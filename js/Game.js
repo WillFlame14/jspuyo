@@ -17,7 +17,7 @@ class Game {
 
 	getBoardState() {
 		const { droppingX, droppingY } = this.currentDrop.convert();
-		const boardState = this.board;
+		const boardState = this.board.boardstate;
 		const droppingColour = this.currentDrop.colours;
 		return { boardState, droppingX, droppingY, droppingColour };
 	}
@@ -28,7 +28,9 @@ class Game {
 			this.startLockDelay(this.settings.lockDelay);
 			this.currentDrop = getNewDrop();
 		}
-		this.board.checkGameOver();
+		if(this.board.checkGameOver()) {
+			alert();
+		}
 	}
 
 	checkLock() {

@@ -1,9 +1,6 @@
-const PUYO_COLOURS = ["rgba(200, 20, 20, 0.9)", "rgba(20, 200, 20, 0.9)", "rgba(20, 20, 200, 0.9)", "rgba(150, 150, 20, 0.9)", "rgba(150, 20, 150, 0.9)"];
-const PUYO_EYES = "rgba(255, 255, 255, 0.7)";
-const COLS = 6;
-const ROWS = 12;
+'use strict';
 
-let boardState = [
+let sampleBoardState = [
     //   0  1  2  3  4  5  6
     [null, null, null, null, null, null], // 11
     [null, null, null, null, null, null], // 10
@@ -22,9 +19,10 @@ let droppingX = [0.5, 1.5];
 let droppingY = [9.1, 9.1];
 let droppingColour = [PUYO_COLOURS[4], PUYO_COLOURS[3]];
 
-boardState = boardState.reverse();
+sampleBoardState = sampleBoardState.reverse();
 
-function updateBoard() {
+function updateBoard(currentBoardState) {
+    const { boardState, droppingX, droppingY, droppingColour } = currentBoardState;
     let board = document.getElementById("board");
     let ctx = board.getContext("2d");
     ctx.clearRect(0, 0, board.width, board.height);
@@ -42,7 +40,7 @@ function updateBoard() {
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
         ctx.translate(2 * board.width / COLS / 5, 0);
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
-        ctx.fillStyle = PUYO_EYES;
+        ctx.fillStyle = PUYO_EYES_COLOUR;
         ctx.fill();
 
         ctx.restore(); // restore to stacked/dropping state
@@ -73,4 +71,4 @@ function updateBoard() {
     ctx.restore(); // restore to plain state
 }
 
-updateBoard();
+//updateBoard(sampleBoardState);

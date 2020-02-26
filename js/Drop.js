@@ -47,7 +47,7 @@ class Drop {
 	}
 
 	shiftRight() {
-		if(this.pos_x < this.width - 0.5) {
+		if(this.pos_x < COLS - 0.5) {
 			this.pos_x++;
 		}
 	}

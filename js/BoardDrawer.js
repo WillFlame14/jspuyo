@@ -1,4 +1,4 @@
-const PUYO_COLOURS = ["rgba(200, 20, 20, 0.9)", "rgba(20, 200, 20, 0.9)", "rgba(20, 20, 200, 0.9)", "rgba(150, 150, 20, 0.9)", "rgba(150, 200, 20, 0.9)"];
+const PUYO_COLOURS = ["rgba(200, 20, 20, 0.9)", "rgba(20, 200, 20, 0.9)", "rgba(20, 20, 200, 0.9)", "rgba(150, 150, 20, 0.9)", "rgba(150, 20, 150, 0.9)"];
 const PUYO_EYES = "rgba(255, 255, 255, 0.7)";
 const COLS = 6;
 const ROWS = 12;
@@ -9,10 +9,10 @@ let boardState = [
     [null, null, null, null, null, null], // 10
     [null, null, null, null, null, null], // 9
     [null, null, null, null, null, null], // 8
-    [null, null, null, null, null, null], // 7
-    [null, null, null, null, null, null], // 6
-    [1, null, null, null, null, null], // 5
-    [3, null, null, null, null, null], // 4
+    [null, 3, null, null, null, null], // 7
+    [null, 4, null, null, null, null], // 6
+    [1, 4, null, null, null, null], // 5
+    [3, 4, null, null, null, null], // 4
     [3, 3, null, null, null, null], // 3
     [1, 0, null, null, null, null], // 2
     [1, 1, 0, null, null, null], // 1

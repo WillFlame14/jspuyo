@@ -45,11 +45,11 @@ class Drop {
 
 	// The below methods all assume that all validation has already been carried out.
 	shiftLeft() {
-		this.pos_x--;
+		this.arle.x--;
 	}
 
 	shiftRight() {
-		this.pos_x++;
+		this.arle.x++;
 	}
 
 	rotateCW() {

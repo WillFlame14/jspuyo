@@ -24,5 +24,5 @@ function getRandomColour(numColours = 4) {
 }
 
 function getOtherPuyo(drop) {
-	return { x: drop.arle.x + Math.cos(drop.standardAngle), y: drop.arle.x + Math.sin(drop.standardAngle)}
+	return { x: drop.arle.x + Math.cos(drop.standardAngle - Math.PI / 2), y: drop.arle.y + Math.sin(drop.standardAngle - Math.PI / 2)}
 }

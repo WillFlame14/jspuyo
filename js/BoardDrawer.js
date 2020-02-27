@@ -7,6 +7,7 @@ function updateBoard(currentBoardState) {
     let board = document.getElementById("board");
     let ctx = board.getContext("2d");
     ctx.clearRect(0, 0, board.width, board.height);
+    ctx.save();
     ctx.translate(0.5 * board.width / COLS, (ROWS - 0.5) * board.height / ROWS);
     for (let j = boardState.length - 1; j >= 0; j--) {
         for (let i = boardState[j].length - 1; i >= 0; i--) {
@@ -17,6 +18,7 @@ function updateBoard(currentBoardState) {
         }
     }
     drawDrop(currentDrop);
+    ctx.restore();
 
     function drawPuyo(colour) {
         ctx.beginPath();
@@ -25,6 +27,7 @@ function updateBoard(currentBoardState) {
         ctx.fill();
 
         ctx.translate(- board.width / COLS / 5, -board.width / COLS / 10);
+
         ctx.beginPath();
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
         ctx.translate(2 * board.width / COLS / 5, 0);
@@ -38,13 +41,14 @@ function updateBoard(currentBoardState) {
         drawPuyo(colour);
         ctx.restore();
     }
-    function draw_I(drop xPos, yPos, angle, colourArle, colourSchezo) {
+    function draw_I(drop) {
         ctx.save();
-        ctx.translate(board.width / COLS * drop.arle.x - board.height / ROWS * drop.arle.y);
+        ctx.translate(board.width / COLS * drop.arle.x, - board.height / ROWS * drop.arle.y);
+        //alert(`${board.width / COLS * drop.arle.x} and ${- board.height / ROWS * drop.arle.y}`);
         ctx.save();
         drawPuyo(drop.colours[0]);
         ctx.restore();
-        ctx.translate(board.width / COLS * Math.cos(drop.standardAngle), - board.height / ROWS * Math.sin(drop.standardAngle));
+        ctx.translate(board.width / COLS * Math.cos(drop.standardAngle - Math.PI / 2), - board.height / ROWS * Math.sin(drop.standardAngle - Math.PI / 2));
         drawPuyo(drop.colours[1]);
         ctx.restore();
         ctx.restore();
@@ -63,20 +67,20 @@ function updateBoard(currentBoardState) {
     }
     function drawDrop(drop) {
         switch (drop.shape) {
-    		case 'I':
-    			draw_I(drop);
+            case 'I':
+                draw_I(drop);
                 break;
-    		case 'h':
-    			draw_h(drop);
+            case 'h':
+                draw_h(drop);
                 break;
-    		case 'L':
-    			draw_L(drop);
+            case 'L':
+                draw_L(drop);
                 break;
-    		case 'H':
-    			draw_H(drop);
+            case 'H':
+                draw_H(drop);
                 break;
-    		case 'O':
-    			draw_O(drop);
+            case 'O':
+                draw_O(drop);
                 break;
         }
     }

@@ -37,14 +37,21 @@ class Game {
 		const schezo = getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
-		const arle_x = Math.round(arle.x);
-		const schezo_x = Math.round(schezo.x);
+		let arle_x = Math.round(arle.x);
+		let schezo_x = Math.round(schezo.x);
+
+		if(arle_x > COLS - 1) {
+			arle_x = COLS - 1;
+		}
+		if(schezo_x > COLS - 1) {
+			schezo_x = COLS - 1;
+		}
 
 		if(arle_x == schezo_x) {
-			return boardState[arle_x] >= Math.min(arle.y, schezo.y);
+			return boardState[arle_x].length >= Math.min(arle.y, schezo.y);
 		}
 		else {
-			return boardState[arle_x] >= arle.y || boardState[schezo_x] >= schezo.y;
+			return boardState[arle_x].length >= arle.y || boardState[schezo_x] >= schezo.y;
 		}
 	}
 
@@ -53,20 +60,39 @@ class Game {
 		const arleDrop = this.currentDrop;
 		const schezo = getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
+		schezo.x = Math.round(schezo.x);
 
-		boardState[arleDrop.arle.x].push(arleDrop.colours[0]);
-		boardState[schezo.x].push(arleDrop.colours[1]);
+		if(arleDrop.arle.x == schezo.x) {
+			if(arleDrop.arle.y < schezo.y) {
+				boardState[schezo.x].push(arleDrop.colours[0]);
+				boardState[schezo.x].push(arleDrop.colours[1]);
+			}
+			else {
+				boardState[schezo.x].push(arleDrop.colours[1]);
+				boardState[schezo.x].push(arleDrop.colours[0]);
+			}
+		}
+		else {
+			boardState[arleDrop.arle.x].push(arleDrop.colours[0]);
+			boardState[schezo.x].push(arleDrop.colours[1]);
+		}
 	}
 
 	move(direction) {
 		const arle = this.currentDrop.arle;
 		const schezo = getOtherPuyo(this.currentDrop);
 
-		if(direction == 'left' && Math.min(arle.x, schezo.x) > 0) {
-			this.currentDrop.shiftLeft();
+		if(direction == 'left') {
+			const leftest = (arle.x < schezo.x) ? arle : schezo;
+			if(leftest.x >= 1 && this.board.boardState[Math.ceil(leftest.x) - 1].length <= leftest.y) {
+				this.currentDrop.shiftLeft();
+			}
 		}
-		else if(direction == 'right' && Math.max(arle.x, schezo.x) < COLS) {
-			this.currentDrop.shiftRight();
+		else if(direction == 'right') {
+			const rightest = (arle.x > schezo.x) ? arle : schezo;
+			if(rightest.x <= COLS - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
+				this.currentDrop.shiftRight();
+			}
 		}
 	}
 

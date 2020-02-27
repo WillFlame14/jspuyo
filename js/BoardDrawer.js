@@ -56,7 +56,7 @@ function updateBoard(currentBoardState) {
         for (let i = boardState[j].length - 1; i >= 0; i--) {
             if (boardState[j][i] != null) {
                 //alert("drawing puyo at (" + i + ", " + j + ")");
-                drawPuyo(j, i, PUYO_COLOURS[boardState[j][i]]);
+                drawPuyo(j, i, boardState[j][i]);
             }
         }
     }

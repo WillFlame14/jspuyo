@@ -1,7 +1,5 @@
 'use strict';
 
-const GRAVITY = 0.1;
-
 function getNewDrop(gamemode = 'Tsu', dropset, orientation) {
 	let shape, colours = [];
 	if(gamemode === 'Tsu') {

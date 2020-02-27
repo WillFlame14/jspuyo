@@ -26,10 +26,10 @@ class Game {
 		this.currentDrop.affectGravity(this.settings.gravity);
 		if(this.checkLock()) {
 			this.startLockDelay(this.settings.lockDelay);
+			if(this.board.checkGameOver()) {
+				alert("Game over!");
+			}
 			this.currentDrop = getNewDrop();
-		}
-		if(this.board.checkGameOver()) {
-			alert();
 		}
 	}
 

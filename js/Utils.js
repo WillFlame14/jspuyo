@@ -20,5 +20,5 @@ class Settings {
 function getRandomColour(numColours) {
 	const colours = COLOUR_LIST.slice(0, numColours);
 	
-	return colours[Math.floor(Math.random() * 4)];
+	return PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
 }

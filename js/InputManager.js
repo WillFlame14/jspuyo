@@ -5,10 +5,10 @@ class InputManager {
 		this.events = [];
 		document.addEventListener("keydown", event => {
 			switch(event.key) {
-				case 'ArrowLeft': // Left
+				case 'ArrowLeft':
 					this.emit('move', 'left')
 					break;
-				case 'ArrowRight': //Right
+				case 'ArrowRight':
 					this.emit('move', 'right');
 					break;
 			}

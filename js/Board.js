@@ -12,6 +12,6 @@ class Board {
 	}
 
 	checkGameOver() {
-		return this.boardstate[3].length === this.height;
+		return this.boardstate[2].length >= this.height;
 	}
 }

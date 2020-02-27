@@ -4,8 +4,8 @@
 	const game = new Game('Tsu');
 
 	function main() {
-		window.requestAnimationFrame(main);
-		game.affectGravity();
+		const mainFrame = window.requestAnimationFrame(main);
+		game.step(mainFrame);
 		updateBoard(game.getBoardState());
 	}
 

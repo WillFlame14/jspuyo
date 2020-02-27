@@ -1,108 +1,72 @@
 'use strict';
 
-const DEFAULT_SETTINGS = new Settings(0.1, 0.5);
-
 class Game {
-	constructor(gamemode, settings = DEFAULT_SETTINGS) {
-		this.board = new Board(12, 6);
+	constructor(gamemode = 'Tsu', settings) {
+		this.board = new Board();
 		this.gamemode = gamemode;
-		this.settings = settings;
+		this.settings = new Settings();
 
 		this.inputManager = new InputManager();
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
-		this.currentDrop = getNewDrop();
+		this.currentDrop = getNewDrop(this.gamemode, this.settings);
 	}
 
 	getBoardState() {
-		const { droppingX, droppingY } = this.currentDrop.convert();
-		const boardState = this.board.boardState;
-		const droppingColour = this.currentDrop.colours;
-		return { boardState, droppingX, droppingY, droppingColour };
+		return { boardState: this.board.boardState, currentDrop: this.currentDrop };
 	}
 
-	affectGravity() {
+	step(mainFrame) {
 		this.currentDrop.affectGravity(this.settings.gravity);
+		this.currentDrop.affectRotation();
+
 		if(this.checkLock()) {
+			this.currentDrop.finishRotation();
 			this.startLockDelay(this.settings.lockDelay);
 			if(this.board.checkGameOver()) {
 				alert("Game over!");
+				window.cancelAnimationFrame(mainFrame);
 			}
-			this.currentDrop = getNewDrop();
+			this.currentDrop = getNewDrop(this.gamemode, this.settings);
 		}
 	}
 
 	checkLock() {
-		const x = this.currentDrop.pos_x;
-		const y = this.currentDrop.pos_y;
+		const arle = this.currentDrop.arle;
+		const schezo = getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
-		switch (this.currentDrop.orientation) {
-			case 'Up':
-			case 'Down':
-				return boardState[x].length >= (y - 0.5);
-			case 'Left':
-			case 'Right':
-				const col_max_height = Math.max(boardState[x - 0.5], boardState[x + 0.5]);
-				return boardState[col_max_height] >= y;
+
+		const arle_x = Math.round(arle.x);
+		const schezo_x = Math.round(schezo.x);
+
+		if(arle_x == schezo_x) {
+			return boardState[arle_x] >= Math.min(arle.y, schezo.y);
+		}
+		else {
+			return boardState[arle_x] >= arle.y || boardState[schezo_x] >= schezo.y;
 		}
 	}
 
-	startLockDelay() {
+	startLockDelay(lockDelay) {
 		// For now there is 0 lock delay
-		const x = this.currentDrop.pos_x;
-		const y = this.currentDrop.pos_y;
+		const arleDrop = this.currentDrop;
+		const schezo = getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
-		switch (this.currentDrop.orientation) {
-			case 'Up':
-				boardState[x].push(this.currentDrop.colours[0]);
-				boardState[x].push(this.currentDrop.colours[1]);
-				break;
-			case 'Down':
-				boardState[x].push(this.currentDrop.colours[1]);
-				boardState[x].push(this.currentDrop.colours[0]);
-				break;
-			case 'Left':
-				boardState[x - 0.5].push(this.currentDrop.colours[0]);
-				boardState[x + 0.5].push(this.currentDrop.colours[1]);
-				break;
-			case 'Right':
-				boardState[x - 0.5].push(this.currentDrop.colours[1]);
-				boardState[x + 0.5].push(this.currentDrop.colours[0]);
-				break;
-		}
+
+		boardState[arleDrop.arle.x].push(arleDrop.colours[0]);
+		boardState[schezo.x].push(arleDrop.colours[1]);
 	}
 
 	move(direction) {
-		const x = this.currentDrop.pos_x;
-		const y = this.currentDrop.pos_y;
-		switch(this.currentDrop.orientation) {
-			case 'Up':
-			case 'Down':
-				if(direction === 'left') {
-					if(x > 0 && this.board.boardState[x - 1].length <= (y - 0.5)) {
-						this.currentDrop.shiftLeft();
-					}
-				}
-				else {
-					if(x < (COLS - 1) && this.board.boardState[x + 1].length <= (y - 0.5)) {
-						this.currentDrop.shiftRight();
-					}
-				}
-				break;
-			case 'Left':
-			case 'Right':
-				if(direction === 'left') {
-					if(x > 0.5 && this.board.boardState[x - 0.5].length <= y) {
-						this.currentDrop.shiftLeft();
-					}
-				}
-				else {
-					if(x < (COLS - 0.5) && this.board.boardState[x + 0.5].length <= y) {
-						this.currentDrop.shiftRight();
-					}
-				}
-				break;
+		const arle = this.currentDrop.arle;
+		const schezo = getOtherPuyo(this.currentDrop);
+
+		if(direction == 'left' && Math.min(arle.x, schezo.x) > 0) {
+			this.currentDrop.shiftLeft();
+		}
+		else if(direction == 'right' && Math.max(arle.x, schezo.x) < COLS) {
+			this.currentDrop.shiftRight();
 		}
 	}
 

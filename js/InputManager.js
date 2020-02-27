@@ -11,6 +11,12 @@ class InputManager {
 				case 'ArrowRight':
 					this.emit('move', 'right');
 					break;
+				case 'z':
+					this.emit('rotate', 'CCW');
+					break;
+				case 'x':
+					this.emit('rotate', 'CW');
+					break;
 			}
 		});
 	}

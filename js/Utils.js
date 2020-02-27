@@ -11,14 +11,18 @@ const COLS = 6;
 const ROWS = 12;
 
 class Settings {
-	constructor(gravity, lockDelay) {
+	constructor(gravity = 0.02, lockDelay = 0.5) {
 		this.gravity = gravity;
 		this.lockDelay = lockDelay;
 	}
 }
 
-function getRandomColour(numColours) {
+function getRandomColour(numColours = 4) {
 	const colours = COLOUR_LIST.slice(0, numColours);
 	
 	return PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
+}
+
+function getOtherPuyo(drop) {
+	return { x: drop.arle.x + Math.cos(drop.standardAngle), y: drop.arle.x + Math.sin(drop.standardAngle)}
 }

@@ -1,28 +1,12 @@
 'use strict';
 
-let sampleBoardState = [
-    //   0  1  2  3  4  5  6
-    [null, null, null, null, null, null], // 11
-    [null, null, null, null, null, null], // 10
-    [null, null, null, null, null, null], // 9
-    [null, null, null, null, null, null], // 8
-    [null, 3, null, null, null, null], // 7
-    [null, 4, null, null, null, null], // 6
-    [1, 4, null, null, null, null], // 5
-    [3, 4, null, null, null, null], // 4
-    [3, 3, null, null, null, null], // 3
-    [1, 0, null, null, null, null], // 2
-    [1, 1, 0, null, null, null], // 1
-    [0, 0, 2, null, null, null],  // 0
-]
-let droppingX = [0.5, 1.5];
-let droppingY = [9.1, 9.1];
-let droppingColour = [PUYO_COLOURS[4], PUYO_COLOURS[3]];
-
-sampleBoardState = sampleBoardState.reverse();
-
 function updateBoard(currentBoardState) {
-    const { boardState, droppingX, droppingY, droppingColour } = currentBoardState;
+    const { boardState, currentDrop } = currentBoardState;
+    const schezo = getOtherPuyo(currentDrop);
+    const droppingX = [currentDrop.arle.x, schezo.x];
+    const droppingY = [currentDrop.arle.y, schezo.y];
+    const droppingColour = currentDrop.colours;
+    
     let board = document.getElementById("board");
     let ctx = board.getContext("2d");
     ctx.clearRect(0, 0, board.width, board.height);
@@ -75,4 +59,3 @@ function updateBoard(currentBoardState) {
     ctx.restore(); // restore to plain state
 }
 
-//updateBoard(sampleBoardState);

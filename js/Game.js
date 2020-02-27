@@ -100,11 +100,41 @@ class Game {
 		if(this.currentDrop.rotating !== 'not') {
 			return;
 		}
+
+		const newDrop = this.currentDrop.copy();
+
 		if(direction === 'CW') {
+			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
+			newDrop.standardAngle = newStandardAngle;
+
+			this.checkKick(newDrop);
 			this.currentDrop.rotateCW();
 		}
 		else {
+			const newStandardAngle = this.currentDrop.standardAngle + Math.PI / 2;
+			newDrop.standardAngle = newStandardAngle;
+
+			this.checkKick(newDrop);
 			this.currentDrop.rotateCCW();
+		}
+	}
+
+	checkKick(newDrop) {
+		const schezo = getOtherPuyo(newDrop);
+
+		if(schezo.x > COLS - 1) {
+			this.currentDrop.shiftLeft();
+		}
+		else if(schezo.x < 0) {
+			this.currentDrop.shiftRight();
+		}
+		else if(this.board.boardState[schezo.x].length >= schezo.y) {
+			if(schezo.x > this.currentDrop.arle.x) {
+				this.currentDrop.shiftLeft();
+			}
+			else if(schezo.x < this.currentDrop.arle.x) {
+				this.currentDrop.shiftRight();
+			}
 		}
 	}
 }

@@ -35,12 +35,16 @@ function getPuyosFromShape(shape) {
 }
 
 class Drop {
-	constructor (shape, colours) {
+	constructor (shape, colours, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
-		this.arle = { x: 2, y: 13 };
 		this.colours = colours;
-		this.standardAngle = 0;
-		this.rotating = 'not';
+		this.arle = arle;
+		this.standardAngle = standardAngle;
+		this.rotating = rotating;
+	}
+
+	copy() {
+		return new Drop(this.shape, this.colours, this.arle, this.standardAngle, this.rotating);
 	}
 
 	// The below methods all assume that all validation has already been carried out.
@@ -66,10 +70,10 @@ class Drop {
 
 	affectRotation() {
 		if(this.rotating == 'CW') {
-			this.standardAngle -= Math.PI / 2 / FRAMES_PER_ROTATION;
+			this.standardAngle -= Math.PI / (2 * FRAMES_PER_ROTATION);
 		}
 		else if(this.rotating == 'CCW') {
-			this.standardAngle += Math.PI / 2 / FRAMES_PER_ROTATION;
+			this.standardAngle += Math.PI / (2 * FRAMES_PER_ROTATION);
 		}
 		else {
 			return;
@@ -84,7 +88,7 @@ class Drop {
 		}
 
 		// Check if reached a right angle
-		if(this.standardAngle % (Math.PI / 2) < 0.001) {
+		if(Math.round(this.standardAngle * 10000) % Math.round(Math.PI  * 5000) < 0.01) {
 			this.rotating = 'not';
 		}
 	}

@@ -17,7 +17,7 @@ class Game {
 
 	getBoardState() {
 		const { droppingX, droppingY } = this.currentDrop.convert();
-		const boardState = this.board.boardstate;
+		const boardState = this.board.boardState;
 		const droppingColour = this.currentDrop.colours;
 		return { boardState, droppingX, droppingY, droppingColour };
 	}
@@ -36,15 +36,15 @@ class Game {
 	checkLock() {
 		const x = this.currentDrop.pos_x;
 		const y = this.currentDrop.pos_y;
-		const boardstate = this.board.boardstate;
+		const boardState = this.board.boardState;
 		switch (this.currentDrop.orientation) {
 			case 'Up':
 			case 'Down':
-				return boardstate[x].length >= (y - 0.5);
+				return boardState[x].length >= (y - 0.5);
 			case 'Left':
 			case 'Right':
-				const col_max_height = Math.max(boardstate[x - 0.5], boardstate[x + 0.5]);
-				return boardstate[col_max_height] >= y;
+				const col_max_height = Math.max(boardState[x - 0.5], boardState[x + 0.5]);
+				return boardState[col_max_height] >= y;
 		}
 	}
 
@@ -52,33 +52,57 @@ class Game {
 		// For now there is 0 lock delay
 		const x = this.currentDrop.pos_x;
 		const y = this.currentDrop.pos_y;
-		const boardstate = this.board.boardstate;
+		const boardState = this.board.boardState;
 		switch (this.currentDrop.orientation) {
 			case 'Up':
-				boardstate[x].push(this.currentDrop.colours[0]);
-				boardstate[x].push(this.currentDrop.colours[1]);
+				boardState[x].push(this.currentDrop.colours[0]);
+				boardState[x].push(this.currentDrop.colours[1]);
 				break;
 			case 'Down':
-				boardstate[x].push(this.currentDrop.colours[1]);
-				boardstate[x].push(this.currentDrop.colours[0]);
+				boardState[x].push(this.currentDrop.colours[1]);
+				boardState[x].push(this.currentDrop.colours[0]);
 				break;
 			case 'Left':
-				boardstate[x - 0.5].push(this.currentDrop.colours[0]);
-				boardstate[x + 0.5].push(this.currentDrop.colours[1]);
+				boardState[x - 0.5].push(this.currentDrop.colours[0]);
+				boardState[x + 0.5].push(this.currentDrop.colours[1]);
 				break;
 			case 'Right':
-				boardstate[x - 0.5].push(this.currentDrop.colours[1]);
-				boardstate[x + 0.5].push(this.currentDrop.colours[0]);
+				boardState[x - 0.5].push(this.currentDrop.colours[1]);
+				boardState[x + 0.5].push(this.currentDrop.colours[0]);
 				break;
 		}
 	}
 
 	move(direction) {
-		if(direction === 'left') {
-			this.currentDrop.shiftLeft();
-		}
-		else {
-			this.currentDrop.shiftRight();
+		const x = this.currentDrop.pos_x;
+		const y = this.currentDrop.pos_y;
+		switch(this.currentDrop.orientation) {
+			case 'Up':
+			case 'Down':
+				if(direction === 'left') {
+					if(x > 0 && this.board.boardState[x - 1].length <= (y - 0.5)) {
+						this.currentDrop.shiftLeft();
+					}
+				}
+				else {
+					if(x < (COLS - 1) && this.board.boardState[x + 1].length <= (y - 0.5)) {
+						this.currentDrop.shiftRight();
+					}
+				}
+				break;
+			case 'Left':
+			case 'Right':
+				if(direction === 'left') {
+					if(x > 0.5 && this.board.boardState[x - 0.5].length <= y) {
+						this.currentDrop.shiftLeft();
+					}
+				}
+				else {
+					if(x < (COLS - 0.5) && this.board.boardState[x + 0.5].length <= y) {
+						this.currentDrop.shiftRight();
+					}
+				}
+				break;
 		}
 	}
 

@@ -39,15 +39,11 @@ class Drop {
 	}
 
 	shiftLeft() {
-		if(this.pos_x > 0.5) {
-			this.pos_x = this.pos_x - 1;
-		}
+		this.pos_x = this.pos_x - 1;
 	}
 
 	shiftRight() {
-		if(this.pos_x < COLS - 0.5) {
-			this.pos_x++;
-		}
+		this.pos_x++;
 	}
 
 	rotateCW() {

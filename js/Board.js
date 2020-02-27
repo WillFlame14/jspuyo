@@ -5,13 +5,13 @@ class Board {
 		this.height = height;
 		this.width = width;
 
-		this.boardstate = [];
+		this.boardState = [];
 		for(let i = 0; i < width; i++) {
-			this.boardstate.push([]);
+			this.boardState.push([]);
 		}
 	}
 
 	checkGameOver() {
-		return this.boardstate[2].length >= this.height;
+		return this.boardState[2].length >= this.height;
 	}
 }

@@ -1,21 +1,24 @@
 'use strict';
 
 function updateBoard(currentBoardState) {
+    // alert("updateBoard started")
     const { boardState, currentDrop } = currentBoardState;
-    const schezo = getOtherPuyo(currentDrop);
-    const droppingX = [currentDrop.arle.x, schezo.x];
-    const droppingY = [currentDrop.arle.y, schezo.y];
-    const droppingColour = currentDrop.colours;
-    
+
     let board = document.getElementById("board");
     let ctx = board.getContext("2d");
     ctx.clearRect(0, 0, board.width, board.height);
-    //alert("cleared board");
-    ctx.save(); // save plain state
+    ctx.translate(0.5 * board.width / COLS, (ROWS - 0.5) * board.height / ROWS);
+    for (let j = boardState.length - 1; j >= 0; j--) {
+        for (let i = boardState[j].length - 1; i >= 0; i--) {
+            // alert("drawing single at " + j + " " + i);
+            if (boardState[j][i] != null) {
+                drawSingle(j, i, boardState[j][i]);
+            }
+        }
+    }
+    drawDrop(currentDrop);
 
-    function drawPuyo(xPos, yPos, colour) {
-        ctx.translate(board.width / COLS * xPos, - board.height / ROWS * yPos);
-        //alert("moved origin " + xPos + " right and " + yPos + " up");
+    function drawPuyo(colour) {
         ctx.beginPath();
         ctx.arc(0, 0, board.width / COLS / 2, 0, 2 * Math.PI);
         ctx.fillStyle = colour;
@@ -28,34 +31,53 @@ function updateBoard(currentBoardState) {
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
         ctx.fillStyle = PUYO_EYES_COLOUR;
         ctx.fill();
-
-        ctx.restore(); // restore to stacked/dropping state
-        ctx.save(); // add stacked/dropping state back
-        //alert("restored origin");
     }
-    
-    ctx.translate(0.5 * board.width / COLS, (ROWS - 0.5) * board.height / ROWS);
-    ctx.save(); // save stacked state
-    for (let j = boardState.length - 1; j >= 0; j--) {
-        for (let i = boardState[j].length - 1; i >= 0; i--) {
-            if (boardState[j][i] != null) {
-                //alert("drawing puyo at (" + i + ", " + j + ")");
-                drawPuyo(j, i, boardState[j][i]);
-            }
+    function drawSingle(xPos, yPos, colour) {
+        ctx.save();
+        ctx.translate(board.width / COLS * xPos, - board.height / ROWS * yPos);
+        drawPuyo(colour);
+        ctx.restore();
+    }
+    function draw_I(drop xPos, yPos, angle, colourArle, colourSchezo) {
+        ctx.save();
+        ctx.translate(board.width / COLS * drop.arle.x - board.height / ROWS * drop.arle.y);
+        ctx.save();
+        drawPuyo(drop.colours[0]);
+        ctx.restore();
+        ctx.translate(board.width / COLS * Math.cos(drop.standardAngle), - board.height / ROWS * Math.sin(drop.standardAngle));
+        drawPuyo(drop.colours[1]);
+        ctx.restore();
+        ctx.restore();
+    }
+    function draw_h(drop) {
+        // TODO: program this
+    }
+    function draw_L(drop) {
+        // TODO: program this
+    }
+    function draw_H(drop) {
+        // TODO: program this
+    }
+    function draw_O(drop) {
+        // TODO: program this
+    }
+    function drawDrop(drop) {
+        switch (drop.shape) {
+    		case 'I':
+    			draw_I(drop);
+                break;
+    		case 'h':
+    			draw_h(drop);
+                break;
+    		case 'L':
+    			draw_L(drop);
+                break;
+    		case 'H':
+    			draw_H(drop);
+                break;
+    		case 'O':
+    			draw_O(drop);
+                break;
         }
     }
-    ctx.restore(); // restore to stacked state
-    ctx.restore(); // restore to plain state
-    ctx.save();
-
-    ctx.translate(0, board.height);
-    ctx.save(); // save dropping state
-    for (let i = droppingColour.length - 1; i >= 0; i--) {
-        drawPuyo(droppingX[i], droppingY[i], droppingColour[i]);
-        //alert("drew puyo centred at (" + droppingX[i] + ", " + droppingY[i] + ") with colour " + droppingColour[i]);
-    }
-
-    ctx.restore(); // restore to dropping state
-    ctx.restore(); // restore to plain state
 }
-

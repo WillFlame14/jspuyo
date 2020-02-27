@@ -97,6 +97,9 @@ class Game {
 	}
 
 	rotate(direction) {
+		if(this.currentDrop.rotating !== 'not') {
+			return;
+		}
 		if(direction === 'CW') {
 			this.currentDrop.rotateCW();
 		}

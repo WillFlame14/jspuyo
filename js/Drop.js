@@ -84,7 +84,7 @@ class Drop {
 		}
 
 		// Check if reached a right angle
-		if(this.standardAngle % (Math.PI / 2) < 0.00001) {
+		if(this.standardAngle % (Math.PI / 2) < 0.001) {
 			this.rotating = 'not';
 		}
 	}

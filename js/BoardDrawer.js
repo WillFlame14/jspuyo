@@ -41,7 +41,7 @@ function updateBoard(currentBoardState) {
         drawPuyo(colour);
         ctx.restore();
     }
-    function draw_I(drop, xPos, yPos, angle, colourArle, colourSchezo) {
+    function draw_I(drop) {
         ctx.save();
         ctx.translate(board.width / COLS * drop.arle.x, - board.height / ROWS * drop.arle.y);
         //alert(`${board.width / COLS * drop.arle.x} and ${- board.height / ROWS * drop.arle.y}`);

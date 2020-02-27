@@ -1,14 +1,12 @@
 'use strict';
 
-const { getRandomColour } = require('./Utils');
-
-function getNewDrop(gamemode = 'Tsu', dropset, position) {
+function getNewDrop(gamemode = 'Tsu', dropset, orientation) {
 	let shape, colours = [];
 	if(gamemode === 'Tsu') {
 		shape = 'I';
 	}
 	else {
-		shape = dropset[position];
+		shape = dropset[orientation];
 	}
 	for(let i = 0; i < getSizeFromShape(shape); i++) {
 		colours.push(getRandomColour());
@@ -28,46 +26,42 @@ function getSizeFromShape(shape) {
 	}
 }
 
-const positions = [ 'Up', 'Right', 'Down', 'Left', 'Up' ];
+const orientations = [ 'Up', 'Right', 'Down', 'Left', 'Up' ];
 
 class Drop {
 
 	constructor (shape, colours) {
 		this.shape = shape;
-		this.position = 'Up';
+		this.orientation = 'Up';
 		this.colours = colours;
 		this.pos_x = 2;
 		this.pos_y = 11;
 	}
 
 	shiftLeft() {
-		if(this.pos_x > 0.5) {
-			this.pos_x = this.pos_x - 1;
-		}
+		this.pos_x = this.pos_x - 1;
 	}
 
 	shiftRight() {
-		if(this.pos_x < this.width - 0.5) {
-			this.pos_x++;
-		}
+		this.pos_x++;
 	}
 
 	rotateCW() {
 		this.colours.push(this.colours.shift());
-		this.position = positions[positions.indexOf(this.position) + 1];
-		this.adjustPosition(true);
+		this.orientation = orientations[orientations.indexOf(this.orientation) + 1];
+		this.adjustOrientation(true);
 	}
 
 	rotateCCW() {
 		this.colours.unshift(this.colours.pop());
-		this.position = positions[positions.lastIndexOf(this.position) - 1];
-		this.adjustPosition(false);
+		this.orientation = orientations[orientations.lastIndexOf(this.orientation) - 1];
+		this.adjustOrientation(false);
 	}
 
 	// TODO: fix rotating against the wall, also half Y coordinate
-	adjustPosition(clockwise) {
+	adjustOrientation(clockwise) {
 		const multiplier = clockwise ? 1 : -1;
-		switch(this.position) {
+		switch(this.orientation) {
 			case 'Up':
 			case 'Right':
 				this.pos_x += multiplier * 0.5;
@@ -78,6 +72,31 @@ class Drop {
 				break;
 		}
 	}
-}
 
-module.exports = { getNewDrop };
+	affectGravity(gravity) {
+		this.pos_y -= gravity;
+	}
+
+	convert() {
+		let droppingX, droppingY;
+		switch(this.orientation) {
+			case 'Up':
+				droppingX = [this.pos_x + 0.5, this.pos_x + 0.5];
+				droppingY = [this.pos_y, this.pos_y + 1];
+				break;
+			case 'Down':
+				droppingX = [this.pos_x + 0.5, this.pos_x + 0.5];
+				droppingY = [this.pos_y - 1, this.pos_y];
+				break;
+			case 'Right':
+				droppingX = [this.pos_x, this.pos_x + 1];
+				droppingY = [this.pos_y + 0.5, this.pos_y + 0.5];
+				break;
+			case 'Left':
+				droppingX = [this.pos_x - 1, this.pos_x];
+				droppingY = [this.pos_y + 0.5, this.pos_y + 0.5];
+				break;
+		}
+		return { droppingX, droppingY };
+	}
+}

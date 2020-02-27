@@ -1,9 +1,6 @@
-const PUYO_COLOURS = ["rgba(200, 20, 20, 0.9)", "rgba(20, 200, 20, 0.9)", "rgba(20, 20, 200, 0.9)", "rgba(150, 150, 20, 0.9)", "rgba(150, 20, 150, 0.9)"];
-const PUYO_EYES = "rgba(255, 255, 255, 0.7)";
-const COLS = 6;
-const ROWS = 12;
+'use strict';
 
-let boardState = [
+let sampleBoardState = [
     //   0  1  2  3  4  5  6
     [null, null, null, null, null, null], // 11
     [null, null, null, null, null, null], // 10
@@ -22,16 +19,19 @@ let droppingX = [0.5, 1.5];
 let droppingY = [9.1, 9.1];
 let droppingColour = [PUYO_COLOURS[4], PUYO_COLOURS[3]];
 
-boardState = boardState.reverse();
+sampleBoardState = sampleBoardState.reverse();
 
-function updateBoard() {
+function updateBoard(currentBoardState) {
+    const { boardState, droppingX, droppingY, droppingColour } = currentBoardState;
     let board = document.getElementById("board");
     let ctx = board.getContext("2d");
     ctx.clearRect(0, 0, board.width, board.height);
+    //alert("cleared board");
     ctx.save(); // save plain state
 
     function drawPuyo(xPos, yPos, colour) {
         ctx.translate(board.width / COLS * xPos, - board.height / ROWS * yPos);
+        //alert("moved origin " + xPos + " right and " + yPos + " up");
         ctx.beginPath();
         ctx.arc(0, 0, board.width / COLS / 2, 0, 2 * Math.PI);
         ctx.fillStyle = colour;
@@ -42,11 +42,12 @@ function updateBoard() {
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
         ctx.translate(2 * board.width / COLS / 5, 0);
         ctx.arc(0, 0, board.width / COLS / 5, 0, 2 * Math.PI);
-        ctx.fillStyle = PUYO_EYES;
+        ctx.fillStyle = PUYO_EYES_COLOUR;
         ctx.fill();
 
         ctx.restore(); // restore to stacked/dropping state
         ctx.save(); // add stacked/dropping state back
+        //alert("restored origin");
     }
     
     ctx.translate(0.5 * board.width / COLS, (ROWS - 0.5) * board.height / ROWS);
@@ -55,22 +56,23 @@ function updateBoard() {
         for (let i = boardState[j].length - 1; i >= 0; i--) {
             if (boardState[j][i] != null) {
                 //alert("drawing puyo at (" + i + ", " + j + ")");
-                drawPuyo(i, j, PUYO_COLOURS[boardState[j][i]]);
+                drawPuyo(j, i, boardState[j][i]);
             }
         }
     }
     ctx.restore(); // restore to stacked state
     ctx.restore(); // restore to plain state
+    ctx.save();
 
     ctx.translate(0, board.height);
     ctx.save(); // save dropping state
     for (let i = droppingColour.length - 1; i >= 0; i--) {
-        //alert("drawing puyo at (" + droppingX[i] + ", " + droppingY[i] + ") with colour " + droppingColour[i]);
         drawPuyo(droppingX[i], droppingY[i], droppingColour[i]);
+        //alert("drew puyo centred at (" + droppingX[i] + ", " + droppingY[i] + ") with colour " + droppingColour[i]);
     }
 
     ctx.restore(); // restore to dropping state
     ctx.restore(); // restore to plain state
 }
 
-updateBoard();
+//updateBoard(sampleBoardState);

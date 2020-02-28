@@ -41,6 +41,7 @@ class Drop {
 		this.arle = arle;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
+		this.rotate180 = false;
 	}
 
 	copy() {
@@ -62,6 +63,10 @@ class Drop {
 
 	rotateCCW() {
 		this.rotating = 'CCW';
+	}
+
+	rotate180() {
+		this.rotate180 = true;
 	}
 
 	affectGravity(gravity) {
@@ -89,7 +94,12 @@ class Drop {
 
 		// Check if reached a right angle
 		if(Math.round(this.standardAngle * 10000) % Math.round(Math.PI  * 5000) < 0.01) {
-			this.rotating = 'not';
+			if(!this.rotate180) {
+				this.rotating = 'not';
+			}
+			else {
+				this.rotate180 = false;
+			}
 		}
 	}
 

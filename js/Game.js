@@ -97,7 +97,8 @@ class Game {
 	}
 
 	rotate(direction) {
-		if(this.currentDrop.rotating !== 'not') {
+		if(this.currentDrop.rotating !== 'not' && this.currentDrop.rotating !== direction) {
+			// Attempting to rotate in a different direction. Inputs will not be queued.
 			return;
 		}
 
@@ -107,34 +108,68 @@ class Game {
 			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			this.checkKick(newDrop);
-			this.currentDrop.rotateCW();
+			if(this.checkKick(newDrop)) {
+				this.currentDrop.rotateCW();
+			}
 		}
 		else {
 			const newStandardAngle = this.currentDrop.standardAngle + Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			this.checkKick(newDrop);
-			this.currentDrop.rotateCCW();
+			if(this.checkKick(newDrop)) {
+				this.currentDrop.rotateCCW();
+			}
 		}
 	}
 
-	checkKick(newDrop) {
+	checkKick(newDrop, direction) {
+		const arle = this.currentDrop.arle;
 		const schezo = getOtherPuyo(newDrop);
 
+		let kick = '';
+		let doRotate = true;
+
+		// Check board edges
 		if(schezo.x > COLS - 1) {
-			this.currentDrop.shiftLeft();
+			kick += 'left';
 		}
 		else if(schezo.x < 0) {
-			this.currentDrop.shiftRight();
+			kick += 'right';
 		}
-		else if(this.board.boardState[schezo.x].length >= schezo.y) {
-			if(schezo.x > this.currentDrop.arle.x) {
+		else {
+			// Check the stacks
+			if(this.board.boardState[schezo.x].length >= schezo.y) {
+				if(schezo.x > arle.x) {
+					kick += 'left';
+				}
+				else if(schezo.x < arle.x) {
+					kick += 'right';
+				}
+			}
+		}
+
+		alert(kick);
+
+		if(kick === 'leftright') {
+			this.currentDrop.rotate180();
+		}
+		else if(kick === 'left') {
+			if(arle.x >= 1 && this.board.boardState[arle.x - 1].length < arle.y) {
 				this.currentDrop.shiftLeft();
 			}
-			else if(schezo.x < this.currentDrop.arle.x) {
-				this.currentDrop.shiftRight();
+			else {
+				doRotate = false;
 			}
 		}
+		else if(kick === 'right') {
+			if(arle.x <= COLS - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
+				this.currentDrop.shiftRight();
+			}
+			else {
+				doRotate = false;
+			}
+		}
+
+		return doRotate;
 	}
 }

@@ -148,8 +148,6 @@ class Game {
 			}
 		}
 
-		alert(kick);
-
 		if(kick === 'leftright') {
 			this.currentDrop.rotate180();
 		}

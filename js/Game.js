@@ -97,8 +97,7 @@ class Game {
 	}
 
 	rotate(direction) {
-		if(this.currentDrop.rotating !== 'not' && this.currentDrop.rotating !== direction) {
-			// Attempting to rotate in a different direction. Inputs will not be queued.
+		if(this.currentDrop.rotating !== 'not') {
 			return;
 		}
 
@@ -148,10 +147,7 @@ class Game {
 			}
 		}
 
-		if(kick === 'leftright') {
-			this.currentDrop.rotate180();
-		}
-		else if(kick === 'left') {
+		if(kick === 'left') {
 			if(arle.x >= 1 && this.board.boardState[arle.x - 1].length < arle.y) {
 				this.currentDrop.shiftLeft();
 			}

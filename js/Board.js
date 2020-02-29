@@ -1,6 +1,6 @@
 'use strict';
 
-class Board {
+window.Board = class Board {
 	constructor(height = 12, width = 6) {
 		this.height = height;
 		this.width = width;

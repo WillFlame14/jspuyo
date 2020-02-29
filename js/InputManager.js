@@ -1,6 +1,6 @@
 'use strict';
 
-class InputManager {
+window.InputManager = class InputManager{
 	constructor() {
 		this.events = [];
 		document.addEventListener("keydown", event => {
@@ -30,5 +30,3 @@ class InputManager {
 		callback(data);
 	}
 }
-
-

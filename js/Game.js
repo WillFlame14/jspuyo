@@ -1,16 +1,16 @@
 'use strict';
 
-class Game {
+window.Game = class Game {
 	constructor(gamemode = 'Tsu', settings) {
-		this.board = new Board();
+		this.board = new window.Board();
 		this.gamemode = gamemode;
-		this.settings = new Settings();
+		this.settings = new window.Settings(settings);
 
-		this.inputManager = new InputManager();
+		this.inputManager = new window.InputManager();
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
-		this.currentDrop = getNewDrop(this.gamemode, this.settings);
+		this.currentDrop = window.getNewDrop(this.gamemode, this.settings);
 	}
 
 	getBoardState() {
@@ -28,37 +28,38 @@ class Game {
 				alert("Game over!");
 				window.cancelAnimationFrame(mainFrame);
 			}
-			this.currentDrop = getNewDrop(this.gamemode, this.settings);
+			this.currentDrop = window.getNewDrop(this.gamemode, this.settings);
 		}
 	}
 
 	checkLock() {
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
 		let arle_x = Math.round(arle.x);
 		let schezo_x = Math.round(schezo.x);
 
-		if(arle_x > COLS - 1) {
-			arle_x = COLS - 1;
+		if(arle_x > this.settings.cols - 1) {
+			arle_x = this.settings.cols - 1;
 		}
-		if(schezo_x > COLS - 1) {
-			schezo_x = COLS - 1;
+		if(schezo_x > this.settings.cols - 1) {
+			schezo_x = this.settings.cols - 1;
 		}
 
-		if(arle_x == schezo_x) {
+		if(arle_x === schezo_x) {
 			return boardState[arle_x].length >= Math.min(arle.y, schezo.y);
 		}
 		else {
-			return boardState[arle_x].length >= arle.y || boardState[schezo_x] >= schezo.y;
+			return boardState[arle_x].length >= arle.y || boardState[schezo_x].length >= schezo.y;
 		}
 	}
 
+	/* eslint-disable-next-line no-unused-vars */
 	startLockDelay(lockDelay) {
 		// For now there is 0 lock delay
 		const arleDrop = this.currentDrop;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 		schezo.x = Math.round(schezo.x);
 
@@ -80,7 +81,7 @@ class Game {
 
 	move(direction) {
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 
 		if(direction == 'left') {
 			const leftest = (arle.x < schezo.x) ? arle : schezo;
@@ -90,7 +91,7 @@ class Game {
 		}
 		else if(direction == 'right') {
 			const rightest = (arle.x > schezo.x) ? arle : schezo;
-			if(rightest.x <= COLS - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
+			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shiftRight();
 			}
 		}
@@ -121,15 +122,15 @@ class Game {
 		}
 	}
 
-	checkKick(newDrop, direction) {
+	checkKick(newDrop) {
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(newDrop);
+		const schezo = window.getOtherPuyo(newDrop);
 
 		let kick = '';
 		let doRotate = true;
 
 		// Check board edges
-		if(schezo.x > COLS - 1) {
+		if(schezo.x > this.settings.cols - 1) {
 			kick += 'left';
 		}
 		else if(schezo.x < 0) {
@@ -156,7 +157,7 @@ class Game {
 			}
 		}
 		else if(kick === 'right') {
-			if(arle.x <= COLS - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
+			if(arle.x <= this.settings.cols - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
 				this.currentDrop.shiftRight();
 			}
 			else {

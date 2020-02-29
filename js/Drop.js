@@ -1,8 +1,6 @@
 'use strict';
 
-const FRAMES_PER_ROTATION = 15;
-
-function getNewDrop(gamemode, settings) {
+window.getNewDrop = function getNewDrop(gamemode, settings) {
 	let shape;
 	if(gamemode === 'Tsu') {
 		shape = 'I';
@@ -14,27 +12,27 @@ function getNewDrop(gamemode, settings) {
 			settings.dropset_position = 1;
 		}
 	}
-	return new Drop(shape, getPuyosFromShape(shape));
-}
 
-function getPuyosFromShape(shape) {
-	const first_col = getRandomColour();
-	const second_col = getRandomColour();
-	switch(shape) {
-		case 'I':
-			return [first_col, second_col];
-		case 'h':
-			return [first_col, first_col, second_col];
-		case 'L':
-			return [first_col, second_col, second_col];
-		case 'H':
-			return [first_col, first_col, second_col, second_col];
-		case 'O':
-			return [first_col, first_col, first_col, first_col];
+	const getPuyosFromShape = function (shape) {
+		const first_col = window.getRandomColour();
+		const second_col = window.getRandomColour();
+		switch(shape) {
+			case 'I':
+				return [first_col, second_col];
+			case 'h':
+				return [first_col, first_col, second_col];
+			case 'L':
+				return [first_col, second_col, second_col];
+			case 'H':
+				return [first_col, first_col, second_col, second_col];
+			case 'O':
+				return [first_col, first_col, first_col, first_col];
+		}
 	}
-}
+	return new window.Drop(shape, getPuyosFromShape(shape), settings);
+};
 
-class Drop {
+window.Drop = class Drop {
 	constructor (shape, colours, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
@@ -70,10 +68,10 @@ class Drop {
 
 	affectRotation() {
 		if(this.rotating == 'CW') {
-			this.standardAngle -= Math.PI / (2 * FRAMES_PER_ROTATION);
+			this.standardAngle -= Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else if(this.rotating == 'CCW') {
-			this.standardAngle += Math.PI / (2 * FRAMES_PER_ROTATION);
+			this.standardAngle += Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else {
 			return;

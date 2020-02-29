@@ -1,15 +1,13 @@
 'use strict';
 
 (function () {
-	const game = new Game('Tsu');
+	const game = new window.Game('Tsu');
 
 	function main() {
 		const mainFrame = window.requestAnimationFrame(main);
 		game.step(mainFrame);
-		updateBoard(game.getBoardState());
+		window.updateBoard(game.getBoardState());
 	}
 
 	main();
 })();
-
-

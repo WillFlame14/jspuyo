@@ -4,6 +4,7 @@ window.InputManager = class InputManager{
 	constructor(das = 200, arr = 20) {
 		this.events = [];
 		this.keysPressed = {};
+		this.lastPressed = undefined;
 		this.dasTimer = {};
 		this.arrTimer = {};
 		this.das = das;
@@ -11,6 +12,9 @@ window.InputManager = class InputManager{
 
 		document.addEventListener("keydown", event => {
 			this.keysPressed[event.key] = true;
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = event.key;
+			}
 		});
 
 		document.addEventListener("keyup", event => {
@@ -18,6 +22,9 @@ window.InputManager = class InputManager{
 			this.dasTimer[event.key] = undefined;
 			if(this.arrTimer[event.key] !== undefined) {
 				this.arrTimer[event.key] = undefined;
+			}
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = undefined;
 			}
 		});
 	}
@@ -36,10 +43,14 @@ window.InputManager = class InputManager{
 				// Perform key action
 				switch(key) {
 					case 'ArrowLeft':
-						this.emit('move', 'left');
+						if(this.lastPressed !== 'ArrowRight') {
+							this.emit('move', 'left');
+						}
 						break;
 					case 'ArrowRight':
-						this.emit('move', 'right');
+						if(this.lastPressed !== 'ArrowLeft') {
+							this.emit('move', 'right');
+						}
 						break;
 					case 'ArrowDown':
 						this.emit('move', 'down');

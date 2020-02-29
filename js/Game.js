@@ -165,7 +165,7 @@ window.Game = class Game {
 
 		if(kick === 'left') {
 			if(arle.x >= 1 && this.board.boardState[arle.x - 1].length < arle.y) {
-				this.currentDrop.shiftLeft();
+				this.currentDrop.shift('Left');
 			}
 			else {
 				doRotate = false;
@@ -173,7 +173,7 @@ window.Game = class Game {
 		}
 		else if(kick === 'right') {
 			if(arle.x <= this.settings.cols - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
-				this.currentDrop.shiftRight();
+				this.currentDrop.shift('Right');
 			}
 			else {
 				doRotate = false;

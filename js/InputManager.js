@@ -16,7 +16,7 @@ class InputManager {
 		document.addEventListener("keyup", event => {
 			this.keysPressed[event.key] = undefined;
 			this.dasTimer[event.key] = undefined;
-			if(this.arrTimer.hasOwnProperty(event.key)) {
+			if(this.arrTimer[event.key] !== undefined) {
 				this.arrTimer[event.key] = undefined;
 			}
 		});

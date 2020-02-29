@@ -52,7 +52,7 @@ class Game {
 			return boardState[arle_x].length >= Math.min(arle.y, schezo.y);
 		}
 		else {
-			return boardState[arle_x].length >= arle.y || boardState[schezo_x] >= schezo.y;
+			return boardState[arle_x].length >= arle.y || boardState[schezo_x].length >= schezo.y;
 		}
 	}
 

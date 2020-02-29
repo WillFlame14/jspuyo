@@ -5,6 +5,7 @@ window.Game = class Game {
 		this.board = new window.Board();
 		this.gamemode = gamemode;
 		this.settings = new window.Settings(settings);
+		this.lastRotateAttempt = {};
 
 		this.boardDrawer = new window.BoardDrawer(this.settings);
 
@@ -40,6 +41,10 @@ window.Game = class Game {
 	}
 
 	checkLock() {
+		// Do not lock while rotating 180
+		if(this.currentDrop.rotating180 > 0) {
+			return false;
+		}
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
@@ -93,18 +98,17 @@ window.Game = class Game {
 		if(direction === 'left') {
 			const leftest = (arle.x < schezo.x) ? arle : schezo;
 			if(leftest.x >= 1 && this.board.boardState[Math.ceil(leftest.x) - 1].length <= leftest.y) {
-				this.currentDrop.shiftLeft();
+				this.currentDrop.shift('Left');
 			}
 		}
 		else if(direction === 'right') {
 			const rightest = (arle.x > schezo.x) ? arle : schezo;
 			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
-				this.currentDrop.shiftRight();
+				this.currentDrop.shift('Right');
 			}
 		}
 		else if(direction === 'down') {
-			console.log('down');
-			this.currentDrop.softDrop();
+			this.currentDrop.shift('Down');
 		}
 	}
 
@@ -119,21 +123,21 @@ window.Game = class Game {
 			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			if(this.checkKick(newDrop)) {
-				this.currentDrop.rotateCW();
+			if(this.checkKick(newDrop, direction)) {
+				this.currentDrop.rotate('CW');
 			}
 		}
 		else {
 			const newStandardAngle = this.currentDrop.standardAngle + Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			if(this.checkKick(newDrop)) {
-				this.currentDrop.rotateCCW();
+			if(this.checkKick(newDrop, direction)) {
+				this.currentDrop.rotate('CCW');
 			}
 		}
 	}
 
-	checkKick(newDrop) {
+	checkKick(newDrop, direction) {
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(newDrop);
 
@@ -175,6 +179,17 @@ window.Game = class Game {
 				doRotate = false;
 			}
 		}
+
+		// Failed to kick due to both sides being full, but might be able to 180 rotate
+		if(!doRotate) {
+			if(Date.now() - this.lastRotateAttempt[direction] < this.settings.rotate180_time) {
+				this.currentDrop.rotate(direction, 180);
+			}
+			else {
+				this.lastRotateAttempt[direction] = Date.now();
+			}
+		}
+
 
 		return doRotate;
 	}

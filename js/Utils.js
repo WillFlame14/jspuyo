@@ -15,7 +15,10 @@ window.Settings = class Settings {
 		this.rows = rows;
 		this.cols = cols;
 		this.softDrop = softDrop;
+
+		// Constants that cannot be modified
 		this.frames_per_rotation = 8;
+		this.rotate180_time = 200;
 	}
 }
 

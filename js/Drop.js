@@ -8,6 +8,8 @@ window.Drop = class Drop {
 		this.arle = arle;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
+
+		this.rotating180 = 0;
 	}
 
 	static getNewDrop(gamemode, settings) {
@@ -47,25 +49,25 @@ window.Drop = class Drop {
 	}
 
 	// The below methods all assume that all validation has already been carried out.
-	shiftLeft() {
-		this.arle.x--;
+	shift(direction) {
+		switch(direction) {
+			case 'Left':
+				this.arle.x--;
+				break;
+			case 'Right':
+				this.arle.x++;
+				break;
+			case 'Down':
+				this.arle.y -= this.settings.softDrop;
+				break;
+		}
 	}
 
-	shiftRight() {
-		this.arle.x++;
-	}
-
-	softDrop() {
-		this.arle.y -= this.settings.softDrop;
-		console.log(this.settings.softDrop);
-	}
-
-	rotateCW() {
-		this.rotating = 'CW';
-	}
-
-	rotateCCW() {
-		this.rotating = 'CCW';
+	rotate(direction, angle) {
+		if(angle === 180) {
+			this.rotating180 = 2;
+		}
+		this.rotating = direction;
 	}
 
 	affectGravity(gravity) {
@@ -73,15 +75,22 @@ window.Drop = class Drop {
 	}
 
 	affectRotation() {
+		let step;
 		if(this.rotating == 'CW') {
-			this.standardAngle -= Math.PI / (2 * this.settings.frames_per_rotation);
+			step = -Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else if(this.rotating == 'CCW') {
-			this.standardAngle += Math.PI / (2 * this.settings.frames_per_rotation);
+			step = Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else {
 			return;
 		}
+
+		if(this.rotating180 > 0) {
+			step *= 2;
+		}
+
+		this.standardAngle += step;
 
 		// Remain within domain
 		if(this.standardAngle >= 2 * Math.PI) {
@@ -93,15 +102,20 @@ window.Drop = class Drop {
 
 		// Check if reached a right angle
 		if(Math.round(this.standardAngle * 10000) % Math.round(Math.PI  * 5000) < 0.01) {
+			if(this.rotating180 === 2) {
+				this.rotating180 = 1;		// Finishing rotation
+				return;
+			}
 			this.rotating = 'not';
+			this.rotating180 = 0;			// Finished rotation
 		}
 	}
 
 	finishRotation() {
-		if(this.rotating == 'not') {
+		if(this.rotating === 'not') {
 			return;
 		}
-		const cw = this.rotating == 'CW';
+		const cw = (this.rotating === 'CW');
 		if(this.standardAngle < Math.PI / 2) {
 			this.standardAngle = cw ? 0 : Math.PI / 2;
 		}

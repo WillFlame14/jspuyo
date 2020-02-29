@@ -6,15 +6,21 @@ window.Game = class Game {
 		this.gamemode = gamemode;
 		this.settings = new window.Settings(settings);
 
+		this.boardDrawer = new window.BoardDrawer(this.settings);
+
 		this.inputManager = new window.InputManager();
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
-		this.currentDrop = window.getNewDrop(this.gamemode, this.settings);
+		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 	}
 
 	getBoardState() {
 		return { boardState: this.board.boardState, currentDrop: this.currentDrop };
+	}
+
+	updateBoard() {
+		this.boardDrawer.updateBoard(this.getBoardState());
 	}
 
 	step(mainFrame) {
@@ -28,7 +34,7 @@ window.Game = class Game {
 				alert("Game over!");
 				window.cancelAnimationFrame(mainFrame);
 			}
-			this.currentDrop = window.getNewDrop(this.gamemode, this.settings);
+			this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 		}
 	}
 

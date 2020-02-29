@@ -14,6 +14,7 @@ window.Settings = class Settings {
 		this.lockDelay = lockDelay;
 		this.rows = rows;
 		this.cols = cols;
+		this.frames_per_rotation = 8;
 	}
 }
 

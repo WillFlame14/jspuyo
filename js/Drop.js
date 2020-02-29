@@ -1,48 +1,49 @@
 'use strict';
 
-window.getNewDrop = function getNewDrop(gamemode, settings) {
-	let shape;
-	if(gamemode === 'Tsu') {
-		shape = 'I';
-	}
-	else {
-		shape = settings.dropset[settings.dropset_position];
-		settings.dropset_position++;
-		if(settings.dropset_position == 17) {
-			settings.dropset_position = 1;
-		}
-	}
-
-	const getPuyosFromShape = function (shape) {
-		const first_col = window.getRandomColour();
-		const second_col = window.getRandomColour();
-		switch(shape) {
-			case 'I':
-				return [first_col, second_col];
-			case 'h':
-				return [first_col, first_col, second_col];
-			case 'L':
-				return [first_col, second_col, second_col];
-			case 'H':
-				return [first_col, first_col, second_col, second_col];
-			case 'O':
-				return [first_col, first_col, first_col, first_col];
-		}
-	}
-	return new window.Drop(shape, getPuyosFromShape(shape), settings);
-};
-
 window.Drop = class Drop {
-	constructor (shape, colours, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
+		this.settings = settings;
 		this.arle = arle;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
 	}
 
+	static getNewDrop(gamemode, settings) {
+		let shape;
+		if(gamemode === 'Tsu') {
+			shape = 'I';
+		}
+		else {
+			shape = settings.dropset[settings.dropset_position];
+			settings.dropset_position++;
+			if(settings.dropset_position == 17) {
+				settings.dropset_position = 1;
+			}
+		}
+
+		const getPuyosFromShape = function (shape) {
+			const first_col = window.getRandomColour();
+			const second_col = window.getRandomColour();
+			switch(shape) {
+				case 'I':
+					return [first_col, second_col];
+				case 'h':
+					return [first_col, first_col, second_col];
+				case 'L':
+					return [first_col, second_col, second_col];
+				case 'H':
+					return [first_col, first_col, second_col, second_col];
+				case 'O':
+					return [first_col, first_col, first_col, first_col];
+			}
+		}
+		return new window.Drop(shape, getPuyosFromShape(shape), settings);
+	}
+
 	copy() {
-		return new Drop(this.shape, this.colours, this.arle, this.standardAngle, this.rotating);
+		return new Drop(this.shape, this.colours, this.settings, this.arle, this.standardAngle, this.rotating);
 	}
 
 	// The below methods all assume that all validation has already been carried out.

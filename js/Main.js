@@ -6,7 +6,7 @@
 	function main() {
 		const mainFrame = window.requestAnimationFrame(main);
 		game.step(mainFrame);
-		window.updateBoard(game.getBoardState());
+		game.updateBoard();
 	}
 
 	main();

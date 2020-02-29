@@ -8,12 +8,13 @@ window.BoardDrawer = class BoardDrawer{
     updateBoard(currentBoardState) {
         // alert("updateBoard started")
         const { boardState, currentDrop } = currentBoardState;
+        const settings = this.settings;
 
         let board = document.getElementById("board");
         let ctx = board.getContext("2d");
         ctx.clearRect(0, 0, board.width, board.height);
         ctx.save();
-        ctx.translate(0.5 * board.width / this.settings.cols, (this.settings.rows - 0.5) * board.height / this.settings.rows);
+        ctx.translate(0.5 * board.width / settings.cols, (settings.rows - 0.5) * board.height / settings.rows);
         for (let j = boardState.length - 1; j >= 0; j--) {
             for (let i = boardState[j].length - 1; i >= 0; i--) {
                 // alert("drawing single at " + j + " " + i);
@@ -27,33 +28,33 @@ window.BoardDrawer = class BoardDrawer{
 
         function drawPuyo(colour) {
             ctx.beginPath();
-            ctx.arc(0, 0, board.width / this.settings.cols / 2, 0, 2 * Math.PI);
+            ctx.arc(0, 0, board.width / settings.cols / 2, 0, 2 * Math.PI);
             ctx.fillStyle = colour;
             ctx.fill();
 
-            ctx.translate(- board.width / this.settings.cols / 5, -board.width / this.settings.cols / 10);
+            ctx.translate(- board.width / settings.cols / 5, -board.width / settings.cols / 10);
 
             ctx.beginPath();
-            ctx.arc(0, 0, board.width / this.settings.cols / 5, 0, 2 * Math.PI);
-            ctx.translate(2 * board.width / this.settings.cols / 5, 0);
-            ctx.arc(0, 0, board.width / this.settings.cols / 5, 0, 2 * Math.PI);
+            ctx.arc(0, 0, board.width / settings.cols / 5, 0, 2 * Math.PI);
+            ctx.translate(2 * board.width / settings.cols / 5, 0);
+            ctx.arc(0, 0, board.width / settings.cols / 5, 0, 2 * Math.PI);
             ctx.fillStyle = window.PUYO_EYES_COLOUR;
             ctx.fill();
         }
         function drawSingle(xPos, yPos, colour) {
             ctx.save();
-            ctx.translate(board.width / this.settings.cols * xPos, - board.height / this.settings.rows * yPos);
+            ctx.translate(board.width / settings.cols * xPos, - board.height / settings.rows * yPos);
             drawPuyo(colour);
             ctx.restore();
         }
         function draw_I(drop) {
             ctx.save();
-            ctx.translate(board.width / this.settings.cols * drop.arle.x, - board.height / this.settings.rows * drop.arle.y);
-            //alert(`${board.width / this.settings.cols * drop.arle.x} and ${- board.height / this.settings.rows * drop.arle.y}`);
+            ctx.translate(board.width / settings.cols * drop.arle.x, - board.height / settings.rows * drop.arle.y);
+            //alert(`${board.width / settings.cols * drop.arle.x} and ${- board.height / settings.rows * drop.arle.y}`);
             ctx.save();
             drawPuyo(drop.colours[0]);
             ctx.restore();
-            ctx.translate(board.width / this.settings.cols * Math.cos(drop.standardAngle - Math.PI / 2), - board.height / this.settings.rows * Math.sin(drop.standardAngle - Math.PI / 2));
+            ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle - Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle - Math.PI / 2));
             drawPuyo(drop.colours[1]);
             ctx.restore();
             ctx.restore();

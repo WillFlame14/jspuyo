@@ -1,6 +1,6 @@
 'use strict';
 
-class InputManager {
+window.InputManager = class InputManager{
 	constructor(das = 200, arr = 20) {
 		this.events = [];
 		this.keysPressed = {};
@@ -73,5 +73,3 @@ class InputManager {
 		callback(data);
 	}
 }
-
-

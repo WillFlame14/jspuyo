@@ -30,6 +30,7 @@ class Game {
 			}
 			this.currentDrop = getNewDrop(this.gamemode, this.settings);
 		}
+		this.inputManager.executeKeys();
 	}
 
 	checkLock() {

@@ -11,9 +11,10 @@ const COLS = 6;
 const ROWS = 12;
 
 class Settings {
-	constructor(gravity = 0.02, lockDelay = 0.5) {
+	constructor(gravity = 0.02, lockDelay = 0.5, softDrop = 0.2) {
 		this.gravity = gravity;
 		this.lockDelay = lockDelay;
+		this.softDrop = softDrop;
 	}
 }
 

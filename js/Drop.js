@@ -1,6 +1,6 @@
 'use strict';
 
-const FRAMES_PER_ROTATION = 15;
+const FRAMES_PER_ROTATION = 8;
 
 function getNewDrop(gamemode, settings) {
 	let shape;
@@ -14,7 +14,7 @@ function getNewDrop(gamemode, settings) {
 			settings.dropset_position = 1;
 		}
 	}
-	return new Drop(shape, getPuyosFromShape(shape));
+	return new Drop(shape, getPuyosFromShape(shape), settings);
 }
 
 function getPuyosFromShape(shape) {
@@ -35,16 +35,17 @@ function getPuyosFromShape(shape) {
 }
 
 class Drop {
-	constructor (shape, colours, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
+		this.settings = settings;
 		this.arle = arle;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
 	}
 
 	copy() {
-		return new Drop(this.shape, this.colours, this.arle, this.standardAngle, this.rotating);
+		return new Drop(this.shape, this.colours, this.settings, this.arle, this.standardAngle, this.rotating);
 	}
 
 	// The below methods all assume that all validation has already been carried out.
@@ -54,6 +55,10 @@ class Drop {
 
 	shiftRight() {
 		this.arle.x++;
+	}
+
+	softDrop() {
+		this.arle.y -= this.settings.softDrop;
 	}
 
 	rotateCW() {

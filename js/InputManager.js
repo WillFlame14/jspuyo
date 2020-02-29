@@ -27,9 +27,9 @@ class InputManager {
 		Object.keys(this.keysPressed).filter(key => this.keysPressed[key] !== undefined).forEach(key => {
 
 			// If this key is newly pressed OR the DAS timer has completed
-			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.das) {
+			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.das || key === 'ArrowDown') {
 				// If the puyo is undergoing ARR AND the ARR timer has not completed
-				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.arr) {
+				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.arr && key !== 'ArrowDown') {
 					return;
 				}
 
@@ -40,6 +40,9 @@ class InputManager {
 						break;
 					case 'ArrowRight':
 						this.emit('move', 'right');
+						break;
+					case 'ArrowDown':
+						this.emit('move', 'down');
 						break;
 					case 'z':
 						this.emit('rotate', 'CCW');

@@ -1,29 +1,34 @@
 'use strict';
 
-const COLOUR_LIST = [ 'Red', 'Blue', 'Green','Purple', 'Yellow' ];
-const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
-					  'Green': 'rgba(20, 200, 20, 0.9)',
-					  'Blue': 'rgba(20, 20, 200, 0.9)',
-					  'Yellow': 'rgba(150, 150, 20, 0.9)',
-					  'Purple': 'rgba(150, 20, 150, 0.9)' };
-const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
-const COLS = 6;
-const ROWS = 12;
+window.COLOUR_LIST = [ 'Red', 'Blue', 'Green','Purple', 'Yellow' ];
+window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
+						'Green': 'rgba(20, 200, 20, 0.9)',
+						'Blue': 'rgba(20, 20, 200, 0.9)',
+						'Yellow': 'rgba(150, 150, 20, 0.9)',
+						'Purple': 'rgba(150, 20, 150, 0.9)' };
+window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
-class Settings {
-	constructor(gravity = 0.02, lockDelay = 0.5) {
+window.Settings = class Settings {
+	constructor(gravity = 0.02, lockDelay = 0.5, rows = 12, cols = 6, softDrop = 0.2) {
 		this.gravity = gravity;
 		this.lockDelay = lockDelay;
+		this.rows = rows;
+		this.cols = cols;
+		this.softDrop = softDrop;
+
+		// Constants that cannot be modified
+		this.frames_per_rotation = 8;
+		this.rotate180_time = 200;
 	}
 }
 
-function getRandomColour(numColours = 4) {
-	const colours = COLOUR_LIST.slice(0, numColours);
+window.getRandomColour = function (numColours = 4) {
+	const colours = window.COLOUR_LIST.slice(0, numColours);
 	
-	return PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
+	return window.PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
 }
 
-function getOtherPuyo(drop) {
+window.getOtherPuyo = function(drop) {
 	let x = drop.arle.x + Math.cos(drop.standardAngle - Math.PI / 2);
 	let y = drop.arle.y + Math.sin(drop.standardAngle - Math.PI / 2);
 

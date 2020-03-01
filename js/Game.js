@@ -1,64 +1,109 @@
 'use strict';
 
-class Game {
+window.Game = class Game {
 	constructor(gamemode = 'Tsu', settings) {
-		this.board = new Board();
+		this.board = new window.Board();
 		this.gamemode = gamemode;
-		this.settings = new Settings();
+		this.settings = new window.Settings(settings);
+		this.lastRotateAttempt = {};
 
-		this.inputManager = new InputManager();
+		this.boardDrawer = new window.BoardDrawer(this.settings);
+
+		this.inputManager = new window.InputManager();
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
-		this.currentDrop = getNewDrop(this.gamemode, this.settings);
+		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 	}
 
 	getBoardState() {
 		return { boardState: this.board.boardState, currentDrop: this.currentDrop };
 	}
 
-	step(mainFrame) {
+	updateBoard() {
+		this.boardDrawer.updateBoard(this.getBoardState());
+	}
+
+	gameOver() {
+		return this.board.checkGameOver();
+	}
+
+	step() {
+		if(this.currentDrop.shape === null) {
+			this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
+		}
 		this.currentDrop.affectGravity(this.settings.gravity);
 		this.currentDrop.affectRotation();
+		this.inputManager.executeKeys();
 
 		if(this.checkLock()) {
 			this.currentDrop.finishRotation();
 			this.startLockDelay(this.settings.lockDelay);
-			if(this.board.checkGameOver()) {
-				alert("Game over!");
-				window.cancelAnimationFrame(mainFrame);
-			}
-			this.currentDrop = getNewDrop(this.gamemode, this.settings);
+
+			this.currentDrop.shape = null;
 		}
 	}
 
 	checkLock() {
+		// Do not lock while rotating 180
+		if(this.currentDrop.rotating180 > 0) {
+			return false;
+		}
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
-		let arle_x = Math.round(arle.x);
-		let schezo_x = Math.round(schezo.x);
-
-		if(arle_x > COLS - 1) {
-			arle_x = COLS - 1;
+		if(this.currentDrop.rotating === 'CW') {
+			if(schezo.x > arle.x) {
+				if(schezo.y > arle.y) {		// quadrant 1
+					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+				else {						// quadrant 2
+					return boardState[arle.x].length > schezo.y;
+				}
+			}
+			else {
+				if(schezo.y < arle.y) {		// quadrant 3
+					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+				else {						// quadrant 4
+					return boardState[arle.x].length > arle.y;
+				}
+			}
 		}
-		if(schezo_x > COLS - 1) {
-			schezo_x = COLS - 1;
+		else if(this.currentDrop.rotating === 'CCW') {
+			if(schezo.x > arle.x) {
+				if(schezo.y > arle.y) {		// quadrant 1
+					return boardState[arle.x].length > arle.y;
+				}
+				else {						// quadrant 2
+					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+			}
+			else {
+				if(schezo.y < arle.y) {		// quadrant 3
+					return boardState[arle.x].length > schezo.y;
+				}
+				else {						// quadrant 4
+					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+			}
 		}
-
-		if(arle_x == schezo_x) {
-			return boardState[arle_x].length >= Math.min(arle.y, schezo.y);
-		}
-		else {
-			return boardState[arle_x].length >= arle.y || boardState[schezo_x] >= schezo.y;
+		else {		// not rotating
+			if(arle.x === schezo.x) {		// vertical orientation
+				return boardState[arle.x].length >= Math.min(arle.y, schezo.y);
+			}
+			else {		//horizontal orientation
+				return boardState[arle.x].length >= arle.y || boardState[schezo.x].length >= schezo.y;
+			}
 		}
 	}
 
+	/* eslint-disable-next-line no-unused-vars */
 	startLockDelay(lockDelay) {
 		// For now there is 0 lock delay
 		const arleDrop = this.currentDrop;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 		schezo.x = Math.round(schezo.x);
 
@@ -80,19 +125,22 @@ class Game {
 
 	move(direction) {
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(this.currentDrop);
+		const schezo = window.getOtherPuyo(this.currentDrop);
 
-		if(direction == 'left') {
+		if(direction === 'left') {
 			const leftest = (arle.x < schezo.x) ? arle : schezo;
-			if(leftest.x >= 1 && this.board.boardState[Math.ceil(leftest.x) - 1].length <= leftest.y) {
-				this.currentDrop.shiftLeft();
+			if(leftest.x >= 1 && this.board.boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
+				this.currentDrop.shift('Left');
 			}
 		}
-		else if(direction == 'right') {
+		else if(direction === 'right') {
 			const rightest = (arle.x > schezo.x) ? arle : schezo;
-			if(rightest.x <= COLS - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
-				this.currentDrop.shiftRight();
+			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
+				this.currentDrop.shift('Right');
 			}
+		}
+		else if(direction === 'down') {
+			this.currentDrop.shift('Down');
 		}
 	}
 
@@ -107,29 +155,29 @@ class Game {
 			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			if(this.checkKick(newDrop)) {
-				this.currentDrop.rotateCW();
+			if(this.checkKick(newDrop, direction)) {
+				this.currentDrop.rotate('CW');
 			}
 		}
 		else {
 			const newStandardAngle = this.currentDrop.standardAngle + Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
-			if(this.checkKick(newDrop)) {
-				this.currentDrop.rotateCCW();
+			if(this.checkKick(newDrop, direction)) {
+				this.currentDrop.rotate('CCW');
 			}
 		}
 	}
 
 	checkKick(newDrop, direction) {
 		const arle = this.currentDrop.arle;
-		const schezo = getOtherPuyo(newDrop);
+		const schezo = window.getOtherPuyo(newDrop);
 
 		let kick = '';
 		let doRotate = true;
 
 		// Check board edges
-		if(schezo.x > COLS - 1) {
+		if(schezo.x > this.settings.cols - 1) {
 			kick += 'left';
 		}
 		else if(schezo.x < 0) {
@@ -149,20 +197,31 @@ class Game {
 
 		if(kick === 'left') {
 			if(arle.x >= 1 && this.board.boardState[arle.x - 1].length < arle.y) {
-				this.currentDrop.shiftLeft();
+				this.currentDrop.shift('Left');
 			}
 			else {
 				doRotate = false;
 			}
 		}
 		else if(kick === 'right') {
-			if(arle.x <= COLS - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
-				this.currentDrop.shiftRight();
+			if(arle.x <= this.settings.cols - 2 && this.board.boardState[arle.x + 1].length < arle.y) {
+				this.currentDrop.shift('Right');
 			}
 			else {
 				doRotate = false;
 			}
 		}
+
+		// Failed to kick due to both sides being full, but might be able to 180 rotate
+		if(!doRotate) {
+			if(Date.now() - this.lastRotateAttempt[direction] < this.settings.rotate180_time) {
+				this.currentDrop.rotate(direction, 180);
+			}
+			else {
+				this.lastRotateAttempt[direction] = Date.now();
+			}
+		}
+
 
 		return doRotate;
 	}

@@ -1,22 +1,81 @@
 'use strict';
 
-class InputManager {
-	constructor() {
+window.InputManager = class InputManager{
+	constructor(das = 200, arr = 20) {
 		this.events = [];
+		this.keysPressed = {};
+		this.lastPressed = undefined;
+		this.dasTimer = {};
+		this.arrTimer = {};
+		this.das = das;
+		this.arr = arr;
+
 		document.addEventListener("keydown", event => {
-			switch(event.key) {
-				case 'ArrowLeft':
-					this.emit('move', 'left')
-					break;
-				case 'ArrowRight':
-					this.emit('move', 'right');
-					break;
-				case 'z':
-					this.emit('rotate', 'CCW');
-					break;
-				case 'x':
-					this.emit('rotate', 'CW');
-					break;
+			this.keysPressed[event.key] = true;
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = event.key;
+			}
+		});
+
+		document.addEventListener("keyup", event => {
+			this.keysPressed[event.key] = undefined;
+			this.dasTimer[event.key] = undefined;
+			if(this.arrTimer[event.key] !== undefined) {
+				this.arrTimer[event.key] = undefined;
+			}
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = undefined;
+			}
+		});
+	}
+
+	executeKeys() {
+		// First, take all the keys currently pressed
+		Object.keys(this.keysPressed).filter(key => this.keysPressed[key] !== undefined).forEach(key => {
+
+			// If this key is newly pressed OR the DAS timer has completed
+			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.das || key === 'ArrowDown') {
+				// If the puyo is undergoing ARR AND the ARR timer has not completed
+				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.arr && key !== 'ArrowDown') {
+					return;
+				}
+
+				// If the puyo is rotating and the rotate button is still held
+				if(this.dasTimer[key] !== undefined && (key === 'z' || key === 'x')) {
+					return;
+				}
+
+				// Perform key action
+				switch(key) {
+					case 'ArrowLeft':
+						if(this.lastPressed !== 'ArrowRight') {
+							this.emit('move', 'left');
+						}
+						break;
+					case 'ArrowRight':
+						if(this.lastPressed !== 'ArrowLeft') {
+							this.emit('move', 'right');
+						}
+						break;
+					case 'ArrowDown':
+						this.emit('move', 'down');
+						break;
+					case 'z':
+						this.emit('rotate', 'CCW');
+						break;
+					case 'x':
+						this.emit('rotate', 'CW');
+						break;
+				}
+
+				// If took an action and DAS timer exists, that must mean entering ARR
+				if(this.dasTimer[key] !== undefined) {
+					this.arrTimer[key] = Date.now();
+				}
+				// Otherwise, this is a new press and must undergo DAS
+				else {
+					this.dasTimer[key] = Date.now();
+				}
 			}
 		});
 	}
@@ -30,5 +89,3 @@ class InputManager {
 		callback(data);
 	}
 }
-
-

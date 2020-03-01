@@ -49,21 +49,49 @@ window.Game = class Game {
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
-		let arle_x = Math.round(arle.x);
-		let schezo_x = Math.round(schezo.x);
-
-		if(arle_x > this.settings.cols - 1) {
-			arle_x = this.settings.cols - 1;
+		if(this.currentDrop.rotating === 'CW') {
+			if(schezo.x > arle.x) {
+				if(schezo.y > arle.y) {		// quadrant 1
+					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+				else {						// quadrant 2
+					return boardState[arle.x].length > schezo.y;
+				}
+			}
+			else {
+				if(schezo.y < arle.y) {		// quadrant 3
+					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+				else {						// quadrant 4
+					return boardState[arle.x].length > arle.y;
+				}
+			}
 		}
-		if(schezo_x > this.settings.cols - 1) {
-			schezo_x = this.settings.cols - 1;
+		else if(this.currentDrop.rotating === 'CCW') {
+			if(schezo.x > arle.x) {
+				if(schezo.y > arle.y) {		// quadrant 1
+					return boardState[arle.x].length > arle.y;
+				}
+				else {						// quadrant 2
+					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+			}
+			else {
+				if(schezo.y < arle.y) {		// quadrant 3
+					return boardState[arle.x].length > schezo.y;
+				}
+				else {						// quadrant 4
+					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+				}
+			}
 		}
-
-		if(arle_x === schezo_x) {
-			return boardState[arle_x].length >= Math.min(arle.y, schezo.y);
-		}
-		else {
-			return boardState[arle_x].length >= arle.y || boardState[schezo_x].length >= schezo.y;
+		else {		// not rotating
+			if(arle.x === schezo.x) {		// vertical orientation
+				return boardState[arle.x].length >= Math.min(arle.y, schezo.y);
+			}
+			else {		//horizontal orientation
+				return boardState[arle.x].length >= arle.y || boardState[schezo.x].length >= schezo.y;
+			}
 		}
 	}
 

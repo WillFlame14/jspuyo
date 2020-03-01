@@ -1,7 +1,7 @@
 'use strict';
 
 window.Drop = class Drop {
-	constructor (shape, colours, settings, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 12 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
@@ -115,7 +115,6 @@ window.Drop = class Drop {
 		if(this.rotating === 'not') {
 			return;
 		}
-		console.log('snap');
 		const cw = (this.rotating === 'CW');
 		if(this.standardAngle < Math.PI / 2) {
 			this.standardAngle = cw ? 0 : Math.PI / 2;

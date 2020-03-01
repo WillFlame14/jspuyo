@@ -39,6 +39,7 @@ window.Game = class Game {
 		if(this.checkLock()) {
 			this.currentDrop.finishRotation();
 			this.startLockDelay(this.settings.lockDelay);
+			console.log(`chain length ${this.board.resolveChains()}`);
 
 			this.currentDrop.shape = null;
 		}

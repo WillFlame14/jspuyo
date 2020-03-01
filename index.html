@@ -2,20 +2,21 @@
 <head>
     <title>jspuyo</title>
     <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
     <main>
         <h1>jspuyo</h1>
         <div id="gameArea">
             <div id = "nuisanceQueueArea">
-                <canvas id="nuisanceQueue" width="150" height="25">nuisanceQueue</canvas>
+                <canvas id="nuisanceQueue" width="150" height="25"></canvas>
             </div>
             <div id = "centralArea">
-                <canvas id="board" width="150" height="300" style="border:1px solid #2a52be;">The board has failed to load.</canvas>
-                <canvas id="queue" width="40" height="300">queue</canvas>
+                <canvas id="board" width="150" height="300" style="border:1px solid #2a52be;"></canvas>
+                <canvas id="queue" width="40" height="300" style="border:1px solid #2a52be;"></canvas>
             </div>
             <div id = "pointsArea">
-                <span id="pointsDisplay">Score: 000000</span>
+                <span id="pointsDisplay" class = "numDisplay">Score: 000000</span>
             </div>
         </div>
         <div id = "descArea">

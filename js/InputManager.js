@@ -40,6 +40,11 @@ window.InputManager = class InputManager{
 					return;
 				}
 
+				// If the puyo is rotating and the rotate button is still held
+				if(this.dasTimer[key] !== undefined && (key === 'z' || key === 'x')) {
+					return;
+				}
+
 				// Perform key action
 				switch(key) {
 					case 'ArrowLeft':

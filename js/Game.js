@@ -97,13 +97,13 @@ window.Game = class Game {
 
 		if(direction === 'left') {
 			const leftest = (arle.x < schezo.x) ? arle : schezo;
-			if(leftest.x >= 1 && this.board.boardState[Math.ceil(leftest.x) - 1].length <= leftest.y) {
+			if(leftest.x >= 1 && this.board.boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
 				this.currentDrop.shift('Left');
 			}
 		}
 		else if(direction === 'right') {
 			const rightest = (arle.x > schezo.x) ? arle : schezo;
-			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.floor(rightest.x) + 1].length <= rightest.y) {
+			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shift('Right');
 			}
 		}

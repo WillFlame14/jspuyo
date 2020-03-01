@@ -115,6 +115,7 @@ window.Drop = class Drop {
 		if(this.rotating === 'not') {
 			return;
 		}
+		console.log('snap');
 		const cw = (this.rotating === 'CW');
 		if(this.standardAngle < Math.PI / 2) {
 			this.standardAngle = cw ? 0 : Math.PI / 2;

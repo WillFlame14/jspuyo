@@ -1,11 +1,29 @@
 <html>
 <head>
     <title>jspuyo</title>
+    <meta charset="utf-8" />
 </head>
 <body>
     <main>
+        <h1>jspuyo</h1>
         <div id="gameArea">
-            <canvas id="board" width="150" height="300" style="border:1px solid #2a52be;">The board has failed to load.</canvas>
+            <div id = "nuisanceQueueArea">
+                <canvas id="nuisanceQueue" width="150" height="25">nuisanceQueue</canvas>
+            </div>
+            <div id = "centralArea">
+                <canvas id="board" width="150" height="300" style="border:1px solid #2a52be;">The board has failed to load.</canvas>
+                <canvas id="queue" width="40" height="300">queue</canvas>
+            </div>
+            <div id = "pointsArea">
+                <span id="pointsDisplay">Score: 000000</span>
+            </div>
+        </div>
+        <div id = "descArea">
+            <p>Controls:</p>
+            <p>Z - rotate CCW</p>
+            <p>X - rotate CW</p>
+            <p>left/right - move left/right</p>
+            <p>down - soft drop</p>
         </div>
         <script src="js/Utils.js"></script>
         <script src="js/InputManager.js"></script>

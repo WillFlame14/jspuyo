@@ -15,18 +15,16 @@ window.Board = class Board {
 		return this.boardState[2].length >= this.height;
 	}
 
-	resolveChains(chain_length = 0) {
+	resolveChains(puyos_chained = [], boardState = this.boardState.slice()) {
 		let chained = false;
 		let current_chain_puyos = [];
 		const visited = [];
 
-		const boardState = this.boardState;
 		const height = this.height;
 		const width = this.width;
 
 		const dfs = function(location, puyo_colour, colour_length, chain_puyo_locs) {
 			visited.push(location);
-			console.log(JSON.stringify(location));
 
 			const { col, row } = location;
 
@@ -38,8 +36,8 @@ window.Board = class Board {
 						const newloc = { col: new_col, row: new_row };
 
 						if(validLoc(newloc) && notVisited(newloc) && boardState[new_col][new_row] === puyo_colour) {
-							console.log(`same colour! ${colour_length}`);
 							chain_puyo_locs.push(newloc);
+
 							// Update with the length of this branch
 							const { length, locs } = dfs(newloc, puyo_colour, colour_length + 1, chain_puyo_locs);
 							colour_length = length;
@@ -61,36 +59,26 @@ window.Board = class Board {
 			return col >= 0 && row >= 0 && col < width && row < height && boardState[col][row] !== undefined;
 		}
 
-		for(let i = 0; i < this.boardState.length; i++) {
-			for(let j = 0; j < this.boardState[i].length; j++) {
+		for(let i = 0; i < boardState.length; i++) {
+			for(let j = 0; j < boardState[i].length; j++) {
 				const loc = { col: i, row: j };
 				if(notVisited(loc)) {
-					console.log('found a starting point');
-					const { length, locs } = dfs(loc, this.boardState[i][j], 1, [loc]);
+					const { length, locs } = dfs(loc, boardState[i][j], 1, [loc]);
 					if (length > 3) {
 						current_chain_puyos = current_chain_puyos.concat(locs);
-						console.log(`chain! ${JSON.stringify(locs)}`);
 						chained = true;
 					}
 				}
 			}
 		}
 
-		current_chain_puyos.forEach(location => {
-			const { col, row } = location;
-
-			// Set chained puyos to null
-			this.boardState[col][row] = null;
-		});
-
-		// Remove all the null puyos
-		this.boardState = this.boardState.map(col => col.filter(row => row !== null));
-
-		console.log(this.boardState);
+		current_chain_puyos.forEach(location => boardState[location.col][location.row] = null);
+		boardState = boardState.map(col => col.filter(row => row !== null));
 
 		if(chained) {
-			return this.resolveChains(chain_length + 1);
+			puyos_chained.push(current_chain_puyos);
+			return this.resolveChains(puyos_chained, boardState);
 		}
-		return chain_length;
+		return puyos_chained;
 	}
 }

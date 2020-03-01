@@ -6,6 +6,8 @@ window.Game = class Game {
 		this.gamemode = gamemode;
 		this.settings = new window.Settings(settings);
 		this.lastRotateAttempt = {};
+		this.resolvingChains = [];
+		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
 		this.boardDrawer = new window.BoardDrawer(this.settings);
 
@@ -16,33 +18,71 @@ window.Game = class Game {
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 	}
 
-	getBoardState() {
-		return { boardState: this.board.boardState, currentDrop: this.currentDrop };
-	}
-
-	updateBoard() {
-		this.boardDrawer.updateBoard(this.getBoardState());
-	}
-
 	gameOver() {
 		return this.board.checkGameOver();
 	}
 
 	step() {
-		if(this.currentDrop.shape === null) {
-			this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
-		}
-		this.currentDrop.affectGravity(this.settings.gravity);
-		this.currentDrop.affectRotation();
-		this.inputManager.executeKeys();
+		// Currently resolving a chain
+		if(this.resolvingChains.length !== 0) {
+			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
+				const height = Math.max(...puyoLocs.map(loc => loc.row)) - Math.min(...puyoLocs.map(loc => loc.row));
+				return height * settings.cascadeFramesPerRow + settings.popFrames;
+			};
 
-		if(this.checkLock()) {
-			this.currentDrop.finishRotation();
-			this.startLockDelay(this.settings.lockDelay);
-			console.log(`chain length ${this.board.resolveChains()}`);
+			// Setting up the board state
+			if(this.resolvingState.chain === 0) {
+				const puyoLocs = this.resolvingChains[0];
+				const totalFrames = getTotalFrames(puyoLocs, this.settings);
+				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
+			}
+			else {
+				this.resolvingState.currentFrame++;
+			}
 
-			this.currentDrop.shape = null;
+			// Update the board
+			// this.boardDrawer.resolveChains(this.boardState, this.resolvingState);
+
+			// Check if the chain is done resolving
+			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
+
+				// Temporary function to remove puyos
+				const boardState = this.board.boardState;
+				this.resolvingState.puyoLocs.forEach(location => boardState[location.col][location.row] = null);
+				this.board.boardState = boardState.map(col => col.filter(row => row !== null));
+
+				if(this.resolvingState.chain === this.resolvingChains.length) {		// Done resolving all chains
+					this.resolvingChains = [];
+					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+				}
+				else {				// Still have more chains to resolve
+
+					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
+					const totalFrames = getTotalFrames(puyoLocs, this.settings);
+
+					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
+				}
+			}
 		}
+		// Not resolving a chain; game has control
+		else {
+			if(this.currentDrop.shape === null) {
+				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
+			}
+			this.currentDrop.affectGravity(this.settings.gravity);
+			this.currentDrop.affectRotation();
+			this.inputManager.executeKeys();
+
+			if(this.checkLock()) {
+				this.currentDrop.finishRotation();
+				this.startLockDelay(this.settings.lockDelay);
+				this.resolvingChains = this.board.resolveChains();
+				this.currentDrop.shape = null;
+			}
+		}
+		// Update the board
+		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+		this.boardDrawer.updateBoard(currentBoardState);
 	}
 
 	checkLock() {

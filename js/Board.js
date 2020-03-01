@@ -26,10 +26,9 @@ window.Board = class Board {
 
 		const dfs = function(location, puyo_colour, colour_length, chain_puyo_locs) {
 			visited.push(location);
-			//console.log(JSON.stringify(location));
+			console.log(JSON.stringify(location));
 
 			const { col, row } = location;
-			let colour_leaf = true;
 
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
@@ -39,20 +38,17 @@ window.Board = class Board {
 						const newloc = { col: new_col, row: new_row };
 
 						if(validLoc(newloc) && notVisited(newloc) && boardState[new_col][new_row] === puyo_colour) {
-							//console.log(`same colour! ${colour_length}`);
+							console.log(`same colour! ${colour_length}`);
 							chain_puyo_locs.push(newloc);
-							dfs(newloc, puyo_colour, colour_length + 1, chain_puyo_locs);
-							colour_leaf = false;
+							// Update with the length of this branch
+							const { length, locs } = dfs(newloc, puyo_colour, colour_length + 1, chain_puyo_locs);
+							colour_length = length;
+							chain_puyo_locs = locs;
 						}
 					}
 				}
 			}
-
-			if(colour_leaf && colour_length > 3) {
-				current_chain_puyos = current_chain_puyos.concat(chain_puyo_locs);
-				console.log(`chain! ${JSON.stringify(current_chain_puyos)}`);
-				chained = true;
-			}
+			return { length: colour_length, locs: chain_puyo_locs };
 		}
 
 		const notVisited = function(location) {
@@ -70,7 +66,12 @@ window.Board = class Board {
 				const loc = { col: i, row: j };
 				if(notVisited(loc)) {
 					console.log('found a starting point');
-					dfs(loc, this.boardState[i][j], 1, [loc]);
+					const { length, locs } = dfs(loc, this.boardState[i][j], 1, [loc]);
+					if (length > 3) {
+						current_chain_puyos = current_chain_puyos.concat(locs);
+						console.log(`chain! ${JSON.stringify(locs)}`);
+						chained = true;
+					}
 				}
 			}
 		}

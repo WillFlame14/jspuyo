@@ -29,8 +29,8 @@ window.getRandomColour = function (numColours = 4) {
 }
 
 window.getOtherPuyo = function(drop) {
-	let x = drop.arle.x + Math.cos(drop.standardAngle - Math.PI / 2);
-	let y = drop.arle.y + Math.sin(drop.standardAngle - Math.PI / 2);
+	let x = drop.arle.x + Math.cos(drop.standardAngle + Math.PI / 2);
+	let y = drop.arle.y + Math.sin(drop.standardAngle + Math.PI / 2);
 
 	if(Math.abs(x - Math.round(x)) < 0.001) {
 		x = Math.round(x);

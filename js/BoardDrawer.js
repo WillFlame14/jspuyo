@@ -54,7 +54,7 @@ window.BoardDrawer = class BoardDrawer{
             ctx.save();
             drawPuyo(drop.colours[0]);
             ctx.restore();
-            ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle - Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle - Math.PI / 2));
+            ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle + Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle + Math.PI / 2));
             drawPuyo(drop.colours[1]);
             ctx.restore();
         }

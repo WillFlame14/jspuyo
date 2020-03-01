@@ -57,7 +57,6 @@ window.BoardDrawer = class BoardDrawer{
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle - Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle - Math.PI / 2));
             drawPuyo(drop.colours[1]);
             ctx.restore();
-            ctx.restore();
         }
         /* eslint-disable-next-line no-unused-vars */
         function draw_h(drop) {

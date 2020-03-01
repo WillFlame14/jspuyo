@@ -24,20 +24,25 @@ window.Game = class Game {
 		this.boardDrawer.updateBoard(this.getBoardState());
 	}
 
-	step(mainFrame) {
+	gameOver() {
+		return this.board.checkGameOver();
+	}
+
+	step() {
+		if(this.currentDrop.shape === null) {
+			this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
+		}
 		this.currentDrop.affectGravity(this.settings.gravity);
 		this.currentDrop.affectRotation();
+		this.inputManager.executeKeys();
 
 		if(this.checkLock()) {
 			this.currentDrop.finishRotation();
 			this.startLockDelay(this.settings.lockDelay);
-			if(this.board.checkGameOver()) {
-				alert("Game over!");
-				window.cancelAnimationFrame(mainFrame);
-			}
-			this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+			console.log(`chain length ${this.board.resolveChains()}`);
+
+			this.currentDrop.shape = null;
 		}
-		this.inputManager.executeKeys();
 	}
 
 	checkLock() {

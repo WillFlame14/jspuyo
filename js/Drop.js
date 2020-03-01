@@ -1,7 +1,7 @@
 'use strict';
 
 window.Drop = class Drop {
-	constructor (shape, colours, settings, arle = { x: 2, y: 13 }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 12 }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;

@@ -19,8 +19,8 @@ window.Settings = class Settings {
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;
 		this.rotate180_time = 200;
-		this.cascadeFramesPerRow = 20;
-		this.popFrames = 20;
+		this.cascadeFramesPerRow = 0;
+		this.popFrames = 50;
 	}
 }
 

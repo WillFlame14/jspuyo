@@ -1,33 +1,74 @@
 'use strict';
 
 window.Board = class Board {
-	constructor(height = 12, width = 6) {
+	constructor(height, width) {
 		this.height = height;
 		this.width = width;
-
 		this.boardState = [];
+
+		// Prepare the board by filling it with empty arrays
 		for(let i = 0; i < width; i++) {
 			this.boardState.push([]);
 		}
 	}
 
-	checkGameOver() {
-		return this.boardState[2].length >= this.height;
+	/**
+	 * Returns a boolean indicating if the board's X locations have been covered.
+	 * This depends on the gamemode (future gamemodes may be supported).
+	 */
+	checkGameOver(gamemode) {
+		switch(gamemode) {
+			case 'Tsu':
+				return this.boardState[2].length >= this.height;
+			case 'Fever':
+				return this.boardState[2].length >= this.height || this.boardState[3].length >= this.height;
+		}
 	}
 
+	/**
+	 * Recursive function that searches the entire stack for any chains (recursively).
+	 * The board state used is a copy of the game's board state. No puyos are removed from the game's board.
+	 *
+	 * Underlying logic:
+	 * 		A visited array is kept of the current board state (as of this recursion).
+	 * 		A non-visited puyo is selected as the start position.
+	 * 		Only DFS to puyos with the same colour to find the extent of the chain (marking them as visited along the way).
+	 * 		Upon reaching a "leaf puyo" (all unvisited neighbours are the wrong colour), the running chain length and location
+	 * 			of contained puyos are returned. This is eventually caught by the most recent ancestor that is not a leaf puyo.
+	 * 		That ancestor then updates its own running chain length and list of puyo locations and continues the DFS.
+	 * 		Eventually, the DFS completes and returns the total chain length and list of puyo locations.
+	 * 		If the chain length is larger than 3, it counts as a chain and is added to the overall list of puyos chained.
+	 * 			That means a future board state must be calculated after this chain (the 'chained' flag set to true).
+	 * 		A new non-visited puyo is selected as a start position, and repeat until no valid start positions exist.
+	 * 		If at least one chain of puyos was found, the board state will be updated by removing the chained puyos.
+	 * 		This function is then called recursively with the new board state and list of puyos chained.
+	 *
+	 * @param  {Array}  puyos_chained  Array containing arrays of chained puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
+	 * @param  {Board}  boardState     The "current" boardstate after previous chaining has been completed
+	 * @return {array}                 The complete puyos_chained array
+	 */
 	resolveChains(puyos_chained = [], boardState = this.boardState.slice()) {
-		let chained = false;
-		let current_chain_puyos = [];
-		const visited = [];
+		let chained = false;			// Flag of whether at least one chain was found in this recursion
+		let current_chain_puyos = [];	// List of puyos that will be chained in this recursion
+		const visited = [];				// List of visited locations in this recursion
 
 		const height = this.height;
 		const width = this.width;
 
+		/**
+		 * Performs a DFS through the current board to find the extent of a colour, given a starting puyo.
+		 *
+		 * @param  {object} location        The location of the current puyo, given as {col: number, row: number}
+		 * @param  {rgba}   puyo_colour     The colour of the puyo, given as an rgba value.
+		 * @param  {number} colour_length   The running length of the puyo chain.
+		 * @param  {array}  chain_puyo_locs The running list of puyo locations contained in the chain.
+		 * @return {object}                 The branch's result, given as {length: colour_length, locs: chain_puyo_locs}.
+		 */
 		const dfs = function(location, puyo_colour, colour_length, chain_puyo_locs) {
 			visited.push(location);
-
 			const { col, row } = location;
 
+			// Search in all 4 cardinal direction
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
 					if(Math.abs(i) + Math.abs(j) === 1) {
@@ -35,10 +76,11 @@ window.Board = class Board {
 						const new_row = row + j;
 						const newloc = { col: new_col, row: new_row };
 
+						// New location must be valid, unvisited and have the same colour puyo
 						if(validLoc(newloc) && notVisited(newloc) && boardState[new_col][new_row] === puyo_colour) {
 							chain_puyo_locs.push(newloc);
 
-							// Update with the length of this branch
+							// Update with the leaf puyo of this branch
 							const { length, locs } = dfs(newloc, puyo_colour, colour_length + 1, chain_puyo_locs);
 							colour_length = length;
 							chain_puyo_locs = locs;
@@ -46,23 +88,32 @@ window.Board = class Board {
 					}
 				}
 			}
+			// Done with all branches, return the findings
 			return { length: colour_length, locs: chain_puyo_locs };
 		}
 
+		/**
+		 * Determines if the visited array contains the passed location.
+		 */
 		const notVisited = function(location) {
 			const { col, row } = location;
 			return visited.filter(loc => loc.col == col && loc.row == row).length === 0;
 		}
 
+		/**
+		 * Determines if the potential location (generated by DFS) is valid.
+		 */
 		const validLoc = function(location) {
 			const { col, row } = location;
 			return col >= 0 && row >= 0 && col < width && row < height && boardState[col][row] !== undefined;
 		}
 
+		// Iterate through the entire board to find all starting points
 		for(let i = 0; i < boardState.length; i++) {
 			for(let j = 0; j < boardState[i].length; j++) {
 				const loc = { col: i, row: j };
 				if(notVisited(loc)) {
+					// Find the extent of this colour, starting here
 					const { length, locs } = dfs(loc, boardState[i][j], 1, [loc]);
 					if (length > 3) {
 						current_chain_puyos = current_chain_puyos.concat(locs);
@@ -72,13 +123,16 @@ window.Board = class Board {
 			}
 		}
 
+		// Delete all the puyos chained in this recursion from the board state
 		current_chain_puyos.forEach(location => boardState[location.col][location.row] = null);
 		boardState = boardState.map(col => col.filter(row => row !== null));
 
+		// Recurse with the new board state and list of chained puyos
 		if(chained) {
 			puyos_chained.push(current_chain_puyos);
 			return this.resolveChains(puyos_chained, boardState);
 		}
+		// Implicit else: No chains were found in this recursion
 		return puyos_chained;
 	}
 }

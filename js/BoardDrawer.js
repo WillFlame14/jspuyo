@@ -41,12 +41,14 @@ window.BoardDrawer = class BoardDrawer{
             ctx.fill();
             ctx.restore();
         }
+
         function drawSingle(xPos, yPos, colour) {
             ctx.save();
             ctx.translate(board.width / settings.cols * xPos, - board.height / settings.rows * yPos);
             drawPuyo(colour);
             ctx.restore();
         }
+
         function drawDrop(drop) {
             ctx.translate(board.width / settings.cols * drop.arle.x, - board.height / settings.rows * drop.arle.y);
             ctx.save();
@@ -69,13 +71,14 @@ window.BoardDrawer = class BoardDrawer{
             }
             ctx.restore();
         }
+
         function draw_I(drop) {
             //alert(`${board.width / settings.cols * drop.arle.x} and ${- board.height / settings.rows * drop.arle.y}`);
             drawPuyo(drop.colours[0]);
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle + Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle + Math.PI / 2));
             drawPuyo(drop.colours[1]);
         }
-        /* eslint-disable-next-line no-unused-vars */
+
         function draw_h(drop) {
             drawPuyo(drop.colours[0]);
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle + Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle + Math.PI / 2));
@@ -85,7 +88,7 @@ window.BoardDrawer = class BoardDrawer{
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle), - board.height / settings.rows * Math.sin(drop.standardAngle));
             drawPuyo(drop.colours[1]);
         }
-        /* eslint-disable-next-line no-unused-vars */
+
         function draw_L(drop) {
             drawPuyo(drop.colours[0]);
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle + Math.PI / 2), - board.height / settings.rows * Math.sin(drop.standardAngle + Math.PI / 2));
@@ -95,7 +98,7 @@ window.BoardDrawer = class BoardDrawer{
             ctx.translate(board.width / settings.cols * Math.cos(drop.standardAngle), - board.height / settings.rows * Math.sin(drop.standardAngle));
             drawPuyo(drop.colours[0]);
         }
-        /* eslint-disable-next-line no-unused-vars */
+
         function draw_H(drop) {
             let xChange = board.width / settings.cols / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
             let yChange = board.height / settings.rows / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
@@ -114,7 +117,7 @@ window.BoardDrawer = class BoardDrawer{
             ctx.translate(yChange, - xChange);
             drawPuyo(drop.colours[1]);
         }
-        /* eslint-disable-next-line no-unused-vars */
+
         function draw_O(drop) {
             let xChange = board.width / settings.cols / 2;
             let yChange = board.height / settings.rows / 2;

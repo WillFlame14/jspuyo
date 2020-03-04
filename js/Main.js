@@ -2,7 +2,7 @@
 
 (function () {
 	const game = new window.Game('Tsu');
-	let gameOver = false;
+	let gameOver = false;		// Flag so that one last frame is requested before termination
 
 	function main() {
 		const mainFrame = window.requestAnimationFrame(main);

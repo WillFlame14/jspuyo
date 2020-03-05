@@ -21,7 +21,7 @@ window.Game = class Game {
 	 * Determines if a Game Over should be triggered.
 	 */
 	gameOver() {
-		return this.board.checkGameOver();
+		return this.board.checkGameOver(this.gamemode);
 	}
 
 	/**

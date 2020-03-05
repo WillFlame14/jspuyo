@@ -1,7 +1,7 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', settings = new window.Settings(settings)) {
+	constructor(gamemode = 'Tsu', settings = new window.Settings()) {
 		this.board = new window.Board(settings.rows, settings.cols);
 		this.gamemode = gamemode;
 		this.settings = settings;
@@ -10,7 +10,7 @@ window.Game = class Game {
 		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
 		this.boardDrawer = new window.BoardDrawer(this.settings);
-		this.inputManager = new window.InputManager();
+		this.inputManager = new window.InputManager(this.settings);
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 

@@ -47,7 +47,7 @@ window.Board = class Board {
 	 * @param  {Board}  boardState     The "current" boardstate after previous chaining has been completed
 	 * @return {array}                 The complete puyos_chained array
 	 */
-	resolveChains(puyos_chained = [], boardState = this.boardState.slice()) {
+	resolveChains(puyos_chained = [], boardState = this.boardState.map(col => col.slice())) {
 		let chained = false;			// Flag of whether at least one chain was found in this recursion
 		let current_chain_puyos = [];	// List of puyos that will be chained in this recursion
 		const visited = [];				// List of visited locations in this recursion

@@ -47,6 +47,9 @@ window.Game = class Game {
 				const puyoLocs = this.resolvingChains[0];
 				const totalFrames = getTotalFrames(puyoLocs, this.settings);
 				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
+
+				// "delete" the puyos, but leave them floating
+				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 			}
 			else {
 				this.resolvingState.currentFrame++;
@@ -58,10 +61,8 @@ window.Game = class Game {
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
 
-				// Temporary function to remove puyos
-				const boardState = this.board.boardState;
-				this.resolvingState.puyoLocs.forEach(location => boardState[location.col][location.row] = null);
-				this.board.boardState = boardState.map(col => col.filter(row => row !== null));
+				// Remove the null puyos
+				this.board.boardState = this.board.boardState.map(col => col.filter(row => row !== null));
 
 				// Done resolving all chains
 				if(this.resolvingState.chain === this.resolvingChains.length) {
@@ -74,6 +75,9 @@ window.Game = class Game {
 					const totalFrames = getTotalFrames(puyoLocs, this.settings);
 
 					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
+
+					// "delete" the puyos, but leave them floating
+					this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 				}
 			}
 		}

@@ -34,41 +34,40 @@ class DrawerWithPuyo {
         ctx.restore();
     }
     drawDrop(drop, size) {
-        let ctx = this.ctx;
-        this['draw_' + drop.shape](drop, size);
+        this["draw_" + drop.shape](drop, size);
     }
     draw_I(drop, size) {
         let ctx = this.ctx;
         ctx.save();
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        drawPuyo(drop.colours[1], size);
+        this.drawPuyo(drop.colours[1], size);
         ctx.restore();
     }
 
     draw_h(drop, size) {
         let ctx = this.ctx;
         ctx.save();
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        drawPuyo(drop.colours[1], size);
+        this.drawPuyo(drop.colours[1], size);
         ctx.restore();
     }
 
     draw_L(drop, size) {
         let ctx = this.ctx;
         ctx.save();
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        drawPuyo(drop.colours[1], size);
+        this.drawPuyo(drop.colours[1], size);
         ctx.restore();
         ctx.save();
         ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
     }
 
@@ -78,19 +77,19 @@ class DrawerWithPuyo {
         let xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
         let yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
         ctx.translate(- xChange, - yChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(- yChange, xChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(xChange, yChange);
-        drawPuyo(drop.colours[1], size);
+        this.drawPuyo(drop.colours[1], size);
         ctx.restore();
         ctx.save();
         ctx.translate(yChange, - xChange);
-        drawPuyo(drop.colours[1], size);
+        this.drawPuyo(drop.colours[1], size);
         ctx.restore();
     }
 
@@ -100,19 +99,19 @@ class DrawerWithPuyo {
         let xChange = size / 2;
         let yChange = size / 2;
         ctx.translate(- xChange, - yChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(- yChange, xChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(xChange, yChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
         ctx.save();
         ctx.translate(yChange, - xChange);
-        drawPuyo(drop.colours[0], size);
+        this.drawPuyo(drop.colours[0], size);
         ctx.restore();
     }
 }
@@ -131,7 +130,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
         const {boardState, currentDrop} = currentBoardState;
-        alert(boardState);
         let width = this.board.width;
         let height = this.board.height;
         let unitW = width / this.cols;
@@ -146,20 +144,21 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         // Move the canvas with the origin at the middle of the bottom left square
         ctx.translate(0.5 * unitW, (this.rows - 0.5) * unitH);
 
-        for (let i = this.rows - 1; i >= 0; i--) {
-            for (let j = this.cols - 1; j >= 0; j--) {
+        for (let i = this.cols - 1; i >= 0; i--) {
+            for (let j = this.rows - 1; j >= 0; j--) {
                 if (boardState[i][j] != null) {
                     ctx.save();
-                    ctx.translate(unitW * xPos, - unitH * yPos);
-                    drawPuyo(colour, unitW);
+                    ctx.translate(unitW * i, - unitH * j);
+                    this.drawPuyo(boardState[i][j], unitW);
                     ctx.restore();
                 }
             }
         }
 
-        // Save a canvas with the origin at the location
         ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
-        drawDrop(currentDrop);
+
+        // Change draw_I to drawDrop to expose problem
+        this.draw_I(currentDrop, unitW);
 
         // Restore origin to top left
         ctx.restore();

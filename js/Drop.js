@@ -84,6 +84,7 @@ window.Drop = class Drop {
 			this.rotating180 = 2;
 		}
 		this.rotating = direction;
+		console.log('rotating ' + direction)
 	}
 
 	/**

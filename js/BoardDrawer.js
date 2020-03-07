@@ -6,7 +6,7 @@
  * but the update function will need game state info.
  */
 class DrawerWithPuyo {
-    constructor(settings) {
+    constructor() {
     }
     drawPuyo(colour, size) {
         let ctx = this.ctx;
@@ -34,7 +34,9 @@ class DrawerWithPuyo {
         ctx.restore();
     }
     drawDrop(drop, size) {
-        this["draw_" + drop.shape](drop, size);
+        if ("IhLHO".includes(drop.shape)) {
+            this["draw_" + drop.shape](drop, size);
+        }
     }
     draw_I(drop, size) {
         let ctx = this.ctx;
@@ -121,9 +123,9 @@ class DrawerWithPuyo {
  */
 window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
     constructor(settings) {
-        super(settings);
+        super();
         this.board = document.getElementById("board");
-        this.ctx = board.getContext("2d");
+        this.ctx = this.board.getContext("2d");
         this.cols = settings.cols;
         this.rows = settings.rows;
     }
@@ -158,7 +160,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
 
         // Change draw_I to drawDrop to expose problem
-        this.draw_I(currentDrop, unitW);
+        this.drawDrop(currentDrop, unitW);
 
         // Restore origin to top left
         ctx.restore();

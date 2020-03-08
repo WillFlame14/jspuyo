@@ -9,7 +9,7 @@ window.Game = class Game {
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
-		this.boardDrawer = new window.BoardDrawer(this.settings);
+		this.boardDrawer = new window.BoardDrawer(this.settings, 1);
 		this.inputManager = new window.InputManager(this.settings);
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
@@ -48,21 +48,19 @@ window.Game = class Game {
 				const puyoLocs = this.resolvingChains[0];
 				const totalFrames = getTotalFrames(puyoLocs, this.settings);
 				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
-
-				// "delete" the puyos, but leave them floating
-				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 			}
 			else {
 				this.resolvingState.currentFrame++;
 			}
 
 			// Update the board
-			// this.boardDrawer.resolveChains(this.boardState, this.resolvingState);
+			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
 
 				// Remove the null puyos
+				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 				this.board.boardState = this.board.boardState.map(col => col.filter(row => row !== null));
 
 				// Done resolving all chains
@@ -75,10 +73,7 @@ window.Game = class Game {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
 					const totalFrames = getTotalFrames(puyoLocs, this.settings);
 
-					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
-
-					// "delete" the puyos, but leave them floating
-					this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
+					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 0, totalFrames: totalFrames };
 				}
 			}
 		}
@@ -113,10 +108,11 @@ window.Game = class Game {
 				this.currentDrop.affectGravity(this.settings.gravity);
 				this.currentDrop.affectRotation();
 			}
+
+			// Update the board
+			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+			this.boardDrawer.updateBoard(currentBoardState);
 		}
-		// Update the board
-		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-		this.boardDrawer.updateBoard(currentBoardState);
 	}
 
 	/**
@@ -289,7 +285,7 @@ window.Game = class Game {
 	 * Determines if a specified rotation is valid.
 	 * If the drop encounters a wall, the ground or a stack during rotation, it attempts to kick away.
 	 * If there is no space to kick away, the rotation will fail unless a 180 rotate is performed.
-	 * 
+	 *
 	 * @param  {Drop} 	 newDrop   	The "final state" of the drop after the rotation finishes
 	 * @param  {string}  direction 	The direction of rotation
 	 * @return {boolean} 			Whether rotating is a valid operation or not

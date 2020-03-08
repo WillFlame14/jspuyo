@@ -91,7 +91,6 @@ window.Game = class Game {
 
 			if(this.checkLock()) {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay) {
-					console.log('lock');
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 					this.resolvingChains = this.board.resolveChains();
@@ -342,7 +341,7 @@ window.Game = class Game {
 			}
 		}
 		else if(kick === 'up') {
-			this.currentDrop.shift('Up', this.board.boardState[schezo.x].length - schezo.y);
+			this.currentDrop.shift('Up', this.board.boardState[schezo.x].length - schezo.y + 0.05);
 		}
 
 		// Cannot kick, but might be able to 180 rotate

@@ -1,5 +1,8 @@
 'use strict';
 
+/* eslint-disable-next-line no-undef */
+const socket = io();
+
 window.InputManager = class InputManager{
 	constructor(settings) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
@@ -26,6 +29,9 @@ window.InputManager = class InputManager{
 				this.lastPressed = undefined;
 			}
 		});
+
+		socket.on('move', data => console.log('move ' + data));
+		socket.on('rotate', data => console.log('rotate ' + data));
 	}
 
 	/**
@@ -56,22 +62,27 @@ window.InputManager = class InputManager{
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowRight') {
 							this.emit('move', 'left');
+							socket.emit('move', 'left');
 						}
 						break;
 					case 'ArrowRight':
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowLeft') {
 							this.emit('move', 'right');
+							socket.emit('move', 'right');
 						}
 						break;
 					case 'ArrowDown':
 						this.emit('move', 'down');
+						socket.emit('move', 'down');
 						break;
 					case 'z':
 						this.emit('rotate', 'CCW');
+						socket.emit('rotate', 'CCW');
 						break;
 					case 'x':
 						this.emit('rotate', 'CW');
+						socket.emit('rotate', 'CW');
 						break;
 				}
 

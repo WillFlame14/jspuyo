@@ -14,6 +14,7 @@ window.Game = class Game {
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
+		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 	}
 
@@ -86,15 +87,31 @@ window.Game = class Game {
 			if(this.currentDrop.shape === null) {
 				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
 			}
-			this.currentDrop.affectGravity(this.settings.gravity);
-			this.currentDrop.affectRotation();
 			this.inputManager.executeKeys();
 
 			if(this.checkLock()) {
-				this.currentDrop.finishRotation();
-				this.startLockDelay(this.settings.lockDelay);
-				this.resolvingChains = this.board.resolveChains();
-				this.currentDrop.shape = null;
+				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay) {
+					this.currentDrop.finishRotation();
+					this.lockDrop();
+					this.resolvingChains = this.board.resolveChains();
+					this.currentDrop.shape = null;
+					this.locking = 'not';
+				}
+				else if(this.locking === 'not') {
+					this.locking = Date.now();
+					this.currentDrop.affectRotation();
+				}
+				else {
+					this.currentDrop.affectRotation();
+				}
+			}
+			else if(this.locking !== 'not') {
+				this.locking = 'not';
+				this.currentDrop.affectRotation();
+			}
+			else {
+				this.currentDrop.affectGravity(this.settings.gravity);
+				this.currentDrop.affectRotation();
 			}
 		}
 		// Update the board
@@ -172,8 +189,7 @@ window.Game = class Game {
 	/**
 	 * Locks the drop and adds the puyos to the stack.
 	 */
-	startLockDelay() {
-		// For now there is 0 lock delay
+	lockDrop() {
 		const arleDrop = this.currentDrop;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
@@ -204,21 +220,39 @@ window.Game = class Game {
 	move(direction) {
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
+		let leftest, rightest;
+
+		if(arle.x < schezo.x) {
+			leftest = arle;
+			rightest = schezo;
+		}
+		else if (arle.x > schezo.x) {
+			leftest = schezo;
+			rightest = arle;
+		}
+		else {
+			if(arle.y < schezo.y) {
+				leftest = rightest = arle;
+			}
+			else {
+				leftest = rightest = schezo;
+			}
+		}
 
 		if(direction === 'left') {
-			const leftest = (arle.x < schezo.x) ? arle : schezo;
 			if(leftest.x >= 1 && this.board.boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
 				this.currentDrop.shift('Left');
 			}
 		}
 		else if(direction === 'right') {
-			const rightest = (arle.x > schezo.x) ? arle : schezo;
 			if(rightest.x <= this.settings.cols - 2 && this.board.boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shift('Right');
 			}
 		}
 		else if(direction === 'down') {
-			this.currentDrop.shift('Down');
+			if(arle.y > this.board.boardState[arle.x].length && schezo.y > this.board.boardState[Math.round(schezo.x)].length) {
+				this.currentDrop.shift('Down');
+			}
 		}
 	}
 
@@ -269,19 +303,22 @@ window.Game = class Game {
 
 		// Check board edges to determine kick diretion
 		if(schezo.x > this.settings.cols - 1) {
-			kick += 'left';
+			kick = 'left';
 		}
 		else if(schezo.x < 0) {
-			kick += 'right';
+			kick = 'right';
 		}
 		else {
 			// Check the stacks to determine kick direction
 			if(this.board.boardState[schezo.x].length >= schezo.y) {
 				if(schezo.x > arle.x) {
-					kick += 'left';
+					kick = 'left';
 				}
 				else if(schezo.x < arle.x) {
-					kick += 'right';
+					kick = 'right';
+				}
+				else {
+					kick = 'up';
 				}
 			}
 		}
@@ -302,6 +339,9 @@ window.Game = class Game {
 			else {
 				doRotate = false;
 			}
+		}
+		else if(kick === 'up') {
+			this.currentDrop.shift('Up', this.board.boardState[schezo.x].length - schezo.y + 0.05);
 		}
 
 		// Cannot kick, but might be able to 180 rotate

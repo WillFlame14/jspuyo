@@ -9,7 +9,7 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 350, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
+	constructor(gravity = 0.02, lockDelay = 100, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
 		this.rows = rows;				// Number of rows in the game board

@@ -62,7 +62,7 @@ window.Drop = class Drop {
 	/**
 	 * Moves a Drop. Validation is done before calling this method.
 	 */
-	shift(direction) {
+	shift(direction, amount) {
 		switch(direction) {
 			case 'Left':
 				this.arle.x--;
@@ -72,7 +72,12 @@ window.Drop = class Drop {
 				break;
 			case 'Down':
 				this.arle.y -= this.settings.softDrop;
+				if(this.arle.y < 0) {
+					this.arle.y = 0;
+				}
 				break;
+			case 'Up':
+				this.arle.y += amount;
 		}
 	}
 
@@ -84,7 +89,6 @@ window.Drop = class Drop {
 			this.rotating180 = 2;
 		}
 		this.rotating = direction;
-		console.log('rotating ' + direction)
 	}
 
 	/**

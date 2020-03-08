@@ -99,13 +99,14 @@ window.Game = class Game {
 					this.locking = 'not';
 				}
 				else if(this.locking === 'not') {
-					console.log('locking');
 					this.locking = Date.now();
+					this.currentDrop.affectRotation();
+				}
+				else {
 					this.currentDrop.affectRotation();
 				}
 			}
 			else if(this.locking !== 'not') {
-				console.log('unlocking');
 				this.locking = 'not';
 				this.currentDrop.affectRotation();
 			}
@@ -250,8 +251,7 @@ window.Game = class Game {
 			}
 		}
 		else if(direction === 'down') {
-			if(arle.y > this.board.boardState[arle.x].length + this.settings.softDrop &&
-			schezo.y > this.board.boardState[Math.round(schezo.x)].length + this.settings.softDrop) {
+			if(arle.y > this.board.boardState[arle.x].length && schezo.y > this.board.boardState[Math.round(schezo.x)].length) {
 				this.currentDrop.shift('Down');
 			}
 		}
@@ -265,7 +265,6 @@ window.Game = class Game {
 		if(this.currentDrop.rotating !== 'not') {
 			return;
 		}
-		console.log(direction);
 
 		const newDrop = this.currentDrop.copy();
 
@@ -305,19 +304,22 @@ window.Game = class Game {
 
 		// Check board edges to determine kick diretion
 		if(schezo.x > this.settings.cols - 1) {
-			kick += 'left';
+			kick = 'left';
 		}
 		else if(schezo.x < 0) {
-			kick += 'right';
+			kick = 'right';
 		}
 		else {
 			// Check the stacks to determine kick direction
 			if(this.board.boardState[schezo.x].length >= schezo.y) {
 				if(schezo.x > arle.x) {
-					kick += 'left';
+					kick = 'left';
 				}
 				else if(schezo.x < arle.x) {
-					kick += 'right';
+					kick = 'right';
+				}
+				else {
+					kick = 'up';
 				}
 			}
 		}
@@ -338,6 +340,9 @@ window.Game = class Game {
 			else {
 				doRotate = false;
 			}
+		}
+		else if(kick === 'up') {
+			this.currentDrop.shift('Up', this.board.boardState[schezo.x].length - schezo.y);
 		}
 
 		// Cannot kick, but might be able to 180 rotate

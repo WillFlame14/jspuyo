@@ -56,8 +56,7 @@ window.Game = class Game {
 				this.resolvingState.currentFrame++;
 			}
 
-			// Update the board
-			// this.boardDrawer.resolveChains(this.boardState, this.resolvingState);
+			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
@@ -113,10 +112,10 @@ window.Game = class Game {
 				this.currentDrop.affectGravity(this.settings.gravity);
 				this.currentDrop.affectRotation();
 			}
+			// Update the board
+			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+			this.boardDrawer.updateBoard(currentBoardState);
 		}
-		// Update the board
-		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-		this.boardDrawer.updateBoard(currentBoardState);
 	}
 
 	/**
@@ -289,7 +288,7 @@ window.Game = class Game {
 	 * Determines if a specified rotation is valid.
 	 * If the drop encounters a wall, the ground or a stack during rotation, it attempts to kick away.
 	 * If there is no space to kick away, the rotation will fail unless a 180 rotate is performed.
-	 * 
+	 *
 	 * @param  {Drop} 	 newDrop   	The "final state" of the drop after the rotation finishes
 	 * @param  {string}  direction 	The direction of rotation
 	 * @return {boolean} 			Whether rotating is a valid operation or not

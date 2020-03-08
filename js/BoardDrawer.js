@@ -122,9 +122,9 @@ class DrawerWithPuyo {
  * The drawer for the main area of the game.
  */
 window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
-    constructor(settings) {
+    constructor(settings, boardNum) {
         super();
-        this.board = document.getElementById("board");
+        this.board = document.getElementById("board" + boardNum);
         this.ctx = this.board.getContext("2d");
         this.settings = settings;
         this.poppingPuyos = [];

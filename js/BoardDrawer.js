@@ -157,8 +157,17 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
         }
 
-        ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
-        this.drawDrop(currentDrop, unitW);
+        if (currentDrop.schezo.x) {
+            ctx.save();
+            ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
+            this.drawPuyo(currentDrop.colours[0], unitW);
+            ctx.restore();
+            ctx.translate(unitW * currentDrop.schezo.x, - unitH * currentDrop.schezo.y);
+            this.drawPuyo(currentDrop.colours[1], unitW);
+        } else {
+            ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
+            this.drawDrop(currentDrop, unitW);
+        }
 
         // Restore origin to top left
         ctx.restore();

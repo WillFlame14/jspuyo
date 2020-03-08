@@ -1,18 +1,20 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', settings = new window.Settings()) {
+	constructor(gamemode = 'Tsu', player = true, gameId, socket, settings = new window.Settings()) {
 		this.board = new window.Board(settings.rows, settings.cols);
 		this.gamemode = gamemode;
+		this.player = player;
+		this.gameId = gameId;
 		this.settings = settings;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
-		this.boardDrawer = new window.BoardDrawer(this.settings, 1);
-		this.inputManager = new window.InputManager(this.settings);
+		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, socket);
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
+		this.boardDrawer = new window.BoardDrawer(this.settings, player ? 1 : 2);
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
@@ -82,7 +84,10 @@ window.Game = class Game {
 			if(this.currentDrop.shape === null) {
 				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings)
 			}
-			this.inputManager.executeKeys();
+
+			if(this.player) {
+				this.inputManager.executeKeys();
+			}
 
 			if(this.checkLock()) {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay) {
@@ -213,7 +218,7 @@ window.Game = class Game {
 	 * Called when a move event is emitted from the InputManager, and validates the event before performing it.
 	 * Puyos may not move into the wall or into the stack.
 	 */
-	move(direction) {
+	move(direction, player) {
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		let leftest, rightest;

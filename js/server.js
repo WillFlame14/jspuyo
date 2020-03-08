@@ -7,6 +7,8 @@ const io = require('socket.io')(http);
 const port = process.env.PORT || 3000;
 const path = require('path');
 
+let gameCounter = 1;
+
 app.use(express.static('./'));
 
 app.get('/', function(req, res) {
@@ -14,10 +16,15 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', function(socket) {
-  socket.on('move', data => socket.broadcast.emit("move", data));
-  socket.on('rotate', data => socket.broadcast.emit("rotate", data));
+	socket.on('register', () => {
+		console.log('pinged');
+		socket.emit('getGameId', gameCounter);
+		gameCounter++;
+	});
+	socket.on('move', data => socket.broadcast.emit("move", data));
+	socket.on('rotate', data => socket.broadcast.emit("rotate", data));
 });
 
 http.listen(port, function() {
-  console.log('Listening on port: ' + port);
+	console.log('Listening on port: ' + port);
 });

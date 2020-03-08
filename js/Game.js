@@ -9,7 +9,7 @@ window.Game = class Game {
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
-		this.boardDrawer = new window.BoardDrawer(this.settings);
+		this.boardDrawer = new window.BoardDrawer(this.settings, 1);
 		this.inputManager = new window.InputManager(this.settings);
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));

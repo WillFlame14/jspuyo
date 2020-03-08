@@ -21,7 +21,7 @@ window.Settings = class Settings {
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;	// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;		// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
-		this.cascadeFramesPerRow = 0;	// Number of frames used for a puyo to fall one row
+		this.cascadeFramesPerRow = 5;	// Number of frames used for a puyo to fall one row
 		this.popFrames = 50;			// Number of frames used to pop any amount of puyos
 	}
 }
@@ -31,7 +31,7 @@ window.Settings = class Settings {
  */
 window.getRandomColour = function (numColours = 4) {
 	const colours = window.COLOUR_LIST.slice(0, numColours);
-	
+
 	return window.PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
 }
 

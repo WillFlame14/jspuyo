@@ -48,20 +48,19 @@ window.Game = class Game {
 				const puyoLocs = this.resolvingChains[0];
 				const totalFrames = getTotalFrames(puyoLocs, this.settings);
 				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
-
-				// "delete" the puyos, but leave them floating
-				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 			}
 			else {
 				this.resolvingState.currentFrame++;
 			}
 
+			// Update the board
 			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
 
 				// Remove the null puyos
+				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
 				this.board.boardState = this.board.boardState.map(col => col.filter(row => row !== null));
 
 				// Done resolving all chains
@@ -74,10 +73,7 @@ window.Game = class Game {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
 					const totalFrames = getTotalFrames(puyoLocs, this.settings);
 
-					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
-
-					// "delete" the puyos, but leave them floating
-					this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
+					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 0, totalFrames: totalFrames };
 				}
 			}
 		}
@@ -112,6 +108,7 @@ window.Game = class Game {
 				this.currentDrop.affectGravity(this.settings.gravity);
 				this.currentDrop.affectRotation();
 			}
+
 			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
 			this.boardDrawer.updateBoard(currentBoardState);

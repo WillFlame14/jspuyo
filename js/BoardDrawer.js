@@ -173,7 +173,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         let ctx = this.ctx;
         // alert("resolveChains called");
 
-        // if (resolvingState.currentFrame == 1) {
+        if (resolvingState.currentFrame == 1) {
             this.poppingPuyos = [];
             for (let i = 0; i < cols; i++) {
                 this.poppingPuyos.push([]);
@@ -182,7 +182,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 this.poppingPuyos[resolvingState.puyoLocs[i].col][resolvingState.puyoLocs[i].row] = true;
                 // alert("setting " + resolvingState.puyoLocs[i].col + ", " + resolvingState.puyoLocs[i].row + " to popping");
             }
-        // }
+        }
 
         ctx.clearRect(0, 0, width, height);
 

@@ -13,7 +13,7 @@ p {
     text-align: center;
 }
 
-#gameArea {
-    width: 100%;
-    text-align: center;
+table#playArea {
+    margin-left:auto;
+    margin-right:auto;
 }

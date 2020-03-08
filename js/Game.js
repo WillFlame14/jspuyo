@@ -38,6 +38,7 @@ window.Game = class Game {
 		// Currently resolving a chain
 		if(this.resolvingChains.length !== 0) {
 			// Finds the total number of frames required to display a chain animation
+			// TODO: change this so it finds the most amount of popping Puyo in a single column
 			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
 				const height = Math.max(...puyoLocs.map(loc => loc.row)) - Math.min(...puyoLocs.map(loc => loc.row));
 				return height * settings.cascadeFramesPerRow + settings.popFrames;
@@ -186,12 +187,11 @@ window.Game = class Game {
 	 * Locks the drop and adds the puyos to the stack.
 	 */
 	lockDrop() {
-		const arleDrop = this.currentDrop;
-		const schezo = window.getOtherPuyo(this.currentDrop);
+		this.currentDrop.schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
 		// Force round the schezo before it is put on the stack
-		schezo.x = Math.round(schezo.x);
+		this.currentDrop.schezo.x = Math.round(this.currentDrop.schezo.x);
 
 		if(arleDrop.arle.x == schezo.x) {		// vertical orientation
 			if(arleDrop.arle.y < schezo.y) {

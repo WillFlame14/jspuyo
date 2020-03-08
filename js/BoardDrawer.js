@@ -126,16 +126,16 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         super();
         this.board = document.getElementById("board");
         this.ctx = this.board.getContext("2d");
-        this.cols = settings.cols;
-        this.rows = settings.rows;
+        this.settings = settings;
+        this.poppingPuyos = [];
     }
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
         const {boardState, currentDrop} = currentBoardState;
-        let width = this.board.width;
-        let height = this.board.height;
-        let unitW = width / this.cols;
-        let unitH = height / this.rows;
+        const {width, height} = this.board;
+        const {cols, rows} = this.settings;
+        const unitW = width / cols;
+        const unitH = height / rows;
         let ctx = this.ctx;
 
         ctx.clearRect(0, 0, width, height);
@@ -144,11 +144,11 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0.5 * unitW, (this.rows - 0.5) * unitH);
+        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
 
-        for (let i = this.cols - 1; i >= 0; i--) {
-            for (let j = this.rows - 1; j >= 0; j--) {
-                if (boardState[i][j] != null) {
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < rows; j++) {
+                if (boardState[i][j]) {
                     ctx.save();
                     ctx.translate(unitW * i, - unitH * j);
                     this.drawPuyo(boardState[i][j], unitW);
@@ -158,12 +158,65 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         }
 
         ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
-
-        // Change draw_I to drawDrop to expose problem
         this.drawDrop(currentDrop, unitW);
 
         // Restore origin to top left
         ctx.restore();
     }
+    resolveChains(boardState, resolvingState) {
+        // Get current information and assign it to convenient variables
+        const {width, height} = this.board;
+        const {cols, rows} = this.settings;
+        const unitW = width / cols;
+        const unitH = height / rows;
+        let ctx = this.ctx;
 
+        if (resolvingState.currentFrame == 1) {
+            this.poppingPuyos = [];
+            for (let i = 0; i < cols; i++) {
+                this.poppingPuyos.push([]);
+            }
+            for (let i = resolvingState.puyoLocs.length - 1; i >= 0; i--) {
+                this.poppingPuyos[resolvingState.puyoLocs.col][resolvingState.puyoLocs.row] = true;
+            }
+        }
+
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.save();
+
+        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
+
+
+
+        if (resolvingState.currentFrame <= this.settings.popFrames) {
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    if (this.poppingPuyos[i][j]) {
+                        ctx.save();
+                        ctx.translate(unitW * i, - unitH * j);
+                        this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, this.settings.popFrames);
+                        ctx.restore();
+                    } else if (boardState[i][j] != null) {
+                        ctx.save();
+                        ctx.translate(unitW * i, - unitH * j);
+                        this.drawPuyo(boardState[i][j], unitW);
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+        // else {
+        //     for (let i = 0; i < cols; i++) {
+        //         let numUnder = 0;
+        //         while (numTok) {
+        //             numUnder++;
+        //         }
+        //     }
+        // }
+        ctx.restore();
+    }
+    drawPopping(colour, size, frame, totalFrames) {
+        this.drawPuyo(colour, size * (1 - frame / totalFrames));
+    }
 }

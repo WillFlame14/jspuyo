@@ -157,7 +157,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
         }
 
-        if (currentDrop.schezo.x) {
+        if (currentDrop.schezo.y) {
             ctx.save();
             ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
             this.drawPuyo(currentDrop.colours[0], unitW);

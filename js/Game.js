@@ -35,8 +35,32 @@ window.Game = class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
+		if (this.currentDrop.schezo.y) {
+			const arleDropped = this.currentDrop.arle.y <= this.board.boardState[this.currentDrop.arle.x].length;
+			const schezoDropped = this.currentDrop.schezo.y <= this.board.boardState[this.currentDrop.schezo.x].length;
+			if(this.resolvingState.chain === 0) {
+				this.resolvingState = { chain: -1, puyoLocs: null, currentFrame: 0, totalFrames: 0 };
+			} else {
+				this.resolvingState.currentFrame++;
+				if (!arleDropped) {
+					this.currentDrop.arle.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+				}
+				if (!schezoDropped) {
+					this.currentDrop.schezo.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+				}
+			}
+			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop};
+			this.boardDrawer.updateBoard(currentBoardState);
+			if (schezoDropped && arleDropped) {
+				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.board.boardState[this.currentDrop.arle.x].push(this.currentDrop.colours[0]);
+				this.board.boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
+				this.currentDrop.schezo.x = null;
+				this.currentDrop.schezo.y = null;
+			}
+		}
 		// Currently resolving a chain
-		if(this.resolvingChains.length !== 0) {
+		else if(this.resolvingChains.length !== 0) {
 			// Finds the total number of frames required to display a chain animation
 			// TODO: change this so it finds the most amount of popping Puyo in a single column
 			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
@@ -137,6 +161,7 @@ window.Game = class Game {
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 
+		// TODO: fix side lodging
 		if(this.currentDrop.rotating === 'CW') {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
@@ -193,19 +218,19 @@ window.Game = class Game {
 		// Force round the schezo before it is put on the stack
 		this.currentDrop.schezo.x = Math.round(this.currentDrop.schezo.x);
 
-		if(arleDrop.arle.x == schezo.x) {		// vertical orientation
-			if(arleDrop.arle.y < schezo.y) {
-				boardState[schezo.x].push(arleDrop.colours[0]);
-				boardState[schezo.x].push(arleDrop.colours[1]);
+		if(this.currentDrop.arle.x === this.currentDrop.schezo.x) {		// vertical orientation
+			if(this.currentDrop.arle.y < this.currentDrop.schezo.y) {
+				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
+				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
 			}
 			else {
-				boardState[schezo.x].push(arleDrop.colours[1]);
-				boardState[schezo.x].push(arleDrop.colours[0]);
+				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
+				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
 			}
 		}
 		else {			// horizontal orientation
-			boardState[arleDrop.arle.x].push(arleDrop.colours[0]);
-			boardState[schezo.x].push(arleDrop.colours[1]);
+			this.currentDrop.arle.y = Math.max(boardState[this.currentDrop.arle.x].length, boardState[this.currentDrop.schezo.x].length);
+			this.currentDrop.schezo.y = this.currentDrop.arle.y;
 		}
 	}
 

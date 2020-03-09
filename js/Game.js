@@ -72,16 +72,43 @@ window.Game = class Game {
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
 			// Finds the total number of frames required to display a chain animation
-			// TODO: change this so it finds the most amount of popping Puyo in a single column
-			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
-				const height = Math.max(...puyoLocs.map(loc => loc.row)) - Math.min(...puyoLocs.map(loc => loc.row));
-				return height * settings.cascadeFramesPerRow + settings.popFrames;
+			const getTotalFrames = function getTotalFrames(puyoLocs, boardState, settings) {
+				let poppingPuyos = [];
+				for (let i = 0; i < settings.cols; i++) {
+					poppingPuyos.push([]);
+				}
+				for (let i = 0; i < puyoLocs.length; i++) {
+					poppingPuyos[puyoLocs[i].col][puyoLocs[i].row] = true;
+				}
+				let maxPoppingUnder = 0;
+				let poppingUnder = 0;
+				let wasLastNonPopping = false;
+				for (let i = 0; i < settings.cols; i++) {
+					poppingUnder = 0;
+					wasLastNonPopping = false;
+					for (let j = settings.rows - 1; j >= 0 && poppingUnder === 0; j--) {
+						if (wasLastNonPopping && poppingPuyos[i][j]) {
+							poppingUnder = 1;
+							for (let j1 = j - 1; j1 >= 0; j1--) {
+								if(poppingPuyos[i][j1]) {
+									poppingUnder++;
+								}
+							}
+						} else if (boardState[i][j] != null && !poppingPuyos[i][j]) {
+							wasLastNonPopping = true;
+						}
+					}
+					if (poppingUnder > maxPoppingUnder) {
+						maxPoppingUnder = poppingUnder;
+					}
+				}
+				return maxPoppingUnder * settings.cascadeFramesPerRow + settings.popFrames;
 			};
 
 			// Setting up the board state
 			if(this.resolvingState.chain === 0) {
 				const puyoLocs = this.resolvingChains[0];
-				const totalFrames = getTotalFrames(puyoLocs, this.settings);
+				const totalFrames = getTotalFrames(puyoLocs, this.board.boardState, this.settings);
 				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
 			}
 			else {
@@ -106,7 +133,7 @@ window.Game = class Game {
 				// Still have more chains to resolve
 				else {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
-					const totalFrames = getTotalFrames(puyoLocs, this.settings);
+					const totalFrames = getTotalFrames(puyoLocs, this.board.boardState, this.settings);
 
 					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 0, totalFrames: totalFrames };
 				}
@@ -239,10 +266,8 @@ window.Game = class Game {
 	 * Locks the drop and adds the puyos to the stack.
 	 */
 	lockDrop() {
-		// alert(this.currentDrop.schezo.x + ", " + this.currentDrop.schezo.y);
 		this.currentDrop.schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
-		// alert(this.currentDrop.schezo.x + ", " + this.currentDrop.schezo.y);
 
 		// Force round the schezo before it is put on the stack
 		this.currentDrop.schezo.x = Math.round(this.currentDrop.schezo.x);
@@ -265,7 +290,6 @@ window.Game = class Game {
 			this.currentDrop.arle.y = Math.max(boardState[this.currentDrop.arle.x].length, boardState[this.currentDrop.schezo.x].length);
 			this.currentDrop.schezo.y = this.currentDrop.arle.y;
 		}
-		// alert("lock drop finished with schezo y of " + this.currentDrop.schezo.y);
 	}
 
 	/**

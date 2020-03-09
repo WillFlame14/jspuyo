@@ -174,13 +174,11 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
     }
     resolveChains(boardState, resolvingState) {
         // Get current information and assign it to convenient variables
-        // alert(boardState);
         const {width, height} = this.board;
         const {cols, rows, popFrames, cascadeFramesPerRow} = this.settings;
         const unitW = width / cols;
         const unitH = height / rows;
         let ctx = this.ctx;
-        // alert("resolveChains called");
 
         if (resolvingState.currentFrame == 1) {
             this.poppingPuyos = [];
@@ -189,7 +187,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
             for (let i = resolvingState.puyoLocs.length - 1; i >= 0; i--) {
                 this.poppingPuyos[resolvingState.puyoLocs[i].col][resolvingState.puyoLocs[i].row] = true;
-                // alert("setting " + resolvingState.puyoLocs[i].col + ", " + resolvingState.puyoLocs[i].row + " to popping");
             }
         }
 
@@ -198,38 +195,17 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
-        // alert ("moved origin");
-        // alert ("cols: " + cols + " , rows: " + rows);
 
+        // Draw the stack in the pre-pop positions, with some puyo mid pop
         if (resolvingState.currentFrame <= this.settings.popFrames) {
-            // if (resolvingState.currentFrame == 1) {
-            //     alert("drawing popping phase");
-            //     let full = "occupied:\n";
-            //     let popping = "popping:\n";
-            //     for (let i = rows - 1; i >= 0; i--) {
-            //         for (let j = 0; j < cols; j++) {
-            //                 full += boardState[j][i]?'O':'X';
-            //                 popping += this.poppingPuyos[j][i]?'O':'X';
-            //         }
-            //         full += '\n';
-            //         popping += '\n';
-            //     }
-            //     alert(full);
-            //     alert(popping);
-            // }
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows; j++) {
-                    // alert("popping? " + this.poppingPuyos[i][j]);
-                    // alert("puyo here? " + boardState[i][j]);
                     if (this.poppingPuyos[i][j] != null) {
-                        // alert("a puyo is popping at " + i + ", " + j + ". The colour is " + boardState[i][j]);
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
-                        // alert("popping translation complete");
                         this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, popFrames);
                         ctx.restore();
                     } else if (boardState[i][j] != null) {
-                        // alert("drawing non popping puyo");
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
                         this.drawPuyo(boardState[i][j], unitW);
@@ -238,6 +214,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 }
             }
         }
+        // Draw the stack dropping with the popped puyos gone
         else {
             for (let i = 0; i < cols; i++) {
                 let numUnder = 0;
@@ -262,7 +239,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.restore();
     }
     drawPopping(colour, size, frame, totalFrames) {
-        // alert ("drawPopping called with colour: " + colour + " on frame " + frame + " out of " + totalFrames);
         this.drawPuyo(colour, size * (1 - frame / totalFrames));
     }
 }

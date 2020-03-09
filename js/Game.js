@@ -36,7 +36,7 @@ window.Game = class Game {
 	 */
 	step() {
 		if (this.currentDrop.schezo.y) {
-			// alert("falling entered");
+			alert("falling entered");
 			const arleDropped = this.currentDrop.arle.y <= this.board.boardState[this.currentDrop.arle.x].length;
 			const schezoDropped = this.currentDrop.schezo.y <= this.board.boardState[this.currentDrop.schezo.x].length;
 			if(this.resolvingState.chain === 0) {
@@ -232,12 +232,14 @@ window.Game = class Game {
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
 			}
 			this.resolvingChains = this.board.resolveChains();
+			this.currentDrop.schezo.y = null;
+			this.currentDrop.shape = null;
 		}
 		else {			// horizontal orientation
 			this.currentDrop.arle.y = Math.max(boardState[this.currentDrop.arle.x].length, boardState[this.currentDrop.schezo.x].length);
-			alert(this.currentDrop.arle.y);
 			this.currentDrop.schezo.y = this.currentDrop.arle.y;
 		}
+		// alert("lock drop finished with schezo y of " + this.currentDrop.schezo.y);
 	}
 
 	/**

@@ -36,6 +36,7 @@ window.Game = class Game {
 	 */
 	step() {
 		if (this.currentDrop.schezo.y) {
+			// alert("falling entered");
 			const arleDropped = this.currentDrop.arle.y <= this.board.boardState[this.currentDrop.arle.x].length;
 			const schezoDropped = this.currentDrop.schezo.y <= this.board.boardState[this.currentDrop.schezo.x].length;
 			if(this.resolvingState.chain === 0) {
@@ -58,10 +59,12 @@ window.Game = class Game {
 				this.board.boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
 				this.currentDrop.schezo.x = null;
 				this.currentDrop.schezo.y = null;
+				this.currentDrop.shape = null;
+				// alert("falling exited with coordinates: " + this.currentDrop.arle.y);
 			}
 		}
 		// Currently resolving a chain
-		else if(this.resolvingChains.length !== 0) {
+		if(this.resolvingChains.length !== 0) {
 			// Finds the total number of frames required to display a chain animation
 			// TODO: change this so it finds the most amount of popping Puyo in a single column
 			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
@@ -211,8 +214,10 @@ window.Game = class Game {
 	 * Locks the drop and adds the puyos to the stack.
 	 */
 	lockDrop() {
+		// alert(this.currentDrop.schezo.x + ", " + this.currentDrop.schezo.y);
 		this.currentDrop.schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
+		// alert(this.currentDrop.schezo.x + ", " + this.currentDrop.schezo.y);
 
 		// Force round the schezo before it is put on the stack
 		this.currentDrop.schezo.x = Math.round(this.currentDrop.schezo.x);
@@ -230,6 +235,7 @@ window.Game = class Game {
 		}
 		else {			// horizontal orientation
 			this.currentDrop.arle.y = Math.max(boardState[this.currentDrop.arle.x].length, boardState[this.currentDrop.schezo.x].length);
+			alert(this.currentDrop.arle.y);
 			this.currentDrop.schezo.y = this.currentDrop.arle.y;
 		}
 	}

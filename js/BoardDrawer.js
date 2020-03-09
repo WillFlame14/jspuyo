@@ -157,7 +157,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
         }
 
-        if (currentDrop.schezo.y) {
+        if (currentDrop.schezo.y != null) {
             ctx.save();
             ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
             this.drawPuyo(currentDrop.colours[0], unitW);
@@ -221,14 +221,14 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 for (let j = 0; j < rows; j++) {
                     // alert("popping? " + this.poppingPuyos[i][j]);
                     // alert("puyo here? " + boardState[i][j]);
-                    if (this.poppingPuyos[i][j]) {
+                    if (this.poppingPuyos[i][j] != null) {
                         // alert("a puyo is popping at " + i + ", " + j + ". The colour is " + boardState[i][j]);
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
                         // alert("popping translation complete");
                         this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, popFrames);
                         ctx.restore();
-                    } else if (boardState[i][j]) {
+                    } else if (boardState[i][j] != null) {
                         // alert("drawing non popping puyo");
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
@@ -241,7 +241,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         else {
             for (let i = 0; i < cols; i++) {
                 let numUnder = 0;
-                while (boardState[i][numUnder] && !this.poppingPuyos[i][numUnder]) {
+                while (boardState[i][numUnder] != null && this.poppingPuyos[i][numUnder] == null) {
                     ctx.save();
                     ctx.translate(unitW * i, - unitH * numUnder);
                     this.drawPuyo(boardState[i][numUnder], unitW);
@@ -249,7 +249,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     numUnder++;
                 }
                 for (let j = numUnder + 1; j < rows; j++) {
-                    if (boardState[i][j] && !this.poppingPuyos[i][j]) {
+                    if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * (Math.max(j - (resolvingState.currentFrame - popFrames)/cascadeFramesPerRow, numUnder)));
                         this.drawPuyo(boardState[i][j], unitW);

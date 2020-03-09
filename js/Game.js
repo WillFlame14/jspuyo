@@ -53,6 +53,7 @@ window.Game = class Game {
 			this.boardDrawer.updateBoard(currentBoardState);
 			if (schezoDropped && arleDropped) {
 				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.resolvingChains = this.board.resolveChains();
 				this.board.boardState[this.currentDrop.arle.x].push(this.currentDrop.colours[0]);
 				this.board.boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
 				this.currentDrop.schezo.x = null;
@@ -113,8 +114,6 @@ window.Game = class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
-					this.resolvingChains = this.board.resolveChains();
-					this.currentDrop.shape = null;
 					this.locking = 'not';
 				}
 				else if(this.locking === 'not') {
@@ -218,7 +217,7 @@ window.Game = class Game {
 		// Force round the schezo before it is put on the stack
 		this.currentDrop.schezo.x = Math.round(this.currentDrop.schezo.x);
 
-		if(this.currentDrop.arle.x === this.currentDrop.schezo.x) {		// vertical orientation
+		if(this.currentDrop.arle.x == this.currentDrop.schezo.x) {		// vertical orientation
 			if(this.currentDrop.arle.y < this.currentDrop.schezo.y) {
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
@@ -227,6 +226,7 @@ window.Game = class Game {
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
 			}
+			this.resolvingChains = this.board.resolveChains();
 		}
 		else {			// horizontal orientation
 			this.currentDrop.arle.y = Math.max(boardState[this.currentDrop.arle.x].length, boardState[this.currentDrop.schezo.x].length);

@@ -1,7 +1,7 @@
 'use strict';
 
 window.Drop = class Drop {
-	constructor (shape, colours, settings, arle = { x: 2, y: 12 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 11.5 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;

@@ -15,6 +15,7 @@ window.Game = class Game {
 		this.inputManager.on('rotate', this.rotate.bind(this));
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
+		this.forceLockDelay = 0;
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 	}
 
@@ -44,13 +45,13 @@ window.Game = class Game {
 			} else {
 				this.resolvingState.currentFrame++;
 				if (!arleDropped) {
-					this.currentDrop.arle.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+					this.currentDrop.arle.y -= 1 / this.settings.isoCascadeFramesPerRow;
 					if (this.currentDrop.arle.y < this.board.boardState[this.currentDrop.arle.x].length) {
 						this.currentDrop.arle.y = this.board.boardState[this.currentDrop.arle.x].length
 					}
 				}
 				if (!schezoDropped) {
-					this.currentDrop.schezo.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+					this.currentDrop.schezo.y -= 1 / this.settings.isoCascadeFramesPerRow;
 					if (this.currentDrop.schezo.y < this.board.boardState[this.currentDrop.schezo.x].length) {
 						this.currentDrop.schezo.y = this.board.boardState[this.currentDrop.schezo.x].length
 					}
@@ -119,10 +120,11 @@ window.Game = class Game {
 			this.inputManager.executeKeys();
 
 			if(this.checkLock()) {
-				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay) {
+				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 					this.locking = 'not';
+					this.forceLockDelay = 0;
 				}
 				else if(this.locking === 'not') {
 					this.locking = Date.now();
@@ -167,52 +169,70 @@ window.Game = class Game {
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
+		let lock;
 
+		if(schezo.x > this.settings.cols - 1) {
+			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
+			console.log('jk');
+			arle.x--;
+			schezo.x--;
+		}
+		else if(schezo.x < 0) {
+			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
+			console.log('jk');
+			arle.x++;
+			schezo.x++;
+		}
+
+		if(this.currentDrop.rotating180 !== 0) {
+			console.log(this.currentDrop.rotating180);
+		}
 		// TODO: fix side lodging
 		if(this.currentDrop.rotating === 'CW') {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
-					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+					lock = boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
 				}
 				else {						// quadrant 2
-					return boardState[arle.x].length > schezo.y;
+					lock = boardState[arle.x].length > schezo.y;
 				}
 			}
 			else {
 				if(schezo.y < arle.y) {		// quadrant 3
-					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+					lock = boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
 				}
 				else {						// quadrant 4
-					return boardState[arle.x].length > arle.y;
+					lock = boardState[arle.x].length > arle.y;
 				}
 			}
 		}
 		else if(this.currentDrop.rotating === 'CCW') {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
-					return boardState[arle.x].length > arle.y;
+					lock = boardState[arle.x].length > arle.y;
 				}
 				else {						// quadrant 2
-					return boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+					lock = boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
 				}
 			}
 			else {
 				if(schezo.y < arle.y) {		// quadrant 3
-					return boardState[arle.x].length > schezo.y;
+					lock = boardState[arle.x].length > schezo.y;
 				}
 				else {						// quadrant 4
-					return boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
+					lock = boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
 				}
 			}
 		}
 		else {		// not rotating
 			if(arle.x === schezo.x) {		// vertical orientation
-				return boardState[arle.x].length >= Math.min(arle.y, schezo.y);
+				lock = boardState[arle.x].length >= Math.min(arle.y, schezo.y);
 			}
 			else {		//horizontal orientation
-				return boardState[arle.x].length >= arle.y || boardState[schezo.x].length >= schezo.y;
+				lock = boardState[arle.x].length >= arle.y || boardState[schezo.x].length >= schezo.y;
 			}
 		}
+		return lock;
 	}
 
 	/**
@@ -287,6 +307,13 @@ window.Game = class Game {
 		else if(direction === 'down') {
 			if(arle.y > this.board.boardState[arle.x].length && schezo.y > this.board.boardState[Math.round(schezo.x)].length) {
 				this.currentDrop.shift('Down');
+			}
+			else {
+				this.forceLockDelay += 10;
+			}
+			const new_schezo = window.getOtherPuyo(this.currentDrop);
+			if(new_schezo.y < 0) {
+				this.currentDrop.shift('Up', -new_schezo.y);
 			}
 		}
 	}

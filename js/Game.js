@@ -35,8 +35,8 @@ window.Game = class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
-		if (this.currentDrop.schezo.y) {
-			alert("falling entered");
+		// Isolated puyo currently dropping
+		if (this.currentDrop.schezo.y != null) {
 			const arleDropped = this.currentDrop.arle.y <= this.board.boardState[this.currentDrop.arle.x].length;
 			const schezoDropped = this.currentDrop.schezo.y <= this.board.boardState[this.currentDrop.schezo.x].length;
 			if(this.resolvingState.chain === 0) {
@@ -45,26 +45,31 @@ window.Game = class Game {
 				this.resolvingState.currentFrame++;
 				if (!arleDropped) {
 					this.currentDrop.arle.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+					if (this.currentDrop.arle.y < this.board.boardState[this.currentDrop.arle.x].length) {
+						this.currentDrop.arle.y = this.board.boardState[this.currentDrop.arle.x].length
+					}
 				}
 				if (!schezoDropped) {
 					this.currentDrop.schezo.y -= this.resolvingState.currentFrame / this.settings.isoCascadeFramesPerRow;
+					if (this.currentDrop.schezo.y < this.board.boardState[this.currentDrop.schezo.x].length) {
+						this.currentDrop.schezo.y = this.board.boardState[this.currentDrop.schezo.x].length
+					}
 				}
 			}
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop};
 			this.boardDrawer.updateBoard(currentBoardState);
 			if (schezoDropped && arleDropped) {
-				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
-				this.resolvingChains = this.board.resolveChains();
 				this.board.boardState[this.currentDrop.arle.x].push(this.currentDrop.colours[0]);
 				this.board.boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
+				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.resolvingChains = this.board.resolveChains();
 				this.currentDrop.schezo.x = null;
 				this.currentDrop.schezo.y = null;
 				this.currentDrop.shape = null;
-				// alert("falling exited with coordinates: " + this.currentDrop.arle.y);
 			}
 		}
 		// Currently resolving a chain
-		if(this.resolvingChains.length !== 0) {
+		else if(this.resolvingChains.length !== 0) {
 			// Finds the total number of frames required to display a chain animation
 			// TODO: change this so it finds the most amount of popping Puyo in a single column
 			const getTotalFrames = function getTotalFrames(puyoLocs, settings) {
@@ -232,6 +237,7 @@ window.Game = class Game {
 				boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[0]);
 			}
 			this.resolvingChains = this.board.resolveChains();
+			this.currentDrop.schezo.x = null;
 			this.currentDrop.schezo.y = null;
 			this.currentDrop.shape = null;
 		}

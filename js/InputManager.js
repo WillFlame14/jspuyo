@@ -1,7 +1,7 @@
 'use strict';
 
 window.InputManager = class InputManager{
-	constructor(settings, player, gameId, socket) {
+	constructor(settings, player, gameId, opponentId, socket) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
 		this.lastPressed = undefined;	// Last pressed Left/Right key. Becomes undefined if the key is released.
@@ -12,7 +12,6 @@ window.InputManager = class InputManager{
 		this.socket = socket;
 
 		if(player) {
-			console.log('registered event listeners');
 			document.addEventListener("keydown", event => {
 				this.keysPressed[event.key] = true;
 				if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -32,7 +31,6 @@ window.InputManager = class InputManager{
 			});
 		}
 		else {
-			console.log('no event listeners');
 			this.socket.on('move', (data, gameId) => {
 				if(gameId !== this.gameId) {
 					this.emit('move', data, false);

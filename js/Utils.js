@@ -9,7 +9,7 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 100, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
 		this.rows = rows;				// Number of rows in the game board
@@ -21,8 +21,10 @@ window.Settings = class Settings {
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;	// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;		// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
-		this.cascadeFramesPerRow = 5;	// Number of frames used for a puyo to fall one row
-		this.popFrames = 50;			// Number of frames used to pop any amount of puyos
+		this.cascadeFramesPerRow = 10;	// Number of frames used for a puyo to fall one row
+		this.dropFrames = 10;			// Number of frames used for all the puyo to drop
+		this.popFrames = 40;			// Number of frames used to pop any amount of puyos
+		this.isoCascadeFramesPerRow	= 4;// Number of frames used for an isolated puyo to fall one row
 	}
 }
 

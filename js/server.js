@@ -40,6 +40,12 @@ io.on('connection', function(socket) {
 	socket.on('newDrop', (gameId, drop_colours)=> {
 		socket.broadcast.emit('newDrop', gameId, drop_colours);
 	});
+
+	socket.on('disconnect', () => {
+		if(waitingOpponent !== null && waitingOpponent.socket === socket) {
+			waitingOpponent = null;
+		}
+	});
 });
 
 http.listen(port, function() {

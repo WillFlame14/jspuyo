@@ -63,13 +63,13 @@ window.Drop = class Drop {
 	/**
 	 * Moves a Drop. Validation is done before calling this method.
 	 */
-	shift(direction, amount) {
+	shift(direction, amount = 1) {
 		switch(direction) {
 			case 'Left':
-				this.arle.x--;
+				this.arle.x -= amount;
 				break;
 			case 'Right':
-				this.arle.x++;
+				this.arle.x += amount;
 				break;
 			case 'Down':
 				this.arle.y -= this.settings.softDrop;

@@ -211,9 +211,6 @@ window.Game = class Game {
 			schezo.x++;
 		}
 
-		if(this.currentDrop.rotating180 !== 0) {
-			console.log(this.currentDrop.rotating180);
-		}
 		// TODO: fix side lodging
 		if(this.currentDrop.rotating === 'CW') {
 			if(schezo.x > arle.x) {
@@ -297,6 +294,10 @@ window.Game = class Game {
 	 * Puyos may not move into the wall or into the stack.
 	 */
 	move(direction) {
+		// Do not move while rotating 180
+		if(this.currentDrop.rotating180 > 0) {
+			return false;
+		}
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		let leftest, rightest;
@@ -434,6 +435,14 @@ window.Game = class Game {
 		if(!doRotate) {
 			if(Date.now() - this.lastRotateAttempt[direction] < this.settings.rotate180_time) {
 				this.currentDrop.rotate(direction, 180);
+
+				// Check case where schezo 180 rotates through the stack/ground
+				if((schezo.x > arle.x && direction === 'CW') || (schezo.x < arle.x && direction === 'CCW')) {
+					if(this.board.boardState[arle.x].length >= arle.y - 1) {
+						// Only kick the remaining amount
+						this.currentDrop.shift('Up', this.board.boardState[arle.x].length - arle.y + 1);
+					}
+				}
 			}
 			else {
 				this.lastRotateAttempt[direction] = Date.now();

@@ -71,45 +71,71 @@ window.Game = class Game {
 		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
-			// Finds the total number of frames required to display a chain animation
-			const getTotalFrames = function getTotalFrames(puyoLocs, boardState, settings) {
-				let poppingPuyos = [];
-				for (let i = 0; i < settings.cols; i++) {
-					poppingPuyos.push([]);
-				}
-				for (let i = 0; i < puyoLocs.length; i++) {
-					poppingPuyos[puyoLocs[i].col][puyoLocs[i].row] = true;
-				}
-				let maxPoppingUnder = 0;
-				let poppingUnder = 0;
-				let wasLastNonPopping = false;
-				for (let i = 0; i < settings.cols; i++) {
-					poppingUnder = 0;
-					wasLastNonPopping = false;
-					for (let j = settings.rows - 1; j >= 0 && poppingUnder === 0; j--) {
-						if (wasLastNonPopping && poppingPuyos[i][j]) {
-							poppingUnder = 1;
-							for (let j1 = j - 1; j1 >= 0; j1--) {
-								if(poppingPuyos[i][j1]) {
-									poppingUnder++;
+			// Antiquated, this version does not take row 12 and higher into account
+			// // Finds the total number of frames required to display a chain animation
+			// const getTotalFrames = function getTotalFrames(puyoLocs, boardState, settings) {
+			// 	let poppingPuyos = [];
+			// 	for (let i = 0; i < settings.cols; i++) {
+			// 		poppingPuyos.push([]);
+			// 	}
+			// 	for (let i = 0; i < puyoLocs.length; i++) {
+			// 		poppingPuyos[puyoLocs[i].col][puyoLocs[i].row] = true;
+			// 	}
+			// 	let maxPoppingUnder = 0;
+			// 	let poppingUnder = 0;
+			// 	let wasLastNonPopping = false;
+			// 	for (let i = 0; i < settings.cols; i++) {
+			// 		poppingUnder = 0;
+			// 		wasLastNonPopping = false;
+			// 		for (let j = settings.rows - 1; j >= 0 && poppingUnder === 0; j--) {
+			// 			if (wasLastNonPopping && poppingPuyos[i][j]) {
+			// 				poppingUnder = 1;
+			// 				for (let j1 = j - 1; j1 >= 0; j1--) {
+			// 					if(poppingPuyos[i][j1]) {
+			// 						poppingUnder++;
+			// 					}
+			// 				}
+			// 			} else if (boardState[i][j] != null && !poppingPuyos[i][j]) {
+			// 				wasLastNonPopping = true;
+			// 			}
+			// 		}
+			// 		if (poppingUnder > maxPoppingUnder) {
+			// 			maxPoppingUnder = poppingUnder;
+			// 		}
+			// 	}
+			// 	return maxPoppingUnder * settings.cascadeFramesPerRow + settings.popFrames;
+			// };
+
+			// Checks if there are falling puyo to account for animation time
+			const addDropFrames = function addDropFrames(puyoLocs, boardState, settings) {
+				const isPuyoFalling = function isPuyoFalling() {
+					let colPuyoLocs = [];
+					for (let i = 0; i < settings.cols; i++) {
+						colPuyoLocs = puyoLocs.filter(loc => loc.col === i).map(loc => loc.row).sort();
+						if (boardState[i][colPuyoLocs[colPuyoLocs.length - 1] + 1] != null) {
+							return true;
+						} else {
+							for (let j = 0; j < colPuyoLocs.length - 1; j++) {
+								if (colPuyoLocs[j + 1] - colPuyoLocs[j] !== 1) {
+									return true;
 								}
 							}
-						} else if (boardState[i][j] != null && !poppingPuyos[i][j]) {
-							wasLastNonPopping = true;
 						}
 					}
-					if (poppingUnder > maxPoppingUnder) {
-						maxPoppingUnder = poppingUnder;
-					}
-				}
-				return maxPoppingUnder * settings.cascadeFramesPerRow + settings.popFrames;
-			};
+					return false;
 
+				}
+				if (isPuyoFalling()) {
+					return settings.dropFrames;
+				} else {
+					return 0;
+				}
+			}
 			// Setting up the board state
 			if(this.resolvingState.chain === 0) {
 				const puyoLocs = this.resolvingChains[0];
-				const totalFrames = getTotalFrames(puyoLocs, this.board.boardState, this.settings);
-				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: totalFrames };
+				const dropFrames = addDropFrames(puyoLocs, this.board.boardState, this.settings);
+				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
 			}
 			else {
 				this.resolvingState.currentFrame++;
@@ -133,9 +159,8 @@ window.Game = class Game {
 				// Still have more chains to resolve
 				else {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
-					const totalFrames = getTotalFrames(puyoLocs, this.board.boardState, this.settings);
-
-					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 0, totalFrames: totalFrames };
+					const dropFrames = addDropFrames(puyoLocs, this.board.boardState, this.settings);
+					this.resolvingState = { chain: this.resolvingState.chain + 1, puyoLocs, currentFrame: 0, totalFrames: this.settings.popFrames + dropFrames };
 				}
 			}
 		}

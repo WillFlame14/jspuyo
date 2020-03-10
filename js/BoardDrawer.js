@@ -175,7 +175,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
     resolveChains(boardState, resolvingState) {
         // Get current information and assign it to convenient variables
         const {width, height} = this.board;
-        const {cols, rows, popFrames, cascadeFramesPerRow} = this.settings;
+        const {cols, rows, popFrames, dropFrames} = this.settings;
         const unitW = width / cols;
         const unitH = height / rows;
         let ctx = this.ctx;
@@ -199,7 +199,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         // Draw the stack in the pre-pop positions, with some puyo mid pop
         if (resolvingState.currentFrame <= this.settings.popFrames) {
             for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows; j++) {
+                for (let j = 0; j < rows + 1; j++) {
                     if (this.poppingPuyos[i][j] != null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
@@ -225,10 +225,10 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     ctx.restore();
                     numUnder++;
                 }
-                for (let j = numUnder + 1; j < rows; j++) {
+                for (let j = numUnder + 1; j < rows + 1; j++) {
                     if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
                         ctx.save();
-                        ctx.translate(unitW * i, - unitH * (Math.max(j - (resolvingState.currentFrame - popFrames)/cascadeFramesPerRow, numUnder)));
+                        ctx.translate(unitW * i, - unitH * (Math.max(j - (j - numUnder) * (resolvingState.currentFrame - popFrames) / dropFrames, numUnder)));
                         this.drawPuyo(boardState[i][j], unitW);
                         ctx.restore();
                         numUnder++;

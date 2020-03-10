@@ -1,11 +1,12 @@
 'use strict';
 
 window.Drop = class Drop {
-	constructor (shape, colours, settings, arle = { x: 2, y: 12 }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle = { x: 2, y: 11.5 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
 		this.arle = arle;
+		this.schezo = schezo;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
 
@@ -56,19 +57,19 @@ window.Drop = class Drop {
 	 * Returns a new, identical Drop.
 	 */
 	copy() {
-		return new Drop(this.shape, this.colours, this.settings, this.arle, this.standardAngle, this.rotating);
+		return new Drop(this.shape, this.colours, this.settings, this.arle, this.schezo, this.standardAngle, this.rotating);
 	}
 
 	/**
 	 * Moves a Drop. Validation is done before calling this method.
 	 */
-	shift(direction, amount) {
+	shift(direction, amount = 1) {
 		switch(direction) {
 			case 'Left':
-				this.arle.x--;
+				this.arle.x -= amount;
 				break;
 			case 'Right':
-				this.arle.x++;
+				this.arle.x += amount;
 				break;
 			case 'Down':
 				this.arle.y -= this.settings.softDrop;

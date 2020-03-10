@@ -17,7 +17,7 @@ window.Drop = class Drop {
 	/**
 	 * Returns a new, random drop determined by the gamemode and the player's dropset.
 	 */
-	static getNewDrop(gamemode, settings) {
+	static getNewDrop(gamemode, settings, colours) {
 		let shape;
 		if(gamemode === 'Tsu') {
 			shape = 'I';
@@ -35,8 +35,8 @@ window.Drop = class Drop {
 
 		// Returns an array of colours based on the shape of the drop
 		const getPuyosFromShape = function (shape) {
-			const first_col = window.getRandomColour();
-			const second_col = window.getRandomColour();
+			const first_col = (colours && colours[0]) || window.getRandomColour();
+			const second_col = (colours && colours[1]) || window.getRandomColour();
 			switch(shape) {
 				case 'I':
 					return [first_col, second_col];

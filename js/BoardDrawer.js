@@ -195,7 +195,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
-
         // Draw the stack in the pre-pop positions, with some puyo mid pop
         if (resolvingState.currentFrame <= this.settings.popFrames) {
             for (let i = 0; i < cols; i++) {

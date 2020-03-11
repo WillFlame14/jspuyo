@@ -1,47 +1,31 @@
 'use strict';
 
 window.InputManager = class InputManager{
-	constructor(settings, player, gameId, opponentId, socket) {
+	constructor(settings) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
 		this.lastPressed = undefined;	// Last pressed Left/Right key. Becomes undefined if the key is released.
 		this.dasTimer = {};				// Object containing DAS timers for each key
 		this.arrTimer = {};				// Object containing ARR timers for each key
 		this.settings = settings;
-		this.gameId = gameId;
-		this.socket = socket;
 
-		if(player) {
-			document.addEventListener("keydown", event => {
-				this.keysPressed[event.key] = true;
-				if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-					this.lastPressed = event.key;
-				}
-			});
+		document.addEventListener("keydown", event => {
+			this.keysPressed[event.key] = true;
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = event.key;
+			}
+		});
 
-			document.addEventListener("keyup", event => {
-				this.keysPressed[event.key] = undefined;
-				this.dasTimer[event.key] = undefined;
-				if(this.arrTimer[event.key] !== undefined) {
-					this.arrTimer[event.key] = undefined;
-				}
-				if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-					this.lastPressed = undefined;
-				}
-			});
-		}
-		else {
-			this.socket.on('move', (data, gameId) => {
-				if(gameId !== this.gameId) {
-					this.emit('move', data, false);
-				}
-			});
-			this.socket.on('rotate', (data, gameId) => {
-				if(gameId !== this.gameId) {
-					this.emit('rotate', data, false);
-				}
-			});
-		}
+		document.addEventListener("keyup", event => {
+			this.keysPressed[event.key] = undefined;
+			this.dasTimer[event.key] = undefined;
+			if(this.arrTimer[event.key] !== undefined) {
+				this.arrTimer[event.key] = undefined;
+			}
+			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+				this.lastPressed = undefined;
+			}
+		});
 	}
 
 	/**
@@ -72,27 +56,22 @@ window.InputManager = class InputManager{
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowRight') {
 							this.emit('move', 'left', true);
-							this.socket.emit('move', 'left', this.gameId);
 						}
 						break;
 					case 'ArrowRight':
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowLeft') {
 							this.emit('move', 'right', true);
-							this.socket.emit('move', 'right', this.gameId);
 						}
 						break;
 					case 'ArrowDown':
 						this.emit('move', 'down', true);
-						this.socket.emit('move', 'down', this.gameId);
 						break;
 					case 'z':
 						this.emit('rotate', 'CCW', true);
-						this.socket.emit('rotate', 'CCW', this.gameId);
 						break;
 					case 'x':
 						this.emit('rotate', 'CW', true);
-						this.socket.emit('rotate', 'CW', this.gameId);
 						break;
 				}
 

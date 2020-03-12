@@ -8,6 +8,7 @@ window.Game = class Game {
 		this.gameId = gameId;
 		this.opponentId = opponentId;
 		this.settings = settings;
+		this.leftoverNuisance = 0;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.opponentQueue = [];
@@ -88,40 +89,6 @@ window.Game = class Game {
 		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
-			// Antiquated, this version does not take row 12 and higher into account
-			// // Finds the total number of frames required to display a chain animation
-			// const getTotalFrames = function getTotalFrames(puyoLocs, boardState, settings) {
-			// 	let poppingPuyos = [];
-			// 	for (let i = 0; i < settings.cols; i++) {
-			// 		poppingPuyos.push([]);
-			// 	}
-			// 	for (let i = 0; i < puyoLocs.length; i++) {
-			// 		poppingPuyos[puyoLocs[i].col][puyoLocs[i].row] = true;
-			// 	}
-			// 	let maxPoppingUnder = 0;
-			// 	let poppingUnder = 0;
-			// 	let wasLastNonPopping = false;
-			// 	for (let i = 0; i < settings.cols; i++) {
-			// 		poppingUnder = 0;
-			// 		wasLastNonPopping = false;
-			// 		for (let j = settings.rows - 1; j >= 0 && poppingUnder === 0; j--) {
-			// 			if (wasLastNonPopping && poppingPuyos[i][j]) {
-			// 				poppingUnder = 1;
-			// 				for (let j1 = j - 1; j1 >= 0; j1--) {
-			// 					if(poppingPuyos[i][j1]) {
-			// 						poppingUnder++;
-			// 					}
-			// 				}
-			// 			} else if (boardState[i][j] != null && !poppingPuyos[i][j]) {
-			// 				wasLastNonPopping = true;
-			// 			}
-			// 		}
-			// 		if (poppingUnder > maxPoppingUnder) {
-			// 			maxPoppingUnder = poppingUnder;
-			// 		}
-			// 	}
-			// 	return maxPoppingUnder * settings.cascadeFramesPerRow + settings.popFrames;
-			// };
 
 			// Checks if there are falling puyo to account for animation time
 			const addDropFrames = function addDropFrames(puyoLocs, boardState, settings) {
@@ -170,6 +137,16 @@ window.Game = class Game {
 
 				// Done resolving all chains
 				if(this.resolvingState.chain === this.resolvingChains.length) {
+					// Update the score displayed
+					const html = document.getElementById("pointsDisplay1").innerHTML;
+					const current_score = parseInt(html.substring(6));
+					const chain_score = window.calculateScore(this.resolvingChains);
+					document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + chain_score);
+
+					const { nuisanceSent, leftoverNuisance } = window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
+					this.leftoverNuisance = leftoverNuisance;
+					console.log(nuisanceSent + " " + leftoverNuisance);
+
 					this.resolvingChains = [];
 					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 				}

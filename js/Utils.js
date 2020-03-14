@@ -5,7 +5,8 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
 						'Blue': 'rgba(20, 20, 200, 0.9)',
 						'Yellow': 'rgba(150, 150, 20, 0.9)',
-						'Purple': 'rgba(150, 20, 150, 0.9)' };
+						'Purple': 'rgba(150, 20, 150, 0.9)',
+						'Gray': 'rgba(80, 80, 80, 0.9)' };
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
@@ -55,6 +56,32 @@ window.getOtherPuyo = function(drop) {
 		y = Math.round(y);
 	}
 	return { x, y };
+}
+
+/**
+ * Gets the frames needed for the animation (accounts for falling time).
+ */
+window.getDropFrames = function (puyoLocs, boardState, settings) {
+	let puyoFalling = false;
+	let colPuyoLocs = [];
+	for (let i = 0; i < settings.cols; i++) {
+		colPuyoLocs = puyoLocs.filter(loc => loc.col === i).map(loc => loc.row).sort();
+		if (boardState[i][colPuyoLocs[colPuyoLocs.length - 1] + 1] != null) {
+			puyoFalling = true;
+		} else {
+			for (let j = 0; j < colPuyoLocs.length - 1; j++) {
+				if (colPuyoLocs[j + 1] - colPuyoLocs[j] !== 1) {
+					puyoFalling = true;
+				}
+			}
+		}
+	}
+
+	if (puyoFalling) {
+		return settings.dropFrames;
+	} else {
+		return 0;
+	}
 }
 
 /**

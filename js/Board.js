@@ -136,4 +136,47 @@ window.Board = class Board {
 		// Implicit else: No chains were found in this recursion
 		return puyos_chained;
 	}
+
+	/**
+	 * Drops any active nuisance onto the board.
+	 */
+	dropNuisance(nuisance) {
+		if(nuisance === 0) {
+			return;
+		}
+
+		// Drop one rock
+		if(nuisance >= this.settings.cols * 5) {
+			this.boardState.forEach(row => {
+				for(let i = 0; i < 5; i++) {
+					row.push(window.PUYO_COLOURS['Gray']);
+				}
+			});
+		}
+		// Drop whatever is remaining
+		else {
+			const fullRows = nuisance / this.settings.cols;
+			const remaining = nuisance % this.settings.cols;
+
+			// Drop the full rows first
+			this.boardState.forEach(row => {
+				for(let i = 0; i < fullRows; i++) {
+					row.push(window.PUYO_COLOURS['Gray']);
+				}
+			});
+
+			const unusedColumns = [];
+			for(let i = 0; i < this.settings.cols; i++) {
+				unusedColumns.push[i];
+			}
+
+			// Randomly drop the remaining nuisance
+			for(let i = 0; i < remaining; i++) {
+				let column = Math.floor(Math.random() * unusedColumns.length);
+
+				this.boardState[column].push(window.PUYO_COLOURS['Gray']);
+				unusedColumns.splice(unusedColumns.indexOf(column), 1);
+			}
+		}
+	}
 }

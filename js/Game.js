@@ -117,35 +117,10 @@ window.Game = class Game {
 		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
-			// Checks if there are falling puyo to account for animation time
-			const addDropFrames = function addDropFrames(puyoLocs, boardState, settings) {
-				const isPuyoFalling = function isPuyoFalling() {
-					let colPuyoLocs = [];
-					for (let i = 0; i < settings.cols; i++) {
-						colPuyoLocs = puyoLocs.filter(loc => loc.col === i).map(loc => loc.row).sort();
-						if (boardState[i][colPuyoLocs[colPuyoLocs.length - 1] + 1] != null) {
-							return true;
-						} else {
-							for (let j = 0; j < colPuyoLocs.length - 1; j++) {
-								if (colPuyoLocs[j + 1] - colPuyoLocs[j] !== 1) {
-									return true;
-								}
-							}
-						}
-					}
-					return false;
-				}
-				if (isPuyoFalling()) {
-					return settings.dropFrames;
-				} else {
-					return 0;
-				}
-			}
-
 			// Setting up the board state
 			if(this.resolvingState.chain === 0) {
 				const puyoLocs = this.resolvingChains[0];
-				const dropFrames = addDropFrames(puyoLocs, this.board.boardState, this.settings);
+				const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
 				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
 			}
 			else {
@@ -158,18 +133,7 @@ window.Game = class Game {
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
 				// Update the score displayed
-				const html = document.getElementById("pointsDisplay1").innerHTML;
-				const current_score = parseInt(html.substring(6));
-				const chain_score = window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
-				document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + chain_score);
-
-				// Send nuisance
-				const { nuisanceSent, leftoverNuisance } =
-					window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
-
-				this.leftoverNuisance = leftoverNuisance;
-				console.log(nuisanceSent + " " + leftoverNuisance);
-				this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
+				this.updateScore();
 
 				// Remove the null puyos
 				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
@@ -179,12 +143,15 @@ window.Game = class Game {
 				if(this.resolvingState.chain === this.resolvingChains.length) {
 					this.resolvingChains = [];
 					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
-					this.socket.emit('activateNuisance', this.gameId);
+					this.board.dropNuisance(this.activeNuisance);
+					if(this.activeNuisance === 0 && this.visibleNuisance === 0) {
+						this.socket.emit('activateNuisance', this.gameId);
+					}
 				}
 				// Still have more chains to resolve
 				else {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
-					const dropFrames = addDropFrames(puyoLocs, this.board.boardState, this.settings);
+					const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
 					this.resolvingState = {
 						chain: this.resolvingState.chain + 1,
 						puyoLocs,
@@ -196,32 +163,37 @@ window.Game = class Game {
 		}
 		// Not resolving a chain; game has control
 		else {
+			// Create a new drop if one does not exist
 			if(this.currentDrop.shape === null) {
 				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
-				this.socket.emit('newDrop', this.gameId, this.currentDrop.colours);
 			}
 
 			this.inputManager.executeKeys();
 
 			if(this.checkLock()) {
+				// Lock delay is over, lock puyo in place
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
+					this.board.dropNuisance(this.activeNuisance);
 					this.locking = 'not';
 					this.forceLockDelay = 0;
 				}
-				else if(this.locking === 'not') {
-					this.locking = Date.now();
-					this.currentDrop.affectRotation();
-				}
 				else {
+					// Start lock delay
+					if(this.locking === 'not') {
+						this.locking = Date.now();
+					}
+					// Continue lock delay
 					this.currentDrop.affectRotation();
 				}
 			}
+			// Was locking before, but not anymore so reset locking state
 			else if(this.locking !== 'not') {
 				this.locking = 'not';
 				this.currentDrop.affectRotation();
 			}
+			// Not locking
 			else {
 				this.currentDrop.affectGravity(this.settings.gravity);
 				this.currentDrop.affectRotation();
@@ -271,7 +243,6 @@ window.Game = class Game {
 			schezo.x++;
 		}
 
-		// TODO: fix side lodging
 		if(this.currentDrop.rotating === 'CW') {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
@@ -347,6 +318,49 @@ window.Game = class Game {
 		else {			// horizontal orientation
 			currentDrop.arle.y = Math.max(boardState[currentDrop.arle.x].length, boardState[currentDrop.schezo.x].length);
 			currentDrop.schezo.y = currentDrop.arle.y;
+		}
+	}
+
+	/**
+	 * Updates the displayed score and sends nuisance to opponents.
+	 */
+	updateScore() {
+		const html = document.getElementById("pointsDisplay1").innerHTML;
+		const current_score = parseInt(html.substring(6));
+		const chain_score = window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + chain_score);
+
+		let { nuisanceSent, leftoverNuisance } =
+			window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
+		this.leftoverNuisance = leftoverNuisance;
+		console.log(nuisanceSent + " " + leftoverNuisance);
+
+		if(this.nuisanceSent === 0) {
+			return;
+		}
+
+		// Partially cancel the active nuisance
+		if(this.activeNuisance > nuisanceSent) {
+			this.activeNuisance -= nuisanceSent;
+		}
+		// Fully cancel the active nuisance
+		else {
+			this.activeNuisance = 0;
+			nuisanceSent -= this.activeNuisance;
+
+			// Partially cancel the visible nuisance
+			if(this.visibleNuisance > nuisanceSent) {
+				this.visibleNuisance -= this.activeNuisance;
+			}
+			// Fully cancel the visible nuisance
+			else {
+				this.visibleNuisance = 0;
+				nuisanceSent -= this.visibleNuisance;
+
+				if(nuisanceSent > 0) {
+					this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
+				}
+			}
 		}
 	}
 

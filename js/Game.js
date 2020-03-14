@@ -2,7 +2,7 @@
 
 window.Game = class Game {
 	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, firstDrop_colours, settings = new window.Settings()) {
-		this.board = new window.Board(settings.rows, settings.cols);
+		this.board = new window.Board(settings);
 		this.gamemode = gamemode;
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
@@ -25,6 +25,7 @@ window.Game = class Game {
 		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
 			// this.opponentBoardDrawers[id] = new window.HashedBoardDrawer(opponentCounter);
+			this.visibleNuisance[id] = 0;
 			opponentCounter++;
 		});
 
@@ -40,19 +41,18 @@ window.Game = class Game {
 			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
-			if(this.visibleNuisance[gameId] === undefined) {
-				this.visibleNuisance[gameId] = 0;
-			}
 			this.visibleNuisance[gameId] += nuisance;
-		})
+			console.log('received ' + nuisance + " nuisance");
+		});
 
-		this.socket.on('activateNuisance', (gameId) => {
-			if(!this.opponentIds.includes(gameId)) {
+		this.socket.on('activateNuisance', gameId => {
+			if(!opponentIds.includes(gameId)) {
 				return;
 			}
 			this.activeNuisance += this.visibleNuisance[gameId];
 			this.visibleNuisance[gameId] = 0;
-		})
+			console.log('activated ' + this.activeNuisance + ' nuisance');
+		});
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLockDelay = 0;
@@ -143,8 +143,15 @@ window.Game = class Game {
 				if(this.resolvingState.chain === this.resolvingChains.length) {
 					this.resolvingChains = [];
 					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
-					this.board.dropNuisance(this.activeNuisance);
-					if(this.activeNuisance === 0 && this.visibleNuisance === 0) {
+
+					this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
+					const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
+						nuisance += this.visibleNuisance[opp];
+						return nuisance;
+					}, 0);
+
+					// No pending nuisance, chain completed
+					if(this.activeNuisance === 0 && totalVisibleNuisance === 0) {
 						this.socket.emit('activateNuisance', this.gameId);
 					}
 				}
@@ -175,7 +182,7 @@ window.Game = class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
-					this.board.dropNuisance(this.activeNuisance);
+					this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
 					this.locking = 'not';
 					this.forceLockDelay = 0;
 				}
@@ -333,7 +340,7 @@ window.Game = class Game {
 		let { nuisanceSent, leftoverNuisance } =
 			window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
-		console.log(nuisanceSent + " " + leftoverNuisance);
+		console.log("sent: " + nuisanceSent + " leftover: " + leftoverNuisance);
 
 		if(this.nuisanceSent === 0) {
 			return;
@@ -348,18 +355,25 @@ window.Game = class Game {
 			this.activeNuisance = 0;
 			nuisanceSent -= this.activeNuisance;
 
-			// Partially cancel the visible nuisance
-			if(this.visibleNuisance > nuisanceSent) {
-				this.visibleNuisance -= this.activeNuisance;
-			}
-			// Fully cancel the visible nuisance
-			else {
-				this.visibleNuisance = 0;
-				nuisanceSent -= this.visibleNuisance;
-
-				if(nuisanceSent > 0) {
-					this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
+			// Cancel the visible nuisance
+			const opponents = Object.keys(this.visibleNuisance);
+			for(let i = 0; i < opponents.length; i++) {
+				// Partially cancel this opponent's nuisance
+				if(this.visibleNuisance[opponents[i]] > nuisanceSent) {
+					this.visibleNuisance[opponents[i]] -= nuisanceSent;
+					// No nuisance left to send, so break
+					break;
 				}
+				// Fully cancel this opponent's nuisance
+				else {
+					this.visibleNuisance[opponents[i]] = 0;
+					nuisanceSent -= this.visibleNuisance[opponents[i]];
+				}
+			}
+
+			// Still nuisance left to send
+			if(nuisanceSent > 0) {
+				this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
 			}
 		}
 	}

@@ -1,13 +1,14 @@
 'use strict';
 
 window.Board = class Board {
-	constructor(height, width) {
-		this.height = height;
-		this.width = width;
+	constructor(settings) {
+		this.settings = settings;
+		this.height = settings.rows;
+		this.width = settings.cols;
 		this.boardState = [];
 
 		// Prepare the board by filling it with empty arrays
-		for(let i = 0; i < width; i++) {
+		for(let i = 0; i < this.width; i++) {
 			this.boardState.push([]);
 		}
 	}
@@ -139,10 +140,11 @@ window.Board = class Board {
 
 	/**
 	 * Drops any active nuisance onto the board.
+	 * Returns the number of nuisance puyo dropped.
 	 */
 	dropNuisance(nuisance) {
 		if(nuisance === 0) {
-			return;
+			return 0;
 		}
 
 		// Drop one rock
@@ -152,10 +154,11 @@ window.Board = class Board {
 					row.push(window.PUYO_COLOURS['Gray']);
 				}
 			});
+			return 30;
 		}
 		// Drop whatever is remaining
 		else {
-			const fullRows = nuisance / this.settings.cols;
+			const fullRows = Math.floor(nuisance / this.settings.cols);
 			const remaining = nuisance % this.settings.cols;
 
 			// Drop the full rows first
@@ -167,16 +170,16 @@ window.Board = class Board {
 
 			const unusedColumns = [];
 			for(let i = 0; i < this.settings.cols; i++) {
-				unusedColumns.push[i];
+				unusedColumns.push(i);
 			}
 
 			// Randomly drop the remaining nuisance
 			for(let i = 0; i < remaining; i++) {
-				let column = Math.floor(Math.random() * unusedColumns.length);
-
+				let column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
 				this.boardState[column].push(window.PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
+			return nuisance;
 		}
 	}
 }

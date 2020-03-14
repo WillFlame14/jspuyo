@@ -42,8 +42,16 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on('sendBoard', (gameId, boardHash)=> {
+	socket.on('sendBoard', (gameId, boardHash) => {
 		socket.broadcast.emit('sendBoard', gameId, boardHash);
+	});
+
+	socket.on('sendNuisance', (gameId, nuisance) => {
+		socket.broadcast.emit('sendNuisance', gameId, nuisance);
+	})
+
+	socket.on('activateNuisance', gameId => {
+		socket.broadcast.emit('activateNuisance', gameId);
 	});
 
 	socket.on('disconnect', () => {

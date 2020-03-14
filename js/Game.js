@@ -1,12 +1,12 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', player = true, gameId, opponentId, socket, firstDrop_colours, settings = new window.Settings()) {
+	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, firstDrop_colours, settings = new window.Settings()) {
 		this.board = new window.Board(settings.rows, settings.cols);
 		this.gamemode = gamemode;
-		this.player = player;
 		this.gameId = gameId;
-		this.opponentId = opponentId;
+		this.opponentIds = opponentIds;
+		console.log(opponentIds);
 		this.settings = settings;
 		this.leftoverNuisance = 0;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
@@ -14,26 +14,27 @@ window.Game = class Game {
 		this.opponentQueue = [];
 		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
-		this.socket = socket;
-		if(!this.player) {
-			this.socket.on('newDrop', (gameId, drop_colours) => {
-				if(this.opponentId === gameId) {
-					const newDrop = window.Drop.getNewDrop(this.gamemode, this.settings, drop_colours);
-					this.opponentQueue.push(newDrop);
-				}
-				else {
-					console.log("Mismatch between opponent:" + this.opponentId + " and game: " + gameId);
-				}
-			});
-		}
-
 		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('move', this.move.bind(this));
 		this.inputManager.on('rotate', this.rotate.bind(this));
-		this.boardDrawer = new window.BoardDrawer(this.settings, player ? 1 : 2);
+		this.boardDrawer = new window.BoardDrawer(this.settings, 1);
+		this.opponentBoardDrawers = {};
+
+		let opponentCounter = 2;
+		this.opponentIds.forEach(id => {
+			//this.opponentBoardDrawers[id] = new window.HashedBoardDrawer(opponentCounter);
+			opponentCounter++;
+		});
+
+		this.socket = socket;
+		this.socket.on('sendBoard', (gameId, boardHash) => {
+			if(this.opponentIds.includes(gameId)) {
+				//this.opponentBoardDrawers[gameId].updateBoard(boardHash);
+			}
+		});
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
-    this.forceLockDelay = 0;
+		this.forceLockDelay = 0;
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings, firstDrop_colours);
 	}
 
@@ -54,29 +55,34 @@ window.Game = class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
+		let currentBoardHash;
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {
 			const arleDropped = this.currentDrop.arle.y <= this.board.boardState[this.currentDrop.arle.x].length;
 			const schezoDropped = this.currentDrop.schezo.y <= this.board.boardState[this.currentDrop.schezo.x].length;
+
 			if(this.resolvingState.chain === 0) {
 				this.resolvingState = { chain: -1, puyoLocs: null, currentFrame: 0, totalFrames: 0 };
-			} else {
+			}
+			else {
 				this.resolvingState.currentFrame++;
 				if (!arleDropped) {
 					this.currentDrop.arle.y -= 1 / this.settings.isoCascadeFramesPerRow;
 					if (this.currentDrop.arle.y < this.board.boardState[this.currentDrop.arle.x].length) {
-						this.currentDrop.arle.y = this.board.boardState[this.currentDrop.arle.x].length
+						this.currentDrop.arle.y = this.board.boardState[this.currentDrop.arle.x].length;
 					}
 				}
 				if (!schezoDropped) {
 					this.currentDrop.schezo.y -= 1 / this.settings.isoCascadeFramesPerRow;
 					if (this.currentDrop.schezo.y < this.board.boardState[this.currentDrop.schezo.x].length) {
-						this.currentDrop.schezo.y = this.board.boardState[this.currentDrop.schezo.x].length
+						this.currentDrop.schezo.y = this.board.boardState[this.currentDrop.schezo.x].length;
 					}
 				}
 			}
-			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop};
-			this.boardDrawer.updateBoard(currentBoardState);
+
+			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+
 			if (schezoDropped && arleDropped) {
 				this.board.boardState[this.currentDrop.arle.x].push(this.currentDrop.colours[0]);
 				this.board.boardState[this.currentDrop.schezo.x].push(this.currentDrop.colours[1]);
@@ -89,7 +95,6 @@ window.Game = class Game {
 		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
-
 			// Checks if there are falling puyo to account for animation time
 			const addDropFrames = function addDropFrames(puyoLocs, boardState, settings) {
 				const isPuyoFalling = function isPuyoFalling() {
@@ -115,6 +120,7 @@ window.Game = class Game {
 					return 0;
 				}
 			}
+
 			// Setting up the board state
 			if(this.resolvingState.chain === 0) {
 				const puyoLocs = this.resolvingChains[0];
@@ -126,7 +132,7 @@ window.Game = class Game {
 			}
 
 			// Update the board
-			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+			currentBoardHash = this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
 			// Check if the chain is done resolving
 			if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
@@ -161,24 +167,11 @@ window.Game = class Game {
 		// Not resolving a chain; game has control
 		else {
 			if(this.currentDrop.shape === null) {
-				if(this.player) {
-					this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
-					this.socket.emit('newDrop', this.gameId, this.currentDrop.colours);
-				}
-				else {
-					if(this.opponentQueue.length > 0) {
-						this.currentDrop = this.opponentQueue.pop();
-					}
-					else {
-						console.log('Opponent queue is empty. You may be experiencing lag.');
-						return;
-					}
-				}
+				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+				this.socket.emit('newDrop', this.gameId, this.currentDrop.colours);
 			}
 
-			if(this.player) {
-				this.inputManager.executeKeys();
-			}
+			this.inputManager.executeKeys();
 
 			if(this.checkLock()) {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
@@ -206,8 +199,11 @@ window.Game = class Game {
 
 			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-			this.boardDrawer.updateBoard(currentBoardState);
+			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 		}
+
+		// Emit board state to all opponents
+		this.socket.emit('sendBoard', this.gameId, currentBoardHash);
 	}
 
 	/**
@@ -327,7 +323,7 @@ window.Game = class Game {
 	 * Called when a move event is emitted from the InputManager, and validates the event before performing it.
 	 * Puyos may not move into the wall or into the stack.
 	 */
-	move(direction, player) {
+	move(direction) {
     // Do not move while rotating 180
 		if(this.currentDrop.rotating180 > 0) {
 			return false;

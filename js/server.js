@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 const path = require('path');
 
 // Temporary fixed size of all games. Investigate better lobby system in the future.
-const game_size = 3;
+const game_size = 2;
 
 let gameCounter = 1;
 let waitingOpponents = [];

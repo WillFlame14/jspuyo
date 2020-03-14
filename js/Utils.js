@@ -60,31 +60,35 @@ window.getOtherPuyo = function(drop) {
 /**
  * Finds the score of the given chain. Currently only for Tsu rule.
  */
-window.calculateScore = function(puyoLocs) {
+window.calculateScore = function(puyoLocs, chain_length) {
+	// These arrays are 1-indexed.
 	const CHAIN_POWER = [-1, 0, 8, 16, 32, 64, 96, 128,160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
 	const COLOUR_BONUS = [-1, 0, 3, 6, 12, 24, 48];
 	const GROUP_BONUS = [-1, -1, -1, -1, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
 
 	// Number of puyos cleared in the chain
-	const puyos_cleared = puyoLocs.reduce((puyos, group) => puyos += group.length, 0);
+	const puyos_cleared = puyoLocs.length;
 
 	// Find the different colours
-	const containedColours = [];
+	const containedColours = {};
 
-	puyoLocs.forEach(chain => {
-		if(!containedColours.includes(chain[0].colour)) {
-			containedColours.push(chain[0].colour);
+	puyoLocs.forEach(puyo => {
+		if(containedColours[puyo.colour] === undefined) {
+			containedColours[puyo.colour] = 1;
+		}
+		else {
+			containedColours[puyo.colour]++;
 		}
 	});
 
 	// Chain power based on length of chain
-	const chain_power = CHAIN_POWER[puyoLocs.length];
+	const chain_power = CHAIN_POWER[chain_length];
 
 	// Colour bonus based on number of colours used
-	const colour_bonus = COLOUR_BONUS[containedColours.length];
+	const colour_bonus = COLOUR_BONUS[Object.keys(containedColours).length];
 
 	// Group bonus based on number of puyos in each group
-	const group_bonus = puyoLocs.reduce((bonus, group) => bonus += GROUP_BONUS[group.length], 0);
+	const group_bonus = Object.keys(containedColours).reduce((bonus, colour) => bonus += GROUP_BONUS[containedColours[colour]], 0);
 
 	return (10 * puyos_cleared) * (chain_power + colour_bonus + group_bonus);
 }

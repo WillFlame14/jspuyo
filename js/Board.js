@@ -78,6 +78,7 @@ window.Board = class Board {
 
 						// New location must be valid, unvisited and have the same colour puyo
 						if(validLoc(newloc) && notVisited(newloc) && boardState[new_col][new_row] === puyo_colour) {
+							newloc.colour = boardState[new_col][new_row];
 							chain_puyo_locs.push(newloc);
 
 							// Update with the leaf puyo of this branch
@@ -111,7 +112,7 @@ window.Board = class Board {
 		// Iterate through the entire board to find all starting points
 		for(let i = 0; i < boardState.length; i++) {
 			for(let j = 0; j < boardState[i].length; j++) {
-				const loc = { col: i, row: j };
+				const loc = { col: i, row: j, colour: boardState[i][j] };
 				if(notVisited(loc)) {
 					// Find the extent of this colour, starting here
 					const { length, locs } = dfs(loc, boardState[i][j], 1, [loc]);

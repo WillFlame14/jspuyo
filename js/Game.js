@@ -8,6 +8,7 @@ window.Game = class Game {
 		this.opponentIds = opponentIds;
 		console.log(opponentIds);
 		this.settings = settings;
+		this.leftoverNuisance = 0;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.opponentQueue = [];
@@ -142,6 +143,16 @@ window.Game = class Game {
 
 				// Done resolving all chains
 				if(this.resolvingState.chain === this.resolvingChains.length) {
+					// Update the score displayed
+					const html = document.getElementById("pointsDisplay1").innerHTML;
+					const current_score = parseInt(html.substring(6));
+					const chain_score = window.calculateScore(this.resolvingChains);
+					document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + chain_score);
+
+					const { nuisanceSent, leftoverNuisance } = window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
+					this.leftoverNuisance = leftoverNuisance;
+					console.log(nuisanceSent + " " + leftoverNuisance);
+
 					this.resolvingChains = [];
 					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 				}

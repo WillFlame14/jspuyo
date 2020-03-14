@@ -3,12 +3,17 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+	perMessageDeflate: false
+});
 const port = process.env.PORT || 3000;
 const path = require('path');
 
+// Temporary fixed size of all games. Investigate better lobby system in the future.
+const game_size = 3;
+
 let gameCounter = 1;
-let waitingOpponent = null;
+let waitingOpponents = [];
 
 app.use(express.static('./'));
 
@@ -23,27 +28,27 @@ io.on('connection', function(socket) {
 		gameCounter++;
 	});
 
-	socket.on('findOpponent', (gameId, gameDrop_colours) => {
-		if(waitingOpponent === null) {
-			waitingOpponent = { gameId: gameId, gameDrop_colours: gameDrop_colours, socket: socket };
+	socket.on('findOpponent', gameId => {
+		if(waitingOpponents.length < game_size - 1) {
+			waitingOpponents.push({ gameId: gameId, socket: socket });
 		}
 		else {
-			waitingOpponent.socket.emit('start', gameId, gameDrop_colours);
-			socket.emit('start', waitingOpponent.gameId, waitingOpponent.gameDrop_colours);
-			console.log('matched ' + gameId + ' with ' + waitingOpponent.gameId);
-			waitingOpponent = null;
+			waitingOpponents.forEach(player => {
+				player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
+			});
+			socket.emit('start', waitingOpponents.map(player => player.gameId));
+			console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
+			waitingOpponents = [];
 		}
 	});
 
-	socket.on('move', data => socket.broadcast.emit("move", data));
-	socket.on('rotate', data => socket.broadcast.emit("rotate", data));
-	socket.on('newDrop', (gameId, drop_colours)=> {
-		socket.broadcast.emit('newDrop', gameId, drop_colours);
+	socket.on('sendBoard', (gameId, boardHash)=> {
+		socket.broadcast.emit('sendBoard', gameId, boardHash);
 	});
 
 	socket.on('disconnect', () => {
-		if(waitingOpponent !== null && waitingOpponent.socket === socket) {
-			waitingOpponent = null;
+		if(waitingOpponents.length > 0) {
+			waitingOpponents = waitingOpponents.filter(player => player.socket !== socket);
 		}
 	});
 });

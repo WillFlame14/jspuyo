@@ -154,7 +154,8 @@ window.Board = class Board {
 					row.push(window.PUYO_COLOURS['Gray']);
 				}
 			});
-			return 30;
+			console.log('Dropped a rock.');
+			return this.settings.cols * 5;
 		}
 		// Drop whatever is remaining
 		else {
@@ -179,6 +180,7 @@ window.Board = class Board {
 				this.boardState[column].push(window.PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
+			console.log('Dropped ' + nuisance + ' nuisance.');
 			return nuisance;
 		}
 	}

@@ -8,6 +8,8 @@ window.Game = class Game {
 		this.opponentIds = opponentIds;
 		this.settings = settings;
 		this.endResult = null;
+		this.softDrops = 0;
+		this.preChainScore = 0;
 
 		this.leftoverNuisance = 0;
 		this.visibleNuisance = {};
@@ -228,6 +230,7 @@ window.Game = class Game {
 			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
 			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+			this.updateScore();
 		}
 
 		// Emit board state to all opponents
@@ -353,13 +356,25 @@ window.Game = class Game {
 	updateScore() {
 		const html = document.getElementById("pointsDisplay1").innerHTML;
 		const current_score = parseInt(html.substring(6));
-		const chain_score = window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
-		document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + chain_score);
+
+		if(this.resolvingState.chain === 0) {
+			// Score from soft dropping (will not send nuisance)
+			if(this.softDrops > 5) {
+				document.getElementById("pointsDisplay1").innerHTML = "Score: " + (current_score + Math.floor(this.softDrops / 5));
+				this.softDrops %= 5;
+			}
+			return;
+		}
+
+		const final_score = current_score + window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		document.getElementById("pointsDisplay1").innerHTML = "Score: " + final_score;
 
 		let { nuisanceSent, leftoverNuisance } =
-			window.calculateNuisance(chain_score, this.settings.pointsPerNuisance, this.leftoverNuisance);
+			window.calculateNuisance(final_score - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
 		console.log("Sent: " + nuisanceSent + " Leftover: " + leftoverNuisance);
+
+		this.preChainScore = final_score;
 
 		if(nuisanceSent === 0) {
 			return;
@@ -451,6 +466,7 @@ window.Game = class Game {
 		else if(direction === 'down') {
 			if(arle.y > this.board.boardState[arle.x].length && schezo.y > this.board.boardState[Math.round(schezo.x)].length) {
 				this.currentDrop.shift('Down');
+				this.softDrops += 1;
 			}
 			else {
 				this.forceLockDelay += 20;

@@ -201,7 +201,7 @@ window.Game = class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
-					if(this.resolvingChains.length === 0) {
+					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
 						this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
 					}
 					this.locking = 'not';

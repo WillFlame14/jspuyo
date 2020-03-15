@@ -7,6 +7,7 @@ window.Game = class Game {
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
+		this.endResult = null;
 
 		this.leftoverNuisance = 0;
 		this.visibleNuisance = {};
@@ -54,16 +55,30 @@ window.Game = class Game {
 			console.log('Activated ' + this.activeNuisance + ' nuisance.');
 		});
 
+		this.socket.on('gameOver', gameId => {
+			if(!opponentIds.includes(gameId)) {
+				return;
+			}
+			console.log('Opponent with id ' + gameId + ' has topped out.');
+			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'Win';
+			}
+		})
+
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLockDelay = 0;
 		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings, firstDrop_colours);
 	}
 
 	/**
-	 * Determines if a Game Over should be triggered.
+	 * Determines if the Game should be ended.
 	 */
-	gameOver() {
-		return this.board.checkGameOver(this.gamemode);
+	end() {
+		if(this.board.checkGameOver(this.gamemode) && this.endResult === null) {
+			this.endResult = 'Loss';
+		}
+		return this.endResult;
 	}
 
 	/**
@@ -173,7 +188,7 @@ window.Game = class Game {
 		// Not resolving a chain; game has control
 		else {
 			// Create a new drop if one does not exist
-			if(this.currentDrop.shape === null) {
+			if(this.currentDrop.shape === null && this.endResult === null) {
 				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
 			}
 
@@ -438,7 +453,7 @@ window.Game = class Game {
 				this.currentDrop.shift('Down');
 			}
 			else {
-				this.forceLockDelay += 10;
+				this.forceLockDelay += 20;
 			}
 			const new_schezo = window.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {

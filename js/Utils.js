@@ -24,7 +24,7 @@ window.Settings = class Settings {
 		this.rotate180_time = 200;		// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 		this.cascadeFramesPerRow = 10;	// Number of frames used for a puyo to fall one row
 		this.dropFrames = 10;			// Number of frames used for all the puyo to drop
-		this.popFrames = 40;			// Number of frames used to pop any amount of puyos
+		this.popFrames = 60;			// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 4;// Number of frames used for an isolated puyo to fall one row
 		this.pointsPerNuisance = 70;
 	}

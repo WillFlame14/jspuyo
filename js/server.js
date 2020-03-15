@@ -54,6 +54,10 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('activateNuisance', gameId);
 	});
 
+	socket.on('gameOver', gameId => {
+		socket.broadcast.emit('gameOver', gameId);
+	})
+
 	socket.on('disconnect', () => {
 		if(waitingOpponents.length > 0) {
 			waitingOpponents = waitingOpponents.filter(player => player.socket !== socket);

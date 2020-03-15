@@ -18,17 +18,29 @@
 		main();
 	});
 
-	let gameOver = false;		// Flag so that one last frame is requested before termination
+	let finalMessage = null;		// The message to be displayed
 
 	function main() {
 		const mainFrame = window.requestAnimationFrame(main);
 		game.step();
-		if(gameOver) {
+		if(finalMessage !== null) {
 			window.cancelAnimationFrame(mainFrame);
-			alert("Game over!");
+			alert(finalMessage);
 		}
-		if(game.gameOver()) {
-			gameOver = true;
+		if(game.end()) {
+			switch(game.end()) {
+				case 'Win':
+					finalMessage = 'You win!';
+					break;
+				case 'Loss':
+					finalMessage = 'You lose...';
+					console.log('loss');
+					socket.emit('gameOver', gameId);
+					break;
+				case 'OppDisconnect':
+					finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
+					break;
+			}
 		}
 	}
 })();

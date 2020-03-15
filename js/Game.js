@@ -13,7 +13,7 @@ window.Game = class Game {
 		this.activeNuisance = 0;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
-		this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
 		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('move', this.move.bind(this));
@@ -85,7 +85,7 @@ window.Game = class Game {
 			const schezoDropped = currentDrop.schezo.y <= boardState[currentDrop.schezo.x].length;
 
 			if(this.resolvingState.chain === 0) {
-				this.resolvingState = { chain: -1, puyoLocs: null, currentFrame: 0, totalFrames: 0 };
+				this.resolvingState = { chain: -1, puyoLocs: null, nuisanceLocs: null, currentFrame: 0, totalFrames: 0 };
 			}
 			else {
 				this.resolvingState.currentFrame++;
@@ -108,7 +108,7 @@ window.Game = class Game {
 			if (schezoDropped && arleDropped) {
 				boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
-				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 				this.resolvingChains = this.board.resolveChains();
 				currentDrop.schezo.x = null;
 				currentDrop.schezo.y = null;
@@ -121,7 +121,8 @@ window.Game = class Game {
 			if(this.resolvingState.chain === 0) {
 				const puyoLocs = this.resolvingChains[0];
 				const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
-				this.resolvingState = { chain: 1, puyoLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
+				const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
+				this.resolvingState = { chain: 1, puyoLocs, nuisanceLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
 			}
 			else {
 				this.resolvingState.currentFrame++;
@@ -135,14 +136,13 @@ window.Game = class Game {
 				// Update the score displayed
 				this.updateScore();
 
-				// Remove the null puyos
-				this.resolvingState.puyoLocs.forEach(location => this.board.boardState[location.col][location.row] = null);
-				this.board.boardState = this.board.boardState.map(col => col.filter(row => row !== null));
+				// Remove the chained puyos and popped nuisance puyos
+				this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
 
 				// Done resolving all chains
 				if(this.resolvingState.chain === this.resolvingChains.length) {
 					this.resolvingChains = [];
-					this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+					this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
 					this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
 					const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
@@ -158,10 +158,12 @@ window.Game = class Game {
 				// Still have more chains to resolve
 				else {
 					const puyoLocs = this.resolvingChains[this.resolvingState.chain];
+					const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
 					const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
 					this.resolvingState = {
 						chain: this.resolvingState.chain + 1,
 						puyoLocs,
+						nuisanceLocs,
 						currentFrame: 0,
 						totalFrames: this.settings.popFrames + dropFrames
 					};

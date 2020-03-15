@@ -188,6 +188,9 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             for (let i = resolvingState.puyoLocs.length - 1; i >= 0; i--) {
                 this.poppingPuyos[resolvingState.puyoLocs[i].col][resolvingState.puyoLocs[i].row] = true;
             }
+            for (let i = resolvingState.nuisanceLocs.length - 1; i >= 0; i--) {
+                this.poppingPuyos[resolvingState.nuisanceLocs[i].col][resolvingState.nuisanceLocs[i].row] = true;
+            }
         }
 
         ctx.clearRect(0, 0, width, height);

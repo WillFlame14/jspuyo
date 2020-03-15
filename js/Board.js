@@ -107,7 +107,12 @@ window.Board = class Board {
 		 */
 		const validLoc = function(location) {
 			const { col, row } = location;
-			return col >= 0 && row >= 0 && col < width && row < height && boardState[col][row] !== undefined;
+			return col >= 0 &&
+					row >= 0 &&
+					col < width &&
+					row < height &&
+					boardState[col][row] !== undefined &&
+					boardState[col][row] !== window.PUYO_COLOURS['Gray'];
 		}
 
 		// Iterate through the entire board to find all starting points

@@ -385,7 +385,7 @@ window.Game = class Game {
 
 			// Still nuisance left to send
 			if(nuisanceSent > 0) {
-				console.log('Canceled all pending nuisance and sending ' + nuisanceSent + ' nuisance.');
+				console.log('Sending ' + nuisanceSent + ' nuisance.');
 				this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
 			}
 		}

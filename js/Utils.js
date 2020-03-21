@@ -9,8 +9,35 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Gray': 'rgba(100, 100, 100, 0.9)' };
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
+window.sfx = {
+	"move": new Audio('../sounds/SE_T07_move.wav'),
+	"rotate": new Audio('../sounds/SE_T08_rotate.wav'),
+	"win": new Audio('../sounds/SE_T19_win.wav'),
+	"lose": new Audio('../sounds/se_puy20_lose.wav'),
+	"chain": [
+		null,
+		new Audio('../sounds/SE_T00_ren1.wav'),
+		new Audio('../sounds/SE_T01_ren2.wav'),
+		new Audio('../sounds/SE_T02_ren3.wav'),
+		new Audio('../sounds/SE_T03_ren4.wav'),
+		new Audio('../sounds/SE_T04_ren5.wav'),
+		new Audio('../sounds/SE_T05_ren6.wav'),
+		new Audio('../sounds/SE_T06_ren7.wav'),
+	],
+	"nuisanceSend": [
+		null,
+		null,
+		new Audio('../sounds/SE_T14_oj_okuri1.wav'),
+		new Audio('../sounds/SE_T15_oj_okuri2.wav'),
+		new Audio('../sounds/SE_T16_oj_okuri3.wav'),
+		new Audio('../sounds/SE_T17_oj_okuri4.wav')
+	],
+	"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
+	"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav')
+};
+
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.2) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
 		this.rows = rows;				// Number of rows in the game board
@@ -18,15 +45,27 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;		// Additional vertical distance the drop falls when soft dropping
 		this.das = das;					// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;					// Milliseconds between event triggers after the DAS timer is complete
+		this.volume = volume;
 
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;	// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;		// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 		this.cascadeFramesPerRow = 10;	// Number of frames used for a puyo to fall one row
 		this.dropFrames = 10;			// Number of frames used for all the puyo to drop
-		this.popFrames = 60;			// Number of frames used to pop any amount of puyos
+		this.popFrames = 50;			// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 4;// Number of frames used for an isolated puyo to fall one row
 		this.pointsPerNuisance = 70;
+
+		// Set volume for each sound
+		Object.keys(window.sfx).forEach(key => {
+			const sounds = window.sfx[key];
+			if(Array.isArray(sounds)) {
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
+			}
+			else if(sounds !== null) {
+				sounds.volume = this.volume;
+			}
+		});
 	}
 }
 

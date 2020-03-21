@@ -211,6 +211,22 @@ window.Game = class Game {
 			// Update the score displayed
 			this.updateScore();
 
+			// Play chain sfx
+			if(this.resolvingState.chain > 7) {
+				window.sfx['chain'][7].play();
+			}
+			else {
+				window.sfx['chain'][this.resolvingState.chain].play();
+			}
+
+			// Play nuisance sfx
+			if(this.resolvingState.chain > 6) {
+				window.sfx['nuisance'][6].play();
+			}
+			else if(this.resolvingState.chain > 1) {
+				window.sfx['nuisanceSend'][this.resolvingState.chain].play();
+			}
+
 			// Remove the chained puyos and popped nuisance puyos
 			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
 
@@ -472,11 +488,13 @@ window.Game = class Game {
 		if(direction === 'Left') {
 			if(leftest.x >= 1 && boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
 				this.currentDrop.shift('Left');
+				window.sfx['move'].play();
 			}
 		}
 		else if(direction === 'Right') {
 			if(rightest.x <= this.settings.cols - 2 && boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shift('Right');
+				window.sfx['move'].play();
 			}
 		}
 		else if(direction === 'Down') {
@@ -514,6 +532,7 @@ window.Game = class Game {
 
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CW');
+				window.sfx['rotate'].play();
 			}
 		}
 		else {
@@ -522,6 +541,7 @@ window.Game = class Game {
 
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CCW');
+				window.sfx['rotate'].play();
 			}
 		}
 	}

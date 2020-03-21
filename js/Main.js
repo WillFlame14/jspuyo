@@ -49,10 +49,12 @@
 			switch(game.end()) {
 				case 'Win':
 					finalMessage = 'You win!';
+					window.sfx['win'].play();
 					break;
 				case 'Loss':
 					finalMessage = 'You lose...';
 					socket.emit('gameOver', gameId);
+					window.sfx['lose'].play();
 					break;
 				case 'OppDisconnect':
 					finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';

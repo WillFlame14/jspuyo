@@ -28,17 +28,28 @@ io.on('connection', function(socket) {
 		gameCounter++;
 	});
 
-	socket.on('findOpponent', gameId => {
-		if(waitingOpponents.length < game_size - 1) {
-			waitingOpponents.push({ gameId: gameId, socket: socket });
+	socket.on('findOpponent', (gameId, cpu) => {
+		// For now, cannot play mixed games with CPUs and real opponents
+		if(cpu) {
+			const cpuIds = [];
+			for(let i = 0; i < game_size - 1; i++) {
+				cpuIds.push(-gameCounter);
+				gameCounter++;
+			}
+			socket.emit('start', cpuIds);
 		}
 		else {
-			waitingOpponents.forEach(player => {
-				player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
-			});
-			socket.emit('start', waitingOpponents.map(player => player.gameId));
-			console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
-			waitingOpponents = [];
+			if(waitingOpponents.length < game_size - 1) {
+				waitingOpponents.push({ gameId: gameId, socket: socket });
+			}
+			else {
+				waitingOpponents.forEach(player => {
+					player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
+				});
+				socket.emit('start', waitingOpponents.map(player => player.gameId));
+				console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
+				waitingOpponents = [];
+			}
 		}
 	});
 

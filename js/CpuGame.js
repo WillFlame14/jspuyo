@@ -7,6 +7,8 @@ window.CpuGame = class CpuGame extends window.Game {
 		this.ai = ai;
 		this.ai.assignSettings(this.settings);
 		this.currentMove = null;
+		this.rotations = 0;
+		this.lastArle = null;
 	}
 
 	/**
@@ -15,7 +17,7 @@ window.CpuGame = class CpuGame extends window.Game {
 	 */
 	getInputs() {
 		if(this.currentMove === null) {
-			this.currentMove = this.ai.getMove(this.board.boardState);
+			this.currentMove = this.ai.getMove(this.board.boardState, this.currentDrop);
 		}
 
 		let applied = false;
@@ -32,17 +34,21 @@ window.CpuGame = class CpuGame extends window.Game {
 		if(this.currentDrop.rotating === 'not') {
 			if(this.rotations < rotations) {
 				this.rotate('CW');
+				this.rotations++;
 				applied = true;
 			}
 			else if(this.rotations > rotations) {
 				this.rotate('CCW');
+				this.rotations--;
 				applied = true;
 			}
 		}
 
-		if(!applied) {
+		if(!applied || (this.lastArle !== null && JSON.stringify(this.currentDrop.arle) === JSON.stringify(this.lastArle))) {
 			this.move('Down');
 		}
+
+		this.lastArle = Object.assign(this.currentDrop.arle);
 	}
 
 	/**
@@ -51,5 +57,6 @@ window.CpuGame = class CpuGame extends window.Game {
 	lockDrop() {
 		super.lockDrop();
 		this.currentMove = null;
+		this.rotations = 0;
 	}
 }

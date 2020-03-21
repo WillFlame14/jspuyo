@@ -24,8 +24,9 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
 		super(settings, speed);
 	}
 
-	getMove(boardState) {
+	getMove(boardState, currentDrop) {
 		let col = this.settings.cols - 1;
+		let rotations = 0;
 		// Attempt to place on the right side of the board
 		while(boardState[col].length >= this.settings.rows - 1 && col > 2) {
 			col--;
@@ -37,6 +38,25 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
 				col++;
 			}
 		}
-		return { col: col, rotations: 0 };
+
+		// Only column 2 left
+		if(col === 2) {
+			const noRotationBoard = new window.Board(this.settings, boardState);
+			noRotationBoard.boardState[2].push(currentDrop.colours[0]);
+			noRotationBoard.boardState[2].push(currentDrop.colours[1]);
+			const noRotationChains = noRotationBoard.resolveChains();
+
+			const yesRotationBoard = new window.Board(this.settings, boardState);
+			yesRotationBoard.boardState[2].push(currentDrop.colours[1]);
+			yesRotationBoard.boardState[2].push(currentDrop.colours[0]);
+			const yesRotationChains = yesRotationBoard.resolveChains();
+
+			if(yesRotationChains.length > noRotationChains.length) {
+				console.log('YES ROTATE')
+				rotations = 2;
+			}
+		}
+
+		return { col, rotations };
 	}
 }

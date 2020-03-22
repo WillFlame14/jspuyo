@@ -55,23 +55,23 @@ window.InputManager = class InputManager{
 					case 'ArrowLeft':
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowRight') {
-							this.emit('move', 'left', true);
+							this.emit('Move', 'Left', true);
 						}
 						break;
 					case 'ArrowRight':
 						// Special case for holding both directions down
 						if(this.lastPressed !== 'ArrowLeft') {
-							this.emit('move', 'right', true);
+							this.emit('Move', 'Right', true);
 						}
 						break;
 					case 'ArrowDown':
-						this.emit('move', 'down', true);
+						this.emit('Move', 'Down', true);
 						break;
 					case 'z':
-						this.emit('rotate', 'CCW', true);
+						this.emit('Rotate', 'CCW', true);
 						break;
 					case 'x':
-						this.emit('rotate', 'CW', true);
+						this.emit('Rotate', 'CW', true);
 						break;
 				}
 

@@ -1,15 +1,16 @@
 'use strict';
 
-window.COLOUR_LIST = [ 'Red', 'Blue', 'Green','Purple', 'Yellow' ];
+window.COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
 						'Blue': 'rgba(20, 20, 200, 0.9)',
 						'Yellow': 'rgba(150, 150, 20, 0.9)',
-						'Purple': 'rgba(150, 20, 150, 0.9)' };
+						'Purple': 'rgba(150, 20, 150, 0.9)',
+						'Gray': 'rgba(100, 100, 100, 0.9)' };
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.2) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
 		this.rows = rows;				// Number of rows in the game board
@@ -17,15 +18,89 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;		// Additional vertical distance the drop falls when soft dropping
 		this.das = das;					// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;					// Milliseconds between event triggers after the DAS timer is complete
+		this.volume = volume;
 
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;	// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;		// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 		this.cascadeFramesPerRow = 10;	// Number of frames used for a puyo to fall one row
 		this.dropFrames = 10;			// Number of frames used for all the puyo to drop
-		this.popFrames = 40;			// Number of frames used to pop any amount of puyos
+		this.popFrames = 50;			// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 4;// Number of frames used for an isolated puyo to fall one row
 		this.pointsPerNuisance = 70;
+	}
+}
+
+window.AudioPlayer = class AudioPlayer {
+	constructor(gameId, socket, volume) {
+		this.gameId = gameId;
+		this.socket = socket;
+		this.volume = volume;
+
+		this.sfx = {
+			"move": new Audio('../sounds/SE_T07_move.wav'),
+			"rotate": new Audio('../sounds/SE_T08_rotate.wav'),
+			"win": new Audio('../sounds/SE_T19_win.wav'),
+			"loss": new Audio('../sounds/se_puy20_lose.wav'),
+			"chain": [
+				null,
+				new Audio('../sounds/SE_T00_ren1.wav'),
+				new Audio('../sounds/SE_T01_ren2.wav'),
+				new Audio('../sounds/SE_T02_ren3.wav'),
+				new Audio('../sounds/SE_T03_ren4.wav'),
+				new Audio('../sounds/SE_T04_ren5.wav'),
+				new Audio('../sounds/SE_T05_ren6.wav'),
+				new Audio('../sounds/SE_T06_ren7.wav'),
+			],
+			"nuisanceSend": [
+				null,
+				null,
+				new Audio('../sounds/SE_T14_oj_okuri1.wav'),
+				new Audio('../sounds/SE_T15_oj_okuri2.wav'),
+				new Audio('../sounds/SE_T16_oj_okuri3.wav'),
+				new Audio('../sounds/SE_T17_oj_okuri4.wav')
+			],
+			"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
+			"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav')
+		};
+
+		// Set volume for each sound
+		Object.keys(this.sfx).forEach(key => {
+			const sounds = this.sfx[key];
+			if(Array.isArray(sounds)) {
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
+			}
+			else if(sounds !== null) {
+				// Win/Lose SFX are especially loud
+				if(key === 'win' || key === 'lose') {
+					sounds.volume = this.volume * 0.6;
+				}
+				else {
+					sounds.volume = this.volume;
+				}
+			}
+		});
+	}
+
+	/**
+	 * Plays a sound effect. An 1-based index parameter is provided for more detailed selection.
+	 */
+	playSfx(sfx_name, index = null) {
+		if(index !== null) {
+			this.sfx[sfx_name][index].play();
+		}
+		else {
+			this.sfx[sfx_name].play();
+		}
+	}
+
+	/**
+	 * Plays a sound effect, and emits the sound to the server.
+	 * Used so that other players can hear the appropriate sound.
+	 */
+	playAndEmitSfx(sfx_name, index = null) {
+		this.playSfx(sfx_name, index);
+		this.socket.emit('sendSound', this.gameId, sfx_name, index);
 	}
 }
 
@@ -58,33 +133,63 @@ window.getOtherPuyo = function(drop) {
 }
 
 /**
+ * Gets the frames needed for the animation (accounts for falling time).
+ */
+window.getDropFrames = function (puyoLocs, boardState, settings) {
+	let puyoFalling = false;
+	let colPuyoLocs = [];
+	for (let i = 0; i < settings.cols; i++) {
+		colPuyoLocs = puyoLocs.filter(loc => loc.col === i).map(loc => loc.row).sort();
+		if (boardState[i][colPuyoLocs[colPuyoLocs.length - 1] + 1] != null) {
+			puyoFalling = true;
+		} else {
+			for (let j = 0; j < colPuyoLocs.length - 1; j++) {
+				if (colPuyoLocs[j + 1] - colPuyoLocs[j] !== 1) {
+					puyoFalling = true;
+				}
+			}
+		}
+	}
+
+	if (puyoFalling) {
+		return settings.dropFrames;
+	} else {
+		return 0;
+	}
+}
+
+/**
  * Finds the score of the given chain. Currently only for Tsu rule.
  */
-window.calculateScore = function(puyoLocs) {
+window.calculateScore = function(puyoLocs, chain_length) {
+	// These arrays are 1-indexed.
 	const CHAIN_POWER = [-1, 0, 8, 16, 32, 64, 96, 128,160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
 	const COLOUR_BONUS = [-1, 0, 3, 6, 12, 24, 48];
 	const GROUP_BONUS = [-1, -1, -1, -1, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
 
 	// Number of puyos cleared in the chain
-	const puyos_cleared = puyoLocs.reduce((puyos, group) => puyos += group.length, 0);
+	const puyos_cleared = puyoLocs.length;
 
 	// Find the different colours
-	const containedColours = [];
+	const containedColours = {};
 
-	puyoLocs.forEach(chain => {
-		if(!containedColours.includes(chain[0].colour)) {
-			containedColours.push(chain[0].colour);
+	puyoLocs.forEach(puyo => {
+		if(containedColours[puyo.colour] === undefined) {
+			containedColours[puyo.colour] = 1;
+		}
+		else {
+			containedColours[puyo.colour]++;
 		}
 	});
 
 	// Chain power based on length of chain
-	const chain_power = CHAIN_POWER[puyoLocs.length];
+	const chain_power = CHAIN_POWER[chain_length];
 
 	// Colour bonus based on number of colours used
-	const colour_bonus = COLOUR_BONUS[containedColours.length];
+	const colour_bonus = COLOUR_BONUS[Object.keys(containedColours).length];
 
 	// Group bonus based on number of puyos in each group
-	const group_bonus = puyoLocs.reduce((bonus, group) => bonus += GROUP_BONUS[group.length], 0);
+	const group_bonus = Object.keys(containedColours).reduce((bonus, colour) => bonus += GROUP_BONUS[containedColours[colour]], 0);
 
 	return (10 * puyos_cleared) * (chain_power + colour_bonus + group_bonus);
 }

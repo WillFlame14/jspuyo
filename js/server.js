@@ -7,19 +7,14 @@ const io = require('socket.io')(http, {
 	perMessageDeflate: false
 });
 const port = process.env.PORT || 3000;
-const path = require('path');
 
 // Temporary fixed size of all games. Investigate better lobby system in the future.
-const game_size = 3;
+const game_size = 2;
 
 let gameCounter = 1;
 let waitingOpponents = [];
 
 app.use(express.static('./'));
-
-app.get('/', function(req, res) {
-  res.sendFile(path.resolve('index.html'));
-});
 
 io.on('connection', function(socket) {
 	socket.on('register', () => {
@@ -28,23 +23,51 @@ io.on('connection', function(socket) {
 		gameCounter++;
 	});
 
-	socket.on('findOpponent', gameId => {
-		if(waitingOpponents.length < game_size - 1) {
-			waitingOpponents.push({ gameId: gameId, socket: socket });
+	socket.on('findOpponent', (gameId, cpu) => {
+		// For now, cannot play mixed games with CPUs and real opponents
+		if(cpu) {
+			const cpuIds = [];
+			for(let i = 0; i < game_size - 1; i++) {
+				cpuIds.push(-gameCounter);
+				gameCounter++;
+			}
+			socket.emit('start', cpuIds);
 		}
 		else {
-			waitingOpponents.forEach(player => {
-				player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
-			});
-			socket.emit('start', waitingOpponents.map(player => player.gameId));
-			console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
-			waitingOpponents = [];
+			if(waitingOpponents.length < game_size - 1) {
+				waitingOpponents.push({ gameId: gameId, socket: socket });
+			}
+			else {
+				waitingOpponents.forEach(player => {
+					player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
+				});
+				socket.emit('start', waitingOpponents.map(player => player.gameId));
+				console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
+				waitingOpponents = [];
+			}
 		}
 	});
 
-	socket.on('sendBoard', (gameId, boardHash)=> {
-		socket.broadcast.emit('sendBoard', gameId, boardHash);
+	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
+	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
+		socket.broadcast.emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 	});
+
+	socket.on('sendSound', (gameId, sfx_name, index) => {
+		socket.broadcast.emit('sendSound', gameId, sfx_name, index);
+	})
+
+	socket.on('sendNuisance', (gameId, nuisance) => {
+		socket.broadcast.emit('sendNuisance', gameId, nuisance);
+	})
+
+	socket.on('activateNuisance', gameId => {
+		socket.broadcast.emit('activateNuisance', gameId);
+	});
+
+	socket.on('gameOver', gameId => {
+		socket.broadcast.emit('gameOver', gameId);
+	})
 
 	socket.on('disconnect', () => {
 		if(waitingOpponents.length > 0) {

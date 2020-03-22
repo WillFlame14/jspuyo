@@ -60,3 +60,39 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
 		return { col, rotations };
 	}
 }
+
+window.TestCpu = class TestCpu extends window.Cpu {
+	constructor(settings, speed) {
+		super(settings, speed);
+	}
+
+	getMove(boardState, currentDrop) {
+		let maxChain = 0;
+		let col = Math.floor(Math.random() * this.settings.cols);
+		let rotations = 0;
+		for(let currCol = 0; currCol < this.settings.cols - 1; currCol++) {
+			const board = new window.Board(this.settings, boardState);
+			board.boardState[currCol].push(currentDrop.colours[0]);
+			board.boardState[currCol].push(currentDrop.colours[1]);
+
+			const chains = board.resolveChains();
+			if(chains.length > maxChain) {
+				maxChain = chains.length;
+				col = currCol;
+			}
+
+			const board2 = new window.Board(this.settings, boardState);
+			board2.boardState[currCol].push(currentDrop.colours[1]);
+			board2.boardState[currCol].push(currentDrop.colours[0]);
+
+			const chains2 = board.resolveChains();
+			if(chains2.length > maxChain) {
+				maxChain = chains2.length;
+				col = currCol;
+				rotations = 2;
+			}
+		}
+
+		return { col, rotations };
+	}
+}

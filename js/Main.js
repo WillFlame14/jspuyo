@@ -28,7 +28,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, new window.HarpyCpu());
+			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu());
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});

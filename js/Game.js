@@ -137,7 +137,9 @@ window.Game = class Game {
 
 			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+			// REPLACE BELOW! this.boardDrawer.updateBoard(currentBoardHash);
+			this.boardDrawer.drawFromHash(currentBoardHash);
 			this.updateScore();
 		}
 
@@ -173,7 +175,9 @@ window.Game = class Game {
 			}
 		}
 		const currentBoardState = { boardState, currentDrop };
-		const currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+		// REPLACE BELOW! this.boardDrawer.updateBoard(currentBoardState);
+		this.boardDrawer.drawFromHash(currentBoardHash);
 
 		if (schezoDropped && arleDropped) {
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
@@ -204,7 +208,9 @@ window.Game = class Game {
 		}
 
 		// Update the board
-		const currentBoardHash = this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
+		// REPLACE BELOW! this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+		this.boardDrawer.drawFromHash(currentBoardHash);
 
 		// Check if the chain is done resolving
 		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {

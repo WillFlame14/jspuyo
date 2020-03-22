@@ -177,7 +177,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
 
         // Restore origin to top left
         ctx.restore();
-        console.log(this.hashForUpdate(currentBoardState));
     }
     resolveChains(boardState, resolvingState) {
         // Get current information and assign it to convenient variables

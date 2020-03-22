@@ -1,6 +1,6 @@
 'use strict';
 
-window.COLOUR_LIST = [ 'Red', 'Blue', 'Green','Purple', 'Yellow' ];
+window.COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
 						'Blue': 'rgba(20, 20, 200, 0.9)',

@@ -2,15 +2,13 @@
 
 (function () {
 	const socket = window.io();
-	let game, gameId;
+	let game, gameId, cpu = location.search.includes('cpu=true');
 	let cpuGames = [];
-
-	const cpu = false;
 
 	socket.emit('register');
 
-	socket.on('getGameId', data => {
-		gameId = data;
+	socket.on('getGameId', id => {
+		gameId = id;
 		socket.emit('findOpponent', gameId, cpu);
 		console.log('Awaiting match...');
 	});

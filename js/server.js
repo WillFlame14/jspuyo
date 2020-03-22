@@ -7,7 +7,6 @@ const io = require('socket.io')(http, {
 	perMessageDeflate: false
 });
 const port = process.env.PORT || 3000;
-const path = require('path');
 
 // Temporary fixed size of all games. Investigate better lobby system in the future.
 const game_size = 2;
@@ -16,10 +15,6 @@ let gameCounter = 1;
 let waitingOpponents = [];
 
 app.use(express.static('./'));
-
-app.get('/', function(req, res) {
-  res.sendFile(path.resolve('index.html'));
-});
 
 io.on('connection', function(socket) {
 	socket.on('register', () => {

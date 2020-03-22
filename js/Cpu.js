@@ -13,12 +13,18 @@ window.Cpu = class Cpu {
 		this.settings = settings;
 	}
 
+	/**
+	 * Returns the optimal move according to the AI.
+	 */
 	/* eslint-disable-next-line no-unused-vars*/
 	getMove(boardState, currentDrop) {
 		throw new Error('getMove(boardState, currentDrop) must be implemented by the subclass.');
 	}
 }
 
+/**
+ * HarpyCpu: stacks the right side , then the left side
+ */
 window.HarpyCpu = class HarpyCpu extends window.Cpu {
 	constructor(settings, speed) {
 		super(settings, speed);
@@ -52,7 +58,6 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
 			const yesRotationChains = yesRotationBoard.resolveChains();
 
 			if(yesRotationChains.length > noRotationChains.length) {
-				console.log('YES ROTATE')
 				rotations = 2;
 			}
 		}
@@ -61,6 +66,10 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
 	}
 }
 
+/**
+ * TestCpu: Goes for the longest possible chain result given the current drop.
+ * Otherwise, places randomly.
+ */
 window.TestCpu = class TestCpu extends window.Cpu {
 	constructor(settings, speed) {
 		super(settings, speed);

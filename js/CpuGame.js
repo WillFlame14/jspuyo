@@ -4,16 +4,16 @@ window.CpuGame = class CpuGame extends window.Game {
 	constructor(gamemode, gameId, opponentIds, socket, boardDrawerId, ai, settings) {
 		super(gamemode, gameId, opponentIds, socket, boardDrawerId, settings);
 
-		this.ai = ai;
+		this.ai = ai;					// The algorithm used to determine the optimal move
 		this.ai.assignSettings(this.settings);
-		this.currentMove = null;
-		this.rotations = 0;
-		this.lastArle = null;
+		this.currentMove = null;		// The current optimal move
+		this.rotations = 0;				// Rotations performed on the current drop (between -2 and 2)
+		this.lastArle = null;			// The location of the arle in the last frame (used to detect whether a drop is stuck)
 	}
 
 	/**
 	 * @Override
-	 * Apply an input for the CPU.
+	 * Apply an input for the CPU. Used to get the current drop to the optimal move position.
 	 */
 	getInputs() {
 		if(this.currentMove === null) {
@@ -22,6 +22,8 @@ window.CpuGame = class CpuGame extends window.Game {
 
 		let applied = false;
 		const { col, rotations } = this.currentMove;
+
+		// Move drop to correct column
 		if(this.currentDrop.arle.x < col) {
 			this.move('Right');
 			applied = true;
@@ -31,6 +33,7 @@ window.CpuGame = class CpuGame extends window.Game {
 			applied = true;
 		}
 
+		// Perform correct amount of rotations
 		if(this.currentDrop.rotating === 'not') {
 			if(this.rotations < rotations) {
 				this.rotate('CW');
@@ -44,6 +47,7 @@ window.CpuGame = class CpuGame extends window.Game {
 			}
 		}
 
+		// If no action needs to be taken or the drop is stuck, soft drop
 		if(!applied || (this.lastArle !== null && JSON.stringify(this.currentDrop.arle) === JSON.stringify(this.lastArle))) {
 			this.move('Down');
 		}

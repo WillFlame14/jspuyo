@@ -3,8 +3,8 @@
 (function () {
 	const socket = window.io();
 	let game, gameId;
-	const cpu = location.search.includes('cpu=true');
-	const noPlayer = location.search.includes('player=false');
+	const cpu = location.search.includes('cpu=true');				// Flag to play against a CPU
+	const noPlayer = location.search.includes('player=false');		// Flag to let CPU play for you
 	let cpuGames = [];
 
 	socket.emit('register');
@@ -28,6 +28,7 @@
 		const allIds = opponentIds.slice();
 		allIds.push(gameId);
 
+		// Create the CPU games
 		cpuGames = opponentIds.filter(id => id < 0).map(id => {
 			const thisSocket = window.io();
 			const thisOppIds = allIds.slice();

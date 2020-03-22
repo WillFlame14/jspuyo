@@ -31,8 +31,6 @@ window.Settings = class Settings {
 	}
 }
 
-
-
 window.AudioPlayer = class AudioPlayer {
 	constructor(gameId, socket, volume) {
 		this.gameId = gameId;
@@ -73,6 +71,7 @@ window.AudioPlayer = class AudioPlayer {
 				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
 			}
 			else if(sounds !== null) {
+				// Win/Lose SFX are especially loud
 				if(key === 'win' || key === 'lose') {
 					sounds.volume = this.volume * 0.6;
 				}
@@ -83,6 +82,9 @@ window.AudioPlayer = class AudioPlayer {
 		});
 	}
 
+	/**
+	 * Plays a sound effect. An 1-based index parameter is provided for more detailed selection.
+	 */
 	playSfx(sfx_name, index = null) {
 		if(index !== null) {
 			this.sfx[sfx_name][index].play();
@@ -92,13 +94,15 @@ window.AudioPlayer = class AudioPlayer {
 		}
 	}
 
+	/**
+	 * Plays a sound effect, and emits the sound to the server.
+	 * Used so that other players can hear the appropriate sound.
+	 */
 	playAndEmitSfx(sfx_name, index = null) {
 		this.playSfx(sfx_name, index);
 		this.socket.emit('sendSound', this.gameId, sfx_name, index);
 	}
 }
-
-
 
 /**
  * Returns a random puyo colour, given the size of the colour pool.
@@ -195,8 +199,4 @@ window.calculateNuisance = function(chain_score, pointsPerNuisance, leftoverNuis
 	const nuisanceSent = Math.floor(nuisancePoints);
 
 	return { nuisanceSent, leftoverNuisance: nuisancePoints - nuisanceSent };
-}
-
-window.playSound = function(sfxName) {
-
 }

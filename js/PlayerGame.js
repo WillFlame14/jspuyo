@@ -4,6 +4,7 @@ window.PlayerGame = class PlayerGame extends window.Game {
 	constructor(gamemode, gameId, opponentIds, socket, settings) {
 		super(gamemode, gameId, opponentIds, socket, 1, settings);
 
+		// Accepts inputs from player
 		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
@@ -45,6 +46,9 @@ window.PlayerGame = class PlayerGame extends window.Game {
 		this.inputManager.executeKeys();
 	}
 
+	/**
+	 * Updates the score for opponents.
+	 */
 	updateOpponentScore(gameId, score) {
 		const pointsDisplayName = 'pointsDisplay' + '2';
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;

@@ -7,15 +7,15 @@ window.Game = class Game {
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
-		this.endResult = null;
-		this.softDrops = 0;
-		this.preChainScore = 0;
-		this.currentScore = 0;
+		this.endResult = null;			// Final result of the game
+		this.softDrops = 0;				// Frames in which the soft drop button was held
+		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
+		this.currentScore = 0;			// Current score (completely accurate)
 
-		this.leftoverNuisance = 0;
-		this.visibleNuisance = {};
-		this.activeNuisance = 0;
-		this.totalNuisance = 0;
+		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
+		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
+		this.activeNuisance = 0;		// Active nuisance
+		this.totalNuisance = 0;			// Sum of all queued and active nuisance
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
@@ -48,7 +48,7 @@ window.Game = class Game {
 			if(!opponentIds.includes(gameId)) {
 				return;
 			}
-			console.log('Opponent with id ' + gameId + ' has topped out.');
+			console.log('Player with id ' + gameId + ' has topped out.');
 			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'Win';

@@ -36,6 +36,7 @@ window.AudioPlayer = class AudioPlayer {
 		this.gameId = gameId;
 		this.socket = socket;
 		this.volume = volume;
+		this.cancel = false;
 
 		this.sfx = {
 			"move": new Audio('../sounds/SE_T07_move.wav'),
@@ -86,6 +87,9 @@ window.AudioPlayer = class AudioPlayer {
 	 * Plays a sound effect. An 1-based index parameter is provided for more detailed selection.
 	 */
 	playSfx(sfx_name, index = null) {
+		if(this.cancel) {
+			return;
+		}
 		if(index !== null) {
 			this.sfx[sfx_name][index].play();
 		}
@@ -101,6 +105,10 @@ window.AudioPlayer = class AudioPlayer {
 	playAndEmitSfx(sfx_name, index = null) {
 		this.playSfx(sfx_name, index);
 		this.socket.emit('sendSound', this.gameId, sfx_name, index);
+	}
+
+	disable() {
+		this.cancel = true;
 	}
 }
 

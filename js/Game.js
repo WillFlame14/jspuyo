@@ -71,15 +71,6 @@ window.Game = class Game {
 		if(this.board.checkGameOver(this.gamemode) && this.resolvingChains.length === 0 && this.endResult === null) {
 			this.endResult = 'Loss';
 		}
-		if(this.endResult !== null) {
-			switch(this.endResult) {
-				case 'Win':
-					this.audioPlayer.playSfx('win');
-					break;
-				case 'Loss':
-					this.audioPlayer.playSfx('loss');
-			}
-		}
 		return this.endResult;
 	}
 

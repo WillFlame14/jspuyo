@@ -85,7 +85,7 @@ window.TestCpu = class TestCpu extends window.Cpu {
 			board2.boardState[currCol].push(currentDrop.colours[1]);
 			board2.boardState[currCol].push(currentDrop.colours[0]);
 
-			const chains2 = board.resolveChains();
+			const chains2 = board2.resolveChains();
 			if(chains2.length > maxChain) {
 				maxChain = chains2.length;
 				col = currCol;

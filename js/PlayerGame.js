@@ -23,7 +23,9 @@ window.PlayerGame = class PlayerGame extends window.Game {
 			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
-			this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+			if(gameId > 0) {
+				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+			}
 			this.updateOpponentScore(gameId, score);
 		});
 
@@ -33,6 +35,24 @@ window.PlayerGame = class PlayerGame extends window.Game {
 			}
 			this.audioPlayer.playSfx(sfx_name, index);
 		});
+	}
+
+	/**
+	 * @Override
+	 * Plays the corresponding end sound effect, but only for the player's game.
+	 */
+	end() {
+		const endResult = super.end();
+		if(endResult !== null) {
+			switch(this.endResult) {
+				case 'Win':
+					this.audioPlayer.playSfx('win');
+					break;
+				case 'Loss':
+					this.audioPlayer.playSfx('loss');
+			}
+		}
+		return endResult;
 	}
 
 	/**

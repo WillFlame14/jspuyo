@@ -9,14 +9,29 @@ window.PlayerGame = class PlayerGame extends window.Game {
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
 
-		// Add a HashedBoardDrawer for each opponent. CPU boards will draw themselves
-		// eslint-disable-next-line no-unused-vars
+		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
 		let opponentCounter = 1;
 		this.opponentIds.forEach(id => {
 			if(id > 0) {
-				// this.opponentBoardDrawers[id] = new window.HashedBoardDrawer(opponentCounter + 1);
+				this.opponentBoardDrawers[id] = new window.BoardDrawer(this.settings, opponentCounter + 1);
 			}
 			opponentCounter++;
+		});
+
+		// eslint-disable-next-line no-unused-vars
+		this.socket.on('sendState', (gameId, boardHash, score, nuisance) => {
+			if(!this.opponentIds.includes(gameId)) {
+				return;
+			}
+			this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+			this.updateOpponentScore(gameId, score);
+		});
+
+		this.socket.on('sendSound', (gameId, sfx_name, index) => {
+			if(!this.opponentIds.includes(gameId)) {
+				return;
+			}
+			this.audioPlayer.playSfx(sfx_name, index);
 		});
 	}
 
@@ -26,5 +41,10 @@ window.PlayerGame = class PlayerGame extends window.Game {
 	 */
 	getInputs() {
 		this.inputManager.executeKeys();
+	}
+
+	updateOpponentScore(gameId, score) {
+		const pointsDisplayName = 'pointsDisplay' + '2';
+		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;
 	}
 }

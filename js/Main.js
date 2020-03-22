@@ -5,7 +5,7 @@
 	let game, gameId;
 	let cpuGames = [];
 
-	const cpu = true;
+	const cpu = false;
 
 	socket.emit('register');
 
@@ -45,16 +45,15 @@
 			window.cancelAnimationFrame(mainFrame);
 			alert(finalMessage);
 		}
-		if(game.end()) {
-			switch(game.end()) {
+		const endResult = game.end();
+		if(endResult !== null) {
+			switch(endResult) {
 				case 'Win':
 					finalMessage = 'You win!';
-					window.sfx['win'].play();
 					break;
 				case 'Loss':
 					finalMessage = 'You lose...';
 					socket.emit('gameOver', gameId);
-					window.sfx['lose'].play();
 					break;
 				case 'OppDisconnect':
 					finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
@@ -63,8 +62,9 @@
 		}
 
 		cpuGames.forEach(cpuGame => {
-			if(cpuGame.game.end()) {
-				switch(cpuGame.game.end()) {
+			const cpuEndResult = cpuGame.game.end();
+			if(cpuEndResult !== null) {
+				switch(cpuEndResult) {
 					case 'Win':
 						// finalMessage = 'You win!';
 						break;

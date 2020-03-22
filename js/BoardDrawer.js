@@ -132,8 +132,8 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         for (let i = 0; i < window.COLOUR_LIST.length; i++) {
             this.colourArray.push(window.PUYO_COLOURS[window.COLOUR_LIST[i]]);
         }
-        this.outSnapFactor = 2;
-        this.outRotFactor = 8;
+        this.outSnapFactor = 100;
+        this.outRotFactor = 100;
     }
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
@@ -263,10 +263,17 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     }
                 }
                 let dropArray = splitHash[2].split(",");
-                let arle = {x: dropArray[3], y: dropArray[4]};
-                let schezo = {x: dropArray[5] == "n" ? null : dropArray[5], y: dropArray[6] == "n" ? null : dropArray[6]};
-                let currentDrop = new window.Drop(dropArray[0], [this.colourArray[dropArray[1]], this.colourArray[dropArray[2]]], null, arle, schezo, dropArray[7] * 2 * Math.PI, dropArray[8]);
-                this.updateBoard({ boardState: boardState, currentDrop: currentDrop });
+                let arle = { x: dropArray[3], y: dropArray[4] };
+                let schezo = { x: dropArray[5] == "n" ? null : dropArray[5], y: dropArray[6] == "n" ? null : dropArray[6] };
+                let currentDrop = new window.Drop(
+                    dropArray[0],
+                    [this.colourArray[dropArray[1]], this.colourArray[dropArray[2]]],
+                    null,
+                    arle,
+                    schezo,
+                    dropArray[7] * 2 * Math.PI,
+                    dropArray[8]);
+                this.updateBoard({ boardState, currentDrop });
             } break;
             case "1": {
                 let boardState = [];
@@ -290,7 +297,16 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 for (let i = 0; i < nuisanceLocCols.length - 1; i++) { // excess delimiter in hash causes off-by-one error due to a tailing ">" creating an undefined last element
                     nuisanceLocs.push({ col: nuisanceLocCols[i], row: nuisanceLocRows[i] });
                 }
-                this.resolveChains(boardState, { chain: resolvingStateArray[0], puyoLocs: puyoLocs, nuisanceLocs: nuisanceLocs, currentFrame: resolvingStateArray[5], totalFrames: resolvingStateArray[6] })
+
+                this.resolveChains(boardState,
+                    {
+                        chain: resolvingStateArray[0],
+                        puyoLocs,
+                        nuisanceLocs,
+                        currentFrame: resolvingStateArray[5],
+                        totalFrames: resolvingStateArray[6]
+                    }
+                );
             } break;
             default:
             break;
@@ -324,6 +340,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         hash += currentDrop.rotating; // 8: rotating
         return hash;
     }
+
     hashForResolving(boardState, resolvingState) {
         let hash = "1:";
         for (let i = 0; i < boardState.length; i++) {

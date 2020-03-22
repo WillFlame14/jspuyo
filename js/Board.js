@@ -192,7 +192,6 @@ window.Board = class Board {
 				}
 			});
 			console.log('Dropped a rock.');
-			window.sfx['nuisanceFall2'].play();
 			return this.settings.cols * 5;
 		}
 		// Drop whatever is remaining
@@ -219,7 +218,6 @@ window.Board = class Board {
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
 			console.log('Dropped ' + nuisance + ' nuisance.');
-			window.sfx['nuisanceFall1'].play();
 			return nuisance;
 		}
 	}

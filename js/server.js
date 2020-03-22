@@ -53,9 +53,13 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on('sendBoard', (gameId, boardHash) => {
-		socket.broadcast.emit('sendBoard', gameId, boardHash);
+	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
+		socket.broadcast.emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 	});
+
+	socket.on('sendSound', (gameId, sfx_name, index) => {
+		socket.broadcast.emit('sendSound', gameId, sfx_name, index);
+	})
 
 	socket.on('sendNuisance', (gameId, nuisance) => {
 		socket.broadcast.emit('sendNuisance', gameId, nuisance);

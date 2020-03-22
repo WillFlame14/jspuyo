@@ -10,10 +10,12 @@ window.Game = class Game {
 		this.endResult = null;
 		this.softDrops = 0;
 		this.preChainScore = 0;
+		this.currentScore = 0;
 
 		this.leftoverNuisance = 0;
 		this.visibleNuisance = {};
 		this.activeNuisance = 0;
+		this.totalNuisance = 0;
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
@@ -22,18 +24,14 @@ window.Game = class Game {
 		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
 
 		this.socket = socket;
-		this.socket.on('sendBoard', (gameId, boardHash) => {
-			if(!this.opponentIds.includes(gameId)) {
-				return;
-			}
-			// this.opponentBoardDrawers[gameId].updateBoard(boardHash);
-		});
+		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.settings.volume);
 
 		this.socket.on('sendNuisance', (gameId, nuisance) => {
 			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			this.visibleNuisance[gameId] += nuisance;
+			this.totalNuisance += nuisance;
 			console.log('Received ' + nuisance + " nuisance.");
 		});
 
@@ -73,6 +71,15 @@ window.Game = class Game {
 		if(this.board.checkGameOver(this.gamemode) && this.resolvingChains.length === 0 && this.endResult === null) {
 			this.endResult = 'Loss';
 		}
+		if(this.endResult !== null) {
+			switch(this.endResult) {
+				case 'Win':
+					this.audioPlayer.playSfx('win');
+					break;
+				case 'Loss':
+					this.audioPlayer.playSfx('loss');
+			}
+		}
 		return this.endResult;
 	}
 
@@ -110,7 +117,15 @@ window.Game = class Game {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
-						this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
+						const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
+						if(droppedNuisance === this.settings.cols * 2) {
+							this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+						}
+						else if(droppedNuisance > 0) {
+							this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+						}
+						this.activeNuisance -= droppedNuisance;
+						this.totalNuisance -= droppedNuisance;
 					}
 					this.locking = 'not';
 					this.forceLockDelay = 0;
@@ -138,13 +153,12 @@ window.Game = class Game {
 			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
 			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-			// REPLACE BELOW! this.boardDrawer.updateBoard(currentBoardHash);
-			this.boardDrawer.drawFromHash(currentBoardHash);
+			this.boardDrawer.updateBoard(currentBoardState);
 			this.updateScore();
 		}
 
 		// Emit board state to all opponents
-		this.socket.emit('sendBoard', this.gameId, currentBoardHash);
+		this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.totalNuisance);
 	}
 
 	/**
@@ -176,8 +190,7 @@ window.Game = class Game {
 		}
 		const currentBoardState = { boardState, currentDrop };
 		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-		// REPLACE BELOW! this.boardDrawer.updateBoard(currentBoardState);
-		this.boardDrawer.drawFromHash(currentBoardHash);
+		this.boardDrawer.updateBoard(currentBoardState);
 
 		if (schezoDropped && arleDropped) {
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
@@ -209,8 +222,7 @@ window.Game = class Game {
 
 		// Update the board
 		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
-		// REPLACE BELOW! this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
-		this.boardDrawer.drawFromHash(currentBoardHash);
+		this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
 		// Check if the chain is done resolving
 		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
@@ -219,18 +231,18 @@ window.Game = class Game {
 
 			// Play chain sfx
 			if(this.resolvingState.chain > 7) {
-				window.sfx['chain'][7].play();
+				this.audioPlayer.playAndEmitSfx('chain', 7);
 			}
 			else {
-				window.sfx['chain'][this.resolvingState.chain].play();
+				this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain);
 			}
 
 			// Play nuisance sfx
 			if(this.resolvingState.chain > 6) {
-				window.sfx['nuisance'][6].play();
+				this.audioPlayer.playAndEmitSfx('nuisanceSend', 6);
 			}
 			else if(this.resolvingState.chain > 1) {
-				window.sfx['nuisanceSend'][this.resolvingState.chain].play();
+				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);
 			}
 
 			// Remove the chained puyos and popped nuisance puyos
@@ -241,7 +253,16 @@ window.Game = class Game {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
-				this.activeNuisance -= this.board.dropNuisance(this.activeNuisance);
+				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
+				if(droppedNuisance === this.settings.cols * 2) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				}
+				else if(droppedNuisance > 0) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+				this.activeNuisance -= droppedNuisance;
+				this.totalNuisance -= droppedNuisance;
+
 				const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
 					nuisance += this.visibleNuisance[opp];
 					return nuisance;
@@ -392,26 +413,27 @@ window.Game = class Game {
 	updateScore() {
 		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;
 		const html = document.getElementById(pointsDisplayName).innerHTML;
-		const current_score = parseInt(html.substring(6));
+		const last_score = parseInt(html.substring(6));
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)
 			if(this.softDrops > 5) {
-				document.getElementById(pointsDisplayName).innerHTML = "Score: " + (current_score + Math.floor(this.softDrops / 5));
+				this.currentScore = last_score + Math.floor(this.softDrops / 5);
+				document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 				this.softDrops %= 5;
 			}
 			return;
 		}
 
-		const final_score = current_score + window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
-		document.getElementById(pointsDisplayName).innerHTML = "Score: " + final_score;
+		this.currentScore = last_score + window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
 		let { nuisanceSent, leftoverNuisance } =
-			window.calculateNuisance(final_score - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
+			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
 		console.log("Sent: " + nuisanceSent + " Leftover: " + leftoverNuisance);
 
-		this.preChainScore = final_score;
+		this.preChainScore = this.currentScore;
 
 		if(nuisanceSent === 0) {
 			return;
@@ -494,13 +516,13 @@ window.Game = class Game {
 		if(direction === 'Left') {
 			if(leftest.x >= 1 && boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
 				this.currentDrop.shift('Left');
-				window.sfx['move'].play();
+				this.audioPlayer.playAndEmitSfx('move');
 			}
 		}
 		else if(direction === 'Right') {
 			if(rightest.x <= this.settings.cols - 2 && boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shift('Right');
-				window.sfx['move'].play();
+				this.audioPlayer.playAndEmitSfx('move');
 			}
 		}
 		else if(direction === 'Down') {
@@ -538,7 +560,7 @@ window.Game = class Game {
 
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CW');
-				window.sfx['rotate'].play();
+				this.audioPlayer.playAndEmitSfx('rotate');
 			}
 		}
 		else {
@@ -547,7 +569,7 @@ window.Game = class Game {
 
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CCW');
-				window.sfx['rotate'].play();
+				this.audioPlayer.playAndEmitSfx('rotate');
 			}
 		}
 	}

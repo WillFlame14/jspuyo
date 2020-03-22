@@ -9,33 +9,6 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Gray': 'rgba(100, 100, 100, 0.9)' };
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
-window.sfx = {
-	"move": new Audio('../sounds/SE_T07_move.wav'),
-	"rotate": new Audio('../sounds/SE_T08_rotate.wav'),
-	"win": new Audio('../sounds/SE_T19_win.wav'),
-	"lose": new Audio('../sounds/se_puy20_lose.wav'),
-	"chain": [
-		null,
-		new Audio('../sounds/SE_T00_ren1.wav'),
-		new Audio('../sounds/SE_T01_ren2.wav'),
-		new Audio('../sounds/SE_T02_ren3.wav'),
-		new Audio('../sounds/SE_T03_ren4.wav'),
-		new Audio('../sounds/SE_T04_ren5.wav'),
-		new Audio('../sounds/SE_T05_ren6.wav'),
-		new Audio('../sounds/SE_T06_ren7.wav'),
-	],
-	"nuisanceSend": [
-		null,
-		null,
-		new Audio('../sounds/SE_T14_oj_okuri1.wav'),
-		new Audio('../sounds/SE_T15_oj_okuri2.wav'),
-		new Audio('../sounds/SE_T16_oj_okuri3.wav'),
-		new Audio('../sounds/SE_T17_oj_okuri4.wav')
-	],
-	"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
-	"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav')
-};
-
 window.Settings = class Settings {
 	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.2) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -55,19 +28,77 @@ window.Settings = class Settings {
 		this.popFrames = 50;			// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 4;// Number of frames used for an isolated puyo to fall one row
 		this.pointsPerNuisance = 70;
+	}
+}
+
+
+
+window.AudioPlayer = class AudioPlayer {
+	constructor(gameId, socket, volume) {
+		this.gameId = gameId;
+		this.socket = socket;
+		this.volume = volume;
+
+		this.sfx = {
+			"move": new Audio('../sounds/SE_T07_move.wav'),
+			"rotate": new Audio('../sounds/SE_T08_rotate.wav'),
+			"win": new Audio('../sounds/SE_T19_win.wav'),
+			"loss": new Audio('../sounds/se_puy20_lose.wav'),
+			"chain": [
+				null,
+				new Audio('../sounds/SE_T00_ren1.wav'),
+				new Audio('../sounds/SE_T01_ren2.wav'),
+				new Audio('../sounds/SE_T02_ren3.wav'),
+				new Audio('../sounds/SE_T03_ren4.wav'),
+				new Audio('../sounds/SE_T04_ren5.wav'),
+				new Audio('../sounds/SE_T05_ren6.wav'),
+				new Audio('../sounds/SE_T06_ren7.wav'),
+			],
+			"nuisanceSend": [
+				null,
+				null,
+				new Audio('../sounds/SE_T14_oj_okuri1.wav'),
+				new Audio('../sounds/SE_T15_oj_okuri2.wav'),
+				new Audio('../sounds/SE_T16_oj_okuri3.wav'),
+				new Audio('../sounds/SE_T17_oj_okuri4.wav')
+			],
+			"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
+			"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav')
+		};
 
 		// Set volume for each sound
-		Object.keys(window.sfx).forEach(key => {
-			const sounds = window.sfx[key];
+		Object.keys(this.sfx).forEach(key => {
+			const sounds = this.sfx[key];
 			if(Array.isArray(sounds)) {
 				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
 			}
 			else if(sounds !== null) {
-				sounds.volume = this.volume;
+				if(key === 'win' || key === 'lose') {
+					sounds.volume = this.volume * 0.6;
+				}
+				else {
+					sounds.volume = this.volume;
+				}
 			}
 		});
 	}
+
+	playSfx(sfx_name, index = null) {
+		if(index !== null) {
+			this.sfx[sfx_name][index].play();
+		}
+		else {
+			this.sfx[sfx_name].play();
+		}
+	}
+
+	playAndEmitSfx(sfx_name, index = null) {
+		this.playSfx(sfx_name, index);
+		this.socket.emit('sendSound', this.gameId, sfx_name, index);
+	}
 }
+
+
 
 /**
  * Returns a random puyo colour, given the size of the colour pool.
@@ -164,4 +195,8 @@ window.calculateNuisance = function(chain_score, pointsPerNuisance, leftoverNuis
 	const nuisanceSent = Math.floor(nuisancePoints);
 
 	return { nuisanceSent, leftoverNuisance: nuisancePoints - nuisanceSent };
+}
+
+window.playSound = function(sfxName) {
+
 }

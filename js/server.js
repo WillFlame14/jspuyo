@@ -48,6 +48,7 @@ io.on('connection', function(socket) {
 		}
 	});
 
+	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
 	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
 		socket.broadcast.emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 	});

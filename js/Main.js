@@ -2,7 +2,9 @@
 
 (function () {
 	const socket = window.io();
-	let game, gameId, cpu = location.search.includes('cpu=true');
+	let game, gameId;
+	const cpu = location.search.includes('cpu=true');
+	const noPlayer = location.search.includes('player=false');
 	let cpuGames = [];
 
 	socket.emit('register');
@@ -15,7 +17,12 @@
 
 	socket.on('start', opponentIds => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));
-		game = new window.PlayerGame('Tsu', gameId, opponentIds, socket);
+		if(noPlayer) {
+			game = new window.CpuGame('Tsu', gameId, opponentIds, socket, 1, new window.TestCpu());
+		}
+		else {
+			game = new window.PlayerGame('Tsu', gameId, opponentIds, socket);
+		}
 
 		let boardDrawerCounter = 2;
 		const allIds = opponentIds.slice();

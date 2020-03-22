@@ -39,24 +39,6 @@ window.PlayerGame = class PlayerGame extends window.Game {
 
 	/**
 	 * @Override
-	 * Plays the corresponding end sound effect, but only for the player's game.
-	 */
-	end() {
-		const endResult = super.end();
-		if(endResult !== null) {
-			switch(this.endResult) {
-				case 'Win':
-					this.audioPlayer.playSfx('win');
-					break;
-				case 'Loss':
-					this.audioPlayer.playSfx('loss');
-			}
-		}
-		return endResult;
-	}
-
-	/**
-	 * @Override
 	 * Executes the InputManager for the game.
 	 */
 	getInputs() {

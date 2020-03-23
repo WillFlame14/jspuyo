@@ -51,7 +51,7 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/SE_T03_ren4.wav'),
 				new Audio('../sounds/SE_T04_ren5.wav'),
 				new Audio('../sounds/SE_T05_ren6.wav'),
-				new Audio('../sounds/SE_T06_ren7.wav'),
+				new Audio('../sounds/SE_T06_ren7.wav')
 			],
 			"nuisanceSend": [
 				null,

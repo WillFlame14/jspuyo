@@ -25,7 +25,6 @@ window.Game = class Game {
 
 		this.socket = socket;
 		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.settings.volume);
-		console.log(this.audioPlayer);
 		if(this.boardDrawerId !== 1) {
 			this.audioPlayer.disable();
 		}
@@ -242,8 +241,8 @@ window.Game = class Game {
 			}
 
 			// Play nuisance sfx
-			if(this.resolvingState.chain > 6) {
-				this.audioPlayer.playAndEmitSfx('nuisanceSend', 6);
+			if(this.resolvingState.chain > 5) {
+				this.audioPlayer.playAndEmitSfx('nuisanceSend', 5);
 			}
 			else if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);

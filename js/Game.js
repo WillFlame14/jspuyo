@@ -127,14 +127,7 @@ window.Game = class Game {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
-						this.preNuisanceHeights = [];
-						for(let i = 0; i < this.settings.cols; i++) {
-							for(let j = 0; this.preNuisanceHeights[i] == null; j++) {
-								if (this.board.boardState[i][j] == null) {
-									this.preNuisanceHeights[i] = j;
-								}
-							}
-						}
+						this.preNuisanceHeights = this.board.boardState.map(col => col.length);
 						const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
 						if(droppedNuisance > 0) {
 							if(droppedNuisance >= this.settings.cols * 2) {
@@ -294,14 +287,7 @@ window.Game = class Game {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
-				this.preNuisanceHeights = [];
-				for(let i = 0; i < this.settings.cols; i++) {
-					for(let j = 0; this.preNuisanceHeights[i] == null; j++) {
-						if (this.board.boardState[i][j] == null) {
-							this.preNuisanceHeights[i] = j;
-						}
-					}
-				}
+				this.preNuisanceHeights = this.board.boardState.map(col => col.length);
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
 				if(droppedNuisance > 0) {
 					if(droppedNuisance >= this.settings.cols * 2) {

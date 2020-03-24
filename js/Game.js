@@ -294,15 +294,26 @@ window.Game = class Game {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
+				this.preNuisanceHeights = [];
+				for(let i = 0; i < this.settings.cols; i++) {
+					for(let j = 0; this.preNuisanceHeights[i] == null; j++) {
+						if (this.board.boardState[i][j] == null) {
+							this.preNuisanceHeights[i] = j;
+						}
+					}
+				}
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance >= this.settings.cols * 2) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				if(droppedNuisance > 0) {
+					if(droppedNuisance >= this.settings.cols * 2) {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+					}
+					else {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+					}
+					this.nuisanceDroppingFrame = 1;
+					this.activeNuisance -= droppedNuisance;
+					this.totalNuisance -= droppedNuisance;
 				}
-				else if(droppedNuisance > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-				}
-				this.activeNuisance -= droppedNuisance;
-				this.totalNuisance -= droppedNuisance;
 
 				const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
 					nuisance += this.visibleNuisance[opp];

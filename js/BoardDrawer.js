@@ -132,9 +132,13 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         for (let i = 0; i < window.COLOUR_LIST.length; i++) {
             this.colourArray.push(window.PUYO_COLOURS[window.COLOUR_LIST[i]]);
         }
-        this.outSnapFactor = 100;
-        this.outRotFactor = 100;
+        this.nuisanceCascadeFPR = [];
     }
+
+    drawPopping(colour, size, frame, totalFrames) {
+        this.drawPuyo(colour, size * (1 - frame / totalFrames));
+    }
+
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
         const {boardState, currentDrop} = currentBoardState;
@@ -246,8 +250,58 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         }
         ctx.restore();
     }
-    drawPopping(colour, size, frame, totalFrames) {
-        this.drawPuyo(colour, size * (1 - frame / totalFrames));
+
+    dropNuisance(boardState, preNuisanceHeights, frame, maxFrames) {
+        if (frame === 1) {
+            this.nuisanceCascaseFPR = [];
+            maxFrames = 0;
+            for (let i = 0; i < this.settings.cols; i++) {
+                this.nuisanceCascadeFPR[i] =
+                    this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
+                    Math.random() * this.settings.varNuisanceCascadeFPR * 2;
+                const colMaxFrames = (this.settings.nuisanceSpawnRow - preNuisanceHeights[i]) * this.nuisanceCascadeFPR[i];
+                if (colMaxFrames > maxFrames) {
+                    maxFrames = colMaxFrames;
+                }
+            }
+            maxFrames += this.settings.nuisanceLandFrames;
+        }
+
+        const {width, height} = this.board;
+        const {cols, rows} = this.settings;
+        const unitW = width / cols;
+        const unitH = height / rows;
+        let ctx = this.ctx;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // Save a canvas with the origin at the top left (every save coupled with a restore)
+        ctx.save();
+
+        // Move the canvas with the origin at the middle of the bottom left square
+        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
+
+        for (let i = 0; i < cols; i++) {
+            for (let j = 0; j < preNuisanceHeights[i]; j++) {
+                ctx.save();
+                ctx.translate(unitW * i, - unitH * j);
+                this.drawPuyo(boardState[i][j], unitW);
+                ctx.restore();
+            }
+            const startingRowsAbove = this.settings.nuisanceSpawnRow - preNuisanceHeights[i];
+            const rowsDropped = Math.min(frame / this.nuisanceCascadeFPR[i], startingRowsAbove);
+            for (let j = preNuisanceHeights[i]; boardState[i][j] != null; j++) {
+                ctx.save();
+                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j - preNuisanceHeights[i]));
+                this.drawPuyo(boardState[i][j], unitW);
+                ctx.restore();
+            }
+        }
+
+        // Restore origin to top left
+        ctx.restore();
+
+        return maxFrames;
     }
 
     drawFromHash(hash) {
@@ -328,19 +382,18 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         hash += this.colourArray.indexOf(currentDrop.colours[0]) + ","; // 1: colour 1
         hash += this.colourArray.indexOf(currentDrop.colours[1]) + ","; // 2: colour 2
         hash += currentDrop.arle.x + ","; // 3: arle x
-        hash += Math.round(currentDrop.arle.y * this.outSnapFactor) / this.outSnapFactor + ","; // 4: arle y (rounded)
+        hash += Math.round(currentDrop.arle.y * this.settings.hashSnapFactor) / this.settings.hashSnapFactor + ","; // 4: arle y (rounded)
         // 5 and 6: schezo x and rounded y
         if (currentDrop.schezo.y == null) {
             hash += "n,n,"
         } else {
             hash += currentDrop.schezo.x + ",";
-            hash += Math.round(currentDrop.schezo.y * this.outSnapFactor) / this.outSnapFactor + ",";
+            hash += Math.round(currentDrop.schezo.y * this.settings.hashSnapFactor) / this.settings.hashSnapFactor + ",";
         }
-        hash += Math.round(currentDrop.standardAngle / Math.PI / 2 * this.outRotFactor) / this.outRotFactor + ","; // 7: angle in rev rounded to nearest gradian
+        hash += Math.round(currentDrop.standardAngle / Math.PI / 2 * this.settings.hashRotFactor) / this.settings.hashRotFactor + ","; // 7: angle in rev rounded to nearest gradian
         hash += currentDrop.rotating; // 8: rotating
         return hash;
     }
-
     hashForResolving(boardState, resolvingState) {
         let hash = "1:";
         for (let i = 0; i < boardState.length; i++) {

@@ -25,6 +25,9 @@ window.Game = class Game {
 
 		this.socket = socket;
 		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.settings.volume);
+		if(this.boardDrawerId !== 1) {
+			this.audioPlayer.disable();
+		}
 
 		this.socket.on('sendNuisance', (gameId, nuisance) => {
 			if(!this.opponentIds.includes(gameId)) {
@@ -118,7 +121,7 @@ window.Game = class Game {
 					this.lockDrop();
 					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
 						const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-						if(droppedNuisance === this.settings.cols * 2) {
+						if(droppedNuisance >= this.settings.cols * 2) {
 							this.audioPlayer.playAndEmitSfx('nuisanceFall2');
 						}
 						else if(droppedNuisance > 0) {
@@ -238,8 +241,8 @@ window.Game = class Game {
 			}
 
 			// Play nuisance sfx
-			if(this.resolvingState.chain > 6) {
-				this.audioPlayer.playAndEmitSfx('nuisanceSend', 6);
+			if(this.resolvingState.chain > 5) {
+				this.audioPlayer.playAndEmitSfx('nuisanceSend', 5);
 			}
 			else if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);
@@ -254,7 +257,7 @@ window.Game = class Game {
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance === this.settings.cols * 2) {
+				if(droppedNuisance >= this.settings.cols * 2) {
 					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
 				}
 				else if(droppedNuisance > 0) {

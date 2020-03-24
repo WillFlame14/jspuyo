@@ -49,7 +49,7 @@
 		cpuGames.forEach(cpuGame => cpuGame.game.step());
 		if(finalMessage !== null) {
 			window.cancelAnimationFrame(mainFrame);
-			alert(finalMessage);
+			console.log(finalMessage);
 		}
 		const endResult = game.end();
 		if(endResult !== null) {

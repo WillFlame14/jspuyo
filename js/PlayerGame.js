@@ -1,14 +1,15 @@
 'use strict';
 
 window.PlayerGame = class PlayerGame extends window.Game {
-	constructor(gamemode, gameId, opponentIds, socket, settings) {
-		super(gamemode, gameId, opponentIds, socket, 1, settings);
+	constructor(gamemode, gameId, opponentIds, socket, dropGenerator, settings) {
+		super(gamemode, gameId, opponentIds, socket, 1, dropGenerator, settings);
 
 		// Accepts inputs from player
 		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
+		console.log("hi");
 
 		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
 		let opponentCounter = 1;

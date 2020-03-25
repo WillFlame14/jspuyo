@@ -1,7 +1,7 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, boardDrawerId, settings = new window.Settings()) {
+	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, boardDrawerId, dropGenerator, settings = new window.Settings()) {
 		this.board = new window.Board(settings);
 		this.gamemode = gamemode;
 		this.gameId = gameId;
@@ -11,6 +11,12 @@ window.Game = class Game {
 		this.softDrops = 0;				// Frames in which the soft drop button was held
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
+
+		this.dropGenerator = dropGenerator;
+		const req = this.dropGenerator.requestDrops(0).slice();
+		console.log(req);
+		this.dropQueue = req;
+		this.dropQueueIndex = 1;
 
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
 		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
@@ -64,7 +70,7 @@ window.Game = class Game {
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLockDelay = 0;
-		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+		this.currentDrop = this.dropQueue.shift();
 	}
 
 	/**
@@ -107,9 +113,13 @@ window.Game = class Game {
 		}
 		// Not resolving a chain; game has control
 		else {
-			// Create a new drop if one does not exist
+			// Create a new drop if one does not exist and game has not ended
 			if(this.currentDrop.shape === null && this.endResult === null) {
-				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+				if(this.dropQueue.length <= 3) {
+					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
+					this.dropQueueIndex++;
+				}
+				this.currentDrop = this.dropQueue.shift();
 			}
 
 			this.getInputs();

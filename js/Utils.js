@@ -112,6 +112,29 @@ window.AudioPlayer = class AudioPlayer {
 	}
 }
 
+window.DropGenerator = class DropGenerator {
+	constructor(gamemode, settings) {
+		this.gamemode = gamemode;
+		this.settings = settings;
+		this.drops = {};
+		this.drops[0] = [];
+		for(let i = 0; i < 20; i++) {
+			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+		}
+		console.log(this.drops[0][0].colours);
+	}
+
+	requestDrops(index) {
+		if(this.drops[index + 1] === undefined) {
+			this.drops[index + 1] = [];
+			for(let i = 0; i < 20; i++) {
+				this.drops[index + 1].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+			}
+		}
+		return this.drops[index];
+	}
+}
+
 /**
  * Returns a random puyo colour, given the size of the colour pool.
  */

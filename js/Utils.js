@@ -118,7 +118,23 @@ window.DropGenerator = class DropGenerator {
 		this.settings = settings;
 		this.drops = [];
 		this.drops[0] = [];
-		for(let i = 0; i < 40; i++) {
+
+		// Generate the 3 colours that will be used for the first 3 drops
+		const firstColours = [];
+		while(firstColours.length < 3) {
+			let colour = window.getRandomColour();
+			if(!firstColours.includes(colour)) {
+				firstColours.push(colour);
+			}
+		}
+
+		// Only use the previously determined 3 colours for the first 3 drops
+		for(let i = 0; i < 3; i++) {
+			const colours = [firstColours[Math.floor(Math.random() * 3)], firstColours[Math.floor(Math.random() * 3)]];
+			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings, colours));
+		}
+
+		for(let i = 3; i < 40; i++) {
 			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings));
 		}
 	}

@@ -206,7 +206,10 @@ window.Board = class Board {
 
 			const unusedColumns = [];
 			for(let i = 0; i < this.settings.cols; i++) {
-				unusedColumns.push(i);
+				// Do not place nuisance on columns that are too tall
+				if(this.boardState[i].length < 13) {
+					unusedColumns.push(i);
+				}
 			}
 
 			// Randomly drop the remaining nuisance

@@ -4,13 +4,13 @@ window.COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
 						'Blue': 'rgba(20, 20, 200, 0.9)',
-						'Yellow': 'rgba(150, 150, 20, 0.9)',
 						'Purple': 'rgba(150, 20, 150, 0.9)',
+						'Yellow': 'rgba(150, 150, 20, 0.9)',
 						'Gray': 'rgba(100, 100, 100, 0.9)' };
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.1) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, numColours = 4, volume = 0.1) {
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;			// Milliseconds of time before a drop locks into place
 		this.rows = rows;					// Number of rows in the game board
@@ -18,7 +18,8 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
-		this.volume = volume;
+		this.numColours = numColours;		// Number of unique puyo colours being used
+		this.volume = volume;				// Volume (varies between 0 and 1)
 
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation
@@ -123,16 +124,70 @@ window.DropGenerator = class DropGenerator {
 		this.gamemode = gamemode;
 		this.settings = settings;
 		this.drops = [];
+		this.colourList = Object.keys(window.PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => window.PUYO_COLOURS[colour_name]);
+		this.colourBuckets = {};
 		this.drops[0] = [];
-		for(let i = 0; i < 40; i++) {
-			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+
+		// Set up colourBuckets for the first batch of 128
+		this.colourList.forEach(colour => {
+			// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
+			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
+		});
+
+		// Generate the 3 colours that will be used for the first 3 drops
+		const firstColours = [];
+		while(firstColours.length < 3) {
+			let colour = window.getRandomColour(this.settings.numColours);
+			if(!firstColours.includes(colour)) {
+				firstColours.push(colour);
+			}
+		}
+
+		// Only use the previously determined 3 colours for the first 3 drops
+		for(let i = 0; i < 3; i++) {
+			const colours = [
+				firstColours[Math.floor(Math.random() * 3)],
+				firstColours[Math.floor(Math.random() * 3)]
+			];
+			this.colourBuckets[colours[0]]--;
+			this.colourBuckets[colours[1]]--;
+			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings, colours));
+		}
+
+		for(let i = 3; i < 128; i++) {
+			// Filter out colours that have been completely used up
+			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
+			const colours = [
+				tempColourList[Math.floor(Math.random() * tempColourList.length)],
+				tempColourList[Math.floor(Math.random() * tempColourList.length)]
+			];
+			this.colourBuckets[colours[0]]--;
+			this.colourBuckets[colours[1]]--;
+
+			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings, colours));
 		}
 	}
 
 	requestDrops(index) {
 		if(this.drops[index + 1] === undefined) {
 			this.drops[index + 1] = [];
-			for(let i = 0; i < 40; i++) {
+
+			// Reset colourBuckets for the next batch of 128
+			this.colourList.forEach(colour => {
+				// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
+				this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
+			});
+
+			for(let i = 0; i < 128; i++) {
+				// Filter out colours that have been completely used up
+				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
+				const colours = [
+					colourList[Math.floor(Math.random() * colourList.length)],
+					colourList[Math.floor(Math.random() * colourList.length)]
+				];
+				this.colourBuckets[colours[0]]--;
+				this.colourBuckets[colours[1]]--;
+
 				this.drops[index + 1].push(window.Drop.getNewDrop(this.gamemode, this.settings));
 			}
 		}
@@ -143,10 +198,10 @@ window.DropGenerator = class DropGenerator {
 /**
  * Returns a random puyo colour, given the size of the colour pool.
  */
-window.getRandomColour = function (numColours = 4) {
+window.getRandomColour = function (numColours) {
 	const colours = window.COLOUR_LIST.slice(0, numColours);
 
-	return window.PUYO_COLOURS[colours[Math.floor(Math.random() * 4)]];
+	return window.PUYO_COLOURS[colours[Math.floor(Math.random() * numColours)]];
 }
 
 /**

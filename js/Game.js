@@ -223,12 +223,12 @@ window.Game = class Game {
 	dropNuisance() {
 		const boardState = this.board.boardState;
 		let hash;
-		if (this.nuisanceDroppingFrame === 1) {
+		if (this.nuisanceDroppingFrame == 1) {
 			this.nuisanceDroppingMaxFrames = this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, 1);
-			// hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, 1);
+			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, 1);
 		} else {
 			this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
-			// hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
+			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
 		}
 		if (this.nuisanceDroppingFrame >= this.nuisanceDroppingMaxFrames) {
 			this.nuisanceDroppingFrame = null;

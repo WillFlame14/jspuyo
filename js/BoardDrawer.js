@@ -252,7 +252,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
     }
 
     dropNuisance(boardState, preNuisanceHeights, frame, maxFrames) {
-        if (frame === 1) {
+        if (frame == 1) {
             this.nuisanceCascaseFPR = [];
             maxFrames = 0;
             for (let i = 0; i < this.settings.cols; i++) {
@@ -300,7 +300,6 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
 
         // Restore origin to top left
         ctx.restore();
-
         return maxFrames;
     }
 
@@ -327,8 +326,8 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     schezo,
                     dropArray[7] * 2 * Math.PI,
                     dropArray[8]);
-                this.updateBoard({ boardState, currentDrop });
-            } break;
+                return this.updateBoard({ boardState, currentDrop });
+            }
             case "1": {
                 let boardState = [];
                 let boardStateCols = splitHash[1].split(",");
@@ -352,7 +351,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     nuisanceLocs.push({ col: nuisanceLocCols[i], row: nuisanceLocRows[i] });
                 }
 
-                this.resolveChains(boardState,
+                return this.resolveChains(boardState,
                     {
                         chain: resolvingStateArray[0],
                         puyoLocs,
@@ -361,9 +360,23 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                         totalFrames: resolvingStateArray[6]
                     }
                 );
-            } break;
+            }
+            case "2": {
+                let boardState = [];
+                let boardStateCols = splitHash[1].split(",");
+                for (let i = 0; i < this.settings.cols; i++) {
+                    boardState.push([]);
+                    for (let j = 0; j < boardStateCols[i].length; j++) {
+                        boardState[i].push(this.colourArray[boardStateCols[i][j]]);
+                    }
+                }
+                let preNuisanceHeights = splitHash[2].split(",");
+                preNuisanceHeights = preNuisanceHeights.map(num => Number(num));
+                let frame = splitHash[3];
+                let maxFrames = splitHash[4] == "n" ? null : splitHash[4];
+                return this.dropNuisance(boardState, preNuisanceHeights, frame, maxFrames);
+            }
             default:
-            break;
         }
     }
 
@@ -426,6 +439,21 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         hash += ",";
         hash += resolvingState.currentFrame + ","; // 5: current frame
         hash += resolvingState.totalFrames; // 6: total frames
+        return hash;
+    }
+
+    hashForNuisance(boardState, preNuisanceHeights, frame, maxFrames) {
+        let hash = "2:";
+        for (let i = 0; i < boardState.length; i++) {
+            for (let j = 0; j < boardState[i].length; j++) {
+                hash += this.colourArray.indexOf(boardState[i][j]);
+            }
+            hash += ",";
+        }
+        hash += ":" + preNuisanceHeights.toString();
+        hash += ":" + frame;
+        hash += ":";
+        hash += maxFrames == null ? "n" : maxFrames;
         return hash;
     }
 }

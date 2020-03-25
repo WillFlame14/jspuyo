@@ -101,7 +101,7 @@ window.Board = class Board {
 		 */
 		const notVisited = function(location) {
 			const { col, row } = location;
-			return visited.filter(loc => loc.col == col && loc.row == row).length === 0;
+			return visited.filter(loc => loc.col === col && loc.row === row).length === 0;
 		}
 
 		// Iterate through the entire board to find all starting points
@@ -121,11 +121,10 @@ window.Board = class Board {
 		}
 
 		// Delete all the puyos chained in this recursion from the board state
-		board.deletePuyos(current_chain_puyos);
+		board.deletePuyos(current_chain_puyos.concat(board.findNuisancePopped(current_chain_puyos)));
 
 		// Recurse with the new board state and list of chained puyos
 		if(chained) {
-			board.deletePuyos(board.findNuisancePopped(current_chain_puyos));
 			puyos_chained.push(current_chain_puyos);
 			return this.resolveChains(puyos_chained, board);
 		}
@@ -166,7 +165,6 @@ window.Board = class Board {
 						continue;
 					}
 					if(this.boardState[loc.col + i][loc.row + j] === window.PUYO_COLOURS['Gray']) {
-						// Set the nuisance puyo to be removed as null
 						poppedNuisance.push({ col: loc.col + i, row: loc.row + j });
 					}
 				}

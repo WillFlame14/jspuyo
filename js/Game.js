@@ -200,6 +200,18 @@ window.Game = class Game {
 			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
+			// If there are no chains to resolve, drop nuisance before returning control to the board
+			if(this.resolvingChains.length === 0) {
+				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
+				if(droppedNuisance >= this.settings.cols * 2) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				}
+				else if(droppedNuisance > 0) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+				this.activeNuisance -= droppedNuisance;
+				this.totalNuisance -= droppedNuisance;
+			}
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;
 			currentDrop.shape = null;

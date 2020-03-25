@@ -11,7 +11,6 @@ window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
 	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.1) {
-<<<<<<< HEAD
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;			// Milliseconds of time before a drop locks into place
 		this.rows = rows;					// Number of rows in the game board
@@ -19,15 +18,6 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
-=======
-		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
-		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
-		this.rows = rows;				// Number of rows in the game board
-		this.cols = cols;				// Number of columns in the game board
-		this.softDrop = softDrop;		// Additional vertical distance the drop falls when soft dropping
-		this.das = das;					// Milliseconds before holding a key repeatedly triggers the event
-		this.arr = arr;					// Milliseconds between event triggers after the DAS timer is complete
->>>>>>> 50efb088be47faafd5dc0b21ea8af26f18774e35
 		this.volume = volume;
 
 		// Constants that cannot be modified

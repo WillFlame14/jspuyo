@@ -9,7 +9,6 @@ window.CpuGame = class CpuGame extends window.Game {
 		this.currentMove = null;		// The current optimal move
 		this.rotations = 0;				// Rotations performed on the current drop (between -2 and 2)
 		this.lastArle = null;			// The location of the arle in the last frame (used to detect whether a drop is stuck)
-		console.log('bye');
 	}
 
 	/**
@@ -50,7 +49,7 @@ window.CpuGame = class CpuGame extends window.Game {
 
 		// If no action needs to be taken or the drop is stuck, soft drop
 		if(!applied || (this.lastArle !== null && JSON.stringify(this.currentDrop.arle) === JSON.stringify(this.lastArle))) {
-			//this.move('Down');
+			this.move('Down');
 		}
 
 		this.lastArle = Object.assign(this.currentDrop.arle);

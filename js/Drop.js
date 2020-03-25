@@ -55,9 +55,19 @@ window.Drop = class Drop {
 
 	/**
 	 * Returns a new, identical Drop.
+	 *
+	 * NOTE: The settings object only uses a shallow copy.
+	 * However, it should not be able to be modified during a game.
 	 */
 	copy() {
-		return new Drop(this.shape, this.colours, this.settings, this.arle, this.schezo, this.standardAngle, this.rotating);
+		return new Drop(
+			this.shape,
+			this.colours.slice(),
+			this.settings,
+			window.objectCopy(this.arle),
+			window.objectCopy(this.schezo),
+			this.standardAngle,
+			this.rotating);
 	}
 
 	/**

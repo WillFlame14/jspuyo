@@ -10,7 +10,7 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.2) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.1) {
 		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
 		this.rows = rows;				// Number of rows in the game board
@@ -116,18 +116,17 @@ window.DropGenerator = class DropGenerator {
 	constructor(gamemode, settings) {
 		this.gamemode = gamemode;
 		this.settings = settings;
-		this.drops = {};
+		this.drops = [];
 		this.drops[0] = [];
-		for(let i = 0; i < 20; i++) {
+		for(let i = 0; i < 40; i++) {
 			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings));
 		}
-		console.log(this.drops[0][0].colours);
 	}
 
 	requestDrops(index) {
 		if(this.drops[index + 1] === undefined) {
 			this.drops[index + 1] = [];
-			for(let i = 0; i < 20; i++) {
+			for(let i = 0; i < 40; i++) {
 				this.drops[index + 1].push(window.Drop.getNewDrop(this.gamemode, this.settings));
 			}
 		}
@@ -230,4 +229,12 @@ window.calculateNuisance = function(chain_score, pointsPerNuisance, leftoverNuis
 	const nuisanceSent = Math.floor(nuisancePoints);
 
 	return { nuisanceSent, leftoverNuisance: nuisancePoints - nuisanceSent };
+}
+
+/**
+ * Deep copies an object where all values are primitype types.
+ * Call this function recursively to deep copy more nested objects.
+ */
+window.objectCopy = function(obj) {
+	return JSON.parse(JSON.stringify(obj));
 }

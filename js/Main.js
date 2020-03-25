@@ -40,7 +40,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, dropGenerator, new window.TestCpu());
+			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, dropGenerator, new window.TestCpu(), settings);
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});

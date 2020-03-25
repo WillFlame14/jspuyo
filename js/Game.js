@@ -13,9 +13,7 @@ window.Game = class Game {
 		this.currentScore = 0;			// Current score (completely accurate)
 
 		this.dropGenerator = dropGenerator;
-		const req = this.dropGenerator.requestDrops(0).slice();
-		console.log(req);
-		this.dropQueue = req;
+		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
 
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)

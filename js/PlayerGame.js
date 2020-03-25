@@ -9,7 +9,6 @@ window.PlayerGame = class PlayerGame extends window.Game {
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
-		console.log("hi");
 
 		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
 		let opponentCounter = 1;

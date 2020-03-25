@@ -229,15 +229,19 @@ window.Game = class Game {
 
 			// If there are no chains to resolve, drop nuisance before returning control to the board
 			if(this.resolvingChains.length === 0) {
+				this.preNuisanceHeights = this.board.boardState.map(col => col.length);
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance >= this.settings.cols * 2) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				if(droppedNuisance > 0) {
+					if(droppedNuisance >= this.settings.cols * 2) {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+					}
+					else {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+					}
+					this.nuisanceDroppingFrame = 1;
+					this.activeNuisance -= droppedNuisance;
+					this.totalNuisance -= droppedNuisance;
 				}
-				else if(droppedNuisance > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-				}
-				this.activeNuisance -= droppedNuisance;
-				this.totalNuisance -= droppedNuisance;
 			}
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;

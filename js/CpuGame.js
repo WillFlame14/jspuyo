@@ -1,8 +1,8 @@
 'use strict';
 
 window.CpuGame = class CpuGame extends window.Game {
-	constructor(gamemode, gameId, opponentIds, socket, boardDrawerId, ai, settings) {
-		super(gamemode, gameId, opponentIds, socket, boardDrawerId, settings);
+	constructor(gamemode, gameId, opponentIds, socket, boardDrawerId, dropGenerator, ai, settings) {
+		super(gamemode, gameId, opponentIds, socket, boardDrawerId, dropGenerator, settings);
 
 		this.ai = ai;					// The algorithm used to determine the optimal move
 		this.ai.assignSettings(this.settings);

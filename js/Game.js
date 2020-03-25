@@ -1,7 +1,7 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, boardDrawerId, settings = new window.Settings()) {
+	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, boardDrawerId, dropGenerator, settings = new window.Settings()) {
 		this.board = new window.Board(settings);
 		this.gamemode = gamemode;
 		this.gameId = gameId;
@@ -11,6 +11,10 @@ window.Game = class Game {
 		this.softDrops = 0;				// Frames in which the soft drop button was held
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
+
+		this.dropGenerator = dropGenerator;
+		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
+		this.dropQueueIndex = 1;
 
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
 		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
@@ -67,7 +71,7 @@ window.Game = class Game {
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLockDelay = 0;
-		this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+		this.currentDrop = this.dropQueue.shift();
 	}
 
 	/**
@@ -114,9 +118,13 @@ window.Game = class Game {
 		}
 		// Not resolving a chain; game has control
 		else {
-			// Create a new drop if one does not exist
+			// Create a new drop if one does not exist and game has not ended
 			if(this.currentDrop.shape === null && this.endResult === null) {
-				this.currentDrop = window.Drop.getNewDrop(this.gamemode, this.settings);
+				if(this.dropQueue.length <= 3) {
+					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
+					this.dropQueueIndex++;
+				}
+				this.currentDrop = this.dropQueue.shift();
 			}
 
 			this.getInputs();
@@ -213,6 +221,18 @@ window.Game = class Game {
 			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
+			// If there are no chains to resolve, drop nuisance before returning control to the board
+			if(this.resolvingChains.length === 0) {
+				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
+				if(droppedNuisance >= this.settings.cols * 2) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				}
+				else if(droppedNuisance > 0) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+				this.activeNuisance -= droppedNuisance;
+				this.totalNuisance -= droppedNuisance;
+			}
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;
 			currentDrop.shape = null;

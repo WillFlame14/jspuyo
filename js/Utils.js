@@ -11,6 +11,7 @@ window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
 	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, volume = 0.1) {
+<<<<<<< HEAD
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;			// Milliseconds of time before a drop locks into place
 		this.rows = rows;					// Number of rows in the game board
@@ -18,6 +19,15 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
+=======
+		this.gravity = gravity;			// Vertical distance the drop falls every frame naturally (without soft dropping)
+		this.lockDelay = lockDelay;		// Milliseconds of time before a drop locks into place
+		this.rows = rows;				// Number of rows in the game board
+		this.cols = cols;				// Number of columns in the game board
+		this.softDrop = softDrop;		// Additional vertical distance the drop falls when soft dropping
+		this.das = das;					// Milliseconds before holding a key repeatedly triggers the event
+		this.arr = arr;					// Milliseconds between event triggers after the DAS timer is complete
+>>>>>>> 50efb088be47faafd5dc0b21ea8af26f18774e35
 		this.volume = volume;
 
 		// Constants that cannot be modified
@@ -118,6 +128,28 @@ window.AudioPlayer = class AudioPlayer {
 	}
 }
 
+window.DropGenerator = class DropGenerator {
+	constructor(gamemode, settings) {
+		this.gamemode = gamemode;
+		this.settings = settings;
+		this.drops = [];
+		this.drops[0] = [];
+		for(let i = 0; i < 40; i++) {
+			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+		}
+	}
+
+	requestDrops(index) {
+		if(this.drops[index + 1] === undefined) {
+			this.drops[index + 1] = [];
+			for(let i = 0; i < 40; i++) {
+				this.drops[index + 1].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+			}
+		}
+		return this.drops[index];
+	}
+}
+
 /**
  * Returns a random puyo colour, given the size of the colour pool.
  */
@@ -213,4 +245,12 @@ window.calculateNuisance = function(chain_score, pointsPerNuisance, leftoverNuis
 	const nuisanceSent = Math.floor(nuisancePoints);
 
 	return { nuisanceSent, leftoverNuisance: nuisancePoints - nuisanceSent };
+}
+
+/**
+ * Deep copies an object where all values are primitype types.
+ * Call this function recursively to deep copy more nested objects.
+ */
+window.objectCopy = function(obj) {
+	return JSON.parse(JSON.stringify(obj));
 }

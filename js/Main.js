@@ -17,11 +17,17 @@
 
 	socket.on('start', opponentIds => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));
+
+		// Temporary fixed settings
+		const gamemode = 'Tsu';
+		const settings = new window.Settings();
+		const dropGenerator = new window.DropGenerator(gamemode, settings);
+
 		if(noPlayer) {
-			game = new window.CpuGame('Tsu', gameId, opponentIds, socket, 1, new window.TestCpu());
+			game = new window.CpuGame(gamemode, gameId, opponentIds, socket, 1, dropGenerator, new window.TestCpu(), settings);
 		}
 		else {
-			game = new window.PlayerGame('Tsu', gameId, opponentIds, socket);
+			game = new window.PlayerGame(gamemode, gameId, opponentIds, socket, dropGenerator, settings);
 		}
 
 		let boardDrawerCounter = 2;
@@ -34,7 +40,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu());
+			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, dropGenerator, new window.TestCpu(), settings);
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});

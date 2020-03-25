@@ -217,10 +217,16 @@ window.Game = class Game {
 		this.boardDrawer.updateBoard(currentBoardState);
 
 		if (schezoDropped && arleDropped) {
-			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
-			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
+			// Do not place any puyos above row 13
+			if(boardState[currentDrop.arle.x].length < 13) {
+				boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
+			}
+			if(boardState[currentDrop.schezo.x].length < 13) {
+				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
+			}
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
+
 			// If there are no chains to resolve, drop nuisance before returning control to the board
 			if(this.resolvingChains.length === 0) {
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
@@ -453,6 +459,11 @@ window.Game = class Game {
 			else {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
+			}
+
+			// Remove any puyos above row 13
+			if(boardState[currentDrop.schezo.x].length > 13) {
+				boardState[currentDrop.schezo.x] = boardState[currentDrop.schezo.x].slice(0, 13);
 			}
 			this.resolvingChains = this.board.resolveChains();
 			currentDrop.schezo.x = null;

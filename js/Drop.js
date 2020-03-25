@@ -35,8 +35,8 @@ window.Drop = class Drop {
 
 		// Returns an array of colours based on the shape of the drop
 		const getPuyosFromShape = function (shape) {
-			const first_col = (colours && colours[0]) || window.getRandomColour();
-			const second_col = (colours && colours[1]) || window.getRandomColour();
+			const first_col = (colours && colours[0]) || window.getRandomColour(settings.numColours);
+			const second_col = (colours && colours[1]) || window.getRandomColour(settings.numColours);
 			switch(shape) {
 				case 'I':
 					return [first_col, second_col];

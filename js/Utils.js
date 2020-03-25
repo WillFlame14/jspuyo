@@ -18,8 +18,8 @@ window.Settings = class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
-    this.numColours = numColours;
-		this.volume = volume;
+		this.numColours = numColours;		// Number of unique puyo colours being used
+		this.volume = volume;				// Volume (varies between 0 and 1)
 
 		// Constants that cannot be modified
 		this.frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation

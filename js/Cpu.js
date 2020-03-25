@@ -79,6 +79,12 @@ window.TestCpu = class TestCpu extends window.Cpu {
 		let maxChain = 0;
 		let col = Math.floor(Math.random() * this.settings.cols);
 		let rotations = 0;
+
+		// Deter against random placements in column 2 (when 0-indexed)
+		while(col === 2) {
+			col = Math.floor(Math.random() * this.settings.cols);
+		}
+
 		for(let currCol = 0; currCol < this.settings.cols - 1; currCol++) {
 			const board = new window.Board(this.settings, boardState);
 			board.boardState[currCol].push(currentDrop.colours[0]);

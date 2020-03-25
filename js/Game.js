@@ -23,6 +23,9 @@ window.Game = class Game {
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+		this.nuisanceDroppingFrame;
+		this.nuisanceDroppingMaxFrames;
+		this.preNuisanceHeights = [];
 
 		this.boardDrawerId = boardDrawerId;
 		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
@@ -75,7 +78,7 @@ window.Game = class Game {
 	 * Determines if the Game should be ended.
 	 */
 	end() {
-		if(this.board.checkGameOver(this.gamemode) && this.resolvingChains.length === 0 && this.endResult === null) {
+		if(this.board.checkGameOver(this.gamemode) && this.resolvingChains.length === 0 && this.nuisanceDroppingFrame == null && this.endResult === null) {
 			this.endResult = 'Loss';
 		}
 		if(this.endResult !== null && this.boardDrawerId === 1) {
@@ -105,6 +108,10 @@ window.Game = class Game {
 		if (this.currentDrop.schezo.y != null) {
 			currentBoardHash = this.dropIsolatedPuyo();
 		}
+		// Currently dropping nuisance
+		else if (this.nuisanceDroppingFrame != null) {
+			currentBoardHash = this.dropNuisance();
+		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
 			currentBoardHash = this.resolveChains();
@@ -128,15 +135,19 @@ window.Game = class Game {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
+						this.preNuisanceHeights = this.board.boardState.map(col => col.length);
 						const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-						if(droppedNuisance >= this.settings.cols * 2) {
-							this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+						if(droppedNuisance > 0) {
+							if(droppedNuisance >= this.settings.cols * 2) {
+								this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+							}
+							else {
+								this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+							}
+							this.nuisanceDroppingFrame = 1;
+							this.activeNuisance -= droppedNuisance;
+							this.totalNuisance -= droppedNuisance;
 						}
-						else if(droppedNuisance > 0) {
-							this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-						}
-						this.activeNuisance -= droppedNuisance;
-						this.totalNuisance -= droppedNuisance;
 					}
 					this.locking = 'not';
 					this.forceLockDelay = 0;
@@ -161,11 +172,13 @@ window.Game = class Game {
 				this.currentDrop.affectRotation();
 			}
 
-			// Update the board
-			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-			this.boardDrawer.updateBoard(currentBoardState);
-			this.updateScore();
+			if (this.nuisanceDroppingFrame == null) {
+				// Update the board
+				const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+				currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+				this.boardDrawer.updateBoard(currentBoardState);
+				this.updateScore();
+			}
 		}
 
 		// Emit board state to all opponents
@@ -233,6 +246,24 @@ window.Game = class Game {
 		return currentBoardHash;
 	}
 
+	dropNuisance() {
+		const boardState = this.board.boardState;
+		let hash;
+		if (this.nuisanceDroppingFrame == 1) {
+			this.nuisanceDroppingMaxFrames = this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, 1);
+			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, 1);
+		} else {
+			this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
+			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
+		}
+		if (this.nuisanceDroppingFrame >= this.nuisanceDroppingMaxFrames) {
+			this.nuisanceDroppingFrame = null;
+		} else {
+			this.nuisanceDroppingFrame++;
+		}
+		return hash;
+	}
+
 	/**
 	 * Called every frame while chaining is occurring. (Prevents inputs.)
 	 * Returns the current board hash.
@@ -282,15 +313,19 @@ window.Game = class Game {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
+				this.preNuisanceHeights = this.board.boardState.map(col => col.length);
 				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance >= this.settings.cols * 2) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				if(droppedNuisance > 0) {
+					if(droppedNuisance >= this.settings.cols * 2) {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+					}
+					else {
+						this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+					}
+					this.nuisanceDroppingFrame = 1;
+					this.activeNuisance -= droppedNuisance;
+					this.totalNuisance -= droppedNuisance;
 				}
-				else if(droppedNuisance > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-				}
-				this.activeNuisance -= droppedNuisance;
-				this.totalNuisance -= droppedNuisance;
 
 				const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
 					nuisance += this.visibleNuisance[opp];

@@ -268,7 +268,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
         }
 
-        return maxFrames + this.settings.nuisanceLandFrames;
+        return Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
     }
 
     dropNuisance(boardState, nuisanceState) {

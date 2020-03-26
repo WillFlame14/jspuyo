@@ -243,6 +243,21 @@ window.Game = class Game {
 			this.nuisanceState.currentFrame++;
 		}
 
+		// Once done falling, play SFX
+		if(this.nuisanceState.currentFrame === this.nuisanceState.totalFrames - this.settings.nuisanceLandFrames) {
+			if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
+				this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+			}
+			else {
+				if(this.nuisanceState.nuisanceAmount > this.settings.cols) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+				if(this.nuisanceState.nuisanceAmount > 0) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+			}
+		}
+
 		// Finished dropping nuisance
 		if (this.nuisanceState.currentFrame >= this.nuisanceState.totalFrames) {
 			this.activeNuisance -= this.nuisanceState.nuisanceAmount;
@@ -251,14 +266,6 @@ window.Game = class Game {
 			for(let i = 0; i < this.settings.cols; i++) {
 				this.board.boardState[i] = this.board.boardState[i].concat(this.nuisanceState.nuisanceArray[i]);
 			}
-
-			if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
-				this.audioPlayer.playAndEmitSfx('nuisanceFall2');
-			}
-			else if(this.nuisanceState.nuisanceAmount > 0) {
-				this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-			}
-
 			// Reset the nuisance state
 			this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
 		}
@@ -286,11 +293,8 @@ window.Game = class Game {
 		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
 		this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
-		// Check if the chain is done resolving
-		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
-			// Update the score displayed
-			this.updateScore();
-
+		// Once done popping, play SFX
+		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play chain sfx
 			if(this.resolvingState.chain > 7) {
 				this.audioPlayer.playAndEmitSfx('chain', 7);
@@ -306,6 +310,12 @@ window.Game = class Game {
 			else if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);
 			}
+		}
+
+		// Check if the chain is done resolving
+		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
+			// Update the score displayed
+			this.updateScore();
 
 			// Remove the chained puyos and popped nuisance puyos
 			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
@@ -586,7 +596,7 @@ window.Game = class Game {
 				this.softDrops += 1;
 			}
 			else {
-				this.forceLockDelay += 20;
+				this.forceLockDelay += 15;
 			}
 			const new_schezo = window.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {

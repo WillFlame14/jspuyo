@@ -232,7 +232,7 @@ window.Game = class Game {
 		// Initialize the nuisance state
 		if (this.nuisanceState.currentFrame === 0) {
 			this.nuisanceState.currentFrame = 1;
-			this.nuisanceState.totalFrames = this.boardDrawer.initNuisanceDrop(this.board.boardState, this.nuisanceState);
+			this.nuisanceState.totalFrames = this.boardDrawer.initNuisanceDrop(this.board.boardState);
 
 			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
 		}

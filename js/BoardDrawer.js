@@ -294,12 +294,11 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 this.drawPuyo(boardState[i][j], unitW);
                 ctx.restore();
             }
-            const startingRowsAbove = this.settings.nuisanceSpawnRow - nuisanceArray[i].length - boardState[i].length;
+            const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
             const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
-            for (let j = 0; j < nuisanceArray[j].length; j++) {
-                console.log('drawing falling nuisance');
+            for (let j = 0; j < nuisanceArray[i].length; j++) {
                 ctx.save();
-                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j - boardState[i].length));
+                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
                 this.drawPuyo(window.PUYO_COLOURS['Gray'], unitW);
                 ctx.restore();
             }

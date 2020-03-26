@@ -212,15 +212,22 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         if (resolvingState.currentFrame <= this.settings.popFrames) {
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows + 1; j++) {
+                    if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
+                        ctx.save();
+                        ctx.translate(unitW * i, - unitH * j);
+                        this.drawPuyo(boardState[i][j], unitW);
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+        if (resolvingState.currentFrame <= this.settings.popFrames) {
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows + 1; j++) {
                     if (this.poppingPuyos[i][j] != null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
                         this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, popFrames);
-                        ctx.restore();
-                    } else if (boardState[i][j] != null) {
-                        ctx.save();
-                        ctx.translate(unitW * i, - unitH * j);
-                        this.drawPuyo(boardState[i][j], unitW);
                         ctx.restore();
                     }
                 }
@@ -237,7 +244,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     ctx.restore();
                     numUnder++;
                 }
-                for (let j = numUnder + 1; j < rows + 1; j++) {
+                for (let j = numUnder + 1; j < boardState[i].length; j++) {
                     if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * (Math.max(j - (j - numUnder) * (resolvingState.currentFrame - popFrames) / dropFrames, numUnder)));
@@ -290,7 +297,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
             const startingRowsAbove = this.settings.nuisanceSpawnRow - preNuisanceHeights[i];
             const rowsDropped = Math.min(frame / this.nuisanceCascadeFPR[i], startingRowsAbove);
-            for (let j = preNuisanceHeights[i]; boardState[i][j] != null; j++) {
+            for (let j = preNuisanceHeights[i]; j < boardState[i].length; j++) {
                 ctx.save();
                 ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j - preNuisanceHeights[i]));
                 this.drawPuyo(boardState[i][j], unitW);

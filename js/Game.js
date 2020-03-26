@@ -232,9 +232,26 @@ window.Game = class Game {
 		// Initialize the nuisance state
 		if (this.nuisanceState.currentFrame === 0) {
 			this.nuisanceState.currentFrame = 1;
-			this.nuisanceState.totalFrames = this.boardDrawer.initNuisanceDrop(this.board.boardState);
 
-			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
+			let maxFrames = 0;
+			let nuisanceCascadeFPR = [];
+
+			for (let i = 0; i < this.settings.cols; i++) {
+				// Generate a semi-random value for "frames per row"
+				nuisanceCascadeFPR.push(
+					this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
+					Math.random() * this.settings.varNuisanceCascadeFPR * 2
+				);
+
+				// Calculate the number of frames required
+				const colMaxFrames = (this.settings.nuisanceSpawnRow - this.board.boardState[i].length) * nuisanceCascadeFPR[i];
+				if (colMaxFrames > maxFrames) {
+					maxFrames = colMaxFrames;
+				}
+			}
+			this.nuisanceState.totalFrames = Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
+			this.boardDrawer.initNuisanceDrop(nuisanceCascadeFPR);
+			hash = this.boardDrawer.hashForNuisanceInit(nuisanceCascadeFPR);
 		}
 		// Already initialized
 		else {

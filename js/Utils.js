@@ -226,27 +226,10 @@ window.getOtherPuyo = function(drop) {
 /**
  * Gets the frames needed for the animation (accounts for falling time).
  */
-window.getDropFrames = function (puyoLocs, boardState, settings) {
-	let puyoFalling = false;
-	let colPuyoLocs = [];
-	for (let i = 0; i < settings.cols; i++) {
-		colPuyoLocs = puyoLocs.filter(loc => loc.col === i).map(loc => loc.row).sort();
-		if (boardState[i][colPuyoLocs[colPuyoLocs.length - 1] + 1] != null) {
-			puyoFalling = true;
-		} else {
-			for (let j = 0; j < colPuyoLocs.length - 1; j++) {
-				if (colPuyoLocs[j + 1] - colPuyoLocs[j] !== 1) {
-					puyoFalling = true;
-				}
-			}
-		}
-	}
-
-	if (puyoFalling) {
-		return settings.dropFrames;
-	} else {
-		return 0;
-	}
+window.getDropFrames = function (poppingLocs, boardState, settings) {
+	return poppingLocs.some(loc => {
+		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.includes({ col: loc.col, row: loc.row + 1});
+	}) ? settings.dropFrames : 0;
 }
 
 /**

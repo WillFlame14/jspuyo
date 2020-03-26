@@ -19,13 +19,10 @@ window.Game = class Game {
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
 		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
 		this.activeNuisance = 0;		// Active nuisance
-		this.totalNuisance = 0;			// Sum of all queued and active nuisance
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
-		this.nuisanceDroppingFrame;
-		this.nuisanceDroppingMaxFrames;
-		this.preNuisanceHeights = [];
+		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
 
 		this.boardDrawerId = boardDrawerId;
 		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
@@ -41,7 +38,6 @@ window.Game = class Game {
 				return;
 			}
 			this.visibleNuisance[gameId] += nuisance;
-			this.totalNuisance += nuisance;
 			console.log('Received ' + nuisance + " nuisance.");
 		});
 
@@ -109,7 +105,7 @@ window.Game = class Game {
 			currentBoardHash = this.dropIsolatedPuyo();
 		}
 		// Currently dropping nuisance
-		else if (this.nuisanceDroppingFrame != null) {
+		else if (this.nuisanceState.nuisanceAmount !== 0) {
 			currentBoardHash = this.dropNuisance();
 		}
 		// Currently resolving a chain
@@ -134,20 +130,11 @@ window.Game = class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
+					// Chain was not started, drop was not split
 					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
-						this.preNuisanceHeights = this.board.boardState.map(col => col.length);
-						const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-						if(droppedNuisance > 0) {
-							if(droppedNuisance >= this.settings.cols * 2) {
-								this.audioPlayer.playAndEmitSfx('nuisanceFall2');
-							}
-							else {
-								this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-							}
-							this.nuisanceDroppingFrame = 1;
-							this.activeNuisance -= droppedNuisance;
-							this.totalNuisance -= droppedNuisance;
-						}
+						const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
+						this.nuisanceState.nuisanceAmount = nuisanceDropped;
+						this.nuisanceState.nuisanceArray = nuisanceArray;
 					}
 					this.locking = 'not';
 					this.forceLockDelay = 0;
@@ -172,17 +159,15 @@ window.Game = class Game {
 				this.currentDrop.affectRotation();
 			}
 
-			if (this.nuisanceDroppingFrame == null) {
-				// Update the board
-				const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-				currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-				this.boardDrawer.updateBoard(currentBoardState);
-				this.updateScore();
-			}
+			// Update the board
+			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+			this.boardDrawer.updateBoard(currentBoardState);
+			this.updateScore();
 		}
 
 		// Emit board state to all opponents
-		this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.totalNuisance);
+		this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
 	}
 
 	/**
@@ -226,17 +211,11 @@ window.Game = class Game {
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
 
-			// If there are no chains to resolve, drop nuisance before returning control to the board
+			// If there are no chains to resolve, drop nuisance
 			if(this.resolvingChains.length === 0) {
-				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance >= this.settings.cols * 2) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall2');
-				}
-				else if(droppedNuisance > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-				}
-				this.activeNuisance -= droppedNuisance;
-				this.totalNuisance -= droppedNuisance;
+				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
+				this.nuisanceState.nuisanceAmount = nuisanceDropped;
+				this.nuisanceState.nuisanceArray = nuisanceArray;
 			}
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;
@@ -245,21 +224,52 @@ window.Game = class Game {
 		return currentBoardHash;
 	}
 
+	/**
+	 * Called every frame while nuisance is dropping.
+	 */
 	dropNuisance() {
-		const boardState = this.board.boardState;
 		let hash;
-		if (this.nuisanceDroppingFrame == 1) {
-			this.nuisanceDroppingMaxFrames = this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, 1);
-			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, 1);
-		} else {
-			this.boardDrawer.dropNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
-			hash = this.boardDrawer.hashForNuisance(boardState, this.preNuisanceHeights, this.nuisanceDroppingFrame, this.nuisanceDroppingMaxFrames);
+		// Initialize the nuisance state
+		if (this.nuisanceState.currentFrame === 0) {
+			this.nuisanceState.currentFrame = 1;
+			this.nuisanceState.totalFrames = this.boardDrawer.initNuisanceDrop(this.board.boardState);
+
+			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
 		}
-		if (this.nuisanceDroppingFrame >= this.nuisanceDroppingMaxFrames) {
-			this.nuisanceDroppingFrame = null;
-		} else {
-			this.nuisanceDroppingFrame++;
+		// Already initialized
+		else {
+			this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
+			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
+			this.nuisanceState.currentFrame++;
 		}
+
+		// Once done falling, play SFX
+		if(this.nuisanceState.currentFrame === this.nuisanceState.totalFrames - this.settings.nuisanceLandFrames) {
+			if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
+				this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+			}
+			else {
+				if(this.nuisanceState.nuisanceAmount > this.settings.cols) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+				if(this.nuisanceState.nuisanceAmount > 0) {
+					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+				}
+			}
+		}
+
+		// Finished dropping nuisance
+		if (this.nuisanceState.currentFrame >= this.nuisanceState.totalFrames) {
+			this.activeNuisance -= this.nuisanceState.nuisanceAmount;
+
+			// Add the nuisance to the stack
+			for(let i = 0; i < this.settings.cols; i++) {
+				this.board.boardState[i] = this.board.boardState[i].concat(this.nuisanceState.nuisanceArray[i]);
+			}
+			// Reset the nuisance state
+			this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
+		}
+
 		return hash;
 	}
 
@@ -279,17 +289,12 @@ window.Game = class Game {
 			this.resolvingState.currentFrame++;
 		}
 
-		console.log(this.boardDrawerId + " " + this.resolvingState.currentFrame + " " + this.resolvingState.totalFrames);
-
 		// Update the board
 		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
 		this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
 
-		// Check if the chain is done resolving
-		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
-			// Update the score displayed
-			this.updateScore();
-
+		// Once done popping, play SFX
+		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play chain sfx
 			if(this.resolvingState.chain > 7) {
 				this.audioPlayer.playAndEmitSfx('chain', 7);
@@ -305,6 +310,12 @@ window.Game = class Game {
 			else if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);
 			}
+		}
+
+		// Check if the chain is done resolving
+		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
+			// Update the score displayed
+			this.updateScore();
 
 			// Remove the chained puyos and popped nuisance puyos
 			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
@@ -314,27 +325,12 @@ window.Game = class Game {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
-				this.preNuisanceHeights = this.board.boardState.map(col => col.length);
-				const droppedNuisance = this.board.dropNuisance(this.activeNuisance);
-				if(droppedNuisance > 0) {
-					if(droppedNuisance >= this.settings.cols * 2) {
-						this.audioPlayer.playAndEmitSfx('nuisanceFall2');
-					}
-					else {
-						this.audioPlayer.playAndEmitSfx('nuisanceFall1');
-					}
-					this.nuisanceDroppingFrame = 1;
-					this.activeNuisance -= droppedNuisance;
-					this.totalNuisance -= droppedNuisance;
-				}
-
-				const totalVisibleNuisance = Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
-					nuisance += this.visibleNuisance[opp];
-					return nuisance;
-				}, 0);
+				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
+				this.nuisanceState.nuisanceAmount = nuisanceDropped;
+				this.nuisanceState.nuisanceArray = nuisanceArray;
 
 				// No pending nuisance, chain completed
-				if(this.activeNuisance === 0 && totalVisibleNuisance === 0) {
+				if(this.getTotalNuisance() === 0) {
 					this.socket.emit('activateNuisance', this.gameId);
 				}
 			}
@@ -600,7 +596,7 @@ window.Game = class Game {
 				this.softDrops += 1;
 			}
 			else {
-				this.forceLockDelay += 20;
+				this.forceLockDelay += 15;
 			}
 			const new_schezo = window.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {
@@ -722,5 +718,15 @@ window.Game = class Game {
 		}
 
 		return doRotate;
+	}
+
+	getTotalNuisance() {
+		const totalVisibleNuisance =
+			Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
+				nuisance += this.visibleNuisance[opp];
+				return nuisance;
+			}, 0);
+
+		return this.activeNuisance + totalVisibleNuisance;
 	}
 }

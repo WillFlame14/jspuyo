@@ -212,15 +212,22 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         if (resolvingState.currentFrame <= this.settings.popFrames) {
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows + 1; j++) {
+                    if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
+                        ctx.save();
+                        ctx.translate(unitW * i, - unitH * j);
+                        this.drawPuyo(boardState[i][j], unitW);
+                        ctx.restore();
+                    }
+                }
+            }
+        }
+        if (resolvingState.currentFrame <= this.settings.popFrames) {
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows + 1; j++) {
                     if (this.poppingPuyos[i][j] != null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * j);
                         this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, popFrames);
-                        ctx.restore();
-                    } else if (boardState[i][j] != null) {
-                        ctx.save();
-                        ctx.translate(unitW * i, - unitH * j);
-                        this.drawPuyo(boardState[i][j], unitW);
                         ctx.restore();
                     }
                 }
@@ -237,7 +244,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                     ctx.restore();
                     numUnder++;
                 }
-                for (let j = numUnder + 1; j < rows + 1; j++) {
+                for (let j = numUnder + 1; j < boardState[i].length; j++) {
                     if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
                         ctx.save();
                         ctx.translate(unitW * i, - unitH * (Math.max(j - (j - numUnder) * (resolvingState.currentFrame - popFrames) / dropFrames, numUnder)));
@@ -251,24 +258,30 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.restore();
     }
 
-    dropNuisance(boardState, preNuisanceHeights, frame, maxFrames) {
-        if (frame == 1) {
-            this.nuisanceCascaseFPR = [];
-            maxFrames = 0;
-            for (let i = 0; i < this.settings.cols; i++) {
-                this.nuisanceCascadeFPR[i] =
-                    this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
-                    Math.random() * this.settings.varNuisanceCascadeFPR * 2;
-                const colMaxFrames = (this.settings.nuisanceSpawnRow - preNuisanceHeights[i]) * this.nuisanceCascadeFPR[i];
-                if (colMaxFrames > maxFrames) {
-                    maxFrames = colMaxFrames;
-                }
+    initNuisanceDrop(boardState) {
+        let maxFrames = 0;
+        this.nuisanceCascadeFPR = [];
+
+        for (let i = 0; i < this.settings.cols; i++) {
+            // Generate a semi-random value for "frames per row"
+            this.nuisanceCascadeFPR[i] =
+                this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
+                Math.random() * this.settings.varNuisanceCascadeFPR * 2;
+
+            // Calculate the number of frames required
+            const colMaxFrames = (this.settings.nuisanceSpawnRow - boardState[i].length) * this.nuisanceCascadeFPR[i];
+            if (colMaxFrames > maxFrames) {
+                maxFrames = colMaxFrames;
             }
-            maxFrames += this.settings.nuisanceLandFrames;
         }
 
-        const {width, height} = this.board;
-        const {cols, rows} = this.settings;
+        return Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
+    }
+
+    dropNuisance(boardState, nuisanceState) {
+        const { nuisanceArray, currentFrame } = nuisanceState;
+        const { width, height } = this.board;
+        const { cols, rows } = this.settings;
         const unitW = width / cols;
         const unitH = height / rows;
         let ctx = this.ctx;
@@ -282,25 +295,24 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
 
         for (let i = 0; i < cols; i++) {
-            for (let j = 0; j < preNuisanceHeights[i]; j++) {
+            for (let j = 0; j < boardState[i].length; j++) {
                 ctx.save();
                 ctx.translate(unitW * i, - unitH * j);
                 this.drawPuyo(boardState[i][j], unitW);
                 ctx.restore();
             }
-            const startingRowsAbove = this.settings.nuisanceSpawnRow - preNuisanceHeights[i];
-            const rowsDropped = Math.min(frame / this.nuisanceCascadeFPR[i], startingRowsAbove);
-            for (let j = preNuisanceHeights[i]; boardState[i][j] != null; j++) {
+            const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
+            const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
+            for (let j = 0; j < nuisanceArray[i].length; j++) {
                 ctx.save();
-                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j - preNuisanceHeights[i]));
-                this.drawPuyo(boardState[i][j], unitW);
+                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
+                this.drawPuyo(window.PUYO_COLOURS['Gray'], unitW);
                 ctx.restore();
             }
         }
 
         // Restore origin to top left
         ctx.restore();
-        return maxFrames;
     }
 
     drawFromHash(hash) {
@@ -370,11 +382,8 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                         boardState[i].push(this.colourArray[boardStateCols[i][j]]);
                     }
                 }
-                let preNuisanceHeights = splitHash[2].split(",");
-                preNuisanceHeights = preNuisanceHeights.map(num => Number(num));
-                let frame = splitHash[3];
-                let maxFrames = splitHash[4] == "n" ? null : splitHash[4];
-                return this.dropNuisance(boardState, preNuisanceHeights, frame, maxFrames);
+                let nuisanceState = JSON.parse(splitHash[2]);
+                return this.dropNuisance(boardState, nuisanceState);
             }
             default:
         }
@@ -442,7 +451,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         return hash;
     }
 
-    hashForNuisance(boardState, preNuisanceHeights, frame, maxFrames) {
+    hashForNuisance(boardState, nuisanceState) {
         let hash = "2:";
         for (let i = 0; i < boardState.length; i++) {
             for (let j = 0; j < boardState[i].length; j++) {
@@ -450,10 +459,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             }
             hash += ",";
         }
-        hash += ":" + preNuisanceHeights.toString();
-        hash += ":" + frame;
-        hash += ":";
-        hash += maxFrames == null ? "n" : maxFrames;
+        hash += ":" + JSON.stringify(nuisanceState);
         return hash;
     }
 }

@@ -10,7 +10,7 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.2, das = 200, arr = 20, numColours = 4, volume = 0.1) {
+	constructor(gravity = 0.02, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.23, das = 200, arr = 20, numColours = 4, volume = 0.1) {
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.lockDelay = lockDelay;			// Milliseconds of time before a drop locks into place
 		this.rows = rows;					// Number of rows in the game board
@@ -26,13 +26,13 @@ window.Settings = class Settings {
 		this.rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 		this.cascadeFramesPerRow = 10;		// Number of frames used for a puyo to fall one row
 		this.dropFrames = 10;				// Number of frames used for all the puyo to drop
-		this.popFrames = 50;				// Number of frames used to pop any amount of puyos
-		this.isoCascadeFramesPerRow	= 4;	// Number of frames used for an isolated puyo to fall one row
+		this.popFrames = 45;				// Number of frames used to pop any amount of puyos
+		this.isoCascadeFramesPerRow	= 2.75;	// Number of frames used for an isolated puyo to fall one row
 		this.pointsPerNuisance = 70;
 		this.hashSnapFactor = 100;			// Fraction of a row rounded to when hashing
 		this.hashRotFactor = 50;			// Fraction of a rev rounded to when hashing
-		this.meanNuisanceCascadeFPR = 4;	// Average frames used for nuisance to drop one row
-		this.varNuisanceCascadeFPR = 1; 	// Max positive or negative difference in frames used for nuisance to drop one row
+		this.meanNuisanceCascadeFPR = 2.75;	// Average frames used for nuisance to drop one row
+		this.varNuisanceCascadeFPR = 0.4; 	// Max positive or negative difference in frames used for nuisance to drop one row
 		this.nuisanceLandFrames = 4;		// Number of frames taken for the nuisance landing animation
 		this.nuisanceSpawnRow = rows + 2;	// Row of nuisance spawn
 	}

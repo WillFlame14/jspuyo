@@ -190,50 +190,54 @@ window.Board = class Board {
 	 * Returns the number of nuisance puyo dropped.
 	 */
 	dropNuisance(nuisance) {
-		if(nuisance === 0) {
-			return 0;
+		let nuisanceDropped = 0, nuisanceArray = [];
+
+		for(let i = 0; i < this.width; i++) {
+			nuisanceArray.push([]);
 		}
 
 		// Drop one rock
-		if(nuisance >= this.settings.cols * 5) {
-			this.boardState.forEach(row => {
+		if(nuisance >= this.width * 5) {
+			nuisanceArray.forEach(col => {
 				for(let i = 0; i < 5; i++) {
-					row.push(window.PUYO_COLOURS['Gray']);
+					col.push(window.PUYO_COLOURS['Gray']);
 				}
 			});
+			nuisanceDropped = 5 * this.width;
 			console.log('Dropped a rock.');
-			return this.settings.cols * 5;
 		}
 		// Drop whatever is remaining
 		else {
-			const fullRows = Math.floor(nuisance / this.settings.cols);
-			const remaining = nuisance % this.settings.cols;
+			const fullRows = Math.floor(nuisance / this.width);
+			const remaining = nuisance % this.width;
 
 			// Drop the full rows first
-			this.boardState.forEach(row => {
+			nuisanceArray.forEach(col => {
 				for(let i = 0; i < fullRows; i++) {
-					row.push(window.PUYO_COLOURS['Gray']);
+					col.push(window.PUYO_COLOURS['Gray']);
 				}
 			});
 
-			// Remove the puyos that are too high
-			this.trim();
-
 			const unusedColumns = [];
-			for(let i = 0; i < this.settings.cols; i++) {
+			for(let i = 0; i < this.width; i++) {
 				unusedColumns.push(i);
 			}
 
 			// Randomly drop the remaining nuisance
 			for(let i = 0; i < remaining; i++) {
 				let column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
-				this.boardState[column].push(window.PUYO_COLOURS['Gray']);
+				nuisanceArray[column].push(window.PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
-
-			console.log('Dropped ' + nuisance + ' nuisance.');
-			this.trim();
-			return nuisance;
+			nuisanceDropped = nuisance;
+			if(nuisanceDropped > 0) {
+				console.log('Dropped ' + nuisance + ' nuisance.');
+			}
 		}
+
+		// Remove the puyos that are too high
+		this.trim();
+
+		return { nuisanceDropped, nuisanceArray };
 	}
 }

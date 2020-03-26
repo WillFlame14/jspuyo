@@ -217,13 +217,12 @@ window.Game = class Game {
 		this.boardDrawer.updateBoard(currentBoardState);
 
 		if (schezoDropped && arleDropped) {
-			// Do not place any puyos above row 13
-			if(boardState[currentDrop.arle.x].length < 13) {
-				boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
-			}
-			if(boardState[currentDrop.schezo.x].length < 13) {
-				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
-			}
+			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
+			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
+
+			// Delete any puyos if they were placed on an overstacked column
+			this.board.trim();
+
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
 
@@ -276,13 +275,15 @@ window.Game = class Game {
 		// Setting up the board state
 		if(this.resolvingState.chain === 0) {
 			const puyoLocs = this.resolvingChains[0];
-			const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
 			const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
+			const dropFrames = window.getDropFrames(puyoLocs.concat(nuisanceLocs), this.board.boardState, this.settings);
 			this.resolvingState = { chain: 1, puyoLocs, nuisanceLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
 		}
 		else {
 			this.resolvingState.currentFrame++;
 		}
+
+		console.log(this.boardDrawerId + " " + this.resolvingState.currentFrame + " " + this.resolvingState.totalFrames);
 
 		// Update the board
 		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
@@ -466,9 +467,8 @@ window.Game = class Game {
 			}
 
 			// Remove any puyos above row 13
-			if(boardState[currentDrop.schezo.x].length > 13) {
-				boardState[currentDrop.schezo.x] = boardState[currentDrop.schezo.x].slice(0, 13);
-			}
+			this.board.trim();
+
 			this.resolvingChains = this.board.resolveChains();
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;

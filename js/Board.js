@@ -153,6 +153,18 @@ window.Board = class Board {
 	}
 
 	/**
+	 * Removes all puyos above row 12 (0-indexed).
+	 */
+	trim() {
+		this.boardState = this.boardState.map(col => {
+			if(col.length > 13) {
+				col = col.slice(0, 13);
+			}
+			return col;
+		});
+	}
+
+	/**
 	 * Finds the nuisance puyos that were popped from the board and returns their locations in an array.
 	 */
 	findNuisancePopped(chain_locs) {
@@ -204,12 +216,12 @@ window.Board = class Board {
 				}
 			});
 
+			// Remove the puyos that are too high
+			this.trim();
+
 			const unusedColumns = [];
 			for(let i = 0; i < this.settings.cols; i++) {
-				// Do not place nuisance on columns that are too tall
-				if(this.boardState[i].length < 13) {
-					unusedColumns.push(i);
-				}
+				unusedColumns.push(i);
 			}
 
 			// Randomly drop the remaining nuisance
@@ -218,7 +230,9 @@ window.Board = class Board {
 				this.boardState[column].push(window.PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
+
 			console.log('Dropped ' + nuisance + ' nuisance.');
+			this.trim();
 			return nuisance;
 		}
 	}

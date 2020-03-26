@@ -31,8 +31,8 @@ window.Settings = class Settings {
 		this.pointsPerNuisance = 70;
 		this.hashSnapFactor = 100;			// Fraction of a row rounded to when hashing
 		this.hashRotFactor = 50;			// Fraction of a rev rounded to when hashing
-		this.meanNuisanceCascadeFPR = 4;	// Average frames used for nuisance to drop one row
-		this.varNuisanceCascadeFPR = 1; 	// Max positive or negative difference in frames used for nuisance to drop one row
+		this.meanNuisanceCascadeFPR = 2;	// Average frames used for nuisance to drop one row
+		this.varNuisanceCascadeFPR = 0.2; 	// Max positive or negative difference in frames used for nuisance to drop one row
 		this.nuisanceLandFrames = 4;		// Number of frames taken for the nuisance landing animation
 		this.nuisanceSpawnRow = rows + 2;	// Row of nuisance spawn
 	}

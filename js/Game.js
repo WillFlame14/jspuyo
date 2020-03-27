@@ -11,6 +11,7 @@ window.Game = class Game {
 		this.softDrops = 0;				// Frames in which the soft drop button was held
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
+		this.allClear = false;
 
 		this.dropGenerator = dropGenerator;
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
@@ -232,9 +233,26 @@ window.Game = class Game {
 		// Initialize the nuisance state
 		if (this.nuisanceState.currentFrame === 0) {
 			this.nuisanceState.currentFrame = 1;
-			this.nuisanceState.totalFrames = this.boardDrawer.initNuisanceDrop(this.board.boardState);
 
-			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
+			let maxFrames = 0;
+			let nuisanceCascadeFPR = [];
+
+			for (let i = 0; i < this.settings.cols; i++) {
+				// Generate a semi-random value for "frames per row"
+				nuisanceCascadeFPR.push(
+					this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
+					Math.random() * this.settings.varNuisanceCascadeFPR * 2
+				);
+
+				// Calculate the number of frames required
+				const colMaxFrames = (this.settings.nuisanceSpawnRow - this.board.boardState[i].length) * nuisanceCascadeFPR[i];
+				if (colMaxFrames > maxFrames) {
+					maxFrames = colMaxFrames;
+				}
+			}
+			this.nuisanceState.totalFrames = Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
+			this.boardDrawer.initNuisanceDrop(nuisanceCascadeFPR);
+			hash = this.boardDrawer.hashForNuisanceInit(nuisanceCascadeFPR);
 		}
 		// Already initialized
 		else {
@@ -332,6 +350,12 @@ window.Game = class Game {
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
 					this.socket.emit('activateNuisance', this.gameId);
+				}
+
+				// Check for all clear
+				if(this.board.boardState.every(col => col.length === 0)) {
+					this.allClear = true;
+					this.audioPlayer.playAndEmitSfx('allClear');
 				}
 			}
 			// Still have more chains to resolve
@@ -496,6 +520,12 @@ window.Game = class Game {
 		let { nuisanceSent, leftoverNuisance } =
 			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
+
+		// Send an extra rock if all clear
+		if(this.allClear) {
+			nuisanceSent += 5 * this.settings.cols;
+			this.allClear = false;
+		}
 		console.log("Sent: " + nuisanceSent + " Leftover: " + leftoverNuisance);
 
 		this.preChainScore = this.currentScore;

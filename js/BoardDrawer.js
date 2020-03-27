@@ -258,24 +258,8 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         ctx.restore();
     }
 
-    initNuisanceDrop(boardState) {
-        let maxFrames = 0;
-        this.nuisanceCascadeFPR = [];
-
-        for (let i = 0; i < this.settings.cols; i++) {
-            // Generate a semi-random value for "frames per row"
-            this.nuisanceCascadeFPR[i] =
-                this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
-                Math.random() * this.settings.varNuisanceCascadeFPR * 2;
-
-            // Calculate the number of frames required
-            const colMaxFrames = (this.settings.nuisanceSpawnRow - boardState[i].length) * this.nuisanceCascadeFPR[i];
-            if (colMaxFrames > maxFrames) {
-                maxFrames = colMaxFrames;
-            }
-        }
-
-        return Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
+    initNuisanceDrop(nuisanceCascadeFPR) {
+        this.nuisanceCascadeFPR = nuisanceCascadeFPR;
     }
 
     dropNuisance(boardState, nuisanceState) {
@@ -374,6 +358,9 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 );
             }
             case "2": {
+                return this.initNuisanceDrop(splitHash[1].split(","));
+            }
+            case "3": {
                 let boardState = [];
                 let boardStateCols = splitHash[1].split(",");
                 for (let i = 0; i < this.settings.cols; i++) {
@@ -382,7 +369,12 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                         boardState[i].push(this.colourArray[boardStateCols[i][j]]);
                     }
                 }
-                let nuisanceState = JSON.parse(splitHash[2]);
+                const nuisanceState = {
+                    nuisanceArray: splitHash[2].split(",").map(col => col ? col.split(">").map(num => this.colourArray[num]) : []),
+                    nuisanceAmount: Number(splitHash[3]),
+                    currentFrame: Number(splitHash[4]),
+                    totalFrames: Number(splitHash[5])
+                };
                 return this.dropNuisance(boardState, nuisanceState);
             }
             default:
@@ -451,15 +443,23 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         return hash;
     }
 
+    hashForNuisanceInit(nuisanceCascadeFPR) {
+        return "2:" + nuisanceCascadeFPR.join(",");
+    }
+
     hashForNuisance(boardState, nuisanceState) {
-        let hash = "2:";
+        let hash = "3:";
         for (let i = 0; i < boardState.length; i++) {
             for (let j = 0; j < boardState[i].length; j++) {
                 hash += this.colourArray.indexOf(boardState[i][j]);
             }
             hash += ",";
         }
-        hash += ":" + JSON.stringify(nuisanceState);
+        hash += ":";
+        hash += nuisanceState.nuisanceArray.map(col => col.map(puyo => this.colourArray.indexOf(puyo)).join(">")).join(",") + ":";
+        hash += nuisanceState.nuisanceAmount + ":";
+        hash += nuisanceState.currentFrame + ":";
+        hash += nuisanceState.totalFrames;
         return hash;
     }
 }

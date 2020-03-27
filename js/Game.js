@@ -316,9 +316,11 @@ window.Game = class Game {
 			// Play chain sfx
 			if(this.resolvingState.chain > 7) {
 				this.audioPlayer.playAndEmitSfx('chain', 7);
+				this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', 7);
 			}
 			else {
 				this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain);
+				this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', this.resolvingState.chain);
 			}
 
 			// Play nuisance sfx
@@ -356,6 +358,7 @@ window.Game = class Game {
 				if(this.board.boardState.every(col => col.length === 0)) {
 					this.allClear = true;
 					this.audioPlayer.playAndEmitSfx('allClear');
+					console.log("All clear by player with id " + this.gameId);
 				}
 			}
 			// Still have more chains to resolve
@@ -502,19 +505,18 @@ window.Game = class Game {
 	updateScore() {
 		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;
 		const html = document.getElementById(pointsDisplayName).innerHTML;
-		const last_score = parseInt(html.substring(6));
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)
 			if(this.softDrops > 5) {
-				this.currentScore = last_score + Math.floor(this.softDrops / 5);
+				this.currentScore += Math.floor(this.softDrops / 5);
 				document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 				this.softDrops %= 5;
 			}
 			return;
 		}
 
-		this.currentScore = last_score + window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		this.currentScore += window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
 		let { nuisanceSent, leftoverNuisance } =

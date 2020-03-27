@@ -60,6 +60,24 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/SE_T05_ren6.wav'),
 				new Audio('../sounds/SE_T06_ren7.wav')
 			],
+			"chain_voiced": [
+				null
+			],
+			"chain_voiced_jpn": [
+				null,
+				new Audio('../sounds/voices/chain_1_jpn.wav'),
+				new Audio('../sounds/voices/chain_2_jpn.wav'),
+				new Audio('../sounds/voices/chain_3_jpn.wav'),
+				new Audio('../sounds/voices/chain_4_jpn.wav'),
+				new Audio('../sounds/voices/chain_5_jpn.wav'),
+				new Audio('../sounds/voices/chain_6_jpn.wav'),
+				new Audio('../sounds/voices/chain_7_jpn.wav'),
+				new Audio('../sounds/voices/chain_8_jpn.wav'),
+				new Audio('../sounds/voices/chain_9_jpn.wav'),
+				new Audio('../sounds/voices/chain_10_jpn.wav'),
+				new Audio('../sounds/voices/chain_11_jpn.wav'),
+				new Audio('../sounds/voices/chain_12_jpn.wav'),
+			],
 			"nuisanceSend": [
 				null,
 				null,
@@ -76,6 +94,10 @@ window.AudioPlayer = class AudioPlayer {
 		// Set volume for each sound
 		Object.keys(this.sfx).forEach(key => {
 			const sounds = this.sfx[key];
+			if(key.includes('voiced')) {
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.4);
+				return;
+			}
 			if(Array.isArray(sounds)) {
 				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
 			}
@@ -238,9 +260,9 @@ window.getDropFrames = function (poppingLocs, boardState, settings) {
  */
 window.calculateScore = function(puyoLocs, chain_length) {
 	// These arrays are 1-indexed.
-	const CHAIN_POWER = [-1, 0, 8, 16, 32, 64, 96, 128,160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
-	const COLOUR_BONUS = [-1, 0, 3, 6, 12, 24, 48];
-	const GROUP_BONUS = [-1, -1, -1, -1, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
+	const CHAIN_POWER = [null, 0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
+	const COLOUR_BONUS = [null, 0, 3, 6, 12, 24, 48];
+	const GROUP_BONUS = [null, null, null, null, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
 
 	// Number of puyos cleared in the chain
 	const puyos_cleared = puyoLocs.length;

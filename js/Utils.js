@@ -69,7 +69,8 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/SE_T17_oj_okuri4.wav')
 			],
 			"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
-			"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav')
+			"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav'),
+			"allClear": new Audio('../sounds/SE_T22_zenkesi.wav')
 		};
 
 		// Set volume for each sound

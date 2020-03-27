@@ -11,6 +11,7 @@ window.Game = class Game {
 		this.softDrops = 0;				// Frames in which the soft drop button was held
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
+		this.allClear = false;
 
 		this.dropGenerator = dropGenerator;
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
@@ -333,6 +334,12 @@ window.Game = class Game {
 				if(this.getTotalNuisance() === 0) {
 					this.socket.emit('activateNuisance', this.gameId);
 				}
+
+				// Check for all clear
+				if(this.board.boardState.every(col => col.length === 0)) {
+					this.allClear = true;
+					this.audioPlayer.playAndEmitSfx('allClear');
+				}
 			}
 			// Still have more chains to resolve
 			else {
@@ -496,6 +503,12 @@ window.Game = class Game {
 		let { nuisanceSent, leftoverNuisance } =
 			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
+
+		// Send an extra rock if all clear
+		if(this.allClear) {
+			nuisanceSent += 5 * this.settings.cols;
+			this.allClear = false;
+		}
 		console.log("Sent: " + nuisanceSent + " Leftover: " + leftoverNuisance);
 
 		this.preChainScore = this.currentScore;

@@ -24,6 +24,7 @@ window.Game = class Game {
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
+		this.squishState = { currentFrame: -1 };
 
 		this.boardDrawerId = boardDrawerId;
 		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
@@ -101,9 +102,14 @@ window.Game = class Game {
 	 */
 	step() {
 		let currentBoardHash;
+
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {
 			currentBoardHash = this.dropIsolatedPuyo();
+		}
+		// Currently squishing puyos into the stack
+		else if(this.squishState.currentFrame !== -1) {
+			currentBoardHash = this.squishPuyos();
 		}
 		// Currently dropping nuisance
 		else if (this.nuisanceState.nuisanceAmount !== 0) {
@@ -131,11 +137,10 @@ window.Game = class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
-					// Chain was not started, drop was not split
-					if(this.resolvingChains.length === 0 && this.currentDrop.schezo.y === null) {
-						const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
-						this.nuisanceState.nuisanceAmount = nuisanceDropped;
-						this.nuisanceState.nuisanceArray = nuisanceArray;
+					
+					// Only do not start squishing puyos if drop was split
+					if(this.currentDrop.schezo.y === null) {
+						this.squishState.currentFrame = 0;
 					}
 					this.locking = 'not';
 					this.forceLockDelay = 0;
@@ -212,12 +217,9 @@ window.Game = class Game {
 			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
 
-			// If there are no chains to resolve, drop nuisance
-			if(this.resolvingChains.length === 0) {
-				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
-				this.nuisanceState.nuisanceAmount = nuisanceDropped;
-				this.nuisanceState.nuisanceArray = nuisanceArray;
-			}
+			// Pass control over to squishPuyos()
+			this.squishState.currentFrame = 0;
+
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;
 			currentDrop.shape = null;
@@ -340,14 +342,13 @@ window.Game = class Game {
 			// Remove the chained puyos and popped nuisance puyos
 			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
 
+			// Squish puyos into the stack
+			this.squishState.currentFrame = 0;
+
 			// Done resolving all chains
 			if(this.resolvingState.chain === this.resolvingChains.length) {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
-
-				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
-				this.nuisanceState.nuisanceAmount = nuisanceDropped;
-				this.nuisanceState.nuisanceArray = nuisanceArray;
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
@@ -375,6 +376,25 @@ window.Game = class Game {
 				};
 			}
 		}
+		return currentBoardHash;
+	}
+
+	squishPuyos() {
+		this.squishState.currentFrame++;
+		if(this.squishState.currentFrame === this.settings.squishFrames) {
+			// Chain was not started
+			if(this.resolvingChains.length === 0) {
+				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
+				this.nuisanceState.nuisanceAmount = nuisanceDropped;
+				this.nuisanceState.nuisanceArray = nuisanceArray;
+			}
+			this.squishState.currentFrame = -1;
+		}
+
+		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+		this.boardDrawer.updateBoard(currentBoardState);
+
 		return currentBoardHash;
 	}
 
@@ -520,7 +540,7 @@ window.Game = class Game {
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
 		let { nuisanceSent, leftoverNuisance } =
-			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.pointsPerNuisance, this.leftoverNuisance);
+			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
 
 		// Send an extra rock if all clear

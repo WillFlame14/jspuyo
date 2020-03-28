@@ -1,12 +1,11 @@
 'use strict';
 
 window.Cpu = class Cpu {
-	constructor(settings, speed) {
+	constructor(settings) {
 		if(this.constructor === Cpu) {
 			throw new Error('Abstract class cannot be instatiated.');
 		}
 		this.settings = settings;
-		this.speed = speed;
 	}
 
 	assignSettings(settings) {
@@ -20,14 +19,137 @@ window.Cpu = class Cpu {
 	getMove(boardState, currentDrop) {
 		throw new Error('getMove(boardState, currentDrop) must be implemented by the subclass.');
 	}
+
+	getAverageHeight(boardState) {
+		return boardState.reduce((sum, col) => sum += col.length, 0) / this.settings.cols;
+	}
+
+	/**
+	 * Returns the best column placement with either 0 or 2 rotations that makes a chain longer than minChain.
+	 * If none exist, returns -1.
+	 */
+	checkForSimpleChains(boardState, currentDrop, minChain) {
+		let runningMaxChain = minChain;
+		let col = -1;
+		for(let i = 0; i < this.settings.cols * 2; i++) {
+			const currCol = Math.floor(i / 2);
+			const board = new window.Board(this.settings, boardState);
+			if(i % 2 === 0) {
+				board.boardState[currCol].push(currentDrop.colours[0]);
+				board.boardState[currCol].push(currentDrop.colours[1]);
+			}
+			else {
+				board.boardState[currCol].push(currentDrop.colours[1]);
+				board.boardState[currCol].push(currentDrop.colours[0]);
+			}
+
+			const chains = board.resolveChains();
+			if(chains.length > runningMaxChain) {
+				runningMaxChain = chains.length;
+				col = currCol;
+			}
+		}
+		return col;
+	}
+
+	/**
+	 * Returns the move that results in the best chain longer than minChain.
+	 * If none exist, returns { col: -1, rotations: -1 };
+	 */
+	checkForAllChains(boardState, currentDrop, minChain) {
+		let runningMaxChain = minChain;
+		let col = -1;
+		let rotations = -1;
+		for(let i = 0; i < this.settings.cols * 4; i++) {
+			const currCol = i % this.settings.cols;
+			const board = new window.Board(this.settings, boardState);
+			let tempRotations;
+			if(i < this.settings.cols) {
+				board.boardState[currCol].push(currentDrop.colours[1]);
+				board.boardState[currCol].push(currentDrop.colours[0]);
+				tempRotations = 2;
+			}
+			else if(i < this.settings.cols * 2) {
+				if(currCol === 0) {
+					continue;
+				}
+				board.boardState[currCol - 1].push(currentDrop.colours[0]);
+				board.boardState[currCol].push(currentDrop.colours[1]);
+				tempRotations = -1;
+			}
+			else if(i < this.settings.cols * 3) {
+				if(currCol === this.settings.cols - 1) {
+					continue;
+				}
+				board.boardState[currCol].push(currentDrop.colours[0]);
+				board.boardState[currCol + 1].push(currentDrop.colours[1]);
+				tempRotations = 1;
+			}
+			else {
+				board.boardState[currCol].push(currentDrop.colours[0]);
+				board.boardState[currCol].push(currentDrop.colours[1]);
+				tempRotations = 0;
+			}
+
+			const chains = board.resolveChains();
+			if(chains.length > runningMaxChain) {
+				runningMaxChain = chains.length;
+				col = currCol;
+				rotations = tempRotations;
+			}
+		}
+		return { col, rotations };
+	}
+}
+
+
+/**
+ * RandomCpu: Completely random moves.
+ */
+window.RandomCpu = class RandomCpu extends window.Cpu {
+	constructor(settings) {
+		super(settings);
+	}
+
+	// eslint-disable-next-line no-unused-vars
+	getMove(boardState, currentDrop) {
+		let col = Math.floor(Math.random() * this.settings.cols);
+		let rotations = Math.floor(Math.random() * 4) - 2;
+		return { col, rotations };
+	}
 }
 
 /**
- * HarpyCpu: stacks the right side , then the left side
+ * FlatCpu: stacks horizontally
  */
-window.HarpyCpu = class HarpyCpu extends window.Cpu {
-	constructor(settings, speed) {
-		super(settings, speed);
+window.FlatCpu = class FlatCpu extends window.Cpu {
+	constructor(settings) {
+		super(settings);
+	}
+
+	getMove(boardState, currentDrop) {
+		let col = 0;
+		let rotations = 0;
+		let minHeight = -1;
+		for(let i = 0; i < this.settings.cols - 1; i++) {
+			if(boardState[i].length < minHeight) {
+				minHeight = boardState[i].length;
+				col = i;
+			}
+		}
+
+		col = super.checkForSimpleChains(boardState, currentDrop, 0);
+
+		return { col, rotations };
+	}
+}
+
+/**
+ * TallCpu: stacks the right side, then the left side
+ */
+window.TallCpu = class TallCpu extends window.Cpu {
+	constructor(settings) {
+		super(settings);
 	}
 
 	getMove(boardState, currentDrop) {
@@ -71,12 +193,11 @@ window.HarpyCpu = class HarpyCpu extends window.Cpu {
  * Otherwise, places randomly.
  */
 window.ChainCpu = class ChainCpu extends window.Cpu {
-	constructor(settings, speed) {
-		super(settings, speed);
+	constructor(settings) {
+		super(settings);
 	}
 
 	getMove(boardState, currentDrop) {
-		let maxChain = 0;
 		let col = Math.floor(Math.random() * this.settings.cols);
 		let rotations = 0;
 
@@ -85,24 +206,7 @@ window.ChainCpu = class ChainCpu extends window.Cpu {
 			col = Math.floor(Math.random() * this.settings.cols);
 		}
 
-		for(let i = 0; i < this.settings.cols * 2; i++) {
-			const currCol = Math.floor(i / 2);
-			const board = new window.Board(this.settings, boardState);
-			if(i % 2 === 0) {
-				board.boardState[currCol].push(currentDrop.colours[0]);
-				board.boardState[currCol].push(currentDrop.colours[1]);
-			}
-			else {
-				board.boardState[currCol].push(currentDrop.colours[1]);
-				board.boardState[currCol].push(currentDrop.colours[0]);
-			}
-
-			const chains = board.resolveChains();
-			if(chains.length > maxChain) {
-				maxChain = chains.length;
-				col = currCol;
-			}
-		}
+		col = super.checkForSimpleChains(boardState, currentDrop, 1);
 
 		return { col, rotations };
 	}
@@ -117,47 +221,12 @@ window.TestCpu = class TestCpu extends window.Cpu {
 	}
 
 	getMove(boardState, currentDrop) {
-		const averageHeight = boardState.reduce((sum, col) => sum += col.length, 0) / this.settings.cols;
-		let maxChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
-							(averageHeight > this.settings.rows / 2) ? 1 :
-							(averageHeight > this.settings.rows / 2) ? 2 : 3;
-		let rotations = 0;
-		let col = -1;
+		const averageHeight = super.getAverageHeight(boardState);
+		let minChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
+							(averageHeight > this.settings.rows / 2) ? 2 :
+							(averageHeight > this.settings.rows / 2) ? 3 : 4;
 
-		// Attempt to find chains longer than 2
-		for(let i = 0; i < this.settings.cols * 4; i++) {
-			const currCol = i % this.settings.cols;
-			const board = new window.Board(this.settings, boardState);
-			if(i < this.settings.cols) {
-				board.boardState[currCol].push(currentDrop.colours[1]);
-				board.boardState[currCol].push(currentDrop.colours[0]);
-			}
-			else if(i < this.settings.cols * 2) {
-				if(currCol === 0) {
-					continue;
-				}
-				board.boardState[currCol - 1].push(currentDrop.colours[0]);
-				board.boardState[currCol].push(currentDrop.colours[1]);
-			}
-			else if(i < this.settings.cols * 3) {
-				if(currCol === this.settings.cols - 1) {
-					continue;
-				}
-				board.boardState[currCol].push(currentDrop.colours[0]);
-				board.boardState[currCol + 1].push(currentDrop.colours[1]);
-			}
-			else {
-				board.boardState[currCol].push(currentDrop.colours[0]);
-				board.boardState[currCol].push(currentDrop.colours[1]);
-			}
-
-			const chains = board.resolveChains();
-			if(chains.length > maxChain) {
-				maxChain = chains.length;
-				col = currCol;
-				rotations = (i < this.settings.cols - 1) ? 2 : 0;
-			}
-		}
+		let { col, rotations} = super.checkForAllChains(boardState, currentDrop, minChain);
 
 		// Unable to find an appropriate chain
 		if(col === -1) {
@@ -166,16 +235,19 @@ window.TestCpu = class TestCpu extends window.Cpu {
 			for(let i = 0; i < this.settings.cols * 4; i++) {
 				const currCol = i % this.settings.cols;
 				const board = new window.Board(this.settings, boardState);
+				let tempRotations;
 				if(i < this.settings.cols) {
 					board.boardState[currCol].push(currentDrop.colours[1]);
 					board.boardState[currCol].push(currentDrop.colours[0]);
+					tempRotations = 2;
 				}
 				else if(i < this.settings.cols * 2) {
 					if(currCol === 0) {
 						continue;
 					}
-					board.boardState[currCol - 1].push(currentDrop.colours[0]);
-					board.boardState[currCol].push(currentDrop.colours[1]);
+					board.boardState[currCol - 1].push(currentDrop.colours[1]);
+					board.boardState[currCol].push(currentDrop.colours[0]);
+					tempRotations = -1;
 				}
 				else if(i < this.settings.cols * 3) {
 					if(currCol === this.settings.cols - 1) {
@@ -183,29 +255,22 @@ window.TestCpu = class TestCpu extends window.Cpu {
 					}
 					board.boardState[currCol].push(currentDrop.colours[0]);
 					board.boardState[currCol + 1].push(currentDrop.colours[1]);
+					tempRotations = 1;
 				}
 				else {
 					board.boardState[currCol].push(currentDrop.colours[0]);
 					board.boardState[currCol].push(currentDrop.colours[1]);
+					tempRotations = 0;
 				}
 
-				const value = this.evaluateBoard(board) - ((currCol === 2) ? 10 : this.getSkyScraperValue(board, currCol));
+				let deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
+
+				const value = this.evaluateBoard(board) - deterrent;
 
 				if(value > maxValue) {
 					col = currCol;
 					maxValue = value;
-					if(i < this.settings.cols - 1) {
-						rotations = 2;
-					}
-					else if(i < this.settings.cols * 2) {
-						rotations = -1;
-					}
-					else if(i < this.settings.cols * 3) {
-						rotations = 1;
-					}
-					else {
-						rotations = 0;
-					}
+					rotations = tempRotations;
 				}
 			}
 		}
@@ -221,7 +286,6 @@ window.TestCpu = class TestCpu extends window.Cpu {
 				}
 			}
 
-			console.log('semi random');
 			col = allowedCols[Math.floor(Math.random() * allowedCols.length)];
 
 			// Deter against random placements in column 2 (when 0-indexed)

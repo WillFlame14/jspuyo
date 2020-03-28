@@ -426,13 +426,11 @@ window.Game = class Game {
 
 		if(schezo.x > this.settings.cols - 1) {
 			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
-			console.log('jk');
 			arle.x--;
 			schezo.x--;
 		}
 		else if(schezo.x < 0) {
 			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
-			console.log('jk');
 			arle.x++;
 			schezo.x++;
 		}
@@ -524,7 +522,6 @@ window.Game = class Game {
 	 */
 	updateScore() {
 		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;
-		const html = document.getElementById(pointsDisplayName).innerHTML;
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)

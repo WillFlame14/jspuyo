@@ -17,9 +17,9 @@ window.Drop = class Drop {
 	/**
 	 * Returns a new, random drop determined by the gamemode and the player's dropset.
 	 */
-	static getNewDrop(gamemode, settings, colours) {
+	static getNewDrop(settings, colours) {
 		let shape;
-		if(gamemode === 'Tsu') {
+		if(settings.gamemode === 'Tsu') {
 			shape = 'I';
 		}
 		else {

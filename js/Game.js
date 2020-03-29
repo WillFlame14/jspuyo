@@ -1,19 +1,19 @@
 'use strict';
 
 window.Game = class Game {
-	constructor(gamemode = 'Tsu', gameId, opponentIds, socket, boardDrawerId, dropGenerator, settings = new window.Settings()) {
+	constructor(gameId, opponentIds, socket, boardDrawerId, settings, userSettings) {
 		this.board = new window.Board(settings);
-		this.gamemode = gamemode;
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
+		this.userSettings = userSettings;
 		this.endResult = null;			// Final result of the game
 		this.softDrops = 0;				// Frames in which the soft drop button was held
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
 
-		this.dropGenerator = dropGenerator;
+		this.dropGenerator = new window.DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
 
@@ -30,7 +30,7 @@ window.Game = class Game {
 		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
 
 		this.socket = socket;
-		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.settings.volume);
+		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.userSettings.volume);
 		if(this.boardDrawerId !== 1) {
 			this.audioPlayer.disable();
 		}
@@ -76,8 +76,11 @@ window.Game = class Game {
 	 * Determines if the Game should be ended.
 	 */
 	end() {
-		if(this.board.checkGameOver(this.gamemode) && this.resolvingChains.length === 0 && this.nuisanceDroppingFrame == null && this.endResult === null) {
-			this.endResult = 'Loss';
+		if(this.board.checkGameOver(this.settings.gamemode)
+			&& this.resolvingChains.length === 0
+			&& this.nuisanceDroppingFrame == null
+			&& this.endResult === null) {
+				this.endResult = 'Loss';
 		}
 		if(this.endResult !== null && this.boardDrawerId === 1) {
 			switch(this.endResult) {
@@ -315,22 +318,11 @@ window.Game = class Game {
 
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
-			// Play chain sfx
-			if(this.resolvingState.chain > 7) {
-				this.audioPlayer.playAndEmitSfx('chain', 7);
-				this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', 7);
-			}
-			else {
-				this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain);
-				this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', this.resolvingState.chain);
-			}
-
-			// Play nuisance sfx
-			if(this.resolvingState.chain > 5) {
-				this.audioPlayer.playAndEmitSfx('nuisanceSend', 5);
-			}
-			else if(this.resolvingState.chain > 1) {
-				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain);
+			// Play sfx
+			this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', this.resolvingState.chain);
+			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
+			if(this.resolvingState.chain > 1) {
+				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain > 5 ? 5 : this.resolvingState.chain);
 			}
 		}
 

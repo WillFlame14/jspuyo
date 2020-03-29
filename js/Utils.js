@@ -10,20 +10,18 @@ window.PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 window.PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 window.Settings = class Settings {
-	constructor(gravity = 0.017, lockDelay = 200, rows = 12, cols = 6, softDrop = 0.215,
-		das = 200, arr = 20, numColours = 4, targetPoints = 70, volume = 0.1) {
+	constructor(gamemode = 'Tsu', gravity = 0.017, rows = 12, cols = 6, softDrop = 0.215, numColours = 4, targetPoints = 70, seed = Math.random()) {
+		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
-		this.lockDelay = lockDelay;			// Milliseconds of time before a drop locks into place
 		this.rows = rows;					// Number of rows in the game board
 		this.cols = cols;					// Number of columns in the game board
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
-		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
-		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.numColours = numColours;		// Number of unique puyo colours being used
 		this.targetPoints = targetPoints;	// Points required to send one nuisance puyo
-		this.volume = volume;				// Volume (varies between 0 and 1)
+		this.seed = seed;
 
 		// Constants that cannot be modified
+		this.lockDelay = 200;				// Milliseconds of time before a drop locks into place
 		this.frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 		this.squishFrames = 8;				// Number of frames used for squishing a drop into the stack
@@ -37,6 +35,32 @@ window.Settings = class Settings {
 		this.hashRotFactor = 50;			// Fraction of a rev rounded to when hashing
 		this.nuisanceSpawnRow = rows + 2;	// Row of nuisance spawn
 	}
+
+	toString() {
+		return this.gamemode + ' '
+			+ this.gravity + ' '
+			+ this.rows + ' '
+			+ this.cols + ' '
+			+ this.softDrop + ' '
+			+ this.numColours + ' '
+			+ this.targetPoints + ' '
+			+ this.seed;
+	}
+
+	static fromString(str) {
+		const parts = str.split(' ');
+		const gamemode = parts.splice(0, 1)[0];
+		const parsedParts = parts.map(part => Number(part));
+		return new Settings(gamemode, ...parsedParts);
+	}
+}
+
+window.UserSettings = class UserSettings {
+	constructor(das = 200, arr = 20, volume = 0.1) {
+		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
+		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
+		this.volume = volume;				// Volume (varies between 0 and 1)
+	}
 }
 
 window.AudioPlayer = class AudioPlayer {
@@ -47,11 +71,11 @@ window.AudioPlayer = class AudioPlayer {
 		this.cancel = false;
 
 		this.sfx = {
-			"move": new Audio('../sounds/SE_T07_move.wav'),
-			"rotate": new Audio('../sounds/SE_T08_rotate.wav'),
-			"win": new Audio('../sounds/SE_T19_win.wav'),
-			"loss": new Audio('../sounds/se_puy20_lose.wav'),
-			"chain": [
+			'move': new Audio('../sounds/SE_T07_move.wav'),
+			'rotate': new Audio('../sounds/SE_T08_rotate.wav'),
+			'win': new Audio('../sounds/SE_T19_win.wav'),
+			'loss': new Audio('../sounds/se_puy20_lose.wav'),
+			'chain': [
 				null,
 				new Audio('../sounds/SE_T00_ren1.wav'),
 				new Audio('../sounds/SE_T01_ren2.wav'),
@@ -61,10 +85,10 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/SE_T05_ren6.wav'),
 				new Audio('../sounds/SE_T06_ren7.wav')
 			],
-			"chain_voiced": [
+			'chain_voiced': [
 				null
 			],
-			"chain_voiced_jpn": [
+			'chain_voiced_jpn': [
 				null,
 				new Audio('../sounds/voices/chain_1_jpn.wav'),
 				new Audio('../sounds/voices/chain_2_jpn.wav'),
@@ -79,7 +103,7 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/voices/chain_11_jpn.wav'),
 				new Audio('../sounds/voices/chain_12_jpn.wav'),
 			],
-			"nuisanceSend": [
+			'nuisanceSend': [
 				null,
 				null,
 				new Audio('../sounds/SE_T14_oj_okuri1.wav'),
@@ -87,9 +111,9 @@ window.AudioPlayer = class AudioPlayer {
 				new Audio('../sounds/SE_T16_oj_okuri3.wav'),
 				new Audio('../sounds/SE_T17_oj_okuri4.wav')
 			],
-			"nuisanceFall1": new Audio('../sounds/SE_T12_ojama1.wav'),
-			"nuisanceFall2": new Audio('../sounds/SE_T13_ojama2.wav'),
-			"allClear": new Audio('../sounds/SE_T22_zenkesi.wav')
+			'nuisanceFall1': new Audio('../sounds/SE_T12_ojama1.wav'),
+			'nuisanceFall2': new Audio('../sounds/SE_T13_ojama2.wav'),
+			'allClear': new Audio('../sounds/SE_T22_zenkesi.wav')
 		};
 
 		// Set volume for each sound
@@ -144,9 +168,9 @@ window.AudioPlayer = class AudioPlayer {
 }
 
 window.DropGenerator = class DropGenerator {
-	constructor(gamemode, settings) {
-		this.gamemode = gamemode;
+	constructor(settings) {
 		this.settings = settings;
+		this.seed = this.settings.seed;
 		this.drops = [];
 		this.colourList = Object.keys(window.PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => window.PUYO_COLOURS[colour_name]);
 		this.colourBuckets = {};
@@ -161,7 +185,7 @@ window.DropGenerator = class DropGenerator {
 		// Generate the 3 colours that will be used for the first 3 drops
 		const firstColours = [];
 		while(firstColours.length < 3) {
-			let colour = window.getRandomColour(this.settings.numColours);
+			let colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
 			if(!firstColours.includes(colour)) {
 				firstColours.push(colour);
 			}
@@ -170,25 +194,25 @@ window.DropGenerator = class DropGenerator {
 		// Only use the previously determined 3 colours for the first 3 drops
 		for(let i = 0; i < 3; i++) {
 			const colours = [
-				firstColours[Math.floor(Math.random() * 3)],
-				firstColours[Math.floor(Math.random() * 3)]
+				firstColours[Math.floor(this.randomNumber() * 3)],
+				firstColours[Math.floor(this.randomNumber() * 3)]
 			];
 			this.colourBuckets[colours[0]]--;
 			this.colourBuckets[colours[1]]--;
-			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings, colours));
+			this.drops[0].push(window.Drop.getNewDrop(this.settings, colours));
 		}
 
 		for(let i = 3; i < 128; i++) {
 			// Filter out colours that have been completely used up
 			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
 			const colours = [
-				tempColourList[Math.floor(Math.random() * tempColourList.length)],
-				tempColourList[Math.floor(Math.random() * tempColourList.length)]
+				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)],
+				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]
 			];
 			this.colourBuckets[colours[0]]--;
 			this.colourBuckets[colours[1]]--;
 
-			this.drops[0].push(window.Drop.getNewDrop(this.gamemode, this.settings, colours));
+			this.drops[0].push(window.Drop.getNewDrop(this.settings, colours));
 		}
 	}
 
@@ -206,16 +230,21 @@ window.DropGenerator = class DropGenerator {
 				// Filter out colours that have been completely used up
 				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
 				const colours = [
-					colourList[Math.floor(Math.random() * colourList.length)],
-					colourList[Math.floor(Math.random() * colourList.length)]
+					colourList[Math.floor(this.randomNumber() * colourList.length)],
+					colourList[Math.floor(this.randomNumber() * colourList.length)]
 				];
 				this.colourBuckets[colours[0]]--;
 				this.colourBuckets[colours[1]]--;
 
-				this.drops[index + 1].push(window.Drop.getNewDrop(this.gamemode, this.settings));
+				this.drops[index + 1].push(window.Drop.getNewDrop(this.settings, colours));
 			}
 		}
 		return this.drops[index];
+	}
+
+	randomNumber() {
+		const x = Math.sin(this.seed++) * 10000;
+		return x - Math.floor(x);
 	}
 }
 

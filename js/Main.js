@@ -21,13 +21,11 @@
 	socket.on('start', (opponentIds, settingsString) => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));
 
-		const settings = window.Settings.fromString(settingsString);
-
 		if(noPlayer) {
-			game = new window.CpuGame(gameId, opponentIds, socket, 1, new window.TestCpu(), settings);
+			game = new window.CpuGame(gameId, opponentIds, socket, 1, new window.TestCpu(), window.Settings.fromString(settingsString));
 		}
 		else {
-			game = new window.PlayerGame(gameId, opponentIds, socket, settings, new window.UserSettings());
+			game = new window.PlayerGame(gameId, opponentIds, socket, window.Settings.fromString(settingsString), new window.UserSettings());
 		}
 
 		let boardDrawerCounter = 2;
@@ -40,7 +38,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame(id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu(), settings);
+			const thisGame = new window.CpuGame(id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu(), window.Settings.fromString(settingsString));
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});

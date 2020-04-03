@@ -7,27 +7,25 @@
 	const noPlayer = location.search.includes('player=false');		// Flag to let CPU play for you
 	let cpuGames = [];
 
+	let gameInfo = { gameId: null, cpu, settingsString: new window.Settings().toString() };
+
 	socket.emit('register');
 
 	socket.on('getGameId', id => {
 		gameId = id;
-		socket.emit('findOpponent', gameId, cpu);
+		gameInfo.gameId = id;
+		socket.emit('findOpponent', gameInfo);
 		console.log('Awaiting match...');
 	});
 
-	socket.on('start', opponentIds => {
+	socket.on('start', (opponentIds, settingsString) => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));
 
-		// Temporary fixed settings
-		const gamemode = 'Tsu';
-		const settings = new window.Settings();
-		const dropGenerator = new window.DropGenerator(gamemode, settings);
-
 		if(noPlayer) {
-			game = new window.CpuGame(gamemode, gameId, opponentIds, socket, 1, dropGenerator, new window.TestCpu(), settings);
+			game = new window.CpuGame(gameId, opponentIds, socket, 1, new window.TestCpu(), window.Settings.fromString(settingsString));
 		}
 		else {
-			game = new window.PlayerGame(gamemode, gameId, opponentIds, socket, dropGenerator, settings);
+			game = new window.PlayerGame(gameId, opponentIds, socket, window.Settings.fromString(settingsString), new window.UserSettings());
 		}
 
 		let boardDrawerCounter = 2;
@@ -40,7 +38,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame('Tsu', id, thisOppIds, thisSocket, boardDrawerCounter, dropGenerator, new window.TestCpu(), settings);
+			const thisGame = new window.CpuGame(id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu(), window.Settings.fromString(settingsString));
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});

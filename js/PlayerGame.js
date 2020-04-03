@@ -1,11 +1,11 @@
 'use strict';
 
 window.PlayerGame = class PlayerGame extends window.Game {
-	constructor(gamemode, gameId, opponentIds, socket, dropGenerator, settings) {
-		super(gamemode, gameId, opponentIds, socket, 1, dropGenerator, settings);
+	constructor(gameId, opponentIds, socket, settings, userSettings) {
+		super(gameId, opponentIds, socket, 1, settings, userSettings);
 
 		// Accepts inputs from player
-		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
+		this.inputManager = new window.InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};

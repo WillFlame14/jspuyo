@@ -13,6 +13,7 @@ const game_size = 2;
 
 let gameCounter = 1;
 let waitingOpponents = [];
+let waitingSettingsStr = null;
 
 app.use(express.static('./'));
 
@@ -23,7 +24,8 @@ io.on('connection', function(socket) {
 		gameCounter++;
 	});
 
-	socket.on('findOpponent', (gameId, cpu) => {
+	socket.on('findOpponent', gameInfo => {
+		const { gameId, cpu, settingsString } = gameInfo;
 		// For now, cannot play mixed games with CPUs and real opponents
 		if(cpu) {
 			const cpuIds = [];
@@ -31,19 +33,28 @@ io.on('connection', function(socket) {
 				cpuIds.push(-gameCounter);
 				gameCounter++;
 			}
-			socket.emit('start', cpuIds);
+			socket.emit('start', cpuIds, settingsString);
 		}
 		else {
+			// Room is not yet full
 			if(waitingOpponents.length < game_size - 1) {
-				waitingOpponents.push({ gameId: gameId, socket: socket });
+				waitingOpponents.push({ gameId, socket });
+
+				// Player to open the room
+				if(waitingSettingsStr === null) {
+					waitingSettingsStr = settingsString;
+				}
 			}
+			// Room is full
 			else {
 				waitingOpponents.forEach(player => {
-					player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId));
+					player.socket.emit('start', waitingOpponents.map(p => p.gameId).filter(id => id !== player.gameId).concat(gameId), waitingSettingsStr);
 				});
-				socket.emit('start', waitingOpponents.map(player => player.gameId));
+				// NOTE: the default settings object must be replaced if changing any modifiable global variables (e.g. board size)
+				socket.emit('start', waitingOpponents.map(player => player.gameId), waitingSettingsStr);
 				console.log('matched gameIds:' + gameId + " " + JSON.stringify(waitingOpponents.map(player => player.gameId)));
 				waitingOpponents = [];
+				waitingSettingsStr = null;
 			}
 		}
 	});

@@ -1,13 +1,13 @@
 'use strict';
 
 window.InputManager = class InputManager{
-	constructor(settings) {
+	constructor(userSettings) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
 		this.lastPressed = undefined;	// Last pressed Left/Right key. Becomes undefined if the key is released.
 		this.dasTimer = {};				// Object containing DAS timers for each key
 		this.arrTimer = {};				// Object containing ARR timers for each key
-		this.settings = settings;
+		this.userSettings = userSettings;
 
 		document.addEventListener("keydown", event => {
 			this.keysPressed[event.key] = true;
@@ -39,9 +39,9 @@ window.InputManager = class InputManager{
 		Object.keys(this.keysPressed).filter(key => this.keysPressed[key] !== undefined).forEach(key => {
 
 			// If this key is newly pressed OR the DAS timer has completed
-			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.settings.das || key === 'ArrowDown') {
+			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.userSettings.das || key === 'ArrowDown') {
 				// If the puyo is undergoing ARR AND the ARR timer has not completed
-				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.settings.arr && key !== 'ArrowDown') {
+				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.userSettings.arr && key !== 'ArrowDown') {
 					return;
 				}
 

@@ -16,6 +16,7 @@ window.Game = class Game {
 		this.dropGenerator = new window.DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
+		this.dropQueueSetIndex = 1;
 
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
 		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
@@ -61,7 +62,18 @@ window.Game = class Game {
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'Win';
 			}
-		})
+		});
+
+		this.socket.on('playerDisconnect', gameId => {
+			if(!opponentIds.includes(gameId)) {
+				return;
+			}
+			console.log('Player with id ' + gameId + ' has disconnected.');
+			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'OppDisconnect';
+			}
+		});
 
 		this.opponentIds.forEach(id => {
 			this.visibleNuisance[id] = 0;
@@ -597,6 +609,7 @@ window.Game = class Game {
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
 		}
+
 		const arle = this.currentDrop.arle;
 		const schezo = window.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;

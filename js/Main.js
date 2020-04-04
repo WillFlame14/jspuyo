@@ -3,20 +3,50 @@
 (function () {
 	const socket = window.io();
 	let game, gameId;
-	const cpu = location.search.includes('cpu=true');				// Flag to play against a CPU
-	const noPlayer = location.search.includes('player=false');		// Flag to let CPU play for you
 	let cpuGames = [];
 
-	let gameInfo = { gameId: null, cpu, settingsString: new window.Settings().toString() };
+	// Dictionary of all URL query parameters
+	const urlParams = new URLSearchParams(window.location.search);
+
+	const cpu = urlParams.get('cpu') === 'true';				// Flag to play against a CPU
+	const noPlayer = urlParams.get('player') === 'false';		// Flag to let CPU play for you
+	const createRoom = urlParams.get('createRoom') === 'true';	// Flag to create a room
+	const joinId = urlParams.get('joinRoom');				// Flag to join a room
+
+	let gameInfo = { gameId: null, settingsString: new window.Settings().toString(), joinId };
 
 	socket.emit('register');
 
 	socket.on('getGameId', id => {
 		gameId = id;
 		gameInfo.gameId = id;
-		socket.emit('findOpponent', gameInfo);
-		console.log('Awaiting match...');
+		// CPU overrides all other options
+		if(cpu) {
+			socket.emit('cpuMatch', gameInfo);
+			console.log('Starting CPU match...');
+		}
+		else if(createRoom) {
+			gameInfo.roomSize = Number(urlParams.get('size')) || 2;
+			socket.emit('createRoom', gameInfo);
+			console.log('Creating a room...');
+		}
+		else if(joinId !== null) {
+			socket.emit('joinRoom', gameInfo);
+			console.log('Joining a room...');
+		}
+		else {
+			socket.emit('enterQueue', gameInfo);
+			console.log('Awaiting match...');
+		}
 	});
+
+	socket.on('giveRoomId', id => {
+		console.log('Other players can join this room by appending ?joinRoom=' + id);
+	});
+
+	socket.on('joinFailure', () => {
+		console.log('ERROR: Unable to join room as this room id is not currently in use.');
+	})
 
 	socket.on('start', (opponentIds, settingsString) => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));
@@ -38,7 +68,14 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame(id, thisOppIds, thisSocket, boardDrawerCounter, new window.TestCpu(), window.Settings.fromString(settingsString));
+			const thisGame = new window.CpuGame(
+				id,
+				thisOppIds,
+				thisSocket,
+				boardDrawerCounter,
+				new window.TestCpu(),
+				window.Settings.fromString(settingsString));
+
 			boardDrawerCounter++;
 			return { game: thisGame, socket: thisSocket, id };
 		});
@@ -54,12 +91,14 @@
 		if(finalMessage !== null) {
 			window.cancelAnimationFrame(mainFrame);
 			console.log(finalMessage);
+			return;
 		}
 		const endResult = game.end();
 		if(endResult !== null) {
 			switch(endResult) {
 				case 'Win':
 					finalMessage = 'You win!';
+					socket.emit('gameEnd', gameId);
 					break;
 				case 'Loss':
 					finalMessage = 'You lose...';
@@ -77,6 +116,7 @@
 				switch(cpuEndResult) {
 					case 'Win':
 						// finalMessage = 'You win!';
+						cpuGame.socket.emit('gameEnd', cpuGame.id);
 						break;
 					case 'Loss':
 						// finalMessage = 'You lose...';

@@ -11,10 +11,12 @@
 	const cpu = urlParams.get('cpu') === 'true';				// Flag to play against a CPU
 	const noPlayer = urlParams.get('player') === 'false';		// Flag to let CPU play for you
 	const createRoom = urlParams.get('createRoom') === 'true';	// Flag to create a room
-	const joinId = urlParams.get('joinRoom');				// Flag to join a room
+	const ranked = urlParams.get('ranked') === 'true';			// Flag to join ranked queue
+	const joinId = urlParams.get('joinRoom');					// Flag to join a room
 
 	let gameInfo = { gameId: null, settingsString: new window.Settings().toString(), joinId };
 
+	// Send a registration request to the server to receive a gameId
 	socket.emit('register');
 
 	socket.on('getGameId', id => {
@@ -26,7 +28,10 @@
 			console.log('Starting CPU match...');
 		}
 		else if(createRoom) {
-			gameInfo.roomSize = Number(urlParams.get('size')) || 2;
+			// TODO: Allow changing of room settings
+			const roomSize = urlParams.get('size');			// Size of the room
+			gameInfo.roomSize = Number(roomSize) || 2;
+
 			socket.emit('createRoom', gameInfo);
 			console.log('Creating a room...');
 		}
@@ -34,8 +39,12 @@
 			socket.emit('joinRoom', gameInfo);
 			console.log('Joining a room...');
 		}
+		else if(ranked) {
+			socket.emit('ranked', gameInfo);
+			console.log('Finding a match...')
+		}
 		else {
-			socket.emit('enterQueue', gameInfo);
+			socket.emit('quickPlay', gameInfo);
 			console.log('Awaiting match...');
 		}
 	});
@@ -46,7 +55,15 @@
 
 	socket.on('joinFailure', () => {
 		console.log('ERROR: Unable to join room as this room id is not currently in use.');
-	})
+	});
+
+	socket.on('roomUpdate', (allIds, roomSize, settingsString) => {
+		console.log('Current players: ' + allIds);
+		if(roomSize > allIds.length) {
+			console.log('Waiting for ' + (roomSize - allIds.length) + ' more players.');
+		}
+		console.log('Settings: ' + window.Settings.fromString(settingsString));
+	});
 
 	socket.on('start', (opponentIds, settingsString) => {
 		console.log('gameId: ' + gameId + ' opponents: ' + JSON.stringify(opponentIds));

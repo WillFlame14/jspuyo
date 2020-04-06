@@ -18,8 +18,15 @@ const defaultQueue = {
 	members: [],
 	settingsString: null
 };
+const rankedQueue = {
+	members: [],
+	settingsString: null
+};
 const socketToIdMap = {};
 const idToRoomMap = {};
+
+let quickPlayStarted = false;
+let abortQuickPlay = false;
 
 app.use(express.static('./'));
 
@@ -34,6 +41,7 @@ io.on('connection', function(socket) {
 	socket.on('cpuMatch', gameInfo => {
 		const { gameId, settingsString } = gameInfo;
 		const cpuIds = [];
+		// Assign each cpu a negative id
 		for(let i = 0; i < game_size - 1; i++) {
 			cpuIds.push(-gameCounter);
 			idToRoomMap[-gameCounter] = 'cpu';
@@ -55,35 +63,112 @@ io.on('connection', function(socket) {
 
 	socket.on('joinRoom', gameInfo => {
 		const { gameId, joinId } = gameInfo;
-
-		console.log(rooms);
-		console.log(joinId);
+		const room = rooms[joinId];
 
 		// Attempted to join with an invalid id
-		if(rooms[joinId] === undefined) {
+		if(room === undefined) {
 			socket.emit('joinFailure');
 			return;
 		}
 
 		// Add player to room map
-		rooms[joinId].members.push({ gameId, socket });
+		room.members.push({ gameId, socket });
 		idToRoomMap[gameId] = joinId;
+		console.log(gameId + ' has joined room ' + joinId);
 
 		// Room is full
-		if(rooms[joinId].members.length === rooms[joinId].roomSize) {
-			const allIds = rooms[joinId].members.map(p => p.gameId);
+		if(room.members.length === room.roomSize) {
+			const allIds = room.members.map(p => p.gameId);
 			// Send start to all members
-			rooms[joinId].members.forEach(player => {
+			room.members.forEach(player => {
 				const currentOpponentIds = allIds.filter(id => id !== player.gameId);
-				player.socket.emit('start', currentOpponentIds, rooms[joinId].settingsString);
+				player.socket.emit('start', currentOpponentIds, room.settingsString);
 			});
 
-			rooms[joinId].started = true;
+			room.started = true;
 			console.log('Starting custom room ' + joinId + ' with gameIds: ' + JSON.stringify(allIds));
+		}
+		// Room is not full yet
+		else {
+			// Send progress update to all members
+			room.members.forEach(player => {
+				player.socket.emit('roomUpdate', room.members.map(p => p.gameId), room.roomSize, room.settingsString);
+			});
 		}
 	});
 
-	socket.on('enterQueue', gameInfo => {
+	socket.on('ranked', gameInfo => {
+		const { gameId, settingsString } = gameInfo;
+
+		// First player in queue since starting server
+		if(rankedQueue.settingsString === null) {
+			rankedQueue.settingsString = settingsString;
+		}
+
+		rankedQueue.members.push({ gameId, socket });
+		console.log(gameId + ' has joined ranked queue.');
+
+		// Room is full
+		if(rankedQueue.members.length === 2) {
+			const allIds = rankedQueue.members.map(p => p.gameId);
+
+			// Establish the room
+			const roomId = generateRoomId(6);
+			rooms[roomId] = {
+				members: Array.from(rankedQueue.members),		// duplicate the array
+				roomSize: 2,
+				settingsString: rankedQueue.settingsString,
+				started: true
+			};
+
+			// Send start to all members
+			rankedQueue.members.forEach(player => {
+				const currentOpponentIds = allIds.filter(id => id !== player.gameId);
+				player.socket.emit('start', currentOpponentIds, rankedQueue.settingsString);
+				idToRoomMap[player.gameId] = roomId;
+			});
+
+			console.log('Starting room ' + roomId + ' with gameIds: ' + JSON.stringify(allIds));
+
+			// Clear the members array
+			rankedQueue.members = [];
+		}
+	});
+
+	const establishRoom = function() {
+		// One timer got here first
+		if(quickPlayStarted || abortQuickPlay) {
+			quickPlayStarted = false;
+			abortQuickPlay = false;
+			return;
+		}
+
+		const allIds = defaultQueue.members.map(p => p.gameId);
+
+		// Establish the room
+		const roomId = generateRoomId(6);
+		rooms[roomId] = {
+			members: Array.from(defaultQueue.members),		// duplicate the array
+			roomSize: defaultQueue.members.length,
+			settingsString: defaultQueue.settingsString,
+			started: true
+		};
+
+		// Send start to all members
+		defaultQueue.members.forEach(player => {
+			const currentOpponentIds = allIds.filter(id => id !== player.gameId);
+			player.socket.emit('start', currentOpponentIds, defaultQueue.settingsString);
+			idToRoomMap[player.gameId] = roomId;
+		});
+
+		console.log('Starting room ' + roomId + ' with gameIds: ' + JSON.stringify(allIds));
+
+		// Reset values
+		defaultQueue.members = [];
+		quickPlayStarted = true;
+	}
+
+	socket.on('quickPlay', gameInfo => {
 		const { gameId, settingsString } = gameInfo;
 
 		// First player in queue since starting server
@@ -92,34 +177,25 @@ io.on('connection', function(socket) {
 		}
 
 		defaultQueue.members.push({ gameId, socket });
-		console.log(defaultQueue.members.length);
+		console.log(gameId + ' has joined the default queue.');
 
-		// Room is full
-		if(defaultQueue.members.length === game_size) {
-			const allIds = defaultQueue.members.map(p => p.gameId);
-
-			// Establish the room
-			const roomId = generateRoomId(6);
-			rooms[roomId] = {
-				members: Array.from(defaultQueue.members),		// duplicate the array
-				roomSize: game_size,
-				settingsString: defaultQueue.settingsString,
-				started: true
-			};
-
-			// Send start to all members
-			defaultQueue.members.forEach(player => {
-				const currentOpponentIds = allIds.filter(id => id !== player.gameId);
-				player.socket.emit('start', currentOpponentIds, defaultQueue.settingsString);
-				idToRoomMap[player.gameId] = roomId;
-			});
-
-			console.log(idToRoomMap);
-			console.log('Starting room ' + roomId + ' with gameIds: ' + JSON.stringify(allIds));
-
-			// Clear the members array
-			defaultQueue.members = [];
+		if (defaultQueue.members.length === 4) {
+			// Start game in 15 seconds
+			setTimeout(establishRoom, 15000);
+			quickPlayStarted = false;
 		}
+		else if (defaultQueue.members.length === 2) {
+			// Start game in 3 minutes
+			setTimeout(establishRoom, 180000);
+			quickPlayStarted = false;
+		}
+
+		const allIds = defaultQueue.members.map(player => player.gameId);
+
+		// Send update to all members
+		defaultQueue.members.forEach(player => {
+			player.socket.emit('roomUpdate', allIds, allIds.length, defaultQueue.settingsString);
+		});
 	});
 
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets

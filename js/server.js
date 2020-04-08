@@ -33,6 +33,7 @@ app.use(express.static('./'));
 io.on('connection', function(socket) {
 	socket.on('register', () => {
 		socket.emit('getGameId', gameCounter);
+
 		socketToIdMap[socket.id] = gameCounter;
 		console.log('Assigned gameId ' + gameCounter);
 		gameCounter++;
@@ -41,14 +42,30 @@ io.on('connection', function(socket) {
 	socket.on('cpuMatch', gameInfo => {
 		const { gameId, settingsString } = gameInfo;
 		const cpuIds = [];
+		const roomId = generateRoomId(6);
+
 		// Assign each cpu a negative id
 		for(let i = 0; i < game_size - 1; i++) {
 			cpuIds.push(-gameCounter);
-			idToRoomMap[-gameCounter] = 'cpu';
+			idToRoomMap[-gameCounter] = roomId;
 			gameCounter++;
 		}
-		socket.emit('start', cpuIds, settingsString);
-		idToRoomMap[gameId] = 'cpu';
+
+		const allIds = cpuIds.concat(gameId);
+		const members = allIds.map(id => {
+			return { gameId: id };
+		});
+
+		rooms[roomId] = {
+			members,		// create the object array
+			roomSize: allIds.length,
+			settingsString,
+			cpu: true,
+			started: true
+		};
+
+		socket.emit('start', [], cpuIds, settingsString);
+		idToRoomMap[gameId] = roomId;
 	});
 
 	socket.on('createRoom', gameInfo => {
@@ -82,7 +99,7 @@ io.on('connection', function(socket) {
 			// Send start to all members
 			room.members.forEach(player => {
 				const currentOpponentIds = allIds.filter(id => id !== player.gameId);
-				player.socket.emit('start', currentOpponentIds, room.settingsString);
+				player.socket.emit('start', currentOpponentIds, [], room.settingsString);
 			});
 
 			room.started = true;
@@ -124,7 +141,7 @@ io.on('connection', function(socket) {
 			// Send start to all members
 			rankedQueue.members.forEach(player => {
 				const currentOpponentIds = allIds.filter(id => id !== player.gameId);
-				player.socket.emit('start', currentOpponentIds, rankedQueue.settingsString);
+				player.socket.emit('start', currentOpponentIds, [], rankedQueue.settingsString);
 				idToRoomMap[player.gameId] = roomId;
 			});
 
@@ -157,7 +174,7 @@ io.on('connection', function(socket) {
 		// Send start to all members
 		defaultQueue.members.forEach(player => {
 			const currentOpponentIds = allIds.filter(id => id !== player.gameId);
-			player.socket.emit('start', currentOpponentIds, defaultQueue.settingsString);
+			player.socket.emit('start', currentOpponentIds, [], defaultQueue.settingsString);
 			idToRoomMap[player.gameId] = roomId;
 		});
 
@@ -226,7 +243,6 @@ io.on('connection', function(socket) {
 	// Game is over for all players
 	socket.on('gameEnd', gameId => {
 		const roomId = idToRoomMap[gameId];
-		console.log(gameId);
 
 		if(roomId === undefined) {
 			// Ignore undefined gameIds as they are from ended games
@@ -236,10 +252,14 @@ io.on('connection', function(socket) {
 			return;
 		}
 
-		// Remove the players (who have still not disconnected) from the maps
+		// Remove the players from the maps
 		rooms[roomId].members.forEach(player => {
 			idToRoomMap[player.gameId] = undefined;
-			socketToIdMap[player.socket.id] = undefined;
+
+			// Exclude CPU games as server does not maintain those sockets
+			if(!rooms[roomId].cpu) {
+				socketToIdMap[player.socket.id] = undefined;
+			}
 		});
 
 		// Clear the room entry
@@ -251,6 +271,7 @@ io.on('connection', function(socket) {
 		const gameId = socketToIdMap[socket.id];
 		const roomId = idToRoomMap[gameId];
 
+		// Find out if they are in the default queue, and if so, their index
 		let defaultQueueIndex = -1;
 		defaultQueue.members.forEach((player, index) => {
 			if(defaultQueueIndex !== -1) {
@@ -269,29 +290,46 @@ io.on('connection', function(socket) {
 			return;
 		}
 
-		// In queue
+		// In queue, so only need to remove them from there and send update to others in queue
 		if(defaultQueueIndex !== -1) {
 			defaultQueue.members.splice(defaultQueueIndex, 1);
-		}
-		// In a CPU game
-		else if(roomId === 'cpu') {
-			console.log('cpu');
-			idToRoomMap[gameId] = undefined;
-			// Reset for the cpus as well
-			for(let i = 1; i < game_size; i++) {
-				idToRoomMap[-(gameId + i)] = undefined;
-			}
+
+			const allIds = defaultQueue.members.map(player => player.gameId);
+
+			// Send update to all members
+			defaultQueue.members.forEach(player => {
+				player.socket.emit('roomUpdate', allIds, allIds.length, defaultQueue.settingsString);
+			});
 		}
 		// In a room
 		else {
+			const room = rooms[roomId];
+
+			// In a CPU game. Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
+			if(room.cpu) {
+				console.log('Ending CPU game ' + roomId + ' due to player disconnect.');
+
+				// Remove all players from the room
+				room.members.forEach(player => {
+					idToRoomMap[player.gameId] = undefined;
+				});
+
+				// Reset the player's socket (Server does not maintain CPU sockets)
+				socketToIdMap[socket.id] = undefined;
+
+				// Clear the room entry
+				rooms[roomId] = undefined;
+				return;
+			}
+
 			// Game has already started, so need to also emit disconnect event to all sockets
-			if(rooms[roomId].started) {
+			if(room.started) {
 				socket.broadcast.emit('playerDisconnect', socketToIdMap[socket.id]);
 			}
 
 			// Find index within the room
 			let roomIndex = -1;
-			rooms[roomId].members.forEach((player, index) => {
+			room.members.forEach((player, index) => {
 				if(roomIndex !== -1) {
 					return;
 				}
@@ -306,7 +344,7 @@ io.on('connection', function(socket) {
 			}
 
 			// Remove player from maps
-			rooms[roomId].members.splice(roomIndex, 1);
+			room.members.splice(roomIndex, 1);
 			idToRoomMap[gameId] = undefined;
 		}
 		socketToIdMap[socket.id] = undefined;

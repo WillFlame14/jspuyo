@@ -100,6 +100,21 @@ window.Cpu = class Cpu {
 		}
 		return { col, rotations };
 	}
+
+	static fromString(ai, settings) {
+		switch(ai) {
+			case 'Random':
+				return new window.RandomCpu(settings);
+			case 'Flat':
+				return new window.FlatCpu(settings);
+			case 'Tall':
+				return new window.TallCpu(settings);
+			case 'Chain':
+				return new window.ChainCpu(settings);
+			default:
+				return new window.TestCpu(settings);
+		}
+	}
 }
 
 

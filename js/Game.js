@@ -2,7 +2,8 @@
 
 const { Board } = require('./Board.js');
 const { BoardDrawer } = require('./BoardDrawer.js');
-const { Utils, AudioPlayer, DropGenerator } = require('./Utils.js');
+const { DropGenerator } = require('./Drop.js');
+const { Utils, AudioPlayer } = require('./Utils.js');
 
 class Game {
 	constructor(gameId, opponentIds, socket, boardDrawerId, settings, userSettings) {
@@ -335,7 +336,12 @@ class Game {
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play sfx
-			this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', this.resolvingState.chain);
+			if(this.resolvingState.chain === this.resolvingChains.length && this.resolvingState.chain > 2) {
+				this.audioPlayer.playAndEmitSfx('akari_spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
+			}
+			else {
+				this.audioPlayer.playAndEmitSfx('akari_chain', this.resolvingState.chain);
+			}
 			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
 			if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain > 5 ? 5 : this.resolvingState.chain);
@@ -387,8 +393,17 @@ class Game {
 		return currentBoardHash;
 	}
 
+	/**
+	 * Squishes the puyos into the stack after lock delay finishes.
+	 */
 	squishPuyos() {
 		this.squishState.currentFrame++;
+
+		// Insert squishing puyos drawing here
+		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+		this.boardDrawer.updateBoard(currentBoardState);
+
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started
 			if(this.resolvingChains.length === 0) {
@@ -398,11 +413,6 @@ class Game {
 			}
 			this.squishState.currentFrame = -1;
 		}
-
-		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-		this.boardDrawer.updateBoard(currentBoardState);
-
 		return currentBoardHash;
 	}
 
@@ -778,6 +788,9 @@ class Game {
 		return doRotate;
 	}
 
+	/**
+	 * Returns the sum of all visible and active nuisance.
+	 */
 	getTotalNuisance() {
 		const totalVisibleNuisance =
 			Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {

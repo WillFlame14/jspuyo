@@ -1,7 +1,5 @@
 'use strict';
 
-const { Drop } = require('./Drop.js');
-
 const COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
@@ -90,20 +88,29 @@ class AudioPlayer {
 			'chain_voiced': [
 				null
 			],
-			'chain_voiced_jpn': [
+			'akari_chain': [
 				null,
-				new Audio('../sounds/voices/chain_1_jpn.wav'),
-				new Audio('../sounds/voices/chain_2_jpn.wav'),
-				new Audio('../sounds/voices/chain_3_jpn.wav'),
-				new Audio('../sounds/voices/chain_4_jpn.wav'),
-				new Audio('../sounds/voices/chain_5_jpn.wav'),
-				new Audio('../sounds/voices/chain_6_jpn.wav'),
-				new Audio('../sounds/voices/chain_7_jpn.wav'),
-				new Audio('../sounds/voices/chain_8_jpn.wav'),
-				new Audio('../sounds/voices/chain_9_jpn.wav'),
-				new Audio('../sounds/voices/chain_10_jpn.wav'),
-				new Audio('../sounds/voices/chain_11_jpn.wav'),
-				new Audio('../sounds/voices/chain_12_jpn.wav'),
+				new Audio('../sounds/voices/akari/chain_1.ogg'),
+				new Audio('../sounds/voices/akari/chain_2.ogg'),
+				new Audio('../sounds/voices/akari/chain_3.ogg'),
+				new Audio('../sounds/voices/akari/chain_4.ogg'),
+				new Audio('../sounds/voices/akari/chain_5.ogg'),
+				new Audio('../sounds/voices/akari/chain_6.ogg'),
+				new Audio('../sounds/voices/akari/chain_7.ogg'),
+				new Audio('../sounds/voices/akari/chain_8.ogg'),
+				new Audio('../sounds/voices/akari/chain_9.ogg'),
+				new Audio('../sounds/voices/akari/chain_10.ogg'),
+				new Audio('../sounds/voices/akari/chain_11.ogg'),
+				new Audio('../sounds/voices/akari/chain_12.ogg'),
+				new Audio('../sounds/voices/akari/chain_13.ogg')
+			],
+			'akari_spell': [
+				null,
+				new Audio('../sounds/voices/akari/spell_1.ogg'),
+				new Audio('../sounds/voices/akari/spell_2.ogg'),
+				new Audio('../sounds/voices/akari/spell_3.ogg'),
+				new Audio('../sounds/voices/akari/spell_4.ogg'),
+				new Audio('../sounds/voices/akari/spell_5.ogg')
 			],
 			'nuisanceSend': [
 				null,
@@ -121,8 +128,9 @@ class AudioPlayer {
 		// Set volume for each sound
 		Object.keys(this.sfx).forEach(key => {
 			const sounds = this.sfx[key];
-			if(key.includes('voiced')) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.4);
+			// Voiced sfx
+			if(key.includes('chain') || key.includes('spell')) {
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.3);
 				return;
 			}
 			if(Array.isArray(sounds)) {
@@ -166,87 +174,6 @@ class AudioPlayer {
 
 	disable() {
 		this.cancel = true;
-	}
-}
-
-class DropGenerator {
-	constructor(settings) {
-		this.settings = settings;
-		this.seed = this.settings.seed;
-		this.drops = [];
-		this.colourList = Object.keys(PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => PUYO_COLOURS[colour_name]);
-		this.colourBuckets = {};
-		this.drops[0] = [];
-
-		// Set up colourBuckets for the first batch of 128
-		this.colourList.forEach(colour => {
-			// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
-			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
-		});
-
-		// Generate the 3 colours that will be used for the first 3 drops
-		const firstColours = [];
-		while(firstColours.length < 3) {
-			let colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
-			if(!firstColours.includes(colour)) {
-				firstColours.push(colour);
-			}
-		}
-
-		// Only use the previously determined 3 colours for the first 3 drops
-		for(let i = 0; i < 3; i++) {
-			const colours = [
-				firstColours[Math.floor(this.randomNumber() * 3)],
-				firstColours[Math.floor(this.randomNumber() * 3)]
-			];
-			this.colourBuckets[colours[0]]--;
-			this.colourBuckets[colours[1]]--;
-			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
-		}
-
-		for(let i = 3; i < 128; i++) {
-			// Filter out colours that have been completely used up
-			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
-			const colours = [
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)],
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]
-			];
-			this.colourBuckets[colours[0]]--;
-			this.colourBuckets[colours[1]]--;
-
-			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
-		}
-	}
-
-	requestDrops(index) {
-		if(this.drops[index + 1] === undefined) {
-			this.drops[index + 1] = [];
-
-			// Reset colourBuckets for the next batch of 128
-			this.colourList.forEach(colour => {
-				// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
-				this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
-			});
-
-			for(let i = 0; i < 128; i++) {
-				// Filter out colours that have been completely used up
-				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
-				const colours = [
-					colourList[Math.floor(this.randomNumber() * colourList.length)],
-					colourList[Math.floor(this.randomNumber() * colourList.length)]
-				];
-				this.colourBuckets[colours[0]]--;
-				this.colourBuckets[colours[1]]--;
-
-				this.drops[index + 1].push(Drop.getNewDrop(this.settings, colours));
-			}
-		}
-		return this.drops[index];
-	}
-
-	randomNumber() {
-		const x = Math.sin(this.seed++) * 10000;
-		return x - Math.floor(x);
 	}
 }
 
@@ -323,6 +250,9 @@ function calculateScore (puyoLocs, chain_length) {
 	return (10 * puyos_cleared) * (chain_power + colour_bonus + group_bonus);
 }
 
+/**
+ * Finds the amount of nuisance generated from a particular increase in score.
+ */
 function calculateNuisance(chain_score, targetPoints, leftoverNuisance) {
 	const nuisancePoints = chain_score / targetPoints + leftoverNuisance;
 	const nuisanceSent = Math.floor(nuisancePoints);
@@ -353,7 +283,6 @@ module.exports = {
 	PUYO_EYES_COLOUR,
 	Settings,
 	UserSettings,
-	DropGenerator,
 	AudioPlayer,
 	Utils
 }

@@ -390,9 +390,10 @@ class TestCpu extends Cpu {
 }
 
 module.exports = {
+	Cpu,
 	RandomCpu,
-	TallCpu,
 	FlatCpu,
+	TallCpu,
 	ChainCpu,
 	TestCpu
 }

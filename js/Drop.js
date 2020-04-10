@@ -1,6 +1,8 @@
 'use strict';
 
-window.Drop = class Drop {
+const { Utils, PUYO_COLOURS } = require('./Utils.js');
+
+class Drop {
 	constructor (shape, colours, settings, arle = { x: 2, y: 11.5 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
@@ -35,8 +37,8 @@ window.Drop = class Drop {
 
 		// Returns an array of colours based on the shape of the drop
 		const getPuyosFromShape = function (shape) {
-			const first_col = (colours && colours[0]) || window.getRandomColour(settings.numColours);
-			const second_col = (colours && colours[1]) || window.getRandomColour(settings.numColours);
+			const first_col = (colours && colours[0]) || Utils.getRandomColour(settings.numColours);
+			const second_col = (colours && colours[1]) || Utils.getRandomColour(settings.numColours);
 			switch(shape) {
 				case 'I':
 					return [first_col, second_col];
@@ -50,7 +52,7 @@ window.Drop = class Drop {
 					return [first_col, first_col, first_col, first_col];
 			}
 		}
-		return new window.Drop(shape, getPuyosFromShape(shape), settings);
+		return new Drop(shape, getPuyosFromShape(shape), settings);
 	}
 
 	/**
@@ -64,8 +66,8 @@ window.Drop = class Drop {
 			this.shape,
 			this.colours.slice(),
 			this.settings,
-			window.objectCopy(this.arle),
-			window.objectCopy(this.schezo),
+			Utils.objectCopy(this.arle),
+			Utils.objectCopy(this.schezo),
 			this.standardAngle,
 			this.rotating);
 	}
@@ -178,3 +180,92 @@ window.Drop = class Drop {
 		}
 	}
 }
+
+class DropGenerator {
+	constructor(settings) {
+		this.settings = settings;
+		this.seed = this.settings.seed;
+		this.drops = [];
+		this.colourList = Object.keys(PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => PUYO_COLOURS[colour_name]);
+		this.colourBuckets = {};
+		this.drops[0] = [];
+
+		// Set up colourBuckets for the first batch of 128
+		this.colourList.forEach(colour => {
+			// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
+			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
+		});
+
+		// Generate the 3 colours that will be used for the first 3 drops
+		const firstColours = [];
+		while(firstColours.length < 3) {
+			let colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
+			if(!firstColours.includes(colour)) {
+				firstColours.push(colour);
+			}
+		}
+
+		// Only use the previously determined 3 colours for the first 3 drops
+		for(let i = 0; i < 3; i++) {
+			const colours = [
+				firstColours[Math.floor(this.randomNumber() * 3)],
+				firstColours[Math.floor(this.randomNumber() * 3)]
+			];
+			this.colourBuckets[colours[0]]--;
+			this.colourBuckets[colours[1]]--;
+			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
+		}
+
+		for(let i = 3; i < 128; i++) {
+			// Filter out colours that have been completely used up
+			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
+			const colours = [
+				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)],
+				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]
+			];
+			this.colourBuckets[colours[0]]--;
+			this.colourBuckets[colours[1]]--;
+
+			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
+		}
+	}
+
+	/**
+	 * Called when a queue is running low on drops so that a new batch is generated.
+	 */
+	requestDrops(index) {
+		if(this.drops[index + 1] === undefined) {
+			this.drops[index + 1] = [];
+
+			// Reset colourBuckets for the next batch of 128
+			this.colourList.forEach(colour => {
+				// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
+				this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
+			});
+
+			for(let i = 0; i < 128; i++) {
+				// Filter out colours that have been completely used up
+				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
+				const colours = [
+					colourList[Math.floor(this.randomNumber() * colourList.length)],
+					colourList[Math.floor(this.randomNumber() * colourList.length)]
+				];
+				this.colourBuckets[colours[0]]--;
+				this.colourBuckets[colours[1]]--;
+
+				this.drops[index + 1].push(Drop.getNewDrop(this.settings, colours));
+			}
+		}
+		return this.drops[index];
+	}
+
+	/**
+	 * Seeded RNG so that each game's drop generator always creates the same drops
+	 */
+	randomNumber() {
+		const x = Math.sin(this.seed++) * 10000;
+		return x - Math.floor(x);
+	}
+}
+
+module.exports = { Drop, DropGenerator };

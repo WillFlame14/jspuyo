@@ -1,8 +1,13 @@
 'use strict';
 
-window.Game = class Game {
+const { Board } = require('./Board.js');
+const { BoardDrawer } = require('./BoardDrawer.js');
+const { DropGenerator } = require('./Drop.js');
+const { Utils, AudioPlayer } = require('./Utils.js');
+
+class Game {
 	constructor(gameId, opponentIds, socket, boardDrawerId, settings, userSettings) {
-		this.board = new window.Board(settings);
+		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
@@ -13,9 +18,10 @@ window.Game = class Game {
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
 
-		this.dropGenerator = new window.DropGenerator(this.settings);
+		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
+		this.dropQueueSetIndex = 1;
 
 		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
 		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
@@ -27,10 +33,10 @@ window.Game = class Game {
 		this.squishState = { currentFrame: -1 };
 
 		this.boardDrawerId = boardDrawerId;
-		this.boardDrawer = new window.BoardDrawer(this.settings, this.boardDrawerId);
+		this.boardDrawer = new BoardDrawer(this.settings, this.boardDrawerId);
 
 		this.socket = socket;
-		this.audioPlayer = new window.AudioPlayer(this.gameId, socket, this.userSettings.volume);
+		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.volume);
 		if(this.boardDrawerId !== 1) {
 			this.audioPlayer.disable();
 		}
@@ -61,7 +67,18 @@ window.Game = class Game {
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'Win';
 			}
-		})
+		});
+
+		this.socket.on('playerDisconnect', gameId => {
+			if(!opponentIds.includes(gameId)) {
+				return;
+			}
+			console.log('Player with id ' + gameId + ' has disconnected.');
+			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'OppDisconnect';
+			}
+		});
 
 		this.opponentIds.forEach(id => {
 			this.visibleNuisance[id] = 0;
@@ -305,7 +322,7 @@ window.Game = class Game {
 		if(this.resolvingState.chain === 0) {
 			const puyoLocs = this.resolvingChains[0];
 			const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
-			const dropFrames = window.getDropFrames(puyoLocs.concat(nuisanceLocs), this.board.boardState, this.settings);
+			const dropFrames = Utils.getDropFrames(puyoLocs.concat(nuisanceLocs), this.board.boardState, this.settings);
 			this.resolvingState = { chain: 1, puyoLocs, nuisanceLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
 		}
 		else {
@@ -319,7 +336,12 @@ window.Game = class Game {
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play sfx
-			this.audioPlayer.playAndEmitSfx('chain_voiced_jpn', this.resolvingState.chain);
+			if(this.resolvingState.chain === this.resolvingChains.length && this.resolvingState.chain > 2) {
+				this.audioPlayer.playAndEmitSfx('akari_spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
+			}
+			else {
+				this.audioPlayer.playAndEmitSfx('akari_chain', this.resolvingState.chain);
+			}
 			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
 			if(this.resolvingState.chain > 1) {
 				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain > 5 ? 5 : this.resolvingState.chain);
@@ -358,7 +380,7 @@ window.Game = class Game {
 			else {
 				const puyoLocs = this.resolvingChains[this.resolvingState.chain];
 				const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
-				const dropFrames = window.getDropFrames(puyoLocs, this.board.boardState, this.settings);
+				const dropFrames = Utils.getDropFrames(puyoLocs, this.board.boardState, this.settings);
 				this.resolvingState = {
 					chain: this.resolvingState.chain + 1,
 					puyoLocs,
@@ -371,8 +393,17 @@ window.Game = class Game {
 		return currentBoardHash;
 	}
 
+	/**
+	 * Squishes the puyos into the stack after lock delay finishes.
+	 */
 	squishPuyos() {
 		this.squishState.currentFrame++;
+
+		// Insert squishing puyos drawing here
+		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+		this.boardDrawer.updateBoard(currentBoardState);
+
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started
 			if(this.resolvingChains.length === 0) {
@@ -382,11 +413,6 @@ window.Game = class Game {
 			}
 			this.squishState.currentFrame = -1;
 		}
-
-		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-		this.boardDrawer.updateBoard(currentBoardState);
-
 		return currentBoardHash;
 	}
 
@@ -413,7 +439,7 @@ window.Game = class Game {
 			return false;
 		}
 		const arle = currentDrop.arle;
-		const schezo = window.getOtherPuyo(currentDrop);
+		const schezo = Utils.getOtherPuyo(currentDrop);
 		let lock;
 
 		if(schezo.x > this.settings.cols - 1) {
@@ -480,7 +506,7 @@ window.Game = class Game {
 	lockDrop() {
 		const currentDrop = this.currentDrop;
 		const boardState = this.board.boardState;
-		currentDrop.schezo = window.getOtherPuyo(currentDrop);
+		currentDrop.schezo = Utils.getOtherPuyo(currentDrop);
 
 		// Force round the schezo before it is put on the stack
 		currentDrop.schezo.x = Math.round(currentDrop.schezo.x);
@@ -525,11 +551,11 @@ window.Game = class Game {
 			return;
 		}
 
-		this.currentScore += window.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
 		let { nuisanceSent, leftoverNuisance } =
-			window.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
+			Utils.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
 
 		// Send an extra rock if all clear
@@ -597,8 +623,9 @@ window.Game = class Game {
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
 		}
+
 		const arle = this.currentDrop.arle;
-		const schezo = window.getOtherPuyo(this.currentDrop);
+		const schezo = Utils.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
 		let leftest, rightest;
 
@@ -639,7 +666,7 @@ window.Game = class Game {
 			else {
 				this.forceLockDelay += 15;
 			}
-			const new_schezo = window.getOtherPuyo(this.currentDrop);
+			const new_schezo = Utils.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {
 				this.currentDrop.shift('Up', -new_schezo.y);
 			}
@@ -691,7 +718,7 @@ window.Game = class Game {
 	 */
 	checkKick(newDrop, direction) {
 		const arle = this.currentDrop.arle;
-		const schezo = window.getOtherPuyo(newDrop);
+		const schezo = Utils.getOtherPuyo(newDrop);
 		const boardState = this.board.boardState;
 
 		let kick = '';
@@ -761,6 +788,9 @@ window.Game = class Game {
 		return doRotate;
 	}
 
+	/**
+	 * Returns the sum of all visible and active nuisance.
+	 */
 	getTotalNuisance() {
 		const totalVisibleNuisance =
 			Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
@@ -771,3 +801,5 @@ window.Game = class Game {
 		return this.activeNuisance + totalVisibleNuisance;
 	}
 }
+
+module.exports = { Game };

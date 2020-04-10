@@ -202,8 +202,8 @@ io.on('connection', function(socket) {
 			quickPlayStarted = false;
 		}
 		else if (defaultQueue.members.length === 2) {
-			// Start game in 3 minutes
-			setTimeout(establishRoom, 180000);
+			// Start game in 1 minute
+			setTimeout(establishRoom, 60000);
 			quickPlayStarted = false;
 		}
 

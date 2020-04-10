@@ -5,6 +5,7 @@
   "main": "Main.js",
   "scripts": {
     "bundle": "./node_modules/.bin/watchify js/Main.js -o bundle.js --debug",
+    "uglify": "./node_modules/.bin/browserify -t uglifyify js/Main.js > bundle.js",
     "start": "node js/server.js"
   },
   "repository": {
@@ -24,6 +25,7 @@
   "devDependencies": {
     "browserify": "^16.5.1",
     "eslint": "^6.8.0",
+    "uglifyify": "^5.0.2",
     "watchify": "^3.11.1"
   }
 }

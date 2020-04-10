@@ -1,6 +1,9 @@
 'use strict';
 
-window.Cpu = class Cpu {
+const { Board } = require('./Board.js');
+const { PUYO_COLOURS } = require('./Utils.js');
+
+class Cpu {
 	constructor(settings) {
 		if(this.constructor === Cpu) {
 			throw new Error('Abstract class cannot be instatiated.');
@@ -33,7 +36,7 @@ window.Cpu = class Cpu {
 		let col = -1;
 		for(let i = 0; i < this.settings.cols * 2; i++) {
 			const currCol = Math.floor(i / 2);
-			const board = new window.Board(this.settings, boardState);
+			const board = new Board(this.settings, boardState);
 			if(i % 2 === 0) {
 				board.boardState[currCol].push(currentDrop.colours[0]);
 				board.boardState[currCol].push(currentDrop.colours[1]);
@@ -62,7 +65,7 @@ window.Cpu = class Cpu {
 		let rotations = -1;
 		for(let i = 0; i < this.settings.cols * 4; i++) {
 			const currCol = i % this.settings.cols;
-			const board = new window.Board(this.settings, boardState);
+			const board = new Board(this.settings, boardState);
 			let tempRotations;
 			if(i < this.settings.cols) {
 				board.boardState[currCol].push(currentDrop.colours[1]);
@@ -104,15 +107,15 @@ window.Cpu = class Cpu {
 	static fromString(ai, settings) {
 		switch(ai) {
 			case 'Random':
-				return new window.RandomCpu(settings);
+				return new RandomCpu(settings);
 			case 'Flat':
-				return new window.FlatCpu(settings);
+				return new FlatCpu(settings);
 			case 'Tall':
-				return new window.TallCpu(settings);
+				return new TallCpu(settings);
 			case 'Chain':
-				return new window.ChainCpu(settings);
+				return new ChainCpu(settings);
 			default:
-				return new window.TestCpu(settings);
+				return new TestCpu(settings);
 		}
 	}
 }
@@ -121,7 +124,7 @@ window.Cpu = class Cpu {
 /**
  * RandomCpu: Completely random moves.
  */
-window.RandomCpu = class RandomCpu extends window.Cpu {
+class RandomCpu extends Cpu {
 	constructor(settings) {
 		super(settings);
 	}
@@ -137,7 +140,7 @@ window.RandomCpu = class RandomCpu extends window.Cpu {
 /**
  * FlatCpu: stacks horizontally
  */
-window.FlatCpu = class FlatCpu extends window.Cpu {
+class FlatCpu extends Cpu {
 	constructor(settings) {
 		super(settings);
 	}
@@ -162,7 +165,7 @@ window.FlatCpu = class FlatCpu extends window.Cpu {
 /**
  * TallCpu: stacks the right side, then the left side
  */
-window.TallCpu = class TallCpu extends window.Cpu {
+class TallCpu extends Cpu {
 	constructor(settings) {
 		super(settings);
 	}
@@ -184,12 +187,12 @@ window.TallCpu = class TallCpu extends window.Cpu {
 
 		// Only column 2 left
 		if(col === 2) {
-			const noRotationBoard = new window.Board(this.settings, boardState);
+			const noRotationBoard = new Board(this.settings, boardState);
 			noRotationBoard.boardState[2].push(currentDrop.colours[0]);
 			noRotationBoard.boardState[2].push(currentDrop.colours[1]);
 			const noRotationChains = noRotationBoard.resolveChains();
 
-			const yesRotationBoard = new window.Board(this.settings, boardState);
+			const yesRotationBoard = new Board(this.settings, boardState);
 			yesRotationBoard.boardState[2].push(currentDrop.colours[1]);
 			yesRotationBoard.boardState[2].push(currentDrop.colours[0]);
 			const yesRotationChains = yesRotationBoard.resolveChains();
@@ -207,7 +210,7 @@ window.TallCpu = class TallCpu extends window.Cpu {
  * ChainCpu: Goes for the longest possible chain result given the current drop.
  * Otherwise, places randomly.
  */
-window.ChainCpu = class ChainCpu extends window.Cpu {
+class ChainCpu extends Cpu {
 	constructor(settings) {
 		super(settings);
 	}
@@ -230,7 +233,7 @@ window.ChainCpu = class ChainCpu extends window.Cpu {
 /**
  * TestCpu: ChainCPU, but instead of placing randomly it attempts to connect a colour.
  */
-window.TestCpu = class TestCpu extends window.Cpu {
+class TestCpu extends Cpu {
 	constructor(settings, speed) {
 		super(settings, speed);
 	}
@@ -249,7 +252,7 @@ window.TestCpu = class TestCpu extends window.Cpu {
 
 			for(let i = 0; i < this.settings.cols * 4; i++) {
 				const currCol = i % this.settings.cols;
-				const board = new window.Board(this.settings, boardState);
+				const board = new Board(this.settings, boardState);
 				let tempRotations;
 				if(i < this.settings.cols) {
 					board.boardState[currCol].push(currentDrop.colours[1]);
@@ -373,7 +376,7 @@ window.TestCpu = class TestCpu extends window.Cpu {
 			for(let j = 0; j < board.boardState[i].length; j++) {
 				const puyo = { col: i, row: j, colour: board.boardState[i][j] };
 
-				if(notVisited(puyo) && puyo.colour !== window.PUYO_COLOURS['Gray']) {
+				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
 					// Find the extent of this colour, starting here
 					const length = dfs(puyo, 1, [puyo]);
 					if(length < 4) {
@@ -384,4 +387,12 @@ window.TestCpu = class TestCpu extends window.Cpu {
 		}
 		return value;
 	}
+}
+
+module.exports = {
+	RandomCpu,
+	TallCpu,
+	FlatCpu,
+	ChainCpu,
+	TestCpu
 }

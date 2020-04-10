@@ -1,6 +1,6 @@
 'use strict';
 
-window.InputManager = class InputManager{
+class InputManager{
 	constructor(userSettings) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
@@ -108,3 +108,5 @@ window.InputManager = class InputManager{
 		callback(data, player);
 	}
 }
+
+module.exports = { InputManager };

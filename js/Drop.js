@@ -1,6 +1,8 @@
 'use strict';
 
-window.Drop = class Drop {
+const { Utils } = require('./Utils.js');
+
+class Drop {
 	constructor (shape, colours, settings, arle = { x: 2, y: 11.5 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
@@ -35,8 +37,8 @@ window.Drop = class Drop {
 
 		// Returns an array of colours based on the shape of the drop
 		const getPuyosFromShape = function (shape) {
-			const first_col = (colours && colours[0]) || window.getRandomColour(settings.numColours);
-			const second_col = (colours && colours[1]) || window.getRandomColour(settings.numColours);
+			const first_col = (colours && colours[0]) || Utils.getRandomColour(settings.numColours);
+			const second_col = (colours && colours[1]) || Utils.getRandomColour(settings.numColours);
 			switch(shape) {
 				case 'I':
 					return [first_col, second_col];
@@ -50,7 +52,7 @@ window.Drop = class Drop {
 					return [first_col, first_col, first_col, first_col];
 			}
 		}
-		return new window.Drop(shape, getPuyosFromShape(shape), settings);
+		return new Drop(shape, getPuyosFromShape(shape), settings);
 	}
 
 	/**
@@ -64,8 +66,8 @@ window.Drop = class Drop {
 			this.shape,
 			this.colours.slice(),
 			this.settings,
-			window.objectCopy(this.arle),
-			window.objectCopy(this.schezo),
+			Utils.objectCopy(this.arle),
+			Utils.objectCopy(this.schezo),
 			this.standardAngle,
 			this.rotating);
 	}
@@ -178,3 +180,5 @@ window.Drop = class Drop {
 		}
 	}
 }
+
+module.exports = { Drop };

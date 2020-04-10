@@ -1,5 +1,10 @@
 'use strict';
 
+const { Cpu } = require('./Cpu.js');
+const { CpuGame } = require('./CpuGame.js');
+const { PlayerGame } = require('./PlayerGame.js');
+const { Settings, UserSettings } = require('./Utils.js');
+
 (function () {
 	const socket = window.io();
 	let game, gameId;
@@ -18,7 +23,7 @@
 	const ranked = urlParams.get('ranked') === 'true';		// Flag to join ranked queue
 	const joinId = urlParams.get('joinRoom');				// Id of room to join
 
-	let gameInfo = { gameId: null, settingsString: new window.Settings().toString(), joinId };
+	let gameInfo = { gameId: null, settingsString: new Settings().toString(), joinId };
 
 	// Send a registration request to the server to receive a gameId
 	socket.emit('register');
@@ -66,7 +71,7 @@
 		if(roomSize > allIds.length) {
 			console.log('Waiting for ' + (roomSize - allIds.length) + ' more players.');
 		}
-		console.log('Settings: ' + window.Settings.fromString(settingsString));
+		console.log('Settings: ' + Settings.fromString(settingsString));
 	});
 
 	socket.on('start', (opponentIds, cpuIds, settingsString) => {
@@ -75,20 +80,20 @@
 		const allOpponentIds = opponentIds.concat(cpuIds);
 
 		// Set up the player's game
-		game = new window.PlayerGame(
+		game = new PlayerGame(
 			gameId,
 			allOpponentIds,
 			socket,
-			window.Settings.fromString(settingsString),
-			new window.UserSettings()
+			Settings.fromString(settingsString),
+			new UserSettings()
 		);
 
 		let boardDrawerCounter = 2;
 		const allIds = allOpponentIds.concat(gameId);
 
-		let settings = window.Settings.fromString(settingsString);
+		let settings = Settings.fromString(settingsString);
 		let cpuSpeed = Number(speed) || 10;
-		let cpuAI = window.Cpu.fromString(ai, settings);
+		let cpuAI = Cpu.fromString(ai, settings);
 
 		// Create the CPU games
 		cpuGames = cpuIds.map(id => {
@@ -96,7 +101,7 @@
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
-			const thisGame = new window.CpuGame(
+			const thisGame = new CpuGame(
 				id,
 				thisOppIds,
 				thisSocket,

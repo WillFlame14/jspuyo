@@ -1,5 +1,8 @@
 'use strict';
 
+const { Drop } = require('./Drop.js');
+const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
+
 /**
  * Class to manage updating for any canvas that draws Puyo (the main board or the queue).
  * The settings should not change over the span of the drawer being used
@@ -20,7 +23,7 @@ class DrawerWithPuyo {
         ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
         ctx.translate(2 * size / 5, 0);
         ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        ctx.fillStyle = window.PUYO_EYES_COLOUR;
+        ctx.fillStyle = PUYO_EYES_COLOUR;
         ctx.fill();
         ctx.restore();
         ctx.save();
@@ -121,7 +124,7 @@ class DrawerWithPuyo {
 /**
  * The drawer for the main area of the game.
  */
-window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
+class BoardDrawer extends DrawerWithPuyo {
     constructor(settings, boardNum) {
         super();
         this.board = document.getElementById("board" + boardNum);
@@ -129,8 +132,8 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         this.settings = settings;
         this.poppingPuyos = [];
         this.colourArray = [];
-        for (let i = 0; i < window.COLOUR_LIST.length; i++) {
-            this.colourArray.push(window.PUYO_COLOURS[window.COLOUR_LIST[i]]);
+        for (let i = 0; i < COLOUR_LIST.length; i++) {
+            this.colourArray.push(PUYO_COLOURS[COLOUR_LIST[i]]);
         }
         this.nuisanceCascadeFPR = [];
     }
@@ -290,7 +293,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
             for (let j = 0; j < nuisanceArray[i].length; j++) {
                 ctx.save();
                 ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
-                this.drawPuyo(window.PUYO_COLOURS['Gray'], unitW);
+                this.drawPuyo(PUYO_COLOURS['Gray'], unitW);
                 ctx.restore();
             }
         }
@@ -314,7 +317,7 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
                 let dropArray = splitHash[2].split(",");
                 let arle = { x: dropArray[3], y: dropArray[4] };
                 let schezo = { x: dropArray[5] == "n" ? null : dropArray[5], y: dropArray[6] == "n" ? null : dropArray[6] };
-                let currentDrop = new window.Drop(
+                let currentDrop = new Drop(
                     dropArray[0],
                     [this.colourArray[dropArray[1]], this.colourArray[dropArray[2]]],
                     null,
@@ -463,3 +466,5 @@ window.BoardDrawer = class BoardDrawer extends DrawerWithPuyo {
         return hash;
     }
 }
+
+module.exports = { BoardDrawer };

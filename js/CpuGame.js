@@ -1,8 +1,11 @@
 'use strict';
 
-window.CpuGame = class CpuGame extends window.Game {
+const { Game } = require('./Game.js');
+const { UserSettings } = require('./Utils.js');
+
+class CpuGame extends Game {
 	constructor(gameId, opponentIds, socket, boardDrawerId, ai, speed, settings) {
-		super(gameId, opponentIds, socket, boardDrawerId, settings, new window.UserSettings());
+		super(gameId, opponentIds, socket, boardDrawerId, settings, new UserSettings());
 
 		this.ai = ai;					// The algorithm used to determine the optimal move
 		this.ai.assignSettings(this.settings);
@@ -83,3 +86,5 @@ window.CpuGame = class CpuGame extends window.Game {
 		this.softDropTimer = Date.now();
 	}
 }
+
+module.exports = { CpuGame };

@@ -1,6 +1,8 @@
 'use strict';
 
-window.Board = class Board {
+const { PUYO_COLOURS } = require('./Utils.js');
+
+class Board {
 	constructor(settings, boardState = null) {
 		this.settings = settings;
 		this.height = settings.rows;
@@ -109,7 +111,7 @@ window.Board = class Board {
 			for(let j = 0; j < board.boardState[i].length; j++) {
 				const puyo = { col: i, row: j, colour: board.boardState[i][j] };
 
-				if(notVisited(puyo) && puyo.colour !== window.PUYO_COLOURS['Gray']) {
+				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
 					// Find the extent of this colour, starting here
 					const { length, puyos } = dfs(puyo, 1, [puyo]);
 					if (length > 3) {
@@ -176,7 +178,7 @@ window.Board = class Board {
 					if(Math.abs(i) + Math.abs(j) !== 1 || !this.validLoc({ col: loc.col + i, row: loc.row + j })) {
 						continue;
 					}
-					if(this.boardState[loc.col + i][loc.row + j] === window.PUYO_COLOURS['Gray']) {
+					if(this.boardState[loc.col + i][loc.row + j] === PUYO_COLOURS['Gray']) {
 						poppedNuisance.push({ col: loc.col + i, row: loc.row + j });
 					}
 				}
@@ -200,7 +202,7 @@ window.Board = class Board {
 		if(nuisance >= this.width * 5) {
 			nuisanceArray.forEach(col => {
 				for(let i = 0; i < 5; i++) {
-					col.push(window.PUYO_COLOURS['Gray']);
+					col.push(PUYO_COLOURS['Gray']);
 				}
 			});
 			nuisanceDropped = 5 * this.width;
@@ -214,7 +216,7 @@ window.Board = class Board {
 			// Drop the full rows first
 			nuisanceArray.forEach(col => {
 				for(let i = 0; i < fullRows; i++) {
-					col.push(window.PUYO_COLOURS['Gray']);
+					col.push(PUYO_COLOURS['Gray']);
 				}
 			});
 
@@ -226,7 +228,7 @@ window.Board = class Board {
 			// Randomly drop the remaining nuisance
 			for(let i = 0; i < remaining; i++) {
 				let column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
-				nuisanceArray[column].push(window.PUYO_COLOURS['Gray']);
+				nuisanceArray[column].push(PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
 			nuisanceDropped = nuisance;
@@ -241,3 +243,5 @@ window.Board = class Board {
 		return { nuisanceDropped, nuisanceArray };
 	}
 }
+
+module.exports = { Board };

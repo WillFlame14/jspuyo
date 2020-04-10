@@ -1,14 +1,22 @@
 'use strict';
 
-window.CpuGame = class CpuGame extends window.Game {
-	constructor(gamemode, gameId, opponentIds, socket, boardDrawerId, dropGenerator, ai, settings) {
-		super(gamemode, gameId, opponentIds, socket, boardDrawerId, dropGenerator, settings);
+const { Game } = require('./Game.js');
+const { UserSettings } = require('./Utils.js');
+
+class CpuGame extends Game {
+	constructor(gameId, opponentIds, socket, boardDrawerId, ai, speed, settings) {
+		super(gameId, opponentIds, socket, boardDrawerId, settings, new UserSettings());
 
 		this.ai = ai;					// The algorithm used to determine the optimal move
 		this.ai.assignSettings(this.settings);
+		this.softDropSpeed = speed;				// Number of milliseconds to wait before soft dropping
+		this.movementSpeed = speed / 8;		// Number of milliseconds to wait before performing a move
 		this.currentMove = null;		// The current optimal move
 		this.rotations = 0;				// Rotations performed on the current drop (between -2 and 2)
 		this.lastArle = null;			// The location of the arle in the last frame (used to detect whether a drop is stuck)
+
+		this.softDropTimer = Date.now();		// Timer to measure milliseconds before soft drop
+		this.movementTimer = Date.now();		// Timer to measure milliseconds before movement
 	}
 
 	/**
@@ -18,6 +26,11 @@ window.CpuGame = class CpuGame extends window.Game {
 	getInputs() {
 		if(this.currentMove === null) {
 			this.currentMove = this.ai.getMove(this.board.boardState, this.currentDrop);
+		}
+
+		// Do not move/rotate if movement timer is not fulfilled
+		if(Date.now() - this.movementTimer < this.movementSpeed) {
+			return;
 		}
 
 		let applied = false;
@@ -47,20 +60,31 @@ window.CpuGame = class CpuGame extends window.Game {
 			}
 		}
 
+		// If action was taken, reset the movement timer
+		if(applied) {
+			this.movementTimer = Date.now();
+		}
+
 		// If no action needs to be taken or the drop is stuck, soft drop
 		if(!applied || (this.lastArle !== null && JSON.stringify(this.currentDrop.arle) === JSON.stringify(this.lastArle))) {
-			this.move('Down');
+			// Must also meet speed threshold
+			if(Date.now() - this.softDropTimer > this.softDropSpeed) {
+				this.move('Down');
+			}
 		}
 
 		this.lastArle = Object.assign(this.currentDrop.arle);
 	}
 
 	/**
-	 * After locking a drop, also reset the currentMove.
+	 * After locking a drop, also reset the currentMove and timer.
 	 */
 	lockDrop() {
 		super.lockDrop();
 		this.currentMove = null;
 		this.rotations = 0;
+		this.softDropTimer = Date.now();
 	}
 }
+
+module.exports = { CpuGame };

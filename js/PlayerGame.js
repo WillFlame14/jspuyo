@@ -1,11 +1,15 @@
 'use strict';
 
-window.PlayerGame = class PlayerGame extends window.Game {
-	constructor(gamemode, gameId, opponentIds, socket, dropGenerator, settings) {
-		super(gamemode, gameId, opponentIds, socket, 1, dropGenerator, settings);
+const { BoardDrawer } = require('./BoardDrawer');
+const { Game } = require('./Game.js');
+const { InputManager } = require('./InputManager.js');
+
+class PlayerGame extends Game {
+	constructor(gameId, opponentIds, socket, settings, userSettings) {
+		super(gameId, opponentIds, socket, 1, settings, userSettings);
 
 		// Accepts inputs from player
-		this.inputManager = new window.InputManager(this.settings, this.player, this.gameId, this.opponentId, this.socket);
+		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
@@ -14,7 +18,7 @@ window.PlayerGame = class PlayerGame extends window.Game {
 		let opponentCounter = 1;
 		this.opponentIds.forEach(id => {
 			if(id > 0) {
-				this.opponentBoardDrawers[id] = new window.BoardDrawer(this.settings, opponentCounter + 1);
+				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter + 1);
 			}
 			opponentCounter++;
 		});
@@ -54,3 +58,5 @@ window.PlayerGame = class PlayerGame extends window.Game {
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;
 	}
 }
+
+module.exports = { PlayerGame };

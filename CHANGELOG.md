@@ -9,7 +9,6 @@
 - Set the speed of the CPU by appending `?speed=xxx` (measured in ms) to the URL. Higher speed means slower.
 - Select the CPU's AI by appending `?ai=xxx` to the URL. Supports all currently implemented AIs.
 - New Akari voice files
-
 - The root URL will now join the default queue (1 minute wait for more players with 2 people, 15 seconds wait with 4 people)
 - Join matchmaking (1v1) by appending `?ranked=true` to the URL. Currently there is no ranking system yet.
 - Create a custom room by appending `createRoom=true` to the URL. A custom join link will be provided in the console.

@@ -150,6 +150,7 @@ class Board {
 	 * Removes the puyos in the locations provided.
 	 */
 	deletePuyos(puyoLocs = []) {
+		// First, set them all to null. Then filter out the null elements
 		puyoLocs.forEach(location => this.boardState[location.col][location.row] = null);
 		this.boardState = this.boardState.map(col => col.filter(row => row !== null));
 	}

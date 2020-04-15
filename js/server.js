@@ -9,7 +9,7 @@ const io = require('socket.io')(http, {
 const port = process.env.PORT || 3000;
 
 // Temporary fixed size of all games. Investigate better lobby system in the future.
-const game_size = 2;
+const game_size = 9;
 
 let gameCounter = 1;
 const rooms = {};

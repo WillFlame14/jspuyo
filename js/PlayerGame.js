@@ -8,6 +8,8 @@ class PlayerGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
 		super(gameId, opponentIds, socket, 1, settings, userSettings);
 
+		let frame = 0;
+
 		// Accepts inputs from player
 		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
@@ -28,8 +30,12 @@ class PlayerGame extends Game {
 			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
-			if(gameId > 0) {
+			if(gameId > 0 && frame === 0) {
 				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+				frame = userSettings.skipFrames;
+			}
+			else if (gameId > 0) {
+				frame--;
 			}
 			this.updateOpponentScore(gameId, score);
 		});

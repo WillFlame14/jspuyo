@@ -7,7 +7,7 @@
     "bundle": "watchify js/Main.js -o bundle.js --debug",
     "uglify": "browserify -t uglifyify js/Main.js > bundle.js",
     "start": "node js/server.js",
-    "test": "mocha"
+    "test": "eslint js/ && mocha"
   },
   "repository": {
     "type": "git",

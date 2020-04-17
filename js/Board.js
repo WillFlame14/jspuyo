@@ -207,7 +207,6 @@ class Board {
 				}
 			});
 			nuisanceDropped = 5 * this.width;
-			console.log('Dropped a rock.');
 		}
 		// Drop whatever is remaining
 		else {
@@ -233,9 +232,6 @@ class Board {
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
 			nuisanceDropped = nuisance;
-			if(nuisanceDropped > 0) {
-				console.log('Dropped ' + nuisance + ' nuisance.');
-			}
 		}
 
 		// Remove the puyos that are too high

@@ -1,19 +1,18 @@
 'use strict';
 
 const { Game } = require('./Game.js');
-const { UserSettings } = require('./Utils.js');
 
 class CpuGame extends Game {
-	constructor(gameId, opponentIds, socket, boardDrawerId, ai, speed, settings) {
-		super(gameId, opponentIds, socket, boardDrawerId, settings, new UserSettings());
+	constructor(gameId, opponentIds, socket, boardDrawerId, ai, speed, settings, userSettings) {
+		super(gameId, opponentIds, socket, boardDrawerId, settings, userSettings);
 
-		this.ai = ai;					// The algorithm used to determine the optimal move
+		this.ai = ai;							// The algorithm used to determine the optimal move
 		this.ai.assignSettings(this.settings);
 		this.softDropSpeed = speed;				// Number of milliseconds to wait before soft dropping
-		this.movementSpeed = speed / 8;		// Number of milliseconds to wait before performing a move
-		this.currentMove = null;		// The current optimal move
-		this.rotations = 0;				// Rotations performed on the current drop (between -2 and 2)
-		this.lastArle = null;			// The location of the arle in the last frame (used to detect whether a drop is stuck)
+		this.movementSpeed = speed / 8;			// Number of milliseconds to wait before performing a move
+		this.currentMove = null;				// The current optimal move
+		this.rotations = 0;						// Rotations performed on the current drop (between -2 and 2)
+		this.lastArle = null;					// The location of the arle in the last frame (used to detect whether a drop is stuck)
 
 		this.softDropTimer = Date.now();		// Timer to measure milliseconds before soft drop
 		this.movementTimer = Date.now();		// Timer to measure milliseconds before movement

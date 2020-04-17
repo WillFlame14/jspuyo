@@ -62,6 +62,10 @@ class UserSettings {
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
 		this.volume = volume;				// Volume (varies between 0 and 1)
 	}
+
+	set(key, value) {
+		this[key] = value;
+	}
 }
 
 class AudioPlayer {

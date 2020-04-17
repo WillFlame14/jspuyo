@@ -27,17 +27,18 @@ class PlayerGame extends Game {
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (gameId, boardHash, score, nuisance) => {
-			if(!this.opponentIds.includes(gameId)) {
+			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
+			if(!this.opponentIds.includes(gameId) || gameId < 0) {
 				return;
 			}
-			if(gameId > 0 && frame === 0) {
+			if(frame === 0) {
 				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
-			else if (gameId > 0) {
+			else{
+				this.updateOpponentScore(gameId, score);
 				frame--;
 			}
-			this.updateOpponentScore(gameId, score);
 		});
 
 		this.socket.on('sendSound', (gameId, sfx_name, index) => {

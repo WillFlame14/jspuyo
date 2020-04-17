@@ -8,9 +8,6 @@ const io = require('socket.io')(http, {
 });
 const port = process.env.PORT || 3000;
 
-// Temporary fixed size of all games. Investigate better lobby system in the future.
-const game_size = 9;
-
 let gameCounter = 1;
 const rooms = {};
 const defaultQueue = {
@@ -40,12 +37,12 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('cpuMatch', gameInfo => {
-		const { gameId, settingsString } = gameInfo;
+		const { gameId, roomSize, settingsString } = gameInfo;
 		const cpuIds = [];
 		const roomId = generateRoomId(6);
 
 		// Assign each cpu a negative id
-		for(let i = 0; i < game_size - 1; i++) {
+		for(let i = 0; i < roomSize - 1; i++) {
 			cpuIds.push(-gameCounter);
 			idToRoomMap[-gameCounter] = roomId;
 			gameCounter++;

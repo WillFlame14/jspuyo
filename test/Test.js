@@ -15,6 +15,86 @@ const nui = PUYO_COLOURS['Gray'];
 const settings = new Settings();
 
 describe('Board.js', function() {
+	describe('getConnections', function() {
+		it('should return no connections with empty board', function() {
+			const board = new Board(new Settings());
+
+			const chain_puyos = board.getConnections();
+			expect(chain_puyos).to.deep.equal([]);
+		});
+
+		it('should return small connections', function() {
+			const boardState = [
+				[red, red, blu],
+				[blu, grn, red],
+				[blu, grn, red, grn],
+				[grn, grn],
+				[],
+				[]
+			];
+
+			const board = new Board(new Settings(), boardState);
+			const chain_puyos = board.getConnections();
+
+			const expectedResult = [
+				[
+					{ col: 0, row: 0, colour: red },
+					{ col: 0, row: 1, colour: red }
+				],
+				[
+					{ col: 0, row: 2, colour: blu },
+				],
+				[
+					{ col: 1, row: 0, colour: blu },
+					{ col: 2, row: 0, colour: blu }
+				],
+				[
+					{ col: 1, row: 1, colour: grn },
+					{ col: 2, row: 1, colour: grn },
+					{ col: 3, row: 1, colour: grn },
+					{ col: 3, row: 0, colour: grn }
+				],
+				[
+					{ col: 1, row: 2, colour: red },
+					{ col: 2, row: 2, colour: red }
+				],
+				[
+					{ col: 2, row: 3, colour: grn }
+				]
+			]
+			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
+		});
+
+		it('should filter out connections below minLength', function() {
+			const boardState = [
+				[blu, red, blu],
+				[blu, grn, red],
+				[blu, grn, red, grn],
+				[grn, grn],
+				[],
+				[]
+			];
+
+			const board = new Board(new Settings(), boardState);
+			const chain_puyos = board.getConnections(3);
+
+			const expectedResult = [
+				[
+					{ col: 0, row: 0, colour: blu },
+					{ col: 1, row: 0, colour: blu },
+					{ col: 2, row: 0, colour: blu }
+				],
+				[
+					{ col: 1, row: 1, colour: grn },
+					{ col: 2, row: 1, colour: grn },
+					{ col: 3, row: 1, colour: grn },
+					{ col: 3, row: 0, colour: grn }
+				]
+			]
+			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
+		});
+	});
+
 	describe('resolveChains', function() {
 		it('should not resolve with no chains', function() {
 			const boardState = [

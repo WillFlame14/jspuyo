@@ -27,106 +27,115 @@ const { Settings, UserSettings } = require('./Utils.js');
 	const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 5, 6, 8, 10, 12, 14, 15, 18, 20];
 	const skipFrames = Number(urlParams.get('skipFrames')) || (roomSize > 15 ? -1 : defaultSkipFrames[roomSize]);
 
-	let gameInfo = { gameId: null, roomSize, settingsString: new Settings().toString(), joinId };
+	const generateBoards = function(size) {
+		const playArea = document.getElementById('playArea');
+		const firstRow = playArea.insertRow(-1);
 
-	const playArea = document.getElementById('playArea');
-	const firstRow = playArea.insertRow(-1);
+		let runningId = 1;
 
-	let runningId = 1;
+		const createGameCanvas = function(id, row, size) {
+			const board = row.insertCell(-1);
+			const gameArea = document.createElement('div');
+			gameArea.id = 'gameArea' + id;
+			board.appendChild(gameArea);
 
-	const createGameCanvas = function(id, row, size) {
-		const board = row.insertCell(-1);
-		const gameArea = document.createElement('div');
-		gameArea.id = 'gameArea' + id;
-		board.appendChild(gameArea);
+			const nuisanceQueueArea = document.createElement('div');
+			nuisanceQueueArea.id = 'nuisanceQueueArea' + id;
+			gameArea.appendChild(nuisanceQueueArea);
 
-		const nuisanceQueueArea = document.createElement('div');
-		nuisanceQueueArea.id = 'nuisanceQueueArea' + id;
-		gameArea.appendChild(nuisanceQueueArea);
+			const nuisanceQueueCanvas = document.createElement('canvas');
+			nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
+			nuisanceQueueCanvas.height = 50 * size;
+			nuisanceQueueCanvas.width = 300 * size;
+			nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
 
-		const nuisanceQueueCanvas = document.createElement('canvas');
-		nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
-		nuisanceQueueCanvas.height = 25 * size;
-		nuisanceQueueCanvas.width = 150 * size;
-		nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
+			const centralArea = document.createElement('div');
+			centralArea.id = 'centralArea' + id;
+			gameArea.appendChild(centralArea);
 
-		const centralArea = document.createElement('div');
-		centralArea.id = 'centralArea' + id;
-		gameArea.appendChild(centralArea);
+			const boardCanvas = document.createElement('canvas');
+			boardCanvas.id = 'board' + id;
+			boardCanvas.height = 600 * size;
+			boardCanvas.width = 300 * size;
+			boardCanvas.style.border = '1px solid #2a52be';
+			centralArea.appendChild(boardCanvas);
 
-		const boardCanvas = document.createElement('canvas');
-		boardCanvas.id = 'board' + id;
-		boardCanvas.height = 300 * size;
-		boardCanvas.width = 150 * size;
-		boardCanvas.style.border = '1px solid #2a52be';
-		centralArea.appendChild(boardCanvas);
+			const queueCanvas = document.createElement('canvas');
+			queueCanvas.id = 'queue' + id;
+			queueCanvas.height = 600 * size;
+			queueCanvas.width = 80 * size;
+			queueCanvas.style.border = '1px solid #2a52be';
+			centralArea.appendChild(queueCanvas);
 
-		const queueCanvas = document.createElement('canvas');
-		queueCanvas.id = 'queue' + id;
-		queueCanvas.height = 300 * size;
-		queueCanvas.width = 40 * size;
-		queueCanvas.style.border = '1px solid #2a52be';
-		centralArea.appendChild(queueCanvas);
+			const pointsArea = document.createElement('div');
+			pointsArea.id = 'pointsArea' + id;
+			gameArea.appendChild(pointsArea);
 
-		const pointsArea = document.createElement('div');
-		pointsArea.id = 'pointsArea' + id;
-		gameArea.appendChild(pointsArea);
+			const pointsDisplay = document.createElement('span');
+			pointsDisplay.id = 'pointsDisplay' + id;
+			pointsDisplay.className = 'numDisplay';
+			pointsDisplay.innerHTML = 'Score: 000000';
+			pointsArea.appendChild(pointsDisplay);
 
-		const pointsDisplay = document.createElement('span');
-		pointsDisplay.id = 'pointsDisplay' + id;
-		pointsDisplay.className = 'numDisplay';
-		pointsDisplay.innerHTML = 'Score: 000000';
-		pointsArea.appendChild(pointsDisplay);
+			return board;
+		};
 
-		return board;
+		let playerBoard = createGameCanvas(runningId, firstRow, 1);
+		runningId++;
+
+		// Set up the number of boards displayed
+		if(size < 5) {
+			for(let i = 0; i < size - 1; i++) {
+				createGameCanvas(runningId, firstRow, 1);
+				runningId++;
+			}
+		}
+		else if (size < 10) {
+			playerBoard.setAttribute('rowspan', '2');
+			// Create a larger top row
+			for(let i = 0; i < Math.ceil((size - 1) / 2); i++) {
+				createGameCanvas(runningId, firstRow, 0.5);
+				runningId++;
+			}
+			// And a smaller bottom row
+			const secondRow = playArea.insertRow(-1);
+			for(let i = 0; i < Math.floor((size - 1) / 2); i++) {
+				createGameCanvas(runningId, secondRow, 0.5);
+				runningId++;
+			}
+		}
+		else {
+			playerBoard.setAttribute('rowspan', '3');
+			const minPerRow = Math.floor((size - 1) / 3);
+			let extras = size - 1 - minPerRow * 3;
+			// Spread rows over the first two rows
+			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
+				createGameCanvas(runningId, firstRow, 3/10);
+				runningId++;
+			}
+			extras--;
+			const secondRow = playArea.insertRow(-1);
+			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
+				createGameCanvas(runningId, secondRow, 3/10);
+				runningId++;
+			}
+			// Do the final bottom row, guaranteed to be no extras
+			const thirdRow = playArea.insertRow(-1);
+			for(let i = 0; i < minPerRow; i++) {
+				createGameCanvas(runningId, thirdRow, 3/10);
+				runningId++;
+			}
+		}
 	};
 
-	let playerBoard = createGameCanvas(runningId, firstRow, 1);
-	runningId++;
+	const clearBoards = function() {
+		const playArea = document.getElementById('playArea');
+		while(playArea.firstChild) {
+			playArea.firstChild.remove();
+		}
+	}
 
-	// Set up the number of boards displayed
-	if(roomSize < 5) {
-		for(let i = 0; i < roomSize - 1; i++) {
-			createGameCanvas(runningId, firstRow, 1);
-			runningId++;
-		}
-	}
-	else if (roomSize < 10) {
-		playerBoard.setAttribute('rowspan', '2');
-		// Create a larger top row
-		for(let i = 0; i < Math.ceil((roomSize - 1) / 2); i++) {
-			createGameCanvas(runningId, firstRow, 0.5);
-			runningId++;
-		}
-		// And a smaller bottom row
-		const secondRow = playArea.insertRow(-1);
-		for(let i = 0; i < Math.floor((roomSize - 1) / 2); i++) {
-			createGameCanvas(runningId, secondRow, 0.5);
-			runningId++;
-		}
-	}
-	else {
-		playerBoard.setAttribute('rowspan', '3');
-		const minPerRow = Math.floor((roomSize - 1) / 3);
-		let extras = roomSize - 1 - minPerRow * 3;
-		// Spread rows over the first two rows
-		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-			createGameCanvas(runningId, firstRow, 3/10);
-			runningId++;
-		}
-		extras--;
-		const secondRow = playArea.insertRow(-1);
-		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-			createGameCanvas(runningId, secondRow, 3/10);
-			runningId++;
-		}
-		// Do the final bottom row, guaranteed to be no extras
-		const thirdRow = playArea.insertRow(-1);
-		for(let i = 0; i < minPerRow; i++) {
-			createGameCanvas(runningId, thirdRow, 3/10);
-			runningId++;
-		}
-	}
+	let gameInfo = { gameId: null, roomSize, settingsString: new Settings().toString(), joinId };
 
 	// Send a registration request to the server to receive a gameId
 	socket.emit('register');
@@ -157,6 +166,7 @@ const { Settings, UserSettings } = require('./Utils.js');
 			socket.emit('quickPlay', gameInfo);
 			console.log('Awaiting match...');
 		}
+		generateBoards(1);
 	});
 
 	socket.on('giveRoomId', id => {
@@ -169,14 +179,26 @@ const { Settings, UserSettings } = require('./Utils.js');
 
 	socket.on('roomUpdate', (allIds, roomSize, settingsString) => {
 		console.log('Current players: ' + JSON.stringify(allIds));
+
+		// Adjust the number of boards drawn
+		clearBoards();
+		generateBoards(allIds.length);
+
 		if(roomSize > allIds.length) {
 			console.log('Waiting for ' + (roomSize - allIds.length) + ' more players.');
+		}
+		else {
+			console.log('Game starting soon!');
 		}
 		console.log('Settings: ' + Settings.fromString(settingsString));
 	});
 
 	socket.on('start', (opponentIds, cpuIds, settingsString) => {
 		console.log('Opponents: ' + JSON.stringify(opponentIds) + ' CPUs: ' + JSON.stringify(cpuIds));
+
+		// Adjust the number of boards drawn
+		clearBoards();
+		generateBoards(opponentIds.length + cpuIds.length + 1);
 
 		const allOpponentIds = opponentIds.concat(cpuIds);
 		const userSettings = new UserSettings();

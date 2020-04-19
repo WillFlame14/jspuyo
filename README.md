@@ -1,5 +1,6 @@
 # JSPuyo
-<img src="https://david-dm.org/WillFlame14/jspuyo.svg" alt="David dependency status"><img src="https://travis-ci.org/WillFlame14/jspuyo.svg?branch=master" alt="Travis build result">
+<img src="https://david-dm.org/WillFlame14/jspuyo.svg" alt="David dependency status"> <img src="https://travis-ci.org/WillFlame14/jspuyo.svg?branch=master" alt="Travis build result">
+  
 Puyo Puyo for your browser.
 
 ## Features

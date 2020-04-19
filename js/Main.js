@@ -173,27 +173,34 @@ const { Settings, UserSettings } = require('./Utils.js');
 		console.log('Other players can join this room by appending ?joinRoom=' + id);
 	});
 
-	socket.on('joinFailure', () => {
-		console.log('ERROR: Unable to join room as this room id is not currently in use.');
+	socket.on('joinFailure', (errMessage) => {
+		console.log('ERROR: ' + errMessage);
 	});
 
-	socket.on('roomUpdate', (allIds, roomSize, settingsString) => {
+	socket.on('roomUpdate', (allIds, roomSize, settingsString, quickPlay) => {
 		console.log('Current players: ' + JSON.stringify(allIds));
 
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(allIds.length);
 
-		if(roomSize > allIds.length) {
-			console.log('Waiting for ' + (roomSize - allIds.length) + ' more players.');
+		if(quickPlay) {
+			if (allIds.length === 1) {
+				console.log('Waiting for more players to start...');
+			}
+			else {
+				console.log('Game starting soon!');
+			}
 		}
 		else {
-			console.log('Game starting soon!');
+			console.log('Room size: ' + (allIds.length) + '/' + roomSize + ' players');
 		}
+
 		console.log('Settings: ' + Settings.fromString(settingsString));
 	});
 
 	socket.on('start', (opponentIds, cpuIds, settingsString) => {
+		console.log('Game starting!');
 		console.log('Opponents: ' + JSON.stringify(opponentIds) + ' CPUs: ' + JSON.stringify(cpuIds));
 
 		// Adjust the number of boards drawn

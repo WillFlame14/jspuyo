@@ -39,9 +39,6 @@ class Game {
 
 		this.socket = socket;
 		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.volume);
-		if(this.boardDrawerId !== 1) {
-			this.audioPlayer.disable();
-		}
 
 		this.socket.on('sendNuisance', (gameId, nuisance) => {
 			if(!this.opponentIds.includes(gameId)) {
@@ -99,13 +96,14 @@ class Game {
 			&& this.endResult === null) {
 				this.endResult = 'Loss';
 		}
-		if(this.endResult !== null && this.boardDrawerId === 1) {
+		if(this.endResult !== null) {
 			switch(this.endResult) {
 				case 'Win':
-					this.audioPlayer.playSfx('win');
+					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					break;
 				case 'Loss':
-					this.audioPlayer.playSfx('loss');
+					this.audioPlayer.playAndEmitSfx('loss');
+					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 			}
 		}
 		return this.endResult;

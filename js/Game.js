@@ -31,22 +31,20 @@ class Game {
 		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
 		this.squishState = { currentFrame: -1 };
+		this.currentFrame = 0;
 
 		this.boardDrawerId = boardDrawerId;
 		this.boardDrawer = new BoardDrawer(this.settings, this.boardDrawerId);
+		this.lastBoardHash = null;
 
 		this.socket = socket;
 		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.volume);
-		if(this.boardDrawerId !== 1) {
-			this.audioPlayer.disable();
-		}
 
 		this.socket.on('sendNuisance', (gameId, nuisance) => {
 			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			this.visibleNuisance[gameId] += nuisance;
-			console.log('Received ' + nuisance + " nuisance.");
 		});
 
 		this.socket.on('activateNuisance', gameId => {
@@ -55,7 +53,6 @@ class Game {
 			}
 			this.activeNuisance += this.visibleNuisance[gameId];
 			this.visibleNuisance[gameId] = 0;
-			console.log('Activated ' + this.activeNuisance + ' nuisance.');
 		});
 
 		this.socket.on('gameOver', gameId => {
@@ -99,13 +96,14 @@ class Game {
 			&& this.endResult === null) {
 				this.endResult = 'Loss';
 		}
-		if(this.endResult !== null && this.boardDrawerId === 1) {
+		if(this.endResult !== null) {
 			switch(this.endResult) {
 				case 'Win':
-					this.audioPlayer.playSfx('win');
+					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					break;
 				case 'Loss':
-					this.audioPlayer.playSfx('loss');
+					this.audioPlayer.playAndEmitSfx('loss');
+					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 			}
 		}
 		return this.endResult;
@@ -121,7 +119,7 @@ class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
-		let currentBoardHash;
+		let currentBoardHash = null;
 
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {
@@ -185,15 +183,23 @@ class Game {
 				this.currentDrop.affectRotation();
 			}
 
-			// Update the board
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
 			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-			this.boardDrawer.updateBoard(currentBoardState);
+			// Update the board for player (CPUs if enough frames have passed)
+			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
+				this.boardDrawer.updateBoard(currentBoardState);
+				this.currentFrame = this.userSettings.skipFrames;
+			}
+			else {
+				this.currentFrame--;
+			}
 			this.updateScore();
 		}
 
 		// Emit board state to all opponents
-		this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
+		if(currentBoardHash !== null) {
+			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
+		}
 	}
 
 	/**
@@ -204,6 +210,8 @@ class Game {
 		const currentDrop = this.currentDrop;
 		const arleDropped = currentDrop.arle.y <= boardState[currentDrop.arle.x].length;
 		const schezoDropped = currentDrop.schezo.y <= boardState[currentDrop.schezo.x].length;
+
+		let currentBoardHash = null;
 
 		if(this.resolvingState.chain === 0) {
 			this.resolvingState = { chain: -1, puyoLocs: null, nuisanceLocs: null, currentFrame: 0, totalFrames: 0 };
@@ -223,9 +231,18 @@ class Game {
 				}
 			}
 		}
+
 		const currentBoardState = { boardState, currentDrop };
-		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-		this.boardDrawer.updateBoard(currentBoardState);
+		currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+
+		// Update the board for player (CPUs if enough frames have passed)
+		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
+			this.boardDrawer.updateBoard(currentBoardState);
+			this.currentFrame = this.userSettings.skipFrames;
+		}
+		else {
+			this.currentFrame--;
+		}
 
 		if (schezoDropped && arleDropped) {
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
@@ -251,7 +268,7 @@ class Game {
 	 * Called every frame while nuisance is dropping.
 	 */
 	dropNuisance() {
-		let hash;
+		let hash = null;
 		// Initialize the nuisance state
 		if (this.nuisanceState.currentFrame === 0) {
 			this.nuisanceState.currentFrame = 1;
@@ -278,8 +295,15 @@ class Game {
 		}
 		// Already initialized
 		else {
-			this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
 			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
+			// Update the board for player (CPUs if enough frames have passed)
+			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
+				this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
+				this.currentFrame = this.userSettings.skipFrames;
+			}
+			else {
+				this.currentFrame--;
+			}
 			this.nuisanceState.currentFrame++;
 		}
 
@@ -318,6 +342,8 @@ class Game {
 	 * Returns the current board hash.
 	 */
 	resolveChains() {
+		let currentBoardHash = null;
+
 		// Setting up the board state
 		if(this.resolvingState.chain === 0) {
 			const puyoLocs = this.resolvingChains[0];
@@ -329,9 +355,15 @@ class Game {
 			this.resolvingState.currentFrame++;
 		}
 
-		// Update the board
-		const currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
-		this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+		// Update the board for player (CPUs if enough frames have passed)
+		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
+			currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
+			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+			this.currentFrame = this.userSettings.skipFrames;
+		}
+		else {
+			this.currentFrame--;
+		}
 
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
@@ -373,7 +405,6 @@ class Game {
 				if(this.board.boardState.every(col => col.length === 0)) {
 					this.allClear = true;
 					this.audioPlayer.playAndEmitSfx('allClear');
-					console.log("All clear by player with id " + this.gameId);
 				}
 			}
 			// Still have more chains to resolve
@@ -402,6 +433,7 @@ class Game {
 		// Insert squishing puyos drawing here
 		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
 		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
+
 		this.boardDrawer.updateBoard(currentBoardState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
@@ -563,7 +595,6 @@ class Game {
 			nuisanceSent += 5 * this.settings.cols;
 			this.allClear = false;
 		}
-		console.log("Sent: " + nuisanceSent + " Leftover: " + leftoverNuisance);
 
 		this.preChainScore = this.currentScore;
 
@@ -574,13 +605,9 @@ class Game {
 		// Partially cancel the active nuisance
 		if(this.activeNuisance > nuisanceSent) {
 			this.activeNuisance -= nuisanceSent;
-			console.log('Partially canceled ' + nuisanceSent + ' active nuisance.');
 		}
 		// Fully cancel the active nuisance
 		else {
-			if(this.activeNuisance !== 0) {
-				console.log('Fully canceled ' + this.activeNuisance + ' active nuisance.');
-			}
 			nuisanceSent -= this.activeNuisance;
 			this.activeNuisance = 0;
 
@@ -590,17 +617,11 @@ class Game {
 				// Partially cancel this opponent's nuisance
 				if(this.visibleNuisance[opponents[i]] > nuisanceSent) {
 					this.visibleNuisance[opponents[i]] -= nuisanceSent;
-					console.log('Could not fully cancel '
-						+ this.visibleNuisance[opponents[i]] + ' visible nuisance from ' + opponents[i] + '.')
 					// No nuisance left to send, so break
 					break;
 				}
 				// Fully cancel this opponent's nuisance
 				else {
-					if(this.visibleNuisance[opponents[i]] !== 0) {
-						console.log('Fully canceled '
-							+ this.visibleNuisance[opponents[i]] + ' visible nuisance from ' + opponents[i] + '.');
-					}
 					nuisanceSent -= this.visibleNuisance[opponents[i]];
 					this.visibleNuisance[opponents[i]] = 0;
 				}
@@ -608,7 +629,6 @@ class Game {
 
 			// Still nuisance left to send
 			if(nuisanceSent > 0) {
-				console.log('Sending ' + nuisanceSent + ' nuisance.');
 				this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
 			}
 		}

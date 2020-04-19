@@ -4,9 +4,10 @@
   "description": "Puyo Puyo for your browser.",
   "main": "Main.js",
   "scripts": {
-    "bundle": "./node_modules/.bin/watchify js/Main.js -o bundle.js --debug",
-    "uglify": "./node_modules/.bin/browserify -t uglifyify js/Main.js > bundle.js",
-    "start": "node js/server.js"
+    "bundle": "watchify js/Main.js -o bundle.js --debug",
+    "uglify": "browserify -t uglifyify js/Main.js > bundle.js",
+    "start": "node js/server.js",
+    "test": "eslint js/ && mocha"
   },
   "repository": {
     "type": "git",
@@ -24,7 +25,10 @@
   },
   "devDependencies": {
     "browserify": "^16.5.1",
+    "chai": "^4.2.0",
+    "deep-equal-in-any-order": "^1.0.27",
     "eslint": "^6.8.0",
+    "mocha": "^7.1.1",
     "uglifyify": "^5.0.2",
     "watchify": "^3.11.1"
   }

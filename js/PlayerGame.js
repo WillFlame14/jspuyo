@@ -8,6 +8,8 @@ class PlayerGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
 		super(gameId, opponentIds, socket, 1, settings, userSettings);
 
+		let frame = 0;
+
 		// Accepts inputs from player
 		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
@@ -25,13 +27,18 @@ class PlayerGame extends Game {
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (gameId, boardHash, score, nuisance) => {
-			if(!this.opponentIds.includes(gameId)) {
+			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
+			if(!this.opponentIds.includes(gameId) || gameId < 0) {
 				return;
 			}
-			if(gameId > 0) {
+			if(frame === 0) {
 				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+				frame = userSettings.skipFrames;
 			}
-			this.updateOpponentScore(gameId, score);
+			else{
+				this.updateOpponentScore(gameId, score);
+				frame--;
+			}
 		});
 
 		this.socket.on('sendSound', (gameId, sfx_name, index) => {

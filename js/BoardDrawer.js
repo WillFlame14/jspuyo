@@ -193,7 +193,7 @@ class BoardDrawer extends DrawerWithPuyo {
         const unitH = height / rows;
         let ctx = this.ctx;
 
-        if (resolvingState.currentFrame == 1) {
+        if (resolvingState.setup === undefined) {
             this.poppingPuyos = [];
             for (let i = 0; i < cols; i++) {
                 this.poppingPuyos.push([]);
@@ -204,6 +204,7 @@ class BoardDrawer extends DrawerWithPuyo {
             for (let i = resolvingState.nuisanceLocs.length - 1; i >= 0; i--) {
                 this.poppingPuyos[resolvingState.nuisanceLocs[i].col][resolvingState.nuisanceLocs[i].row] = true;
             }
+            resolvingState.setup = true;
         }
 
         ctx.clearRect(0, 0, width, height);

@@ -56,10 +56,15 @@ class Settings {
 }
 
 class UserSettings {
-	constructor(das = 200, arr = 20, volume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 4, volume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
+		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
 		this.volume = volume;				// Volume (varies between 0 and 1)
+	}
+
+	set(key, value) {
+		this[key] = value;
 	}
 }
 
@@ -210,26 +215,26 @@ function getOtherPuyo (drop) {
  */
 function getDropFrames(poppingLocs, boardState, settings) {
 	return poppingLocs.some(loc => {
-		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.includes({ col: loc.col, row: loc.row + 1});
+		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.some(loc2 => loc2.col === loc.col && loc2.row === loc.row + 1);
 	}) ? settings.dropFrames : 0;
 }
 
 /**
  * Finds the score of the given chain. Currently only for Tsu rule.
  */
-function calculateScore (puyoLocs, chain_length) {
+function calculateScore (puyos, chain_length) {
 	// These arrays are 1-indexed.
 	const CHAIN_POWER = [null, 0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
 	const COLOUR_BONUS = [null, 0, 3, 6, 12, 24, 48];
 	const GROUP_BONUS = [null, null, null, null, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
 
 	// Number of puyos cleared in the chain
-	const puyos_cleared = puyoLocs.length;
+	const puyos_cleared = puyos.length;
 
 	// Find the different colours
 	const containedColours = {};
 
-	puyoLocs.forEach(puyo => {
+	puyos.forEach(puyo => {
 		if(containedColours[puyo.colour] === undefined) {
 			containedColours[puyo.colour] = 1;
 		}

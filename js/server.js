@@ -6,8 +6,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http, { perMessageDeflate: false });
 const port = process.env.PORT || 3000;
 
-const { Settings } = require('./Utils.js');
-const defaultSettings = new Settings().toString();
+const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
 let gameCounter = 1;		// The running number of games (used for assigning ids)
 
@@ -60,6 +59,9 @@ function createRoom(members, roomSize, settingsString, cpu = false, quickPlay = 
 	rooms[roomId] = room;
 	room.members.forEach(member => {
 		idToRoomMap[member.gameId] = roomId;
+		if(member.gameId > 0) {
+			member.socket.emit('roomUpdate', room.members.map(p => p.gameId), room.roomSize, room.settingsString, room.quickPlay);
+		}
 	});
 
 	console.log('Creating room ' + roomId + ' with gameIds: ' + JSON.stringify(room.members.map(member => member.gameId)));
@@ -70,8 +72,11 @@ function joinRoom(gameId, roomId, socket) {
 	const room = rooms[roomId];
 
 	// If the room does not exist or is already full
-	if(room === undefined || room.members.length === room.roomSize) {
-		return false;
+	if(room === undefined) {
+		throw new Error('The room you are trying to join (id ' + roomId + ') does not exist.');
+	}
+	else if(room.members.length === room.roomSize) {
+		throw new Error('The room you are trying to join (id ' + roomId + ') is already full.');
 	}
 
 	room.members.push({ gameId, socket});
@@ -150,9 +155,14 @@ io.on('connection', function(socket) {
 	socket.on('joinRoom', gameInfo => {
 		const { gameId, joinId } = gameInfo;
 
-		if(!joinRoom(gameId, joinId, socket)) {
-			socket.emit('joinFailure', 'Unable to join room. Make sure the room id is still valid.');
+		try {
+			joinRoom(gameId, joinId, socket);
 		}
+		catch(err) {
+			socket.emit('joinFailure', err.message);
+			return;
+		}
+		console.log(gameId + ' has joined room ' + joinId + '.');
 	});
 
 	socket.on('ranked', gameInfo => {
@@ -166,12 +176,13 @@ io.on('connection', function(socket) {
 		}
 		// Pending ranked game
 		else {
-			if(!joinRoom(gameId, rankedRoomId, socket)) {
-				socket.emit('joinFailure', 'Unable to join ranked queue. Please try again.');
-				return;
-			}
-			else {
+			try {
+				joinRoom(gameId, rankedRoomId, socket);
 				rankedRoomId = null;
+			}
+			catch(err) {
+				socket.emit('joinFailure', err.message);
+				return;
 			}
 		}
 		console.log(gameId + ' has joined the ranked queue.');
@@ -186,12 +197,15 @@ io.on('connection', function(socket) {
 			defaultQueueRoomId = roomId;
 		}
 		else {
-			if(!joinRoom(gameId, defaultQueueRoomId, socket)) {
-				socket.emit('joinFailure', 'Unable to join quick play. Please try again.');
+			try {
+				joinRoom(gameId, defaultQueueRoomId, socket);
+			}
+			catch(err) {
+				socket.emit('joinFailure', err.message);
 				return;
 			}
-			else if(rooms[defaultQueueRoomId].members.length >= 2 && quickPlayTimer === null) {
-				// Start game in 1 minute
+			// Start game in 1 minute if there are at least 2 players
+			if(rooms[defaultQueueRoomId].members.length >= 2 && quickPlayTimer === null) {
 				quickPlayTimer = setTimeout(startRoom, 60000, defaultQueueRoomId);
 			}
 		}
@@ -221,6 +235,11 @@ io.on('connection', function(socket) {
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
 		socket.broadcast.emit('gameOver', gameId);
+
+		// Disconnect any cpus who have lost to conserve resources
+		if(gameId < 0) {
+			socket.disconnect();
+		}
 	});
 
 	// Game is over for all players
@@ -295,6 +314,11 @@ io.on('connection', function(socket) {
 					clearTimeout(quickPlayTimer);
 					quickPlayTimer = null;
 				}
+			}
+
+			// Close custom room if it is empty
+			if(room.members.length === 0 && defaultQueueRoomId !== roomId && rankedRoomId !== roomId) {
+				rooms[roomId] = undefined;
 			}
 		}
 		socketToIdMap[socket.id] = undefined;

@@ -56,7 +56,7 @@ class Settings {
 }
 
 class UserSettings {
-	constructor(das = 200, arr = 20, skipFrames = 4, volume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 0, volume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)

@@ -15,12 +15,14 @@ class PlayerGame extends Game {
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
+		this.opponentIdToBoardDrawer = {};
 
 		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
-		let opponentCounter = 1;
+		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
 			if(id > 0) {
-				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter + 1);
+				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter);
+				this.opponentIdToBoardDrawer[id] = opponentCounter;
 			}
 			opponentCounter++;
 		});
@@ -61,7 +63,7 @@ class PlayerGame extends Game {
 	 * Updates the score for opponents.
 	 */
 	updateOpponentScore(gameId, score) {
-		const pointsDisplayName = 'pointsDisplay' + '2';
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[gameId];
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;
 	}
 }

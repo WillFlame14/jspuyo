@@ -162,8 +162,8 @@ class Board {
 	 */
 	trim() {
 		this.boardState = this.boardState.map(col => {
-			if(col.length > 13) {
-				col = col.slice(0, 13);
+			if(col.length > this.settings.height + 1) {
+				col = col.slice(0, this.settings.height + 1);
 			}
 			return col;
 		});

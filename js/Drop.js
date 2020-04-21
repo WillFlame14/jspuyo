@@ -3,11 +3,11 @@
 const { Utils, PUYO_COLOURS } = require('./Utils.js');
 
 class Drop {
-	constructor (shape, colours, settings, arle = { x: 2, y: 11.5 }, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
+	constructor (shape, colours, settings, arle, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
-		this.arle = arle;
+		this.arle = arle || { x: 2, y: this.settings.rows + 0.5 };
 		this.schezo = schezo;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
@@ -30,7 +30,7 @@ class Drop {
 			settings.dropset_position++;
 
 			// Check if the end of the dropset has been reached
-			if(settings.dropset_position == 17) {
+			if(settings.dropset_position === settings.dropset.length - 1) {
 				settings.dropset_position = 1;
 			}
 		}

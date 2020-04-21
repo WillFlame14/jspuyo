@@ -4,9 +4,10 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Settings, UserSettings } = require('./Utils.js');
+const io = require('socket.io-client');
 
 (function () {
-	const socket = window.io();
+	const socket = io();
 	let game, gameId;
 	let cpuGames = [];
 
@@ -24,7 +25,7 @@ const { Settings, UserSettings } = require('./Utils.js');
 	const joinId = urlParams.get('joinRoom');				// Id of room to join
 
 	// Frames to skip when drawing opponent boards
-	const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 5, 6, 8, 10, 12, 14, 15, 18, 20];
+	const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 	const skipFrames = Number(urlParams.get('skipFrames')) || (roomSize > 15 ? -1 : defaultSkipFrames[roomSize]);
 
 	const generateBoards = function(size) {
@@ -195,8 +196,7 @@ const { Settings, UserSettings } = require('./Utils.js');
 		else {
 			console.log('Room size: ' + (allIds.length) + '/' + roomSize + ' players');
 		}
-
-		console.log('Settings: ' + Settings.fromString(settingsString));
+		console.log('Settings: ' + settingsString);
 	});
 
 	socket.on('start', (opponentIds, cpuIds, settingsString) => {
@@ -224,12 +224,12 @@ const { Settings, UserSettings } = require('./Utils.js');
 		const allIds = allOpponentIds.concat(gameId);
 
 		let settings = Settings.fromString(settingsString);
-		let cpuSpeed = Number(speed) || 10;
+		let cpuSpeed = Number(speed) || 50;
 		let cpuAI = Cpu.fromString(ai, settings);
 
 		// Create the CPU games
 		cpuGames = cpuIds.map(id => {
-			const thisSocket = window.io();
+			const thisSocket = io();
 			const thisOppIds = allIds.slice();
 			thisOppIds.splice(allIds.indexOf(id), 1);
 
@@ -245,7 +245,7 @@ const { Settings, UserSettings } = require('./Utils.js');
 			);
 
 			boardDrawerCounter++;
-			return { game: thisGame, socket: thisSocket, id };
+			return { game: thisGame, socket: thisSocket, id, remove: false };
 		});
 		main();
 	});
@@ -294,7 +294,10 @@ const { Settings, UserSettings } = require('./Utils.js');
 						// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
 						break;
 				}
+				// Set the game to be removed
+				cpuGame.remove = true;
 			}
 		});
+		cpuGames = cpuGames.filter(cpuGame => !cpuGame.remove);
 	}
 })();

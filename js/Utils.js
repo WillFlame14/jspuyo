@@ -10,7 +10,8 @@ const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 class Settings {
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4, targetPoints = 70, seed = Math.random()) {
+	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
+				targetPoints = 70, marginTime = 96000, minChain = 2, seed = Math.random()) {
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.rows = rows;					// Number of rows in the game board
@@ -18,7 +19,9 @@ class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.numColours = numColours;		// Number of unique puyo colours being used
 		this.targetPoints = targetPoints;	// Points required to send one nuisance puyo
-		this.seed = seed;
+		this.marginTime = marginTime;		// Milliseconds before target points start being reduced
+		this.minChain = minChain;			// Minimum chain before nuisance is sent
+		this.seed = seed;					// Seed for generating drops
 
 		// Constants that cannot be modified
 		this.lockDelay = 200;				// Milliseconds of time before a drop locks into place
@@ -34,6 +37,10 @@ class Settings {
 		this.hashSnapFactor = 100;			// Fraction of a row rounded to when hashing
 		this.hashRotFactor = 50;			// Fraction of a rev rounded to when hashing
 		this.nuisanceSpawnRow = rows + 2;	// Row of nuisance spawn
+
+		this.timer = Date.now();			// Timer for margin time
+		this.marginTimeStarted = false;		// Flag for whether margin time has started
+		this.reductions = 0;				// Number of target point reductions
 	}
 
 	toString() {
@@ -44,6 +51,8 @@ class Settings {
 			+ this.softDrop + ' '
 			+ this.numColours + ' '
 			+ this.targetPoints + ' '
+			+ this.marginTime + ' '
+			+ this.minChain + ' '
 			+ this.seed;
 	}
 
@@ -52,6 +61,32 @@ class Settings {
 		const gamemode = parts.splice(0, 1)[0];
 		const parsedParts = parts.map(part => Number(part));
 		return new Settings(gamemode, ...parsedParts);
+	}
+
+	/**
+	 * Updates the target points due to margin time.
+	 */
+	checkMarginTime(currentTime = Date.now()) {
+		let timeElapsed = currentTime - this.timer;
+		if(!this.marginTimeStarted) {
+			if(timeElapsed > this.marginTime) {
+				this.targetPoints = Math.floor(this.targetPoints * 0.75);
+				this.reductions++;
+				this.marginTimeStarted = true;
+				timeElapsed -= this.marginTime;
+				this.timer += this.marginTime;
+			}
+			else {
+				// Not yet reached margin time
+				return;
+			}
+		}
+		while(timeElapsed > 16000 && this.targetPoints > 1 && this.reductions < 15) {
+			this.targetPoints = Math.floor(this.targetPoints / 2);
+			this.reductions++;
+			timeElapsed -= 16000;
+			this.timer += 16000;
+		}
 	}
 }
 

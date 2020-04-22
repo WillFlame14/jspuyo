@@ -586,6 +586,9 @@ class Game {
 		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
+		// Update target points if margin time is in effect
+		this.settings.checkMarginTime();
+
 		let { nuisanceSent, leftoverNuisance } =
 			Utils.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
@@ -598,7 +601,8 @@ class Game {
 
 		this.preChainScore = this.currentScore;
 
-		if(nuisanceSent === 0) {
+		// Do not send nuisance if chain is not long enough (or there is none to send)
+		if(nuisanceSent === 0 || this.resolvingState.chain < this.settings.minChain) {
 			return;
 		}
 

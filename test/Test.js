@@ -1,7 +1,8 @@
 'use strict';
 
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
-const { expect } = require('chai').use(deepEqualInAnyOrder);
+const chaiExclude = require('chai-exclude');
+const { expect } = require('chai').use(deepEqualInAnyOrder).use(chaiExclude);
 const { Board } = require('../js/Board.js');
 const { Drop } = require('../js/Drop.js');
 const { Utils, Settings, PUYO_COLOURS } = require('../js/Utils.js');
@@ -309,6 +310,68 @@ describe('Board.js', function() {
 });
 
 describe('Utils.js', function() {
+	describe('Settings', function() {
+		it('should be able to transform into a string and back', function() {
+			const settings1 = new Settings();
+			const settings2 = Settings.fromString(settings1.toString());
+
+			expect(settings1).excluding(['timer', 'seed']).to.deep.equal(settings2);
+		});
+
+		it('checkMarginTime - should not change target points before margin time', function() {
+			const settings = new Settings();
+			const startTime = settings.timer;
+			const targetPoints = settings.targetPoints;
+
+			settings.checkMarginTime(startTime + 32000);
+
+			expect(settings.targetPoints).to.equal(targetPoints);
+			expect(settings.timer).to.equal(startTime);
+		});
+
+		it('checkMarginTime - should update target points correctly jumping into margin time', function() {
+			const settings = new Settings();
+			const startTime = settings.timer;
+			const targetPoints = settings.targetPoints;
+
+			// Start margin time and incrment twice
+			settings.checkMarginTime(startTime + (96001 + 32000));
+			const expectedResult = Math.floor(Math.floor(Math.floor(targetPoints * 0.75) / 2) / 2);
+
+			expect(settings.targetPoints).to.equal(expectedResult);
+			expect(settings.timer).to.equal(startTime + (96000 + 32000));
+		});
+
+		it('checkMarginTime - should update target points correctly incrementing margin time', function() {
+			const settings = new Settings();
+			const startTime = settings.timer;
+			const targetPoints = settings.targetPoints;
+
+			// Start margin time
+			const midTime1 = startTime + 96001;
+			settings.checkMarginTime(midTime1);
+			const expectedResultMid = Math.floor(targetPoints * 0.75);
+
+			expect(settings.targetPoints).to.equal(expectedResultMid);
+			expect(settings.timer).to.equal(midTime1 - 1);
+
+			// Margin time has started, but not yet re-incremented
+			const midTime2 = midTime1 + 9000;
+			settings.checkMarginTime(midTime2);
+
+			expect(settings.targetPoints).to.equal(expectedResultMid);
+			expect(settings.timer).to.equal(midTime1 - 1);
+
+			// Margin time has started and incremented once
+			const finalTime = midTime2 + 8001;
+			settings.checkMarginTime(finalTime);
+			const expectedResultFinal = Math.floor(expectedResultMid / 2);
+
+			expect(settings.targetPoints).to.equal(expectedResultFinal);
+			expect(settings.timer).to.equal(midTime1 + 16000 - 1);
+		});
+	});
+
 	describe('getOtherPuyo', function() {
 		it('should retrieve the correct location of a Tsu schezo', function() {
 			// Set the arle at (1, 1) with standardAngle 0 deg

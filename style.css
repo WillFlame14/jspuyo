@@ -1,15 +1,124 @@
+html {
+	margin: 0px;
+	padding: 0px;
+}
+
+body {
+	margin: 0px;
+}
+
+#navbar {
+	display: flex;
+}
+
+#leftPanelSpacer {
+	background-image: linear-gradient(#212121, #000000);
+	height: 81px;
+	flex: 0 0 30px;
+}
+
+#rightPanelSpacer {
+	background-image: linear-gradient(#212121, #000000);
+	height: 81px;
+	flex: 1 0 0;
+}
+
+.navPanel {
+	font: 32px "Chelsea Market", sans-serif;
+	flex: 0 1 80px;
+	height: 81px;
+	display: flex;
+	position: relative;
+	overflow: hidden;
+	transition: flex-basis 200ms ease-in-out, height 200ms ease-in-out;
+	margin: 0px;
+}
+.navPanel.expanded {
+	flex: 0 0 250px;
+}
+
+.navPanel.expanded .panelName{
+	display: block;
+}
+
+#queuePanel {
+	background-image: linear-gradient(#254620, #052a00);
+}
+
+#customPanel {
+	background-image: linear-gradient(#453421, #2a1600);
+}
+
+#singleplayerPanel {
+	background-image: linear-gradient(#273245, #001e2a);
+}
+#singleplayerPanel.expanded {
+	flex: 0 0 320px;
+}
+#singleplayerPanel.expanded .panelName {
+	display: block;
+}
+
+#profilePanel {
+	background-image: linear-gradient(#381d3c, #24002a);
+}
+
+.dropdown {
+	flex: 1 0 100px;
+	flex-direction: column;
+	display: none;
+	position: absolute;
+	background: #434343;
+	margin-top: 80px;
+}
+
+.navPanel.expanded > .dropdown {
+	width: 100%;
+	display: flex;
+	overflow: hidden;
+}
+
+#singleplayerPanel.expanded > .dropdown {
+	width: 100%;
+	display: flex;
+	overflow: hidden;
+}
+
+.dropdown a {
+	font-size: 20px;
+	flex: 0 0 30px;
+	padding: 5px 0px 5px 15px;
+	text-decoration: none;
+	color: white;
+}
+.dropdown a:hover {
+	background: #212121;
+}
+
+.panelName {
+	display: none;
+	padding: 20px 20px 20px 10px;
+	color: white;
+}
+
+.navIcon {
+	height: 60px;
+	margin: 10px;
+	flex: 0 0 60px;
+}
+
 h1 {
-    font: 24px Trebuchet, sans-serif;
+    font: 24px "Chelsea Market", sans-serif;
     text-align: center;
 }
 
 p {
-    font: 12px Trebuchet, sans-serif;
+    font: 12px "Chelsea Market", sans-serif;
     text-align: center;
 }
 
 .numDisplay {
-    font: 12px Trebuchet, sans-serif;
+    font: 12px "Chelsea Market", sans-serif;
     text-align: center;
 }
 

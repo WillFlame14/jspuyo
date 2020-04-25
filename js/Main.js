@@ -253,11 +253,23 @@ const io = require('socket.io-client');
 	let finalMessage = null;		// The message to be displayed
 
 	function main() {
-		const mainFrame = window.requestAnimationFrame(main);
+		let mainFrame = null, timeout = null;
+		if(document.visibilityState === 'visible') {
+			mainFrame = window.requestAnimationFrame(main);
+		}
+		else {
+			console.log('hi');
+			timeout = setTimeout(main, 1);
+		}
 		game.step();
 		cpuGames.forEach(cpuGame => cpuGame.game.step());
 		if(finalMessage !== null) {
-			window.cancelAnimationFrame(mainFrame);
+			if(mainFrame !== null) {
+				window.cancelAnimationFrame(mainFrame);
+			}
+			else {
+				clearTimeout(timeout);
+			}
 			console.log(finalMessage);
 			return;
 		}

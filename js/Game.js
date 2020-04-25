@@ -141,7 +141,7 @@ class Game {
 		else {
 			// Create a new drop if one does not exist and game has not ended
 			if(this.currentDrop.shape === null && this.endResult === null) {
-				if(this.dropQueue.length <= 3) {
+				if(this.dropQueue.length <= 5) {
 					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
 					this.dropQueueIndex++;
 				}
@@ -553,7 +553,7 @@ class Game {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
 			}
 
-			// Remove any puyos above row 13
+			// Remove any puyos that are too high
 			this.board.trim();
 
 			this.resolvingChains = this.board.resolveChains();
@@ -586,6 +586,9 @@ class Game {
 		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
 
+		// Update target points if margin time is in effect
+		this.settings.checkMarginTime();
+
 		let { nuisanceSent, leftoverNuisance } =
 			Utils.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
 		this.leftoverNuisance = leftoverNuisance;
@@ -598,7 +601,8 @@ class Game {
 
 		this.preChainScore = this.currentScore;
 
-		if(nuisanceSent === 0) {
+		// Do not send nuisance if chain is not long enough (or there is none to send)
+		if(nuisanceSent === 0 || this.resolvingState.chain < this.settings.minChain) {
 			return;
 		}
 
@@ -684,6 +688,7 @@ class Game {
 				this.softDrops += 1;
 			}
 			else {
+				// Force lock delay to come earlier while soft drop is being held
 				this.forceLockDelay += 15;
 			}
 			const new_schezo = Utils.getOtherPuyo(this.currentDrop);
@@ -698,7 +703,7 @@ class Game {
 
 	/**
 	 * Called when a rotate event is emitted from the InputManager, and validates the event before performing it.
-	 * The drop may not be rotated while it is already rotating, and kick/180 rotate checking must be performed.
+	 * The drop cannot be rotated while it is already rotating, and kick/180 rotate checking must be performed.
 	 */
 	rotate(direction) {
 		if(this.currentDrop.rotating !== 'not') {

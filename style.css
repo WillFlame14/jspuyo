@@ -12,11 +12,14 @@ body {
 	display: flex;
 	position: relative;
 	background-image: linear-gradient(#212121, #000000);
+	box-shadow: 0px 0px 10px 2px black;
 }
 
 /* Spacer used to indent the panels. */
 #navbarSpacer {
 	flex: 0 0 30px;
+	box-shadow: 5px 0px 5px -5px;
+	z-index: 999;
 }
 
 /* Panel containing icon, title and dropdown menu. Default state is "minimized", which only contains the icon. */
@@ -29,6 +32,8 @@ body {
 	/* Hide the text so that it transitions intead of jumping. */
 	overflow: hidden;
 	transition: all 200ms ease-in-out;
+	box-shadow: 10px 0px 10px -5px, -10px 0px 10px -5px;
+	z-index: 2;
 }
 
 /* Expanded panel to show the panel title. */
@@ -43,16 +48,16 @@ body {
 /* Background gradients for the panels. */
 #queuePanel {
 	background-image: linear-gradient(#254620, #052a00);
+	z-index: 5;
 }
-
 #customPanel {
 	background-image: linear-gradient(#453421, #2a1600);
+	z-index: 4;
 }
-
 #singleplayerPanel {
 	background-image: linear-gradient(#273245, #001e2a);
+	z-index: 3;
 }
-
 #profilePanel {
 	background-image: linear-gradient(#381d3c, #24002a);
 }
@@ -72,7 +77,7 @@ body {
 }
 
 /* Special sizing for the first letter of the title. */
-.firstLetter {
+.panelName::first-letter {
 	font-size: 46px;
 }
 
@@ -87,18 +92,18 @@ body {
 	height: 0px;
 	width: 80px;
 	transition: all 200ms ease-in-out;
+	box-shadow: none;
 
 	/* Float the dropdown menu so it doesn't take up space, and move it below the panels. */
 	position: fixed;
 	margin-top: 80px;
-	z-index: 1;
 }
 
 /* Expand the dropdown menu when the navigation panel is expanded. The heights are modified in Javascript.*/
 .navPanel.expanded > .dropdown {
 	width: 250px;
+	box-shadow: 0px 2px 15px 2px;
 }
-
 #singleplayerPanel.expanded > .dropdown {
 	width: 320px;
 }

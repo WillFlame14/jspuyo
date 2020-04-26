@@ -46,8 +46,9 @@ const io = require('socket.io-client');
 
 			const nuisanceQueueCanvas = document.createElement('canvas');
 			nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
-			nuisanceQueueCanvas.height = 50 * size;
-			nuisanceQueueCanvas.width = 300 * size;
+			nuisanceQueueCanvas.height = 45 * size;
+			nuisanceQueueCanvas.width = 270 * size;
+			nuisanceQueueCanvas.className = 'nuisanceQueue';
 			nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
 
 			const centralArea = document.createElement('div');
@@ -56,26 +57,25 @@ const io = require('socket.io-client');
 
 			const boardCanvas = document.createElement('canvas');
 			boardCanvas.id = 'board' + id;
-			boardCanvas.height = 600 * size;
-			boardCanvas.width = 300 * size;
-			boardCanvas.style.border = '1px solid #2a52be';
+			boardCanvas.height = 540 * size;
+			boardCanvas.width = 270 * size;
 			centralArea.appendChild(boardCanvas);
 
 			const queueCanvas = document.createElement('canvas');
 			queueCanvas.id = 'queue' + id;
-			queueCanvas.height = 600 * size;
-			queueCanvas.width = 80 * size;
-			queueCanvas.style.border = '1px solid #2a52be';
+			queueCanvas.height = 540 * size;
+			queueCanvas.width = 72 * size;
 			centralArea.appendChild(queueCanvas);
 
 			const pointsArea = document.createElement('div');
 			pointsArea.id = 'pointsArea' + id;
+			pointsArea.className = 'pointsArea';
 			gameArea.appendChild(pointsArea);
 
 			const pointsDisplay = document.createElement('span');
 			pointsDisplay.id = 'pointsDisplay' + id;
 			pointsDisplay.className = 'numDisplay';
-			pointsDisplay.innerHTML = 'Score: 000000';
+			pointsDisplay.innerHTML = '00000000';
 			pointsArea.appendChild(pointsDisplay);
 
 			return board;

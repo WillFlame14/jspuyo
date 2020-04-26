@@ -1,10 +1,28 @@
 html {
 	margin: 0px;
 	padding: 0px;
+	background-image:url("images/backgrounds/Forest 04.jpg");
+	background-size: cover;
+	background-position: center;
 }
 
 body {
 	margin: 0px;
+	background-color: rgba(60, 60, 60, 0.5);
+	height: 100%;
+	width: 100%;
+}
+
+canvas {
+	background: rgba(40, 40, 40, 0.8);
+	margin: 0px 10px 0px 0px;
+	border: 4px solid white;
+}
+
+.nuisanceQueue {
+	background: rgba(240, 240, 240, 0.2);
+	margin: none;
+	border: none;
 }
 
 /* Horizontal flexbox, contains the panels and is used as the basis for the dropdown menus. */
@@ -13,6 +31,7 @@ body {
 	position: relative;
 	background-image: linear-gradient(#212121, #000000);
 	box-shadow: 0px 0px 10px 2px black;
+	margin-bottom: 30px;
 }
 
 /* Spacer used to indent the panels. */
@@ -22,10 +41,18 @@ body {
 	z-index: 999;
 }
 
+#logo {
+	font: 18px "Chelsea Market", sans-serif;
+	text-align: right;
+	flex: 1 1 1100px;
+	color: white;
+	padding: 5px 15px 0px 0px;
+}
+
 /* Panel containing icon, title and dropdown menu. Default state is "minimized", which only contains the icon. */
 .navPanel {
 	font: 28px "Chelsea Market", sans-serif;
-	flex: 0 1 80px;
+	flex: 0 0 80px;
 	display: flex;
 	position: relative;
 
@@ -86,6 +113,7 @@ body {
 	flex: 1 0 0px;
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
 	background: #434343;
 
 	/* Set initial dimensions for the transition. */
@@ -129,19 +157,12 @@ body {
 	background: #212121;
 }
 
-h1 {
-    font: 24px "Chelsea Market", sans-serif;
-    text-align: center;
-}
-
-p {
-    font: 12px "Chelsea Market", sans-serif;
-    text-align: center;
-}
-
 .numDisplay {
-    font: 12px "Chelsea Market", sans-serif;
+	width: 270px;
+    font: 52px "Chelsea Market", sans-serif;
+    color: white;
     text-align: center;
+    display: table;
 }
 
 table#playArea {

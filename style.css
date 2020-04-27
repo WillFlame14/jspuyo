@@ -92,14 +92,14 @@ canvas {
 /* Icon of the panel. Always displayed. */
 .navIcon {
 	height: 60px;
-	margin: 10px;
+	margin: 5px 10px;
 	flex: 0 0 60px;
 }
 
 /* Title of the panel. */
 .panelName {
 	display: block;
-	padding: 11px 20px 11px 10px;
+	padding: 5px 20px 5px 10px;
 	color: white;
 }
 
@@ -118,19 +118,19 @@ canvas {
 
 	/* Set initial dimensions for the transition. */
 	height: 0px;
-	width: 80px;
+	width: 70px;
 	transition: all 200ms ease-in-out;
 	box-shadow: none;
 
 	/* Float the dropdown menu so it doesn't take up space, and move it below the panels. */
 	position: fixed;
-	margin-top: 80px;
+	margin-top: 70px;
 }
 
 /* Expand the dropdown menu when the navigation panel is expanded. The heights are modified in Javascript.*/
 .navPanel.expanded > .dropdown {
 	width: 250px;
-	box-shadow: 0px 2px 15px 2px;
+	box-shadow: 0px 2px 15px 2px, 0px 7px 5px -5px black inset;
 }
 #singleplayerPanel.expanded > .dropdown {
 	width: 320px;
@@ -146,6 +146,11 @@ canvas {
 	display: none;
 }
 
+/* The first dropdown item has some extra margin due to the shadow taking up space. */
+.dropdown a:first-child {
+	padding: 7px 0px 5px 15px;
+}
+
 /* Display the links when the navigation panel is expanded. */
 .navPanel.expanded > .dropdown a {
 	flex: 0 0 30px;
@@ -157,7 +162,7 @@ canvas {
 	background: #212121;
 }
 
-.numDisplay {
+.pointsDisplay {
 	width: 270px;
     font: 52px "Chelsea Market", sans-serif;
     color: white;

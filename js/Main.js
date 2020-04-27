@@ -74,7 +74,7 @@ const io = require('socket.io-client');
 
 			const pointsDisplay = document.createElement('span');
 			pointsDisplay.id = 'pointsDisplay' + id;
-			pointsDisplay.className = 'numDisplay';
+			pointsDisplay.className = 'pointsDisplay';
 			pointsDisplay.innerHTML = '00000000';
 			pointsArea.appendChild(pointsDisplay);
 
@@ -104,6 +104,13 @@ const io = require('socket.io-client');
 				createGameCanvas(runningId, secondRow, 0.5);
 				runningId++;
 			}
+			Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
+				if(element.id === "pointsDisplay1") {
+					return;
+				}
+				element.style.fontSize = "26";
+				element.style.width = "50%";
+			});
 		}
 		else {
 			playerBoard.setAttribute('rowspan', '3');
@@ -111,21 +118,28 @@ const io = require('socket.io-client');
 			let extras = size - 1 - minPerRow * 3;
 			// Spread rows over the first two rows
 			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-				createGameCanvas(runningId, firstRow, 3/10);
+				createGameCanvas(runningId, firstRow, 0.33);
 				runningId++;
 			}
 			extras--;
 			const secondRow = playArea.insertRow(-1);
 			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-				createGameCanvas(runningId, secondRow, 3/10);
+				createGameCanvas(runningId, secondRow, 0.33);
 				runningId++;
 			}
 			// Do the final bottom row, guaranteed to be no extras
 			const thirdRow = playArea.insertRow(-1);
 			for(let i = 0; i < minPerRow; i++) {
-				createGameCanvas(runningId, thirdRow, 3/10);
+				createGameCanvas(runningId, thirdRow, 0.33);
 				runningId++;
 			}
+			Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
+				if(element.id === "pointsDisplay1") {
+					return;
+				}
+				element.style.fontSize = "16";
+				element.style.width = "33%";
+			});
 		}
 	};
 

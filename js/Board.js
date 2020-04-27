@@ -39,6 +39,29 @@ class Board {
 	 * Recursive function that searches the entire stack for any chains (recursively).
 	 * The board state used is a copy of the game's board state. No puyos are removed from the game's board.
 	 *
+	 * @param  {Array}  puyos_chained  Array containing arrays of chained puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
+	 * @param  {Board}  boardState     The "current" boardstate after previous chaining has been completed
+	 * @return {array}                 The complete puyos_chained array
+	 */
+	resolveChains(puyos_chained = [], board = new Board(this.settings, this.boardState)) {
+		// Get all connections of length 4 or more, then delete them and the neighbouring nuisance from the board
+		const current_chain_puyos = board.getConnections(4).flat();
+		if(current_chain_puyos.length > 0) {
+			// Delete the chained puyos and neighbouring nuisance
+			board.deletePuyos(current_chain_puyos.concat(board.findNuisancePopped(current_chain_puyos)));
+			puyos_chained.push(current_chain_puyos);
+			// Recurse with the new board state and list of chained puyos
+			return this.resolveChains(puyos_chained, board);
+		}
+
+		// Implicit else: No chains were found in this recursion
+		return puyos_chained;
+	}
+
+	/**
+	 * Finds all the connections in the board state with length >= minLength. and returns them as lists in an array.
+	 * e.g. [[{puyo}, {puyo}], [{puyo}, {puyo}, {puyo}, {puyo}]] where {puyo} is {col: x, row: y, colour: rgba}
+	 *
 	 * Underlying logic:
 	 * 		A visited array is kept of the current board state (as of this recursion).
 	 * 		A non-visited puyo is selected as the start position.
@@ -47,37 +70,29 @@ class Board {
 	 * 			of contained puyos are returned. This is eventually caught by the most recent ancestor that is not a leaf puyo.
 	 * 		That ancestor then updates its own running chain length and list of puyo locations and continues the DFS.
 	 * 		Eventually, the DFS completes and returns the total chain length and list of puyo locations.
-	 * 		If the chain length is larger than 3, it counts as a chain and is added to the overall list of puyos chained.
-	 * 			That means a future board state must be calculated after this chain (the 'chained' flag set to true).
 	 * 		A new non-visited puyo is selected as a start position, and repeat until no valid start positions exist.
-	 * 		If at least one chain of puyos was found, the board state will be updated by removing the chained puyos.
-	 * 		This function is then called recursively with the new board state and list of puyos chained.
-	 *
-	 * @param  {Array}  puyos_chained  Array containing arrays of chained puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
-	 * @param  {Board}  boardState     The "current" boardstate after previous chaining has been completed
-	 * @return {array}                 The complete puyos_chained array
 	 */
-	resolveChains(puyos_chained = [], board = new Board(this.settings, this.boardState)) {
-		let chained = false;			// Flag of whether at least one chain was found in this recursion
-		let current_chain_puyos = [];	// List of puyos that will be chained in this recursion
-		const visited = [];				// List of visited locations in this recursion
+	getConnections(minLength = 0) {
+		const visited = [];		// List of visited locations
+		const result = [];		// List of connections
+
+		// Copy of the board
+		const board = new Board(this.settings, this.boardState);
 
 		/**
 		 * Performs a DFS through the current board to find the extent of a colour, given a starting puyo.
 		 *
 		 * @param  {object} puyo        	The current puyo, given as {col: number, row: number, colour: rgba value}
-		 * @param  {number} colour_length   The running length of the puyo chain.
-		 * @param  {array}  chain_puyos 	The running list of puyos contained in the chain.
-		 * @return {object}                 The branch's result, given as {length: colour_length, puyos: chain_puyos}.
+		 * @param  {array}  chain_puyos 	The running list of puyos contained in the chain. The final list is returned.
 		 */
-		const dfs = function(puyo, colour_length, chain_puyos) {
+		const dfs = function(puyo, chain_puyos) {
 			visited.push(puyo);
 			const { col, row, colour } = puyo;
 
 			// Search in all 4 cardinal directions
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
-					const new_puyo = { col: col + i, row: row + j };
+					const new_puyo = { col: col + i, row: row + j, colour: null };
 
 					if(Math.abs(i) + Math.abs(j) === 1 && board.validLoc(new_puyo)) {
 						new_puyo.colour = board.boardState[col + i][row + j];
@@ -87,15 +102,13 @@ class Board {
 							chain_puyos.push(new_puyo);
 
 							// Update with the leaf puyo of this branch
-							const { length, puyos } = dfs(new_puyo, colour_length + 1, chain_puyos);
-							colour_length = length;
-							chain_puyos = puyos;
+							chain_puyos = dfs(new_puyo, chain_puyos);
 						}
 					}
 				}
 			}
 			// Done with all branches, return the findings
-			return { length: colour_length, puyos: chain_puyos };
+			return chain_puyos;
 		}
 
 		/**
@@ -113,25 +126,14 @@ class Board {
 
 				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
 					// Find the extent of this colour, starting here
-					const { length, puyos } = dfs(puyo, 1, [puyo]);
-					if (length > 3) {
-						current_chain_puyos = current_chain_puyos.concat(puyos);
-						chained = true;
+					const chain_puyos = dfs(puyo, [puyo]);
+					if(chain_puyos.length >= minLength) {
+						result.push(chain_puyos);
 					}
 				}
 			}
 		}
-
-		// Delete all the puyos chained in this recursion from the board state
-		board.deletePuyos(current_chain_puyos.concat(board.findNuisancePopped(current_chain_puyos)));
-
-		// Recurse with the new board state and list of chained puyos
-		if(chained) {
-			puyos_chained.push(current_chain_puyos);
-			return this.resolveChains(puyos_chained, board);
-		}
-		// Implicit else: No chains were found in this recursion
-		return puyos_chained;
+		return result;
 	}
 
 	/**
@@ -150,6 +152,7 @@ class Board {
 	 * Removes the puyos in the locations provided.
 	 */
 	deletePuyos(puyoLocs = []) {
+		// First, set them all to null. Then filter out the null elements
 		puyoLocs.forEach(location => this.boardState[location.col][location.row] = null);
 		this.boardState = this.boardState.map(col => col.filter(row => row !== null));
 	}
@@ -159,8 +162,8 @@ class Board {
 	 */
 	trim() {
 		this.boardState = this.boardState.map(col => {
-			if(col.length > 13) {
-				col = col.slice(0, 13);
+			if(col.length > this.settings.height + 1) {
+				col = col.slice(0, this.settings.height + 1);
 			}
 			return col;
 		});
@@ -206,7 +209,6 @@ class Board {
 				}
 			});
 			nuisanceDropped = 5 * this.width;
-			console.log('Dropped a rock.');
 		}
 		// Drop whatever is remaining
 		else {
@@ -232,9 +234,6 @@ class Board {
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
 			nuisanceDropped = nuisance;
-			if(nuisanceDropped > 0) {
-				console.log('Dropped ' + nuisance + ' nuisance.');
-			}
 		}
 
 		// Remove the puyos that are too high

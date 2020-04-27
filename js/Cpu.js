@@ -1,7 +1,6 @@
 'use strict';
 
 const { Board } = require('./Board.js');
-const { PUYO_COLOURS } = require('./Utils.js');
 
 class Cpu {
 	constructor(settings) {
@@ -23,6 +22,9 @@ class Cpu {
 		throw new Error('getMove(boardState, currentDrop) must be implemented by the subclass.');
 	}
 
+	/**
+	 * Returns the average height of all the columns.
+	 */
 	getAverageHeight(boardState) {
 		return boardState.reduce((sum, col) => sum += col.length, 0) / this.settings.cols;
 	}
@@ -250,6 +252,7 @@ class TestCpu extends Cpu {
 		if(col === -1) {
 			let maxValue = -1;
 
+			// Iterate through all possible columns and rotations
 			for(let i = 0; i < this.settings.cols * 4; i++) {
 				const currCol = i % this.settings.cols;
 				const board = new Board(this.settings, boardState);
@@ -281,8 +284,8 @@ class TestCpu extends Cpu {
 					tempRotations = 0;
 				}
 
+				// Deter from placing in column 2, as well as building skyscrapers
 				let deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
-
 				const value = this.evaluateBoard(board) - deterrent;
 
 				if(value > maxValue) {
@@ -315,6 +318,9 @@ class TestCpu extends Cpu {
 		return { col, rotations };
 	}
 
+	/**
+	 * Returns the skyscraper value (empirically determined) of a column.
+	 */
 	getSkyScraperValue(board, col) {
 		const boardState = board.boardState;
 		let value = 2 * boardState[col].length;
@@ -327,72 +333,31 @@ class TestCpu extends Cpu {
 		return value / 2;
 	}
 
+	/**
+	 * Returns the total "value" of the board (i.e. how connected the puyos are).
+	 */
 	evaluateBoard(board) {
-		const visited = [];				// List of visited locations
+		const connections = board.getConnections();
 		let value = 0;
 
-		/**
-		 * Performs a DFS through the current board to find the extent of a colour, given a starting puyo.
-		 *
-		 * @param  {object} puyo        	The current puyo, given as {col: number, row: number, colour: rgba value}
-		 * @param  {number} colour_length   The running length of the puyo chain.
-		 * @return {object}                 The branch's result, given as {length: colour_length, puyos: chain_puyos}.
-		 */
-		const dfs = function(puyo, colour_length) {
-			visited.push(puyo);
-			const { col, row, colour } = puyo;
-
-			// Search in all 4 cardinal directions
-			for(let i = -1; i <= 1; i++) {
-				for(let j = -1; j <= 1; j++) {
-					const new_puyo = { col: col + i, row: row + j };
-
-					if(Math.abs(i) + Math.abs(j) === 1 && board.validLoc(new_puyo)) {
-						new_puyo.colour = board.boardState[col + i][row + j];
-
-						// New location must be unvisited and have the same colour puyo
-						if(notVisited(new_puyo) && colour === new_puyo.colour) {
-							// Update with the leaf puyo of this branch
-							const length = dfs(new_puyo, colour_length + 1);
-							colour_length = length;
-						}
-					}
-				}
+		connections.forEach(connection => {
+			if(connection.length < 4) {
+				value += connection.length * connection.length;
 			}
-			// Done with all branches, return the findings
-			return colour_length;
-		}
-
-		/**
-		 * Determines if the visited array contains the passed location.
-		 */
-		const notVisited = function(location) {
-			const { col, row } = location;
-			return visited.filter(loc => loc.col === col && loc.row === row).length === 0;
-		}
-
-		// Iterate through the entire board to find all starting points
-		for(let i = 0; i < board.boardState.length; i++) {
-			for(let j = 0; j < board.boardState[i].length; j++) {
-				const puyo = { col: i, row: j, colour: board.boardState[i][j] };
-
-				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
-					// Find the extent of this colour, starting here
-					const length = dfs(puyo, 1, [puyo]);
-					if(length < 4) {
-						value += length * length;
-					}
-				}
+			else if(connection.length > 4) {
+				value += connection.length;
 			}
-		}
+		});
+
 		return value;
 	}
 }
 
 module.exports = {
+	Cpu,
 	RandomCpu,
-	TallCpu,
 	FlatCpu,
+	TallCpu,
 	ChainCpu,
 	TestCpu
 }

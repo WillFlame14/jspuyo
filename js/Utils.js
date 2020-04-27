@@ -1,7 +1,5 @@
 'use strict';
 
-const { Drop } = require('./Drop.js');
-
 const COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
@@ -12,7 +10,8 @@ const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 class Settings {
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4, targetPoints = 70, seed = Math.random()) {
+	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
+				targetPoints = 70, marginTime = 96000, minChain = 2, seed = Math.random()) {
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.rows = rows;					// Number of rows in the game board
@@ -20,7 +19,9 @@ class Settings {
 		this.softDrop = softDrop;			// Additional vertical distance the drop falls when soft dropping
 		this.numColours = numColours;		// Number of unique puyo colours being used
 		this.targetPoints = targetPoints;	// Points required to send one nuisance puyo
-		this.seed = seed;
+		this.marginTime = marginTime;		// Milliseconds before target points start being reduced
+		this.minChain = minChain;			// Minimum chain before nuisance is sent
+		this.seed = seed;					// Seed for generating drops
 
 		// Constants that cannot be modified
 		this.lockDelay = 200;				// Milliseconds of time before a drop locks into place
@@ -36,6 +37,10 @@ class Settings {
 		this.hashSnapFactor = 100;			// Fraction of a row rounded to when hashing
 		this.hashRotFactor = 50;			// Fraction of a rev rounded to when hashing
 		this.nuisanceSpawnRow = rows + 2;	// Row of nuisance spawn
+
+		this.timer = Date.now();			// Timer for margin time
+		this.marginTimeStarted = false;		// Flag for whether margin time has started
+		this.reductions = 0;				// Number of target point reductions
 	}
 
 	toString() {
@@ -46,6 +51,8 @@ class Settings {
 			+ this.softDrop + ' '
 			+ this.numColours + ' '
 			+ this.targetPoints + ' '
+			+ this.marginTime + ' '
+			+ this.minChain + ' '
 			+ this.seed;
 	}
 
@@ -55,13 +62,44 @@ class Settings {
 		const parsedParts = parts.map(part => Number(part));
 		return new Settings(gamemode, ...parsedParts);
 	}
+
+	/**
+	 * Updates the target points due to margin time.
+	 */
+	checkMarginTime(currentTime = Date.now()) {
+		let timeElapsed = currentTime - this.timer;
+		if(!this.marginTimeStarted) {
+			if(timeElapsed > this.marginTime) {
+				this.targetPoints = Math.floor(this.targetPoints * 0.75);
+				this.reductions++;
+				this.marginTimeStarted = true;
+				timeElapsed -= this.marginTime;
+				this.timer += this.marginTime;
+			}
+			else {
+				// Not yet reached margin time
+				return;
+			}
+		}
+		while(timeElapsed > 16000 && this.targetPoints > 1 && this.reductions < 15) {
+			this.targetPoints = Math.floor(this.targetPoints / 2);
+			this.reductions++;
+			timeElapsed -= 16000;
+			this.timer += 16000;
+		}
+	}
 }
 
 class UserSettings {
-	constructor(das = 200, arr = 20, volume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 0, volume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
+		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
 		this.volume = volume;				// Volume (varies between 0 and 1)
+	}
+
+	set(key, value) {
+		this[key] = value;
 	}
 }
 
@@ -90,20 +128,29 @@ class AudioPlayer {
 			'chain_voiced': [
 				null
 			],
-			'chain_voiced_jpn': [
+			'akari_chain': [
 				null,
-				new Audio('../sounds/voices/chain_1_jpn.wav'),
-				new Audio('../sounds/voices/chain_2_jpn.wav'),
-				new Audio('../sounds/voices/chain_3_jpn.wav'),
-				new Audio('../sounds/voices/chain_4_jpn.wav'),
-				new Audio('../sounds/voices/chain_5_jpn.wav'),
-				new Audio('../sounds/voices/chain_6_jpn.wav'),
-				new Audio('../sounds/voices/chain_7_jpn.wav'),
-				new Audio('../sounds/voices/chain_8_jpn.wav'),
-				new Audio('../sounds/voices/chain_9_jpn.wav'),
-				new Audio('../sounds/voices/chain_10_jpn.wav'),
-				new Audio('../sounds/voices/chain_11_jpn.wav'),
-				new Audio('../sounds/voices/chain_12_jpn.wav'),
+				new Audio('../sounds/voices/akari/chain_1.ogg'),
+				new Audio('../sounds/voices/akari/chain_2.ogg'),
+				new Audio('../sounds/voices/akari/chain_3.ogg'),
+				new Audio('../sounds/voices/akari/chain_4.ogg'),
+				new Audio('../sounds/voices/akari/chain_5.ogg'),
+				new Audio('../sounds/voices/akari/chain_6.ogg'),
+				new Audio('../sounds/voices/akari/chain_7.ogg'),
+				new Audio('../sounds/voices/akari/chain_8.ogg'),
+				new Audio('../sounds/voices/akari/chain_9.ogg'),
+				new Audio('../sounds/voices/akari/chain_10.ogg'),
+				new Audio('../sounds/voices/akari/chain_11.ogg'),
+				new Audio('../sounds/voices/akari/chain_12.ogg'),
+				new Audio('../sounds/voices/akari/chain_13.ogg')
+			],
+			'akari_spell': [
+				null,
+				new Audio('../sounds/voices/akari/spell_1.ogg'),
+				new Audio('../sounds/voices/akari/spell_2.ogg'),
+				new Audio('../sounds/voices/akari/spell_3.ogg'),
+				new Audio('../sounds/voices/akari/spell_4.ogg'),
+				new Audio('../sounds/voices/akari/spell_5.ogg')
 			],
 			'nuisanceSend': [
 				null,
@@ -121,8 +168,9 @@ class AudioPlayer {
 		// Set volume for each sound
 		Object.keys(this.sfx).forEach(key => {
 			const sounds = this.sfx[key];
-			if(key.includes('voiced')) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.4);
+			// Voiced sfx
+			if(key.includes('chain') || key.includes('spell')) {
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.3);
 				return;
 			}
 			if(Array.isArray(sounds)) {
@@ -169,87 +217,6 @@ class AudioPlayer {
 	}
 }
 
-class DropGenerator {
-	constructor(settings) {
-		this.settings = settings;
-		this.seed = this.settings.seed;
-		this.drops = [];
-		this.colourList = Object.keys(PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => PUYO_COLOURS[colour_name]);
-		this.colourBuckets = {};
-		this.drops[0] = [];
-
-		// Set up colourBuckets for the first batch of 128
-		this.colourList.forEach(colour => {
-			// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
-			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
-		});
-
-		// Generate the 3 colours that will be used for the first 3 drops
-		const firstColours = [];
-		while(firstColours.length < 3) {
-			let colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
-			if(!firstColours.includes(colour)) {
-				firstColours.push(colour);
-			}
-		}
-
-		// Only use the previously determined 3 colours for the first 3 drops
-		for(let i = 0; i < 3; i++) {
-			const colours = [
-				firstColours[Math.floor(this.randomNumber() * 3)],
-				firstColours[Math.floor(this.randomNumber() * 3)]
-			];
-			this.colourBuckets[colours[0]]--;
-			this.colourBuckets[colours[1]]--;
-			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
-		}
-
-		for(let i = 3; i < 128; i++) {
-			// Filter out colours that have been completely used up
-			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
-			const colours = [
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)],
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]
-			];
-			this.colourBuckets[colours[0]]--;
-			this.colourBuckets[colours[1]]--;
-
-			this.drops[0].push(Drop.getNewDrop(this.settings, colours));
-		}
-	}
-
-	requestDrops(index) {
-		if(this.drops[index + 1] === undefined) {
-			this.drops[index + 1] = [];
-
-			// Reset colourBuckets for the next batch of 128
-			this.colourList.forEach(colour => {
-				// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
-				this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
-			});
-
-			for(let i = 0; i < 128; i++) {
-				// Filter out colours that have been completely used up
-				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
-				const colours = [
-					colourList[Math.floor(this.randomNumber() * colourList.length)],
-					colourList[Math.floor(this.randomNumber() * colourList.length)]
-				];
-				this.colourBuckets[colours[0]]--;
-				this.colourBuckets[colours[1]]--;
-
-				this.drops[index + 1].push(Drop.getNewDrop(this.settings, colours));
-			}
-		}
-		return this.drops[index];
-	}
-
-	randomNumber() {
-		const x = Math.sin(this.seed++) * 10000;
-		return x - Math.floor(x);
-	}
-}
-
 /**
  * Returns a random puyo colour, given the size of the colour pool.
  */
@@ -283,26 +250,26 @@ function getOtherPuyo (drop) {
  */
 function getDropFrames(poppingLocs, boardState, settings) {
 	return poppingLocs.some(loc => {
-		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.includes({ col: loc.col, row: loc.row + 1});
+		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.some(loc2 => loc2.col === loc.col && loc2.row === loc.row + 1);
 	}) ? settings.dropFrames : 0;
 }
 
 /**
  * Finds the score of the given chain. Currently only for Tsu rule.
  */
-function calculateScore (puyoLocs, chain_length) {
+function calculateScore (puyos, chain_length) {
 	// These arrays are 1-indexed.
 	const CHAIN_POWER = [null, 0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
 	const COLOUR_BONUS = [null, 0, 3, 6, 12, 24, 48];
 	const GROUP_BONUS = [null, null, null, null, 0, 2, 3, 4, 5, 6, 7, 10, 10, 10, 10];
 
 	// Number of puyos cleared in the chain
-	const puyos_cleared = puyoLocs.length;
+	const puyos_cleared = puyos.length;
 
 	// Find the different colours
 	const containedColours = {};
 
-	puyoLocs.forEach(puyo => {
+	puyos.forEach(puyo => {
 		if(containedColours[puyo.colour] === undefined) {
 			containedColours[puyo.colour] = 1;
 		}
@@ -323,6 +290,9 @@ function calculateScore (puyoLocs, chain_length) {
 	return (10 * puyos_cleared) * (chain_power + colour_bonus + group_bonus);
 }
 
+/**
+ * Finds the amount of nuisance generated from a particular increase in score.
+ */
 function calculateNuisance(chain_score, targetPoints, leftoverNuisance) {
 	const nuisancePoints = chain_score / targetPoints + leftoverNuisance;
 	const nuisanceSent = Math.floor(nuisancePoints);
@@ -353,7 +323,6 @@ module.exports = {
 	PUYO_EYES_COLOUR,
 	Settings,
 	UserSettings,
-	DropGenerator,
 	AudioPlayer,
 	Utils
 }

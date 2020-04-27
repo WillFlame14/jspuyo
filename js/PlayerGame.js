@@ -8,30 +8,39 @@ class PlayerGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
 		super(gameId, opponentIds, socket, 1, settings, userSettings);
 
+		let frame = 0;
+
 		// Accepts inputs from player
 		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentBoardDrawers = {};
+		this.opponentIdToBoardDrawer = {};
 
 		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
-		let opponentCounter = 1;
+		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
 			if(id > 0) {
-				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter + 1);
+				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter);
+				this.opponentIdToBoardDrawer[id] = opponentCounter;
 			}
 			opponentCounter++;
 		});
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (gameId, boardHash, score, nuisance) => {
-			if(!this.opponentIds.includes(gameId)) {
+			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
+			if(!this.opponentIds.includes(gameId) || gameId < 0) {
 				return;
 			}
-			if(gameId > 0) {
+			if(frame === 0) {
 				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+				frame = userSettings.skipFrames;
 			}
-			this.updateOpponentScore(gameId, score);
+			else{
+				this.updateOpponentScore(gameId, score);
+				frame--;
+			}
 		});
 
 		this.socket.on('sendSound', (gameId, sfx_name, index) => {
@@ -54,7 +63,7 @@ class PlayerGame extends Game {
 	 * Updates the score for opponents.
 	 */
 	updateOpponentScore(gameId, score) {
-		const pointsDisplayName = 'pointsDisplay' + '2';
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[gameId];
 		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;
 	}
 }

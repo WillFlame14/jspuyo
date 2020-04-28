@@ -1,6 +1,7 @@
 'use strict';
 
 const { Drop } = require('./Drop.js');
+const { SpriteDrawer } = require('./Draw.js');
 const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
 
 /**
@@ -10,31 +11,33 @@ const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
  */
 class DrawerWithPuyo {
     constructor() {
+        this.spriteDrawer = new SpriteDrawer();
     }
     drawPuyo(colour, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
-        ctx.fillStyle = colour;
-        ctx.fill();
-        ctx.translate(- size / 5, - size / 10);
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        ctx.translate(2 * size / 5, 0);
-        ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        ctx.fillStyle = PUYO_EYES_COLOUR;
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- size / 6, - size / 13);
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        ctx.translate(2 * size / 6, 0);
-        ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        ctx.fillStyle = colour;
-        ctx.fill();
-        ctx.restore();
+        // let ctx = this.ctx;
+        // ctx.save();
+        // ctx.beginPath();
+        // ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
+        // ctx.fillStyle = colour;
+        // ctx.fill();
+        // ctx.translate(- size / 5, - size / 10);
+        // ctx.beginPath();
+        // ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
+        // ctx.translate(2 * size / 5, 0);
+        // ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
+        // ctx.fillStyle = PUYO_EYES_COLOUR;
+        // ctx.fill();
+        // ctx.restore();
+        // ctx.save();
+        // ctx.translate(- size / 6, - size / 13);
+        // ctx.beginPath();
+        // ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
+        // ctx.translate(2 * size / 6, 0);
+        // ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
+        // ctx.fillStyle = colour;
+        // ctx.fill();
+        // ctx.restore();
+        this.spriteDrawer.drawSprite(this.ctx, 'Custom', size, 0, 1, 0, 0);
     }
     drawDrop(drop, size) {
         if ("IhLHO".includes(drop.shape)) {
@@ -139,7 +142,8 @@ class BoardDrawer extends DrawerWithPuyo {
     }
 
     drawPopping(colour, size, frame, totalFrames) {
-        this.drawPuyo(colour, size * (1 - frame / totalFrames));
+        // this.drawPuyo(colour, size * (1 - frame / totalFrames));
+        this.drawPuyo(colour, size);
     }
 
     updateBoard(currentBoardState) {

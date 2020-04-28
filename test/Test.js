@@ -39,28 +39,28 @@ describe('Board.js', function() {
 
 			const expectedResult = [
 				[
-					{ col: 0, row: 0, colour: red },
-					{ col: 0, row: 1, colour: red }
+					{ col: 0, row: 0, colour: red, connections: ['Up'] },
+					{ col: 0, row: 1, colour: red, connections: ['Down'] }
 				],
 				[
-					{ col: 0, row: 2, colour: blu },
+					{ col: 0, row: 2, colour: blu, connections: [] },
 				],
 				[
-					{ col: 1, row: 0, colour: blu },
-					{ col: 2, row: 0, colour: blu }
+					{ col: 1, row: 0, colour: blu, connections: ['Right'] },
+					{ col: 2, row: 0, colour: blu, connections: ['Left'] }
 				],
 				[
-					{ col: 1, row: 1, colour: grn },
-					{ col: 2, row: 1, colour: grn },
-					{ col: 3, row: 1, colour: grn },
-					{ col: 3, row: 0, colour: grn }
+					{ col: 1, row: 1, colour: grn, connections: ['Right'] },
+					{ col: 2, row: 1, colour: grn, connections: ['Left', 'Right'] },
+					{ col: 3, row: 1, colour: grn, connections: ['Left', 'Down'] },
+					{ col: 3, row: 0, colour: grn, connections: ['Up'] }
 				],
 				[
-					{ col: 1, row: 2, colour: red },
-					{ col: 2, row: 2, colour: red }
+					{ col: 1, row: 2, colour: red, connections: ['Right'] },
+					{ col: 2, row: 2, colour: red, connections: ['Left'] }
 				],
 				[
-					{ col: 2, row: 3, colour: grn }
+					{ col: 2, row: 3, colour: grn, connections: [] }
 				]
 			]
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
@@ -81,15 +81,15 @@ describe('Board.js', function() {
 
 			const expectedResult = [
 				[
-					{ col: 0, row: 0, colour: blu },
-					{ col: 1, row: 0, colour: blu },
-					{ col: 2, row: 0, colour: blu }
+					{ col: 0, row: 0, colour: blu, connections: ['Right'] },
+					{ col: 1, row: 0, colour: blu, connections: ['Left', 'Right'] },
+					{ col: 2, row: 0, colour: blu, connections: ['Left'] }
 				],
 				[
-					{ col: 1, row: 1, colour: grn },
-					{ col: 2, row: 1, colour: grn },
-					{ col: 3, row: 1, colour: grn },
-					{ col: 3, row: 0, colour: grn }
+					{ col: 1, row: 1, colour: grn, connections: ['Right'] },
+					{ col: 2, row: 1, colour: grn, connections: ['Left', 'Right'] },
+					{ col: 3, row: 1, colour: grn, connections: ['Left', 'Down'] },
+					{ col: 3, row: 0, colour: grn, connections: ['Up'] }
 				]
 			]
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
@@ -128,16 +128,16 @@ describe('Board.js', function() {
 
 			const expectedResult = [
 				[
-					{ col: 0, row: 1, colour: grn },
-					{ col: 1, row: 1, colour: grn },
-					{ col: 1, row: 2, colour: grn },
-					{ col: 2, row: 1, colour: grn },
+					{ col: 0, row: 1, colour: grn, connections: ['Right'] },
+					{ col: 1, row: 1, colour: grn, connections: ['Left', 'Up', 'Right'] },
+					{ col: 1, row: 2, colour: grn, connections: ['Down'] },
+					{ col: 2, row: 1, colour: grn, connections: ['Left'] },
 				],
 				[
-					{ col: 0, row: 0, colour: red },
-					{ col: 0, row: 1, colour: red },
-					{ col: 1, row: 0, colour: red },
-					{ col: 2, row: 0, colour: red },
+					{ col: 0, row: 0, colour: red, connections: ['Right', 'Up'] },
+					{ col: 0, row: 1, colour: red, connections: ['Down'] },
+					{ col: 1, row: 0, colour: red, connections: ['Left', 'Right'] },
+					{ col: 2, row: 0, colour: red, connections: ['Left'] },
 				],
 			];
 
@@ -159,21 +159,21 @@ describe('Board.js', function() {
 
 			const expectedResult = [
 				[
-					{ col: 0, row: 0, colour: red },
-					{ col: 1, row: 0, colour: red },
-					{ col: 2, row: 0, colour: red },
-					{ col: 2, row: 1, colour: red },
-					{ col: 0, row: 1, colour: grn },
-					{ col: 0, row: 2, colour: grn },
-					{ col: 0, row: 3, colour: grn },
-					{ col: 1, row: 1, colour: grn },
-					{ col: 1, row: 3, colour: grn }
+					{ col: 0, row: 0, colour: red, connections: ['Right'] },
+					{ col: 1, row: 0, colour: red, connections: ['Left', 'Right'] },
+					{ col: 2, row: 0, colour: red, connections: ['Left', 'Up'] },
+					{ col: 2, row: 1, colour: red, connections: ['Down'] },
+					{ col: 0, row: 1, colour: grn, connections: ['Right', 'Up'] },
+					{ col: 0, row: 2, colour: grn, connections: ['Up', 'Down'] },
+					{ col: 0, row: 3, colour: grn, connections: ['Down'] },
+					{ col: 1, row: 1, colour: grn, connections: ['Left'] },
+					{ col: 1, row: 3, colour: grn, connections: ['Left'] }
 				],
 				[
-					{ col: 2, row: 0, colour: blu },
-					{ col: 3, row: 0, colour: blu },
-					{ col: 3, row: 1, colour: blu },
-					{ col: 4, row: 0, colour: blu },
+					{ col: 2, row: 0, colour: blu, connections: ['Right'] },
+					{ col: 3, row: 0, colour: blu, connections: ['Left', 'Up', 'Right'] },
+					{ col: 3, row: 1, colour: blu, connections: ['Down'] },
+					{ col: 4, row: 0, colour: blu, connections: ['Left'] },
 				]
 			];
 		});
@@ -193,16 +193,16 @@ describe('Board.js', function() {
 
 			const expectedResult = [
 				[
-					{ col: 0, row: 2, colour: grn },
-					{ col: 1, row: 1, colour: grn },
-					{ col: 1, row: 2, colour: grn },
-					{ col: 2, row: 1, colour: grn },
+					{ col: 0, row: 2, colour: grn, connections: ['Right'] },
+					{ col: 1, row: 1, colour: grn, connections: ['Up', 'Right'] },
+					{ col: 1, row: 2, colour: grn, connections: ['Left', 'Down'] },
+					{ col: 2, row: 1, colour: grn, connections: ['Left'] },
 				],
 				[
-					{ col: 0, row: 0, colour: red },
-					{ col: 0, row: 1, colour: red },
-					{ col: 1, row: 0, colour: red },
-					{ col: 2, row: 0, colour: red },
+					{ col: 0, row: 0, colour: red, connections: ['Right', 'Up'] },
+					{ col: 0, row: 1, colour: red, connections: ['Down'] },
+					{ col: 1, row: 0, colour: red, connections: ['Left', 'Right'] },
+					{ col: 2, row: 0, colour: red, connections: ['Left'] },
 				],
 			];
 

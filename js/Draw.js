@@ -17,11 +17,11 @@ class SpriteDrawer {
             const canvasName = 'c' + size.toString();
             ctx.drawImage(
                 this[spriteSheet][canvasName],
-                Math.floor((sX * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size),
-                Math.floor((sY * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size),
-                Math.ceil(sWidth * size), Math.ceil(sHeight * size),
-                Math.floor(cX * size - sWidth * size / 2), Math.floor(cY * size - sHeight * size / 2),
-                Math.ceil(sWidth * size), Math.ceil(sHeight * size)
+                (sX * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size,
+                (sY * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size,
+                sWidth * size, sHeight * size,
+                cX * size - sWidth * size / 2, cY * size - sHeight * size / 2,
+                sWidth * size, sHeight * size
             )
         }
     }
@@ -37,8 +37,8 @@ class SpriteDrawer {
             // e.g. this['aqua']['c50'] or this.aqua.c50 is a canvas that has aqua.png drawn with unit size 50
             if(this[spriteSheet][canvasName] == null) {
                 this[spriteSheet][canvasName] = document.createElement('canvas');
-                this[spriteSheet][canvasName].width = Math.ceil(size * SHEET_COLS * SHEET_UNIT / (SHEET_UNIT - SHEET_GAP));
-                this[spriteSheet][canvasName].height = Math.ceil(size * SHEET_ROWS * SHEET_UNIT / (SHEET_UNIT - SHEET_GAP));
+                this[spriteSheet][canvasName].width = size * SHEET_COLS * SHEET_UNIT / (SHEET_UNIT - SHEET_GAP);
+                this[spriteSheet][canvasName].height = size * SHEET_ROWS * SHEET_UNIT / (SHEET_UNIT - SHEET_GAP);
                 this[spriteSheet][canvasName].getContext('2d').drawImage(
                     this[spriteSheet].image,
                     0, 0,

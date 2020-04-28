@@ -1,7 +1,9 @@
 'use strict';
 
+const { Board } = require('./Board.js');
 const { Drop } = require('./Drop.js');
 const { SpriteDrawer } = require('./Draw.js');
+/* eslint-disable-next-line no-unused-vars */
 const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
 
 /**
@@ -13,13 +15,27 @@ class DrawerWithPuyo {
     constructor() {
         this.spriteDrawer = new SpriteDrawer();
     }
-    drawPuyo(colour, size) {
-        if (colour == PUYO_COLOURS['Gray']) {
-            this.spriteDrawer.drawSprite(this.ctx, 'Aqua', size, 10, 9, 0, 0);
-        } else {
-            console.log(this.colourArray[colour]);
-            this.spriteDrawer.drawSprite(this.ctx, 'Aqua', size, 0, this.colourArray.indexOf(colour), 0, 0);
+    drawPuyo(colour, size, directions = []) {
+        if(colour === PUYO_COLOURS['Gray']) {
+            this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, 10, 9, 0, 0);
+            return;
         }
+
+        let xPos = 0;
+        if(directions.includes('Down')) {
+            xPos += 1;
+        }
+        if(directions.includes('Up')) {
+            xPos += 2;
+        }
+        if(directions.includes('Right')) {
+            xPos += 4;
+        }
+        if(directions.includes('Left')) {
+            xPos += 8;
+        }
+
+        this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, xPos, this.colourArray.indexOf(colour), 0, 0);
     }
     drawDrop(drop, size) {
         if ("IhLHO".includes(drop.shape)) {
@@ -123,6 +139,7 @@ class BoardDrawer extends DrawerWithPuyo {
         this.nuisanceCascadeFPR = [];
     }
 
+    /* eslint-disable-next-line no-unused-vars */
     drawPopping(colour, size, frame, totalFrames) {
         // this.drawPuyo(colour, size * (1 - frame / totalFrames));
         this.drawPuyo(colour, size);
@@ -145,16 +162,18 @@ class BoardDrawer extends DrawerWithPuyo {
         // Move the canvas with the origin at the middle of the bottom left square
         ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
 
-        for (let i = 0; i < cols; i++) {
-            for (let j = 0; j < rows; j++) {
-                if (boardState[i][j]) {
-                    ctx.save();
-                    ctx.translate(unitW * i, - unitH * j);
-                    this.drawPuyo(boardState[i][j], unitW);
-                    ctx.restore();
-                }
-            }
-        }
+        const board = new Board(this.settings, boardState);
+        const connections = board.getConnections();
+
+        // Use the connections array instead of board state
+        connections.forEach(group => {
+            group.forEach(puyo => {
+                ctx.save();
+                ctx.translate(unitW * puyo.col, - unitH * puyo.row);
+                this.drawPuyo(puyo.colour, unitW, puyo.connections);
+                ctx.restore();
+            })
+        })
 
         if (currentDrop.schezo.y != null) {
             ctx.save();

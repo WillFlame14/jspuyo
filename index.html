@@ -2,21 +2,53 @@
 <head>
     <title>jspuyo</title>
     <meta charset="utf-8" />
+    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
+    <div id="navbar">
+        <span id="navbarSpacer"></span>
+        <span class="navPanel" id="queuePanel" onclick="expand_dropdown(this.id)">
+            <img src="images/navbar/QueueIcon.png" class="navIcon">
+            <span class="panelName">Queue</span>
+            <div class="dropdown">
+                <a href="javascript:location.href=location.toString().replace(location.search, '')">Free for all</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?ranked=true'">Ranked</a>
+            </div>
+        </span>
+        <span class="navPanel" id="customPanel" onclick="expand_dropdown(this.id)">
+            <img src="images/navbar/CustomIcon.png" class="navIcon">
+            <span class="panelName">Custom</span>
+            <div class="dropdown">
+                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?createRoom=true'">Create Room</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '')">Join Room</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '')">Spectate</a>
+            </div>
+        </span>
+        <span class="navPanel" id="singleplayerPanel" onclick="expand_dropdown(this.id)">
+            <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
+            <span class="panelName">Singleplayer</span>
+            <div class="dropdown">
+                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true&size=1'">Sprint</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true&size=1'">Time Challenge</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true'">Play Against CPU</a>
+            </div>
+        </span>
+        <span class="navPanel" id="profilePanel" onclick="expand_dropdown(this.id)">
+            <img src="images/navbar/ProfileIcon.png" class="navIcon">
+            <span class="panelName">Profile</span>
+            <div class="dropdown">
+                <a href="javascript:location.href=location.toString().replace(location.search, '')">Gallery</a>
+                <a href="javascript:location.href=location.toString().replace(location.search, '')">Settings</a>
+            </div>
+        </span>
+        <span id="logo">jspuyo</span>
+    </div>
     <main>
-        <h1>jspuyo</h1>
         <table id = "playArea">
             <!-- Inserted by javascript -->
         </table>
-        <div id = "descArea">
-            <p>Controls:</p>
-            <p>Z - rotate CCW</p>
-            <p>X - rotate CW</p>
-            <p>left/right - move left/right</p>
-            <p>down - soft drop</p>
-        </div>
+        <script src="webpage.js"></script>
         <script src="bundle.js"></script>
     </main>
 </body>

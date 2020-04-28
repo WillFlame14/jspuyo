@@ -1,16 +1,173 @@
-h1 {
-    font: 24px Trebuchet, sans-serif;
-    text-align: center;
+html {
+	margin: 0px;
+	padding: 0px;
+	background-image:url("images/backgrounds/Forest 04.jpg");
+	background-size: cover;
+	background-position: center;
 }
 
-p {
-    font: 12px Trebuchet, sans-serif;
-    text-align: center;
+body {
+	margin: 0px;
+	background-color: rgba(60, 60, 60, 0.5);
+	height: 100%;
+	width: 100%;
 }
 
-.numDisplay {
-    font: 12px Trebuchet, sans-serif;
+canvas {
+	background: rgba(40, 40, 40, 0.8);
+	margin: 0px 10px 0px 0px;
+	border: 4px solid white;
+}
+
+.nuisanceQueue {
+	background: rgba(240, 240, 240, 0.2);
+	margin: none;
+	border: none;
+}
+
+/* Horizontal flexbox, contains the panels and is used as the basis for the dropdown menus. */
+#navbar {
+	display: flex;
+	position: relative;
+	background-image: linear-gradient(#212121, #000000);
+	box-shadow: 0px 0px 10px 2px black;
+	margin-bottom: 30px;
+}
+
+/* Spacer used to indent the panels. */
+#navbarSpacer {
+	flex: 0 0 30px;
+	box-shadow: 5px 0px 5px -5px;
+	z-index: 999;
+}
+
+#logo {
+	font: 18px "Chelsea Market", sans-serif;
+	text-align: right;
+	flex: 1 1 1100px;
+	color: white;
+	padding: 5px 15px 0px 0px;
+}
+
+/* Panel containing icon, title and dropdown menu. Default state is "minimized", which only contains the icon. */
+.navPanel {
+	font: 28px "Chelsea Market", sans-serif;
+	flex: 0 0 80px;
+	display: flex;
+	position: relative;
+
+	/* Hide the text so that it transitions intead of jumping. */
+	overflow: hidden;
+	transition: all 200ms ease-in-out;
+	box-shadow: 10px 0px 10px -5px, -10px 0px 10px -5px;
+	z-index: 2;
+}
+
+/* Expanded panel to show the panel title. */
+.navPanel.expanded {
+	flex: 0 0 250px;
+}
+/* Singleplayer panel requires more space due to having a longer title. */
+#singleplayerPanel.expanded {
+	flex: 0 0 320px;
+}
+
+/* Background gradients for the panels. */
+#queuePanel {
+	background-image: linear-gradient(#254620, #052a00);
+	z-index: 5;
+}
+#customPanel {
+	background-image: linear-gradient(#453421, #2a1600);
+	z-index: 4;
+}
+#singleplayerPanel {
+	background-image: linear-gradient(#273245, #001e2a);
+	z-index: 3;
+}
+#profilePanel {
+	background-image: linear-gradient(#381d3c, #24002a);
+}
+
+/* Icon of the panel. Always displayed. */
+.navIcon {
+	height: 60px;
+	margin: 5px 10px;
+	flex: 0 0 60px;
+}
+
+/* Title of the panel. */
+.panelName {
+	display: block;
+	padding: 5px 20px 5px 10px;
+	color: white;
+}
+
+/* Special sizing for the first letter of the title. */
+.panelName::first-letter {
+	font-size: 46px;
+}
+
+/* Vertical flexbox containing links. */
+.dropdown {
+	flex: 1 0 0px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: #434343;
+
+	/* Set initial dimensions for the transition. */
+	height: 0px;
+	width: 70px;
+	transition: all 200ms ease-in-out;
+	box-shadow: none;
+
+	/* Float the dropdown menu so it doesn't take up space, and move it below the panels. */
+	position: fixed;
+	margin-top: 70px;
+}
+
+/* Expand the dropdown menu when the navigation panel is expanded. The heights are modified in Javascript.*/
+.navPanel.expanded > .dropdown {
+	width: 250px;
+	box-shadow: 0px 2px 15px 2px, 0px 7px 5px -5px black inset;
+}
+#singleplayerPanel.expanded > .dropdown {
+	width: 320px;
+}
+
+/* Hide the dropdown links before the navigation panel is expanded. */
+.dropdown a {
+	flex: 0 0 0px;
+	font-size: 20px;
+	color: white;
+	text-decoration: none;
+	padding: 5px 0px 5px 15px;
+	display: none;
+}
+
+/* The first dropdown item has some extra margin due to the shadow taking up space. */
+.dropdown a:first-child {
+	padding: 7px 0px 5px 15px;
+}
+
+/* Display the links when the navigation panel is expanded. */
+.navPanel.expanded > .dropdown a {
+	flex: 0 0 30px;
+	display: block;
+}
+
+/* Darken the background of a link on hover. */
+.dropdown a:hover {
+	background: #212121;
+}
+
+.pointsDisplay {
+	width: 270px;
+    font: 52px "Chelsea Market", sans-serif;
+    color: white;
     text-align: center;
+    display: table;
 }
 
 table#playArea {

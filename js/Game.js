@@ -577,14 +577,14 @@ class Game {
 			// Score from soft dropping (will not send nuisance)
 			if(this.softDrops > 5) {
 				this.currentScore += Math.floor(this.softDrops / 5);
-				document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
+				document.getElementById(pointsDisplayName).innerHTML = `${this.currentScore}`.padStart(8, '0');
 				this.softDrops %= 5;
 			}
 			return;
 		}
 
 		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
-		document.getElementById(pointsDisplayName).innerHTML = "Score: " + this.currentScore;
+		document.getElementById(pointsDisplayName).innerHTML = `${this.currentScore}`.padStart(8, '0');
 
 		// Update target points if margin time is in effect
 		this.settings.checkMarginTime();

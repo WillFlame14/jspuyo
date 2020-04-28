@@ -46,8 +46,9 @@ const io = require('socket.io-client');
 
 			const nuisanceQueueCanvas = document.createElement('canvas');
 			nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
-			nuisanceQueueCanvas.height = 50 * size;
-			nuisanceQueueCanvas.width = 300 * size;
+			nuisanceQueueCanvas.height = 45 * size;
+			nuisanceQueueCanvas.width = 270 * size;
+			nuisanceQueueCanvas.className = 'nuisanceQueue';
 			nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
 
 			const centralArea = document.createElement('div');
@@ -56,26 +57,25 @@ const io = require('socket.io-client');
 
 			const boardCanvas = document.createElement('canvas');
 			boardCanvas.id = 'board' + id;
-			boardCanvas.height = 600 * size;
-			boardCanvas.width = 300 * size;
-			boardCanvas.style.border = '1px solid #2a52be';
+			boardCanvas.height = 540 * size;
+			boardCanvas.width = 270 * size;
 			centralArea.appendChild(boardCanvas);
 
 			const queueCanvas = document.createElement('canvas');
 			queueCanvas.id = 'queue' + id;
-			queueCanvas.height = 600 * size;
-			queueCanvas.width = 80 * size;
-			queueCanvas.style.border = '1px solid #2a52be';
+			queueCanvas.height = 540 * size;
+			queueCanvas.width = 72 * size;
 			centralArea.appendChild(queueCanvas);
 
 			const pointsArea = document.createElement('div');
 			pointsArea.id = 'pointsArea' + id;
+			pointsArea.className = 'pointsArea';
 			gameArea.appendChild(pointsArea);
 
 			const pointsDisplay = document.createElement('span');
 			pointsDisplay.id = 'pointsDisplay' + id;
-			pointsDisplay.className = 'numDisplay';
-			pointsDisplay.innerHTML = 'Score: 000000';
+			pointsDisplay.className = 'pointsDisplay';
+			pointsDisplay.innerHTML = '00000000';
 			pointsArea.appendChild(pointsDisplay);
 
 			return board;
@@ -104,6 +104,13 @@ const io = require('socket.io-client');
 				createGameCanvas(runningId, secondRow, 0.5);
 				runningId++;
 			}
+			Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
+				if(element.id === "pointsDisplay1") {
+					return;
+				}
+				element.style.fontSize = "26";
+				element.style.width = "50%";
+			});
 		}
 		else {
 			playerBoard.setAttribute('rowspan', '3');
@@ -111,21 +118,28 @@ const io = require('socket.io-client');
 			let extras = size - 1 - minPerRow * 3;
 			// Spread rows over the first two rows
 			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-				createGameCanvas(runningId, firstRow, 3/10);
+				createGameCanvas(runningId, firstRow, 0.33);
 				runningId++;
 			}
 			extras--;
 			const secondRow = playArea.insertRow(-1);
 			for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-				createGameCanvas(runningId, secondRow, 3/10);
+				createGameCanvas(runningId, secondRow, 0.33);
 				runningId++;
 			}
 			// Do the final bottom row, guaranteed to be no extras
 			const thirdRow = playArea.insertRow(-1);
 			for(let i = 0; i < minPerRow; i++) {
-				createGameCanvas(runningId, thirdRow, 3/10);
+				createGameCanvas(runningId, thirdRow, 0.33);
 				runningId++;
 			}
+			Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
+				if(element.id === "pointsDisplay1") {
+					return;
+				}
+				element.style.fontSize = "16";
+				element.style.width = "33%";
+			});
 		}
 	};
 
@@ -253,11 +267,23 @@ const io = require('socket.io-client');
 	let finalMessage = null;		// The message to be displayed
 
 	function main() {
-		const mainFrame = window.requestAnimationFrame(main);
+		let mainFrame = null, timeout = null;
+		if(document.visibilityState === 'visible') {
+			mainFrame = window.requestAnimationFrame(main);
+		}
+		else {
+			console.log('hi');
+			timeout = setTimeout(main, 1);
+		}
 		game.step();
 		cpuGames.forEach(cpuGame => cpuGame.game.step());
 		if(finalMessage !== null) {
-			window.cancelAnimationFrame(mainFrame);
+			if(mainFrame !== null) {
+				window.cancelAnimationFrame(mainFrame);
+			}
+			else {
+				clearTimeout(timeout);
+			}
 			console.log(finalMessage);
 			return;
 		}

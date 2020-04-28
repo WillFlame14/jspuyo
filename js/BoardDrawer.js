@@ -14,30 +14,12 @@ class DrawerWithPuyo {
         this.spriteDrawer = new SpriteDrawer();
     }
     drawPuyo(colour, size) {
-        // let ctx = this.ctx;
-        // ctx.save();
-        // ctx.beginPath();
-        // ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
-        // ctx.fillStyle = colour;
-        // ctx.fill();
-        // ctx.translate(- size / 5, - size / 10);
-        // ctx.beginPath();
-        // ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        // ctx.translate(2 * size / 5, 0);
-        // ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        // ctx.fillStyle = PUYO_EYES_COLOUR;
-        // ctx.fill();
-        // ctx.restore();
-        // ctx.save();
-        // ctx.translate(- size / 6, - size / 13);
-        // ctx.beginPath();
-        // ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        // ctx.translate(2 * size / 6, 0);
-        // ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        // ctx.fillStyle = colour;
-        // ctx.fill();
-        // ctx.restore();
-        this.spriteDrawer.drawSprite(this.ctx, 'Custom', size, 0, 1, 0, 0);
+        if (colour == PUYO_COLOURS['Gray']) {
+            this.spriteDrawer.drawSprite(this.ctx, 'Aqua', size, 10, 9, 0, 0);
+        } else {
+            console.log(this.colourArray[colour]);
+            this.spriteDrawer.drawSprite(this.ctx, 'Aqua', size, 0, this.colourArray.indexOf(colour), 0, 0);
+        }
     }
     drawDrop(drop, size) {
         if ("IhLHO".includes(drop.shape)) {

@@ -158,7 +158,11 @@ class FlatCpu extends Cpu {
 			}
 		}
 
-		col = super.checkForSimpleChains(boardState, currentDrop, 0);
+		const result = super.checkForSimpleChains(boardState, currentDrop, 1);
+
+		if(result !== -1) {
+			col = result;
+		}
 
 		return { col, rotations };
 	}
@@ -226,7 +230,11 @@ class ChainCpu extends Cpu {
 			col = Math.floor(Math.random() * this.settings.cols);
 		}
 
-		col = super.checkForSimpleChains(boardState, currentDrop, 1);
+		const result = super.checkForSimpleChains(boardState, currentDrop, 1);
+
+		if(result !== -1) {
+			col = result;
+		}
 
 		return { col, rotations };
 	}
@@ -286,7 +294,7 @@ class TestCpu extends Cpu {
 
 				// Deter from placing in column 2, as well as building skyscrapers
 				let deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
-				const value = this.evaluateBoard(board) - deterrent;
+				const value = this.evaluateBoard(board) + (Math.random() * 2) - deterrent;
 
 				if(value > maxValue) {
 					col = currCol;

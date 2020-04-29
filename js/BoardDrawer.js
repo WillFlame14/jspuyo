@@ -69,74 +69,52 @@ class DrawerWithPuyo {
         this.drawPuyo(drop.colours[1], size, [], dX, dY);
     }
 
-    draw_h(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        this.drawPuyo(drop.colours[0], size);
-        ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
+    draw_h(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[0], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[1], size, [], dX3, dY3);
     }
 
-    draw_L(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        this.drawPuyo(drop.colours[0], size);
-        ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
+    draw_L(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[1], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[0], size, [], dX3, dY3);
     }
 
-    draw_H(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        let xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
-        let yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
-        ctx.translate(- xChange, - yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- yChange, xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(xChange, yChange);
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(yChange, - xChange);
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
+    draw_H(drop, size, dX, dY) {
+        const xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
+        const yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX -yChange, dY + xChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + yChange, dY - xChange);
     }
 
-    draw_O(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        let xChange = size / 2;
-        let yChange = size / 2;
-        ctx.translate(- xChange, - yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- yChange, xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(xChange, yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(yChange, - xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
+    draw_O(drop, size, dX, dY) {
+        const xChange = size / 2;
+        const yChange = size / 2;
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX - yChange, dY - xChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + yChange, dY - xChange);
     }
 }
 
@@ -165,7 +143,7 @@ class BoardDrawer extends DrawerWithPuyo {
 
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
-        const {boardState, currentDrop} = currentBoardState;
+        const {connections, currentDrop} = currentBoardState;
         const {rows} = this.settings;
 
         // Clear list of drawn objects
@@ -179,9 +157,6 @@ class BoardDrawer extends DrawerWithPuyo {
 
         // Move the canvas with the origin at the middle of the bottom left square
         ctx.translate(0, (rows - 1) * this.unitH);
-
-        const board = new Board(this.settings, boardState);
-        const connections = board.getConnections();
 
         // Use the connections array instead of board state
         connections.forEach(group => {
@@ -266,7 +241,7 @@ class BoardDrawer extends DrawerWithPuyo {
     }
 
     dropNuisance(boardState, nuisanceState) {
-        const { nuisanceArray, currentFrame } = nuisanceState;
+        const {nuisanceArray, currentFrame} = nuisanceState;
         const {cols, rows} = this.settings;
 
         // Clear list of drawn objects

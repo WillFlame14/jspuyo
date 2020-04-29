@@ -183,7 +183,7 @@ class Game {
 				this.currentDrop.affectRotation();
 			}
 
-			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+			const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
 			// Update the board for player (CPUs if enough frames have passed)
 			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
 				currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
@@ -220,18 +220,18 @@ class Game {
 			if (!arleDropped) {
 				currentDrop.arle.y -= 1 / this.settings.isoCascadeFramesPerRow;
 				if (currentDrop.arle.y < boardState[currentDrop.arle.x].length) {
-					currentDrop.arle.y = boardState[currentDrop.arle.x].length
+					currentDrop.arle.y = boardState[currentDrop.arle.x].length;
 				}
 			}
 			if (!schezoDropped) {
 				currentDrop.schezo.y -= 1 / this.settings.isoCascadeFramesPerRow;
 				if (currentDrop.schezo.y < boardState[currentDrop.schezo.x].length) {
-					currentDrop.schezo.y = boardState[currentDrop.schezo.x].length
+					currentDrop.schezo.y = boardState[currentDrop.schezo.x].length;
 				}
 			}
 		}
 
-		const currentBoardState = { boardState, currentDrop };
+		const currentBoardState = { connections: this.board.getConnections(), currentDrop };
 
 		// Update the board for player (CPUs if enough frames have passed)
 		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
@@ -457,7 +457,7 @@ class Game {
 		this.squishState.currentFrame++;
 
 		// Insert squishing puyos drawing here
-		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
+		const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
 		const currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {

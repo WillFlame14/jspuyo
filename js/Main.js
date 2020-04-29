@@ -267,13 +267,13 @@ const io = require('socket.io-client');
 	let finalMessage = null;		// The message to be displayed
 
 	function main() {
-		let mainFrame = null, timeout = null;
+		let mainFrame = null;
 		if(document.visibilityState === 'visible') {
 			mainFrame = window.requestAnimationFrame(main);
 		}
 		else {
-			console.log('hi');
-			timeout = setTimeout(main, 1);
+			// TODO: Force game to run in background.
+			// timeout = setTimeout(main, 1);
 		}
 		game.step();
 		cpuGames.forEach(cpuGame => cpuGame.game.step());
@@ -282,7 +282,7 @@ const io = require('socket.io-client');
 				window.cancelAnimationFrame(mainFrame);
 			}
 			else {
-				clearTimeout(timeout);
+				// clearTimeout(timeout);
 			}
 			console.log(finalMessage);
 			return;

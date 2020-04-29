@@ -12,15 +12,15 @@ const SHEET_GAP = 1;    // number of pixels before sprite starts (top/left)
  */
 class SpriteDrawer {
     // sX, sY, sWidth, sHeight, are sprite sheet parameters 0-indexed from top-left
-    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1) {
+    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1.025, sHeight = 1.025) {
         if (this.loadSprite(spriteSheet, size) === true) {
             const canvasName = 'c' + size.toString();
             ctx.drawImage(
                 this[spriteSheet][canvasName],
                 (sX * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size,
                 (sY * (SHEET_UNIT + SHEET_GAP) / SHEET_UNIT + SHEET_GAP / SHEET_UNIT) * size,
-                sWidth * size, sHeight * size,
-                cX * size - sWidth * size / 2, cY * size - sHeight * size / 2,
+                size, size,
+                cX, cY,
                 sWidth * size, sHeight * size
             )
         }

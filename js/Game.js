@@ -28,7 +28,7 @@ class Game {
 		this.activeNuisance = 0;		// Active nuisance
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
-		this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+		this.resolvingState = { chain: 0, connections: [], poppedConnections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
 		this.squishState = { currentFrame: -1 };
 		this.currentFrame = 0;
@@ -184,10 +184,9 @@ class Game {
 			}
 
 			const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-			currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
 			// Update the board for player (CPUs if enough frames have passed)
 			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-				this.boardDrawer.updateBoard(currentBoardState);
+				currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 				this.currentFrame = this.userSettings.skipFrames;
 			}
 			else {
@@ -233,11 +232,10 @@ class Game {
 		}
 
 		const currentBoardState = { boardState, currentDrop };
-		currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
 
 		// Update the board for player (CPUs if enough frames have passed)
 		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-			this.boardDrawer.updateBoard(currentBoardState);
+			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 			this.currentFrame = this.userSettings.skipFrames;
 		}
 		else {
@@ -291,14 +289,12 @@ class Game {
 			}
 			this.nuisanceState.totalFrames = Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
 			this.boardDrawer.initNuisanceDrop(nuisanceCascadeFPR);
-			hash = this.boardDrawer.hashForNuisanceInit(nuisanceCascadeFPR);
 		}
 		// Already initialized
 		else {
-			hash = this.boardDrawer.hashForNuisance(this.board.boardState, this.nuisanceState);
 			// Update the board for player (CPUs if enough frames have passed)
 			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-				this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
+				hash = this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
 				this.currentFrame = this.userSettings.skipFrames;
 			}
 			else {
@@ -345,11 +341,50 @@ class Game {
 		let currentBoardHash = null;
 
 		// Setting up the board state
-		if(this.resolvingState.chain === 0) {
-			const puyoLocs = this.resolvingChains[0];
+		if(this.resolvingState.currentFrame === 0) {
+			if(this.resolvingState.chain === 0) {
+				this.resolvingState.chain++;
+			}
+			const puyoLocs = this.resolvingChains[this.resolvingState.chain - 1];
 			const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
-			const dropFrames = Utils.getDropFrames(puyoLocs.concat(nuisanceLocs), this.board.boardState, this.settings);
-			this.resolvingState = { chain: 1, puyoLocs, nuisanceLocs, currentFrame: 1, totalFrames: this.settings.popFrames + dropFrames };
+			const poppedLocs = puyoLocs.concat(nuisanceLocs);
+			const dropFrames = Utils.getDropFrames(poppedLocs, this.board.boardState, this.settings);
+
+			const lowestUnstablePos = {};
+			poppedLocs.forEach(puyo => {
+				if(lowestUnstablePos[puyo.col] === undefined || lowestUnstablePos[puyo.col] > puyo.row) {
+					lowestUnstablePos[puyo.col] = puyo.row;
+				}
+            });
+
+			const unstablePuyos = [];
+			const stableBoardAfterPop = new Board(this.settings, this.board.boardState);
+            stableBoardAfterPop.boardState.forEach((column, colIndex) => {
+                if(lowestUnstablePos[colIndex] === undefined) {
+                    return;
+                }
+                // Move all unstable puyos
+                const removed_puyo_colours = column.splice(lowestUnstablePos[colIndex]);
+				let nonPoppedPuyos = 0;
+				removed_puyo_colours.forEach((colour, index) => {
+					const row = index + lowestUnstablePos[colIndex];
+					if(!poppedLocs.some(puyo => puyo.col === colIndex && puyo.row === row)) {
+						unstablePuyos.push({ col: colIndex, row, colour, above: lowestUnstablePos[colIndex] + nonPoppedPuyos });
+						nonPoppedPuyos++;
+					}
+                });
+            });
+
+			this.resolvingState = {
+				chain: this.resolvingState.chain,
+				connections: this.board.getConnections(),
+				puyoLocs,
+				poppedLocs,
+				connectionsAfterPop: stableBoardAfterPop.getConnections(),
+				unstablePuyos,
+				currentFrame: 1,
+				totalFrames: this.settings.popFrames + dropFrames
+			};
 		}
 		else {
 			this.resolvingState.currentFrame++;
@@ -357,8 +392,7 @@ class Game {
 
 		// Update the board for player (CPUs if enough frames have passed)
 		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-			currentBoardHash = this.boardDrawer.hashForResolving(this.board.boardState, this.resolvingState);
-			this.boardDrawer.resolveChains(this.board.boardState, this.resolvingState);
+			currentBoardHash = this.boardDrawer.resolveChains(this.resolvingState);
 			this.currentFrame = this.userSettings.skipFrames;
 		}
 		else {
@@ -394,7 +428,7 @@ class Game {
 			// Done resolving all chains
 			if(this.resolvingState.chain === this.resolvingChains.length) {
 				this.resolvingChains = [];
-				this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.resolvingState = { chain: 0, connections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
@@ -409,16 +443,8 @@ class Game {
 			}
 			// Still have more chains to resolve
 			else {
-				const puyoLocs = this.resolvingChains[this.resolvingState.chain];
-				const nuisanceLocs = this.board.findNuisancePopped(puyoLocs);
-				const dropFrames = Utils.getDropFrames(puyoLocs, this.board.boardState, this.settings);
-				this.resolvingState = {
-					chain: this.resolvingState.chain + 1,
-					puyoLocs,
-					nuisanceLocs,
-					currentFrame: 0,
-					totalFrames: this.settings.popFrames + dropFrames
-				};
+				this.resolvingState.currentFrame = 0;
+				this.resolvingState.chain++;
 			}
 		}
 		return currentBoardHash;
@@ -432,9 +458,7 @@ class Game {
 
 		// Insert squishing puyos drawing here
 		const currentBoardState = { boardState: this.board.boardState, currentDrop: this.currentDrop };
-		const currentBoardHash = this.boardDrawer.hashForUpdate(currentBoardState);
-
-		this.boardDrawer.updateBoard(currentBoardState);
+		const currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started

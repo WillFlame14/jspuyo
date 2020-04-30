@@ -4,9 +4,11 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Settings, UserSettings } = require('./Utils.js');
+const init = require('./webpage.js');
 const io = require('socket.io-client');
 
 (function () {
+	window.onload = init;		// Initialize all the webpage components
 	const socket = io();
 	let game, gameId;
 	let cpuGames = [];

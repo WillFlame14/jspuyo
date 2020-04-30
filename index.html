@@ -8,47 +8,58 @@
 <body>
     <div id="navbar">
         <span id="navbarSpacer"></span>
-        <span class="navPanel" id="queuePanel" onclick="expand_dropdown(this.id)">
+        <span class="navPanel" id="queuePanel">
             <img src="images/navbar/QueueIcon.png" class="navIcon">
             <span class="panelName">Queue</span>
             <div class="dropdown">
-                <a href="javascript:location.href=location.toString().replace(location.search, '')">Free for all</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?ranked=true'">Ranked</a>
+                <a id="freeForAll">Free for all</a>
+                <a id="ranked">Ranked</a>
             </div>
         </span>
-        <span class="navPanel" id="customPanel" onclick="expand_dropdown(this.id)">
+        <span class="navPanel" id="customPanel">
             <img src="images/navbar/CustomIcon.png" class="navIcon">
             <span class="panelName">Custom</span>
             <div class="dropdown">
-                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?createRoom=true'">Create Room</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '')">Join Room</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '')">Spectate</a>
+                <a id="createRoom">Create Room</a>
+                <a id="joinRoom">Join Room</a>
+                <a id="spectate">Spectate</a>
             </div>
         </span>
-        <span class="navPanel" id="singleplayerPanel" onclick="expand_dropdown(this.id)">
+        <span class="navPanel" id="singleplayerPanel">
             <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
             <span class="panelName">Singleplayer</span>
             <div class="dropdown">
-                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true&size=1'">Sprint</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true&size=1'">Time Challenge</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '') + '?cpu=true'">Play Against CPU</a>
+                <a id="sprint">Sprint</a>
+                <a id="timeChallenge">Time Challenge</a>
+                <a id="cpu">Play Against CPU</a>
             </div>
         </span>
-        <span class="navPanel" id="profilePanel" onclick="expand_dropdown(this.id)">
+        <span class="navPanel" id="profilePanel">
             <img src="images/navbar/ProfileIcon.png" class="navIcon">
             <span class="panelName">Profile</span>
             <div class="dropdown">
-                <a href="javascript:location.href=location.toString().replace(location.search, '')">Gallery</a>
-                <a href="javascript:location.href=location.toString().replace(location.search, '')">Settings</a>
+                <a id="gallery">Gallery</a>
+                <a id="settings">Settings</a>
             </div>
         </span>
         <span id="logo">jspuyo</span>
+    </div>
+    <div class="modal">
+        <div class="modal-content" id="joinRoomModal">
+            <div class="close">&times;</div>
+            <form id="joinIdForm" autocomplete="off">
+                <label for="joinId">Enter the code for the room you wish to join.</label><br>
+                <div class="errorMsg" id="joinIdFormError"></div>
+                <input type="text" id="joinIdFiller" value="?joinId=" disabled>
+                <input type="text" id="joinId" placeholder="######" maxlength="6"><br>
+                <input type="submit" id="joinRoomSubmit" value="Join Room">
+            </form>
+        </div>
     </div>
     <main>
         <table id = "playArea">
             <!-- Inserted by javascript -->
         </table>
-        <script src="webpage.js"></script>
         <script src="bundle.js"></script>
     </main>
 </body>

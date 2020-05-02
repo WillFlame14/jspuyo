@@ -21,26 +21,55 @@ canvas {
 
 form {
 	font: 40px "Chelsea Market", sans-serif;
+	text-shadow: 2px 2px 5px #343434;
 	color: white;
 	text-align: center;
 	margin: 0px 0px 10px 0px;
 }
 
-input {
-	font: 36px "Chelsea Market", sans-serif;
+label {
+	font: 32px "Chelsea Market", sans-serif;
 	color: white;
-	border: 3px solid white;
+	text-align: center;
 }
 
-input[type="text"] {
+#createRoomModal label {
+	width: 300px;
+}
+
+input {
+	background: gray;
+	color: white;
+	border: 2px solid white;
+}
+
+#createRoomModal input {
+	font: 28px "Chelsea Market", sans-serif;
+}
+
+#joinRoomModal input {
+	font: 36px "Chelsea Market", sans-serif;
+	border-width: 3px;
+}
+
+::placeholder {
 	color: gray;
+}
+
+input[type="text"], input[type="number"] {
+	color: white;
 	background: #343434;
 	padding: 2px;
-	margin: 20px;
+	width: 95px;
+	box-shadow: 3px 3px 5px 1px #343434;
+	margin: 3px 0px;
+	text-align: center;
 }
 
-input[type="submit"] {
-	margin: 10px 0px 0px 0px;
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 input[type="text"]#joinIdFiller {
@@ -52,15 +81,41 @@ input[type="text"]#joinIdFiller {
 }
 
 input[type="text"]#joinId {
-	color: #d2d2d2;
 	border-left: 0px;
 	margin: 10px 0px 10px -10px;
 	width: 200px;
+	text-align: left;
+}
+
+input[type="submit"] {
+	margin: 15px 0px 0px 0px;
+	box-shadow: 3px 3px 5px 1px #343434;
+	padding: 5px 10px;
+	cursor: pointer;
+}
+
+input[type="submit"]#createRoomSubmit {
+	background: #663388;
 }
 
 input[type="submit"]#joinRoomSubmit {
 	background: #2233bb;
-	padding: 5px 10px;
+}
+
+input[type="button"] {
+	background: #676767;
+	box-shadow: 3px 3px 5px 1px #343434;
+	padding: 2px 15px;
+	margin: 3px 0px;
+	cursor: pointer;
+}
+
+input[type="button"]#hardDrop.off {
+	background: #770000;
+}
+
+input[type="button"]#hardDrop.on {
+	background: #007700;
 }
 
 .errorMsg {
@@ -112,6 +167,7 @@ input[type="submit"]#joinRoomSubmit {
 	transition: all 200ms ease-in-out;
 	box-shadow: 10px 0px 10px -5px, -10px 0px 10px -5px;
 	z-index: 2;
+	cursor: pointer;
 }
 
 /* Expanded panel to show the panel title. */
@@ -166,6 +222,7 @@ input[type="submit"]#joinRoomSubmit {
 	flex-direction: column;
 	overflow: hidden;
 	background: #434343;
+	cursor: pointer;
 
 	/* Set initial dimensions for the transition. */
 	height: 0px;
@@ -216,12 +273,12 @@ input[type="submit"]#joinRoomSubmit {
 .modal {
 	display: none; /* Hidden by default */
 	position: fixed; /* Stay in place */
-	z-index: 1; /* Sit on top */
+	z-index: 10; /* Sit on top */
 	left: 0;
 	top: 0;
 	width: 100%; /* Full width */
 	height: 100%; /* Full height */
-	overflow: auto; /* Enable scroll if needed */
+	overflow: hidden;
 	background-color: rgb(0,0,0); /* Fallback color */
 	background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
@@ -229,15 +286,152 @@ input[type="submit"]#joinRoomSubmit {
 /* Modal Content/Box */
 .modal-content {
 	background-color: #887777;
-	position: relative;
-	margin: 15% auto; /* 15% from the top and centered */
+	display: none;
+	position: absolute;
+	margin: 10% auto; /* 15% from the top and centered */
 	border: 3px solid white;
+	box-shadow: 3px 3px 5px 1px #343434;
+	left: 0;
+	right: 0;
 	width: 60%;
 	padding: 10px;
+	z-index: 11;
+}
+
+.modal-title {
+	font: 48px "Chelsea Market", sans-serif;
+	text-shadow: 2px 2px 5px #343434;
+	margin-bottom: 10px;
+	color: white;
+	text-align: center;
+}
+
+.modal-options {
+	display: none;
+	position: relative;
+}
+
+.divider {
+	border-left: 3px solid white;
+	margin-left: 20px;
+}
+
+.option-title {
+	font: 36px "Chelsea Market", sans-serif;
+	text-shadow: 2px 2px 5px #343434;
+	margin: 10px 0px;
+	color: white;
+	text-align: center;
+}
+
+#createRoomOptionsLeft {
+	display: block;
+	width: 45%;
+}
+
+#createRoomOptionsTopLeft {
+	display: flex;
 }
 
 #joinRoomModal {
 	width: 25%;
+	margin-top: 20%;
+}
+
+#createRoomOptionsRight {
+	display: block;
+	width: 54%;
+}
+
+#createRoomOptionsRight label {
+	width: 300px;
+	display: inline-block;
+}
+
+#modeSelector {
+	padding: 0px 25px 0px 15px;
+}
+
+#modeSelector img {
+	width: 115px;
+	height: 115px;
+	filter: drop-shadow(2px 5px 5px #343434);
+	cursor: pointer;
+}
+
+#boardSizeSelector label {
+	font: 28px "Chelsea Market", sans-serif;
+	width: 125px;
+	display: inline-block;
+}
+
+#boardSizeSelector input[type="number"] {
+	width: 75px;
+}
+
+#boardSizeSelector label:first-child {
+	margin-top: 45px;
+}
+
+#boardSizeSelector label {
+	margin-top: 15px;
+}
+
+#playerButtons {
+	display: flex;
+	justify-content: space-around;
+}
+
+#playerButtons span, #playerButtons input {
+	font: 28px "Chelsea Market", sans-serif;
+	color: #aaaaaa;
+	flex: 0 0 70px;
+	padding: 2px;
+	text-align: center;
+	margin: 5px;
+	background: #274e13;
+	border: 3px solid gray;
+	box-shadow: 2px 2px 3px 1px #343434;
+	display: inline-block;
+	cursor: pointer;
+}
+
+#playerButtons .selected {
+	background: #38761d;
+	border: 3px solid white;
+	color: white;
+	box-shadow: 3px 3px 5px 1px #343434;
+}
+
+#playerButtons input {
+	width: 80px;
+	text-shadow: 2px 2px 5px #343434;
+}
+
+#createRoomModal #numColours {
+	font-size: 36px;
+	vertical-align: top;
+	width: 65px;
+}
+
+#coloursSelectorTitle {
+	font-size: 36px;
+	display: inline-block;
+	margin-top: 25px;
+	margin-bottom: 10px;
+}
+
+#coloursSelected {
+	padding: 5px 0px;
+	display: inline-flex;
+	justify-content: space-around;
+	width: 250px;
+}
+
+#coloursSelected img {
+	height: 45px;
+	flex: 0 0 45px;
+	filter: drop-shadow(2px 3px 5px #343434);
 }
 
 /* The Close Button */
@@ -246,19 +440,21 @@ input[type="submit"]#joinRoomSubmit {
 	position: absolute;
 	background: red;
 	text-align: center;
-	right: -5%;
-	top: -5%;
+	right: -20px;
+	top: -20px;
 	width: 30px;
 	height: 30px;
 	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px #343434;
 	font-size: 28px;
 	font-weight: bold;
+	cursor: pointer;
 }
 
 .close:hover, .close:focus {
 	color: black;
+	background: #aa0000;
 	text-decoration: none;
-	cursor: pointer;
 }
 
 .pointsDisplay {

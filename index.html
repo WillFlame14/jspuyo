@@ -45,6 +45,63 @@
         <span id="logo">jspuyo</span>
     </div>
     <div class="modal">
+        <div class="modal-content" id="createRoomModal">
+            <div class="close">&times;</div>
+            <div class="modal-title">Room Options</div>
+            <div class="modal-options" id="createRoomOptions">
+                <div id="createRoomOptionsLeft">
+                    <div id="createRoomOptionsTopLeft">
+                        <div id="modeSelector">
+                            <div class="option-title">Mode</div>
+                            <img src="images/modal_boxes/Tsu_icon.png" id="modeIcon">
+                        </div>
+                        <form id="boardSizeSelector" autocomplete="off">
+                            <label for="numRows">Rows</label>
+                            <input type="number" id="numRows" value="12" max="99"><br>
+                            <label for="numCols">Columns</label>
+                            <input type="number" id="numCols" value="6" max="99">
+                        </form>
+                    </div>
+                    <div id="roomSizeSelector">
+                        <div class="option-title">Players</div>
+                        <form id="playerButtons" autocomplete="off">
+                            <span class="numPlayerButton" id="2player">2</span>
+                            <span class="numPlayerButton" id="3player">3</span>
+                            <span class="numPlayerButton selected" id="4player">4</span>
+                            <input class="numPlayerButton" type="text" id="5player" value="5"></input>
+                        </form>
+                    </div>
+                    <form id="coloursSelector" autocomplete="off">
+                        <label id="coloursSelectorTitle" for="numColours">Colours</label><br>
+                        <input type="text" id="numColours" value="4" maxlength="1">
+                        <span id="coloursSelected">
+                            <img src="images/modal_boxes/puyo_red.png">
+                            <img src="images/modal_boxes/puyo_blue.png">
+                            <img src="images/modal_boxes/puyo_green.png">
+                            <img src="images/modal_boxes/puyo_yellow.png">
+                        </span>
+                    </form>
+                </div>
+                <div class="divider" id="createRoomDivider"></div>
+                <form id="createRoomOptionsRight" autocomplete="off">
+                    <label for="marginTime">Margin Time</label>
+                    <input type="number" id="marginTime" value="96" maxlength="4"><br>
+                    <label for="targetPoints">Target Points</label>
+                    <input type="number" id="targetPoints" value="70" maxlength="4"><br>
+                    <label for="minChainLength">Min Chain Length</label>
+                    <input type="number" id="minChainLength" value="0" maxlength="2"><br>
+                    <label for="gravity">Gravity</label>
+                    <input type="number" id="gravity" value="0.036" maxlength="5"><br>
+                    <label for="softDrop">Soft Drop</label>
+                    <input type="number" id="softDrop" value="0.27" maxlength="4"><br>
+                    <label for="hardDrop">Hard Drop</label>
+                    <input type="button" class="off" id="hardDrop" value="OFF"><br>
+                    <label for="winCondition">Win Condition</label>
+                    <input type="button" id="winCondition" value="FT 3"><br>
+                    <input type="submit" id="createRoomSubmit" value="Create Room">
+                </form>
+            </div>
+        </div>
         <div class="modal-content" id="joinRoomModal">
             <div class="close">&times;</div>
             <form id="joinIdForm" autocomplete="off">

@@ -4,19 +4,9 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings, UserSettings } = require('./Utils.js');
+const { Utils, Settings, UserSettings } = require('./Utils.js');
 
 const io = require('socket.io-client');
-
-let currentlyExpanded = null;
-let currentSession = null;
-
-const panelDropdowns = {
-	'queuePanel': ['freeForAll', 'ranked'],
-	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
-	'singleplayerPanel': ['sprint', 'timeChallenge', 'cpu'],
-	'profilePanel': ['settings', 'gallery']
-};
 
 class PlayerInfo {
 	constructor() {
@@ -65,6 +55,28 @@ class PlayerInfo {
 		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId });
 	}
 })();
+
+/*----------------------------------------------------------*/
+
+let currentlyExpandedPanel = null;
+const createRoomOptionsStateDefault = {
+	selectedMode: 'Tsu',
+	selectedPlayers: '4player',
+	numColours: 4,
+	winCondition: 'FT 3'
+};
+let createRoomOptionsState = Utils.objectCopy(createRoomOptionsStateDefault);
+let currentSession = null;
+
+const panelDropdowns = {
+	'queuePanel': ['freeForAll', 'ranked'],
+	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
+	'singleplayerPanel': ['sprint', 'timeChallenge', 'cpu'],
+	'profilePanel': ['settings', 'gallery']
+};
+
+const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple'];
+const winConditions = ['FT 3', 'FT 5', 'FT 7'];
 
 // Set up all the event listeners
 function init(playerInfo) {
@@ -171,7 +183,7 @@ function init(playerInfo) {
 
 	// Set all close buttons to remove modals
 	Array.from(document.getElementsByClassName('close')).forEach(close => {
-		close.onclick = () => modal.style.display = 'none';
+		close.onclick = () => clearModal();
 	})
 
 	// Manage window onclick
@@ -195,9 +207,113 @@ function init(playerInfo) {
 	document.getElementById('createRoom').onclick = () => {
 		stopCurrentSession();
 
-		const settingsString = new Settings().toString();
-		const roomSize = 2;
-		socket.emit('createRoom', { gameId, settingsString, roomSize })
+		modal.style.display = 'block';
+		document.getElementById('createRoomModal').style.display = 'block';
+		document.getElementById('createRoomOptions').style.display = 'flex';
+
+		// createRoomOptionsState = Utils.objectCopy(createRoomOptionsStateDefault);
+	}
+	document.getElementById('modeIcon').onclick = () => {
+		switch(createRoomOptionsState.selectedMode) {
+			case "Tsu":
+				document.getElementById('modeIcon').src = "images/modal_boxes/Fever_icon.png";
+				createRoomOptionsState.selectedMode = "Fever";
+				break;
+			case "Fever":
+				document.getElementById('modeIcon').src = "images/modal_boxes/Tsu_icon.png";
+				createRoomOptionsState.selectedMode = "Tsu";
+				break;
+		}
+	}
+	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
+		element.onclick = () => {
+			const oldId = createRoomOptionsState.selectedPlayers;
+			if(element.id !== oldId) {
+				document.getElementById(oldId).classList.remove('selected');
+				element.classList.add('selected');
+				createRoomOptionsState.selectedPlayers = element.id;
+			}
+		}
+	});
+	document.getElementById('numColours').oninput = () => {
+		let currentNumber = Number(document.getElementById('numColours').value) || 0;
+		let lastNumber = createRoomOptionsState.numColours;
+		const coloursSelected = document.getElementById('coloursSelected');
+
+		if(currentNumber > 5) {
+			currentNumber = 5;
+		}
+		else if(currentNumber < 0) {
+			currentNumber = 0;
+		}
+
+		while(lastNumber < currentNumber) {
+			const newImg = document.createElement('img');
+			newImg.src = `images/modal_boxes/${puyoImgs[lastNumber]}.png`;
+			coloursSelected.appendChild(newImg);
+			lastNumber++;
+		}
+
+		while(lastNumber > currentNumber) {
+			// Remove last child
+			coloursSelected.removeChild(coloursSelected.children[coloursSelected.children.length - 1]);
+			lastNumber--;
+		}
+		createRoomOptionsState.numColours = currentNumber;
+	};
+	const hardDropButton = document.getElementById('hardDrop');
+	hardDropButton.onclick = () => {
+		if(hardDropButton.value === "ON") {
+			hardDropButton.classList.add('off');
+			hardDropButton.value = "OFF";
+			hardDropButton.classList.remove('on');
+		}
+		else {
+			hardDropButton.classList.add('on');
+			hardDropButton.value = "ON";
+			hardDropButton.classList.remove('off');
+		}
+	}
+	const winConditionButton = document.getElementById('winCondition');
+	winConditionButton.onclick = () => {
+		let currentIndex = winConditions.indexOf(winConditionButton.value);
+		if(currentIndex === winConditions.length - 1) {
+			currentIndex = 0;
+		}
+		else {
+			currentIndex++;
+		}
+		winConditionButton.value = winConditions[currentIndex];
+	}
+	document.getElementById('createRoomSubmit').onclick = function (event) {
+		// Prevent submit button from refreshing the page
+		event.preventDefault();
+
+		let roomSize;
+		if(createRoomOptionsState.selectedPlayers === '5player') {
+			roomSize = Number(document.getElementById('5player').value);
+
+			if(roomSize < 1) {
+				roomSize = 1;
+			}
+		}
+		else {
+			roomSize = Number(createRoomOptionsState.selectedPlayers.charAt(0));
+		}
+
+		const settingsString = new Settings(
+			createRoomOptionsState.selectedMode,
+			Number(document.getElementById('gravity').value),
+			Number(document.getElementById('numRows').value),
+			Number(document.getElementById('numCols').value),
+			Number(document.getElementById('softDrop').value),
+			Number(document.getElementById('numColours').value),
+			Number(document.getElementById('targetPoints').value),
+			Number(document.getElementById('marginTime').value) * 1000,
+			Number(document.getElementById('minChainLength').value)
+		).toString();
+
+		socket.emit('createRoom', { gameId, settingsString, roomSize });
 	}
 	socket.on('giveRoomId', id => {
 		console.log('Other players can join this room by appending ?joinRoom=' + id);
@@ -206,6 +322,7 @@ function init(playerInfo) {
 	// Custom - Join Room
 	document.getElementById('joinRoom').onclick = () => {
 		modal.style.display = 'block';
+		document.getElementById('joinRoomModal').style.display = 'block';
 	}
 	document.getElementById('joinIdForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
@@ -259,6 +376,11 @@ function stopCurrentSession() {
 function clearModal() {
 	const modal = Array.from(document.getElementsByClassName('modal'))[0];
 	modal.style.display = "none";
+
+	// Clear all modal content
+	Array.from(document.getElementsByClassName('modal-content')).forEach(element => {
+		element.style.display = 'none';
+	});
 
 	// Clear all error messages
 	Array.from(document.getElementsByClassName('errorMsg')).forEach(element => {
@@ -396,20 +518,20 @@ function clearBoards() {
 function expand_dropdown(id) {
 	const panels = Object.keys(panelDropdowns);
 
-	if(currentlyExpanded === id) {
+	if(currentlyExpandedPanel === id) {
 		document.getElementById(id).classList.remove('expanded');
 		document.getElementById(id).querySelector('.dropdown').style.height = '0';
-		currentlyExpanded = null;
+		currentlyExpandedPanel = null;
 	}
 	else {
 		document.getElementById(id).querySelector('.dropdown').style.height = `${panelDropdowns[id].length * 40}`;
 		document.getElementById(id).classList.add('expanded');
 		document.getElementById(id).style.zIndex = '10';
-		if(currentlyExpanded !== null) {
-			document.getElementById(currentlyExpanded).classList.remove('expanded');
-			document.getElementById(currentlyExpanded).querySelector('.dropdown').style.height = '0';
+		if(currentlyExpandedPanel !== null) {
+			document.getElementById(currentlyExpandedPanel).classList.remove('expanded');
+			document.getElementById(currentlyExpandedPanel).querySelector('.dropdown').style.height = '0';
 		}
-		currentlyExpanded = id;
+		currentlyExpandedPanel = id;
 	}
 
 	// Then set the z-index for each panel on selection for nice shadow cascading.

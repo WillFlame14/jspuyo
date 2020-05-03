@@ -90,6 +90,81 @@ class Settings {
 	}
 }
 
+const checkPositiveInteger = function(value) {
+	const number = Number(value);
+	if(number && number >= 1) {
+		return Math.floor(number);
+	}
+	return undefined;
+}
+
+const checkNonnegativeDecimal = function(value) {
+	const number = Number(value);
+	if(number === 0 || (number && number > 0)) {
+		return number;
+	}
+	return undefined;
+}
+
+class SettingsBuilder {
+	constructor() {
+		// no default constructor
+	}
+
+	setGamemode (gamemode) {		// specific values fixed by options
+		this.gamemode = gamemode;
+
+		return this;
+	}
+
+	setGravity (gravity) {
+		this.gravity = checkNonnegativeDecimal(gravity);
+		return this;
+	}
+
+	setRows (rows) {
+		this.rows = checkPositiveInteger(rows);
+		return this;
+	}
+
+	setCols(cols) {
+		this.cols = checkPositiveInteger(cols);
+		return this;
+	}
+
+	setSoftDrop (softDrop) {
+		this.softDrop = checkNonnegativeDecimal(softDrop);
+		return this;
+	}
+
+	setNumColours (numColours) {
+		this.numColours = checkPositiveInteger(numColours);
+		return this;
+	}
+
+	setTargetPoints (targetPoints) {
+		this.targetPoints = checkPositiveInteger(targetPoints);
+		return this;
+	}
+
+	setMarginTimeInSeconds (marginTime) {
+		const value = checkPositiveInteger(marginTime);
+		if(value) {
+			this.marginTime = value * 1000;
+		}
+		return this;
+	}
+
+	setMinChain (minChain) {
+		this.minChain = Math.floor(checkNonnegativeDecimal(minChain));
+		return this;
+	}
+
+	build () {
+		return new Settings(this.gamemode, this.gravity, this.rows, this.cols, this.softDrop, this.numColours, this.targetPoints, this.marginTime, this.minChain);
+	}
+}
+
 class UserSettings {
 	constructor(das = 200, arr = 20, skipFrames = 0, volume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
@@ -322,6 +397,7 @@ module.exports = {
 	PUYO_COLOURS,
 	PUYO_EYES_COLOUR,
 	Settings,
+	SettingsBuilder,
 	UserSettings,
 	AudioPlayer,
 	Utils

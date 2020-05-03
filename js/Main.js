@@ -4,7 +4,7 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Utils, Settings, UserSettings } = require('./Utils.js');
+const { Utils, Settings, SettingsBuilder, UserSettings } = require('./Utils.js');
 
 const io = require('socket.io-client');
 
@@ -314,17 +314,17 @@ function init(playerInfo) {
 			roomSize = Number(createRoomOptionsState.selectedPlayers.charAt(0));
 		}
 
-		const settingsString = new Settings(
-			createRoomOptionsState.selectedMode,
-			Number(document.getElementById('gravity').value),
-			Number(document.getElementById('numRows').value),
-			Number(document.getElementById('numCols').value),
-			Number(document.getElementById('softDrop').value),
-			Number(document.getElementById('numColours').value),
-			Number(document.getElementById('targetPoints').value),
-			Number(document.getElementById('marginTime').value) * 1000,
-			Number(document.getElementById('minChainLength').value)
-		).toString();
+		// Generate the validated settings string
+		const settingsString = new SettingsBuilder()
+			.setGamemode(createRoomOptionsState.selectedMode)
+			.setGravity(document.getElementById('gravity').value)
+			.setRows(document.getElementById('numRows').value)
+			.setCols(document.getElementById('numCols').value)
+			.setSoftDrop(document.getElementById('softDrop').value)
+			.setNumColours(document.getElementById('numColours').value)
+			.setTargetPoints(document.getElementById('targetPoints').value)
+			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
+			.setMinChain(document.getElementById('minChainLength').value).build().toString();
 
 		socket.emit('createRoom', { gameId, settingsString, roomSize });
 	}

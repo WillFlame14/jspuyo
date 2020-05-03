@@ -210,9 +210,9 @@ function init(playerInfo) {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomOptions').style.display = 'flex';
-
-		// createRoomOptionsState = Utils.objectCopy(createRoomOptionsStateDefault);
 	}
+
+	// Switch between Tsu and Fever mods on click
 	document.getElementById('modeIcon').onclick = () => {
 		switch(createRoomOptionsState.selectedMode) {
 			case "Tsu":
@@ -225,6 +225,8 @@ function init(playerInfo) {
 				break;
 		}
 	}
+
+	// Maintain the currently selected button and highlight it
 	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
 		element.onclick = () => {
 			const oldId = createRoomOptionsState.selectedPlayers;
@@ -235,11 +237,14 @@ function init(playerInfo) {
 			}
 		}
 	});
+
+	// Read the input field and update the number of colours displayed accordingly
 	document.getElementById('numColours').oninput = () => {
-		let currentNumber = Number(document.getElementById('numColours').value) || 0;
+		let currentNumber = Math.floor(Number(document.getElementById('numColours').value)) || 0;
 		let lastNumber = createRoomOptionsState.numColours;
 		const coloursSelected = document.getElementById('coloursSelected');
 
+		// Clamp to interval [0, 5]
 		if(currentNumber > 5) {
 			currentNumber = 5;
 		}
@@ -261,6 +266,8 @@ function init(playerInfo) {
 		}
 		createRoomOptionsState.numColours = currentNumber;
 	};
+
+	// Switch hard drop options between on/off on click
 	const hardDropButton = document.getElementById('hardDrop');
 	hardDropButton.onclick = () => {
 		if(hardDropButton.value === "ON") {
@@ -274,6 +281,8 @@ function init(playerInfo) {
 			hardDropButton.classList.remove('off');
 		}
 	}
+
+	// Switch between win conditions on click
 	const winConditionButton = document.getElementById('winCondition');
 	winConditionButton.onclick = () => {
 		let currentIndex = winConditions.indexOf(winConditionButton.value);
@@ -285,16 +294,20 @@ function init(playerInfo) {
 		}
 		winConditionButton.value = winConditions[currentIndex];
 	}
+
 	document.getElementById('createRoomSubmit').onclick = function (event) {
-		// Prevent submit button from refreshing the page
-		event.preventDefault();
+		event.preventDefault();		// Prevent submit button from refreshing the page
 
 		let roomSize;
 		if(createRoomOptionsState.selectedPlayers === '5player') {
 			roomSize = Number(document.getElementById('5player').value);
 
+			// Clamp custom room size to interval [0, 16]
 			if(roomSize < 1) {
 				roomSize = 1;
+			}
+			else if(roomSize > 16) {
+				roomSize = 16;
 			}
 		}
 		else {
@@ -315,6 +328,8 @@ function init(playerInfo) {
 
 		socket.emit('createRoom', { gameId, settingsString, roomSize });
 	}
+
+	// Receiving the id of the newly created room
 	socket.on('giveRoomId', id => {
 		console.log('Other players can join this room by appending ?joinRoom=' + id);
 	});
@@ -324,6 +339,7 @@ function init(playerInfo) {
 		modal.style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'block';
 	}
+
 	document.getElementById('joinIdForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();

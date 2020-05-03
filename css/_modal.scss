@@ -1,0 +1,282 @@
+@use "base";
+
+.modal {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 10; // Sit on top
+
+	display: none; // Hidden by default
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	background-color: black; // Fallback color
+	background-color: rgba(0, 0, 0, 0.4); // Black w/ opacity
+}
+
+// Modal Content/Box
+.modal-content {
+	position: absolute;
+	right: 0;
+	left: 0;
+	z-index: 11;
+
+	display: none;
+	width: 60%;
+	margin: 10% auto;
+	padding: 10px;
+
+	background-color: #887777;
+	border: 3px solid white;
+	box-shadow: 3px 3px 5px 1px base.$dark-gray;
+}
+
+.modal-title {
+	margin-bottom: 10px;
+
+	color: white;
+	font: 48px base.$font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px base.$dark-gray;
+}
+
+.modal-options {
+	position: relative;
+
+	display: none;
+}
+
+// Error message that appears in modal boxes.
+.errorMsg {
+	display: none; 	// Hidden by default, appears after an error occurs.
+	margin: 5px 0px;
+
+	color: #882222;
+	font: 22px base.$font-title;
+	text-shadow: 1px 1px 2px base.$dark-gray;
+}
+
+// Basic divider
+.divider {
+	margin-left: 20px;
+
+	border-left: 3px solid white;
+}
+
+// Default formatting for option titles.
+.option-title {
+	margin: 10px 0px;
+
+	color: white;
+	font: 36px base.$font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px base.$dark-gray;
+}
+
+// The Close Button
+.close {
+	position: absolute;
+	top: -20px;
+	right: -20px;
+
+	width: 30px;
+	height: 30px;
+
+	color: white;
+	font-weight: bold;
+	font-size: 28px;
+	text-align: center;
+
+	background: red;
+	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px base.$dark-gray;
+	cursor: pointer;
+
+	&:hover,
+	&:focus {
+		color: black;
+		text-decoration: none;
+
+		background: #aa0000;
+	}
+}
+
+/* ---------- Create Room Modal Box ---------- */
+
+// Default styles
+.createRoomModal {
+	width: 900px;
+
+	input {
+		font: 28px base.$font-title;
+	}
+
+	label {
+		display: inline-block;
+	}
+}
+
+// Left half of the Room Options menu.
+#createRoomOptionsLeft {
+	display: block;
+	width: 47%;
+}
+
+#createRoomOptionsRight {
+	display: block;
+	width: 54%;
+
+	label {
+		width: 300px;
+	}
+}
+
+// Selector between Tsu and Fever modes.
+#modeSelector {
+	padding: 0px 25px 0px 15px;
+
+	img {
+		width: 115px;
+		height: 115px;
+
+		cursor: pointer;
+		filter: drop-shadow(2px 5px 5px base.$dark-gray);
+	}
+}
+
+// Input boxes for the number of rows and columns.
+#boardSizeSelector {
+	label {
+		width: 125px;
+		margin-top: 15px;
+
+		font: 28px base.$font-title;
+	}
+
+	// Extra indenting for the top element
+	label:first-child {
+		margin-top: 45px;
+	}
+
+	input[type="number"] {
+		width: 75px;
+	}
+}
+
+// Horizontal flexbox containing buttons to select number of players
+#playerButtons {
+	display: flex;
+	justify-content: center;
+
+	// Each button is a span except "5", which accepts a user-inputted size
+	span,
+	input {
+		display: inline-block;
+		flex: 0 0 70px;
+		margin: 5px 10px;
+		padding: 2px;
+
+		color: #aaaaaa;
+		font: 28px base.$font-title;
+		text-align: center;
+
+		background: #274e13;
+		border: 3px solid gray;
+		box-shadow: 2px 2px 3px 1px base.$dark-gray;
+		cursor: pointer;
+	}
+
+	// Formatting required to override normal style of input boxes
+	input {
+		width: 80px;
+
+		text-shadow: 2px 2px 5px base.$dark-gray;
+	}
+
+	// The selected button
+	.selected {
+		color: white;
+
+		background: #38761d;
+		border: 3px solid white;
+		box-shadow: 3px 3px 5px 1px base.$dark-gray;
+	}
+}
+
+// Option title for selecting number of colours.
+#coloursSelectorTitle {
+	display: inline-block;
+	margin-top: 25px;
+	margin-bottom: 10px;
+
+	font-size: 36px;
+}
+
+// Input box for selecting number of colours.
+#numColours {
+	width: 65px;
+
+	// On its own, so it deserves a larger font size
+	font-size: 36px;
+	vertical-align: top;
+}
+
+// Display of colours currently selected.
+#coloursSelected {
+	display: inline-flex;
+	justify-content: space-around;
+	padding: 5px 0px;
+
+	img {
+		flex: 0 0 45px;
+		height: 45px;
+		margin: 0px 10px;
+
+		filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	}
+}
+
+// Submit button for Create Room.
+#createRoomSubmit {
+	background: #663388;
+}
+
+/* ---------- Join Room Modal Box ---------- */
+
+#joinRoomModal {
+	width: 25%;
+	margin-top: 20%;
+
+	input {
+		font: 36px base.$font-title;
+
+		border-width: 3px;
+	}
+}
+
+// Uneditable text that illustrates the "?joinId=" prefix.
+#joinIdFiller {
+	width: 155px;
+	margin: 10px -10px 10px 0px;
+
+	color: white;
+	text-align: right;
+
+	border-right: 0px;
+}
+
+// The actual input box for joinId.
+#joinId {
+	width: 200px;
+	margin: 10px 0px 10px -10px;
+
+	text-align: left;
+
+	border-left: 0px;
+}
+
+// Submit button for Join Room.
+#joinRoomSubmit {
+	background: #2233bb;
+}

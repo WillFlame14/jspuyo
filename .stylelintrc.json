@@ -1,0 +1,21 @@
+{
+  "extends": ["stylelint-config-sass-guidelines", "stylelint-config-rational-order"],
+  "plugins": ["stylelint-order"],
+  "rules": {
+  	"color-hex-length": "long",
+  	"color-named": "always-where-possible",
+  	"indentation": "tab",
+  	"length-zero-no-unit": null,
+    "property-no-vendor-prefix": null,
+  	"selector-class-pattern": null,
+  	"selector-max-id": 1,
+  	"selector-no-qualifying-type": [true, {
+  		"ignore": ["attribute", "class"]
+  	}],
+  	"string-quotes": "double",
+  	"order/properties-alphabetical-order": null,
+  	"plugin/rational-order": [true, {
+  		"empty-line-between-groups": true
+  	}]
+  }
+}

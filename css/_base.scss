@@ -1,0 +1,127 @@
+$font-title: "Chelsea Market", sans-serif;
+$dark-gray: #343434;
+
+html {
+	margin: 0px;
+	padding: 0px;
+
+	background-image: url("images/backgrounds/Forest 04.jpg");
+	background-position: center;
+	background-size: cover;
+}
+
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+
+	background-color: rgba(60, 60, 60, 0.5);
+}
+
+canvas {
+	margin: 0px 10px 0px 0px;
+
+	background: rgba(40, 40, 40, 0.8);
+	border: 4px solid white;
+}
+
+form {
+	margin: 0px 0px 10px;
+
+	color: white;
+	font: 40px $font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px $dark-gray;
+}
+
+label {
+	color: white;
+	font: 32px $font-title;
+	text-align: center;
+}
+
+input {
+	color: white;
+	font: 32px $font-title;
+
+	background: gray;
+	border: 2px solid white;
+}
+
+// Formatting for placeholder text in input fields.
+::placeholder {
+	color: gray;
+}
+
+// Input boxes for text or numbers.
+input[type="text"],
+input[type="number"] {
+	width: 95px;
+	margin: 3px 0px;
+	padding: 2px;
+
+	color: white;
+	text-align: center;
+
+	background: $dark-gray;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+}
+
+// Hide the scroll bars on number inputs.
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	margin: 0;
+
+	-webkit-appearance: none;
+}
+
+input[type="submit"] {
+	margin: 15px 0px 0px;
+	padding: 5px 10px;
+
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+	cursor: pointer;
+}
+
+input[type="button"] {
+	margin: 3px 0px;
+	padding: 2px 15px;
+
+	background: #676767;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+	cursor: pointer;
+
+	&.off {
+		background: #770000;
+	}
+
+	&.on {
+		background: #007700;
+	}
+}
+
+.nuisanceQueue {
+	margin: none;
+
+	background: rgba(240, 240, 240, 0.2);
+	border: 0;
+}
+
+.pointsDisplay {
+	display: table;
+	width: 270px;
+
+	color: white;
+	font: 52px $font-title;
+	text-align: center;
+}
+
+#playArea {
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.justify-flexbox {
+	display: flex;
+	justify-content: space-around;
+}

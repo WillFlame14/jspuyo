@@ -45,12 +45,12 @@
         <span id="logo">jspuyo</span>
     </div>
     <div class="modal">
-        <div class="modal-content" id="createRoomModal">
+        <div class="modal-content createRoomModal" id="createRoomModal">
             <div class="close">&times;</div>
             <div class="modal-title">Room Options</div>
             <div class="modal-options" id="createRoomOptions">
                 <div id="createRoomOptionsLeft">
-                    <div id="createRoomOptionsTopLeft">
+                    <div class="justify-flexbox">
                         <div id="modeSelector">
                             <div class="option-title">Mode</div>
                             <img src="images/modal_boxes/Tsu_icon.png" id="modeIcon">
@@ -73,7 +73,7 @@
                     </div>
                     <form id="coloursSelector" autocomplete="off">
                         <label id="coloursSelectorTitle" for="numColours">Colours</label><br>
-                        <input type="text" id="numColours" value="4" maxlength="1">
+                        <input type="number" id="numColours" value="4" min="0" max="5">
                         <span id="coloursSelected">
                             <img src="images/modal_boxes/puyo_red.png">
                             <img src="images/modal_boxes/puyo_blue.png">

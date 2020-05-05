@@ -148,7 +148,7 @@ class SettingsBuilder {
 	}
 
 	setMarginTimeInSeconds (marginTime) {
-		const value = checkPositiveInteger(marginTime);
+		const value = Math.floor(checkNonnegativeDecimal(marginTime));
 		if(value) {
 			this.marginTime = value * 1000;
 		}
@@ -166,11 +166,21 @@ class SettingsBuilder {
 }
 
 class UserSettings {
-	constructor(das = 200, arr = 20, skipFrames = 0, volume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
-		this.volume = volume;				// Volume (varies between 0 and 1)
+		this.sfxVolume = sfxVolume;			// SFX Volume (varies between 0 and 1)
+		this.musicVolume = musicVolume;		// Music Volume (varies between 0 and 1)
+
+		this.keyBindings = {				// Default key bindings
+			moveLeft: 'ArrowLeft',
+			moveRight: 'ArrowRight',
+			rotateCCW: 'KeyZ',
+			rotateCW: 'KeyX',
+			softDrop: 'ArrowDown',
+			hardDrop: 'ArrowUp'
+		};
 	}
 
 	set(key, value) {
@@ -179,10 +189,11 @@ class UserSettings {
 }
 
 class AudioPlayer {
-	constructor(gameId, socket, volume) {
+	constructor(gameId, socket, sfxVolume, musicVolume) {
 		this.gameId = gameId;
 		this.socket = socket;
-		this.volume = volume;
+		this.sfxVolume = sfxVolume;
+		this.musicVolume = musicVolume;
 		this.cancel = false;
 
 		this.sfx = {
@@ -249,15 +260,15 @@ class AudioPlayer {
 				return;
 			}
 			if(Array.isArray(sounds)) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.sfxVolume);
 			}
 			else if(sounds !== null) {
 				// Win/Lose SFX are especially loud
 				if(key === 'win' || key === 'lose') {
-					sounds.volume = this.volume * 0.6;
+					sounds.volume = this.sfxVolume * 0.6;
 				}
 				else {
-					sounds.volume = this.volume;
+					sounds.volume = this.sfxVolume;
 				}
 			}
 		});

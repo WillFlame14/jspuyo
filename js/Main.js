@@ -7,6 +7,7 @@ const { Session } = require('./Session.js');
 const { Settings, SettingsBuilder, UserSettings } = require('./Utils.js');
 
 const io = require('socket.io-client');
+let playerInfo;
 
 class PlayerInfo {
 	constructor() {
@@ -37,7 +38,7 @@ class PlayerInfo {
 
 // Initialize session. This function is only run once.
 (async function () {
-	const playerInfo = new PlayerInfo();
+	playerInfo = new PlayerInfo();
 	await playerInfo.ready();
 
 	// Set up behaviour
@@ -67,6 +68,15 @@ let createRoomOptionsState = {
 };
 let createRoomTrigger = null;
 let cpuRoomSettings = null;
+let keyBindingRegistration = null;
+let keyBindings = {
+	moveLeft: 'ArrowLeft',
+	moveRight: 'ArrowRight',
+	rotateCCW: 'KeyZ',
+	rotateCW: 'KeyX',
+	softDrop: 'ArrowDown',
+	hardDrop: 'ArrowUp'
+};
 let currentSession = null;
 
 const panelDropdowns = {
@@ -187,6 +197,61 @@ function init(playerInfo) {
 		}
 	}
 
+	// Turns a code.event string into a more human-readable display
+	const codeToDisplay = function(code) {
+		// Cut off prefixes
+		if(code.includes('Key')) {
+			code = code.substring(3);
+		}
+		else if(code.includes('Digit')) {
+			code = code.substring(5);
+		}
+
+		switch(code) {
+			case 'ArrowLeft':
+				return '\u2190';
+			case 'ArrowRight':
+				return '\u2192';
+			case 'ArrowDown':
+				return '\u2193';
+			case 'ArrowUp':
+				return '\u2191';
+			case 'ShiftLeft':
+				return 'LSH';
+			case 'ShiftRight':
+				return 'RSH';
+			default:
+				return code.toUpperCase();
+		}
+	}
+
+	window.onkeydown = function(event) {
+		if(keyBindingRegistration !== null) {
+			document.getElementById(keyBindingRegistration).value = codeToDisplay(event.code);
+
+			// set the actual key binding
+			keyBindings[keyBindingRegistration.replace('Binding', '')] = event.code;
+
+			keyBindingRegistration = null;
+		}
+	}
+
+	// Switch all toggleable buttons between on/off when clicked
+	Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off'))).forEach(button => {
+		button.onclick = () => {
+			if(button.value === "ON") {
+				button.classList.add('off');
+				button.value = "OFF";
+				button.classList.remove('on');
+			}
+			else {
+				button.classList.add('on');
+				button.value = "ON";
+				button.classList.remove('off');
+			}
+		}
+	});
+
 	// Queue Panel
 	document.getElementById('freeForAll').onclick = () => {
 		stopCurrentSession();
@@ -263,21 +328,6 @@ function init(playerInfo) {
 		}
 		createRoomOptionsState.numColours = currentNumber;
 	};
-
-	// Switch hard drop options between on/off on click
-	const hardDropButton = document.getElementById('hardDrop');
-	hardDropButton.onclick = () => {
-		if(hardDropButton.value === "ON") {
-			hardDropButton.classList.add('off');
-			hardDropButton.value = "OFF";
-			hardDropButton.classList.remove('on');
-		}
-		else {
-			hardDropButton.classList.add('on');
-			hardDropButton.value = "ON";
-			hardDropButton.classList.remove('off');
-		}
-	}
 
 	// Switch between win conditions on click
 	const winConditionButton = document.getElementById('winCondition');
@@ -452,7 +502,7 @@ function init(playerInfo) {
 	document.getElementById('cpu').onclick = function() {
 		stopCurrentSession();
 
-		// First, open the Room Options menu
+		// Open the Room Options menu
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomOptions').style.display = 'flex';
@@ -476,11 +526,63 @@ function init(playerInfo) {
 			cpus[index].speed = (10 - slider.value) * 500;
 		});
 
-		console.log(cpus);
-
 		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
 
 		cpuRoomSettings = null;
+	}
+
+	// Profile Panel - Settings
+	document.getElementById('settings').onclick = function() {
+		stopCurrentSession();
+
+		modal.style.display = 'block';
+
+		// Use saved settings
+		Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
+			button.value = codeToDisplay(keyBindings[button.id.replace('Binding', '')]);
+		});
+
+		document.getElementById('settingsModal').style.display = 'block';
+	}
+
+	// Attach onclick events for each key binding
+	Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
+		button.onclick = function() {
+			button.value = '...';
+			keyBindingRegistration = button.id;
+		}
+	});
+
+	document.getElementById('settingsSubmit').onclick = function() {
+		let das = Number(document.getElementById('das').value);
+		if(!Number.isNaN(das) && das >= 0) {
+			playerInfo.userSettings.set('das', das);
+		}
+
+		let arr = Number(document.getElementById('arr').value);
+		if(!Number.isNaN(arr) && arr >= 0) {
+			playerInfo.userSettings.set('arr', arr);
+		}
+
+		let skipFrames = Number(document.getElementById('skipFrames').value);
+		if(!Number.isNaN(skipFrames)) {
+			playerInfo.userSettings.set('skipFrames', Math.floor(skipFrames));
+		}
+
+		// Ranges from 0 to 100, default 50
+		let sfxVolume = Number(document.getElementById('sfxVolume').value);
+		if(!Number.isNaN(sfxVolume)) {
+			playerInfo.userSettings.set('sfxVolume', (sfxVolume / 100)**2 * 0.4);
+		}
+
+		// Ranges from 0 to 100, default 50
+		let musicVolume = Number(document.getElementById('musicVolume').value);
+		if(!Number.isNaN(musicVolume)) {
+			playerInfo.userSettings.set('musicVolume', (musicVolume / 100)**2 * 0.4);
+		}
+
+		playerInfo.userSettings.set('keyBindings', keyBindings);
+		clearModal();
 	}
 
 	// Return a promise that instantly resolves

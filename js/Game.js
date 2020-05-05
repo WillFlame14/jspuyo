@@ -38,7 +38,7 @@ class Game {
 		this.lastBoardHash = null;
 
 		this.socket = socket;
-		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.volume);
+		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
 		this.socket.on('sendNuisance', (gameId, nuisance) => {
 			if(!this.opponentIds.includes(gameId)) {

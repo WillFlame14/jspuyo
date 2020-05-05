@@ -27,7 +27,7 @@
 	margin: 10% auto;
 	padding: 10px;
 
-	background-color: #887777;
+	background-color: #776666;
 	border: 3px solid white;
 	box-shadow: 3px 3px 5px 1px base.$dark-gray;
 }
@@ -149,7 +149,7 @@
 
 #createRoomOptionsRight {
 	display: block;
-	width: 54%;
+	width: 50%;
 
 	label {
 		width: 300px;
@@ -317,6 +317,7 @@
 	padding: 0px 10px;
 }
 
+// A container for one set of CPU options.
 .cpuOption {
 	display: none;
 	grid-template-rows: auto auto;
@@ -354,6 +355,7 @@
 	text-align: right;
 }
 
+// A numeric representation of the speed slider.
 .speedDisplay {
 	z-index: 2;
 
@@ -369,31 +371,6 @@
 	grid-column: 3;
 }
 
-input[type="range"].cpuSpeedSlider {
-	width: 100%;
-	height: 2px;
-	margin: auto 0px;
-
-	background: white;
-	outline: none;
-
-	-webkit-appearance: none;
-}
-
-.cpuSpeedSlider::-webkit-slider-thumb {
-	width: 20px;
-	height: 20px;
-
-	background: url("../images/modal_boxes/puyo_gray.png");
-	background-size: contain;
-	border: 0;
-	cursor: pointer;
-	backdrop-filter: drop-shadow(0px 0px 15px base.$dark-gray);
-
-	-webkit-appearance: none;
-	appearance: none;
-}
-
 #cpuOptionsSubmit {
 	display: block;
 
@@ -401,4 +378,83 @@ input[type="range"].cpuSpeedSlider {
 	padding: 0px 15px;
 
 	background: #38761d;
+}
+
+/* User Settings Modal Box */
+
+#settingsSliders {
+	label {
+		margin: 20px 0px 10px;
+	}
+
+	input[type="range"] {
+		width: 90%;
+		margin-bottom: 15px;
+	}
+}
+
+// Since "Intermediate Frames Shown" is a mouthful.
+#skipFramesLabel {
+	font-size: 28px;
+}
+
+#settingsDivider {
+	grid-column: 2;
+}
+
+// The container for the key bindings section. (3 rows x 2 columns)
+.keyBindings {
+	display: grid;
+	grid-template-rows: auto auto auto;
+	grid-template-columns: auto auto;
+
+	margin-right: 15px;
+
+	form {
+		margin-bottom: 0px;
+	}
+
+	label {
+		width: 155px;
+
+		font-size: 24px;
+		text-align: right;
+	}
+
+	input[type="button"] {
+		width: 50px;
+		padding: 2px 0px;
+
+		font-size: 24px;
+	}
+}
+
+// The container for turning ghost drop and chain highlighting on.
+.ghostHighlightOptions {
+	margin-top: 25px;
+
+	label {
+		font-size: 24px;
+	}
+
+	input[type="button"] {
+		width: 75px;
+
+		font-size: 28px;
+	}
+}
+
+// Icons for each spritesheet.
+.appearanceIcon {
+	width: 50px;
+	height: 50px;
+
+	filter: drop-shadow(2px 3px 5px base.$dark-gray);
+}
+
+#settingsSubmit {
+	display: block;
+	margin: 25px auto 10px;
+
+	background-color: #741b47;
 }

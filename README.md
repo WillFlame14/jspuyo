@@ -13,19 +13,19 @@ Puyo Puyo for your browser.
 
 ### CPU Options
 CPU AIs supported:
-- Random (fully random)
+- Random (Fully random)
 - Tall (Frog stacking)
 - Flat (Tara stacking)
 - Chain (Looks for small chains)
-- Test (strongest CPU, also the default)
+- Test (Strongest CPU)
 
-If you're having trouble even with the basic CPUs, you can lower their speed. The number is measured in milliseconds, so try a number like 3000 and adjust from there.
+If you're having trouble even with the basic CPUs, you can try lowering their speed.
 
 ## Development
 - Clone the repository using `git clone`.
 - Navigate into the local repository and install the required modules using `npm install`.
 - Run `npm test` to run the JS code through ESLint, stylelint and the unit tests. All builds will go through Travis CI, where this command is run.
-- Run `npm run stylelint` to get stylelint to automatically fix as many issues as possible.
+- Run `npm run stylelint` to get stylelint to automatically fix as many style issues as possible.
 
 ### Running locally
 - Run `npm start` to bundle the files (using watchify and sass) and start node.

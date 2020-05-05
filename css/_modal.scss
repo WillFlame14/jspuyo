@@ -41,12 +41,6 @@
 	text-shadow: 2px 2px 5px base.$dark-gray;
 }
 
-.modal-options {
-	position: relative;
-
-	display: none;
-}
-
 // Error message that appears in modal boxes.
 .errorMsg {
 	display: none; 	// Hidden by default, appears after an error occurs.
@@ -143,22 +137,26 @@
 
 // Left half of the Room Options menu.
 #createRoomOptionsLeft {
-	display: block;
-	width: 47%;
+	display: grid;
+	grid-template-rows: auto auto auto;
+	grid-template-columns: 40% 60%;
 }
 
-#createRoomOptionsRight {
-	display: block;
-	width: 50%;
+// Labels on the right half, fixed width to give illusion of table
+.roomOptionLabel {
+	width: 300px;
+}
 
-	label {
-		width: 300px;
-	}
+// Input boxes on the right half
+.roomOptionInput {
+	width: 95px;
 }
 
 // Selector between Tsu and Fever modes.
 #modeSelector {
-	padding: 0px 25px 0px 15px;
+	grid-row: 1;
+	grid-column: 1;
+	margin: 0px auto;
 
 	img {
 		width: 115px;
@@ -171,6 +169,11 @@
 
 // Input boxes for the number of rows and columns.
 #boardSizeSelector {
+	grid-row: 1;
+	grid-column: 2;
+
+	margin: auto 0px;
+
 	label {
 		width: 125px;
 		margin-top: 15px;
@@ -178,54 +181,59 @@
 		font: 28px base.$font-title;
 	}
 
-	// Extra indenting for the top element
-	label:first-child {
-		margin-top: 45px;
-	}
-
 	input[type="number"] {
 		width: 75px;
 	}
+}
+
+// Selector for player count
+#roomSizeSelector {
+	grid-row: 2;
+	grid-column: 1 / span 2;
+}
+
+#coloursSelector {
+	grid-row: 3;
+	grid-column: 1 / span 2;
 }
 
 // Horizontal flexbox containing buttons to select number of players
 #playerButtons {
 	display: flex;
 	justify-content: center;
+}
 
-	// Each button is a span except "5", which accepts a user-inputted size
-	span,
-	input {
-		display: inline-block;
-		flex: 0 0 70px;
-		margin: 5px 10px;
-		padding: 2px;
+// Each button is a span except "5", which accepts a user-inputted size
+.numPlayerButton {
+	display: inline-block;
+	flex: 0 0 70px;
+	margin: 5px 10px;
+	padding: 2px;
 
-		color: #aaaaaa;
-		font: 28px base.$font-title;
-		text-align: center;
+	color: #aaaaaa;			// darkened while unselected
+	font: 28px base.$font-title;
+	text-align: center;
 
-		background: #274e13;
-		border: 3px solid gray;
-		box-shadow: 2px 2px 3px 1px base.$dark-gray;
-		cursor: pointer;
-	}
-
-	// Formatting required to override normal style of input boxes
-	input {
-		width: 80px;
-
-		text-shadow: 2px 2px 5px base.$dark-gray;
-	}
+	background: #274e13;	// dark green
+	border: 3px solid gray;
+	box-shadow: 2px 2px 3px 1px base.$dark-gray;
+	cursor: pointer;
 
 	// The selected button
-	.selected {
+	&.selected {
 		color: white;
 
-		background: #38761d;
+		background: #38761d;	// light green
 		border: 3px solid white;
 		box-shadow: 3px 3px 5px 1px base.$dark-gray;
 	}
+}
+
+// Formatting required to override normal style of input boxes
+input.numPlayerButton {
+	width: 80px;
+
+	text-shadow: 2px 2px 5px base.$dark-gray;
 }
 
 // Option title for selecting number of colours.
@@ -264,6 +272,7 @@
 // Submit button for Create Room.
 #createRoomSubmit {
 	background: #663388;
+	width: auto;
 }
 
 /* ---------- Join Room Modal Box ---------- */
@@ -312,6 +321,7 @@
 }
 
 .cpu-container {
+	display: grid;
 	grid-template-rows: auto auto auto;
 	grid-template-columns: auto auto;
 	padding: 0px 10px;
@@ -380,7 +390,12 @@
 	background: #38761d;
 }
 
-/* User Settings Modal Box */
+/* ---------- User Settings Modal Box ---------- */
+
+// Input boxes for DAS and ARR. Since they are alone, they can be larger.
+.dasArrInput {
+	font-size: 36px;
+}
 
 #settingsSliders {
 	label {
@@ -435,6 +450,7 @@
 
 	label {
 		font-size: 24px;
+		margin-bottom: 5px;
 	}
 
 	input[type="button"] {
@@ -455,6 +471,7 @@
 #settingsSubmit {
 	display: block;
 	margin: 25px auto 10px;
+	padding: 0px 15px;
 
 	background-color: #741b47;
 }

@@ -44,29 +44,19 @@ label {
 
 input {
 	color: white;
-	font: 32px $font-title;
+	font: 28px $font-title;
+	text-align: center;
+	margin: 3px 0px;
+	padding: 2px;
 
-	background: gray;
+	background: $dark-gray;
 	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
 }
 
 // Formatting for placeholder text in input fields.
 ::placeholder {
 	color: gray;
-}
-
-// Input boxes for text or numbers.
-input[type="text"],
-input[type="number"] {
-	width: 95px;
-	margin: 3px 0px;
-	padding: 2px;
-
-	color: white;
-	text-align: center;
-
-	background: $dark-gray;
-	box-shadow: 3px 3px 5px 1px $dark-gray;
 }
 
 // Hide the scroll bars on number inputs.
@@ -81,17 +71,11 @@ input[type="submit"] {
 	margin: 15px 0px 0px;
 	padding: 5px 10px;
 
-	box-shadow: 3px 3px 5px 1px $dark-gray;
 	cursor: pointer;
 }
 
 input[type="button"] {
-	width: 95px;
-	margin: 3px 0px;
-	padding: 2px 0px;
-
 	background: #676767;
-	box-shadow: 3px 3px 5px 1px $dark-gray;
 	cursor: pointer;
 
 	&.off {
@@ -107,13 +91,16 @@ input[type="range"] {
 	width: 100%;
 	height: 2px;
 	margin: auto 0px;
+	padding: 0px;
 
 	background: white;
 	outline: none;
+	box-shadow: 1px 1px 3px 1px $dark-gray;
 
 	-webkit-appearance: none;
 }
 
+// The clicky-thing on a range slider
 ::-webkit-slider-thumb {
 	width: 20px;
 	height: 20px;
@@ -138,6 +125,7 @@ button {
 	cursor: pointer;
 }
 
+// The built-in HTML dropdown wrapper element
 select {
 	margin: 5px 0px;
 

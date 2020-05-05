@@ -180,7 +180,7 @@ function init(playerInfo) {
 	document.getElementById('cpu-back').onclick = () => {
 		// Close the Cpu Options menu
 		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'flex';
+		document.getElementById('createRoomOptions').style.display = 'grid';
 
 		// Open the Room Options menu
 		document.getElementById('cpuOptionsModal').style.display = 'none';
@@ -268,7 +268,6 @@ function init(playerInfo) {
 
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'flex';
 		document.getElementById('createRoomSubmit').value = 'Create Room';
 
 		createRoomTrigger = 'custom';
@@ -383,11 +382,9 @@ function init(playerInfo) {
 
 				// Close the Room Options menu
 				document.getElementById('createRoomModal').style.display = 'none';
-				document.getElementById('createRoomOptions').style.display = 'none';
 
 				// Open the CPU Options menu
 				document.getElementById('cpuOptionsModal').style.display = 'block';
-				document.getElementById('cpuOptions').style.display = 'grid';
 
 				// Clear all the cpu options
 				for(let i = 0; i < 6; i++) {
@@ -505,7 +502,7 @@ function init(playerInfo) {
 		// Open the Room Options menu
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'flex';
+		document.getElementById('createRoomOptions').style.display = 'grid';
 		document.getElementById('createRoomSubmit').value = 'Select CPUs';
 
 		// Flag to indicate that these room options are for a CPU game
@@ -564,9 +561,10 @@ function init(playerInfo) {
 			playerInfo.userSettings.set('arr', arr);
 		}
 
+		// Ranges from 0 to 50, default 50 - map to 50 to 0
 		let skipFrames = Number(document.getElementById('skipFrames').value);
 		if(!Number.isNaN(skipFrames)) {
-			playerInfo.userSettings.set('skipFrames', Math.floor(skipFrames));
+			playerInfo.userSettings.set('skipFrames', 50 - Math.floor(skipFrames));
 		}
 
 		// Ranges from 0 to 100, default 50

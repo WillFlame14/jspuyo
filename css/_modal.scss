@@ -74,11 +74,9 @@
 	text-shadow: 2px 2px 5px base.$dark-gray;
 }
 
-// The Close Button
-.close {
+%modal-nav-button {
 	position: absolute;
 	top: -20px;
-	right: -20px;
 
 	width: 30px;
 	height: 30px;
@@ -88,7 +86,6 @@
 	font-size: 28px;
 	text-align: center;
 
-	background: red;
 	border: 2px solid white;
 	box-shadow: 3px 3px 5px 1px base.$dark-gray;
 	cursor: pointer;
@@ -99,6 +96,33 @@
 		text-decoration: none;
 
 		background: #aa0000;
+	}
+}
+
+// The "Close" button
+.close {
+	@extend %modal-nav-button;
+	right: -20px;
+
+	background: red;
+
+	&:hover,
+	&:focus {
+		background: #aa0000;
+	}
+}
+
+
+// The "Back" button
+.back {
+	@extend %modal-nav-button;
+	left: -20px;
+
+	background: blue;
+
+	&:hover,
+	&:focus {
+		background: #0000cc;
 	}
 }
 
@@ -279,4 +303,102 @@
 // Submit button for Join Room.
 #joinRoomSubmit {
 	background: #2233bb;
+}
+
+/* ---------- CPU Options Modal Box ---------- */
+
+#cpuOptionsModal {
+	width: 850px;
+}
+
+.cpu-container {
+	grid-template-rows: auto auto auto;
+	grid-template-columns: auto auto;
+	padding: 0px 10px;
+}
+
+.cpuOption {
+	display: none;
+	grid-template-rows: auto auto;
+	grid-template-columns: 100px fit-content(150px) auto auto;
+	margin: 10px 20px;
+	padding: 10px;
+
+	img {
+		grid-row: 1 / span 2;
+		grid-column: 1;
+		width: 100px;
+		height: 100px;
+
+		filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	}
+}
+
+.aiLabel {
+	grid-row: 1;
+	grid-column: 2;
+	margin: 5px 0px;
+	padding-right: 15px;
+
+	font-size: 28px;
+	text-align: right;
+}
+
+.speedLabel {
+	grid-row: 2;
+	grid-column: 2;
+	margin: 5px 0px;
+	padding-right: 15px;
+
+	font-size: 28px;
+	text-align: right;
+}
+
+.speedDisplay {
+	z-index: 2;
+
+	grid-row: 1 / span 2;
+	grid-column: 1;
+	margin: auto;
+
+	font-size: 32px;
+}
+
+.cpuSpeedSlider {
+	grid-row: 2;
+	grid-column: 3;
+}
+
+input[type="range"].cpuSpeedSlider {
+	width: 100%;
+	height: 2px;
+	margin: auto 0px;
+
+	background: white;
+	outline: none;
+
+	-webkit-appearance: none;
+}
+
+.cpuSpeedSlider::-webkit-slider-thumb {
+	width: 20px;
+	height: 20px;
+
+	background: url("../images/modal_boxes/puyo_gray.png");
+	background-size: contain;
+	border: 0;
+	cursor: pointer;
+	backdrop-filter: drop-shadow(0px 0px 15px base.$dark-gray);
+
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+#cpuOptionsSubmit {
+	display: block;
+
+	margin: 10px auto;
+	padding: 0px 15px;
+
+	background: #38761d;
 }

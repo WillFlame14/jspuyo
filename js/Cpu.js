@@ -106,6 +106,16 @@ class Cpu {
 		return { col, rotations };
 	}
 
+	static getAllCpuNames() {
+		return [
+			'Random',
+			'Flat',
+			'Tall',
+			'Chain',
+			'Test'
+		];
+	}
+
 	static fromString(ai, settings) {
 		switch(ai) {
 			case 'Random':

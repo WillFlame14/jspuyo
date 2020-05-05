@@ -4,7 +4,7 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Utils, Settings, SettingsBuilder, UserSettings } = require('./Utils.js');
+const { Settings, SettingsBuilder, UserSettings } = require('./Utils.js');
 
 const io = require('socket.io-client');
 
@@ -59,13 +59,14 @@ class PlayerInfo {
 /*----------------------------------------------------------*/
 
 let currentlyExpandedPanel = null;
-const createRoomOptionsStateDefault = {
+let createRoomOptionsState = {
 	selectedMode: 'Tsu',
 	selectedPlayers: '4player',
 	numColours: 4,
 	winCondition: 'FT 3'
 };
-let createRoomOptionsState = Utils.objectCopy(createRoomOptionsStateDefault);
+let createRoomTrigger = null;
+let cpuRoomSettings = null;
 let currentSession = null;
 
 const panelDropdowns = {
@@ -75,7 +76,7 @@ const panelDropdowns = {
 	'profilePanel': ['settings', 'gallery']
 };
 
-const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple'];
+const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
 
 // Set up all the event listeners
@@ -104,7 +105,7 @@ function init(playerInfo) {
 		console.log('Settings: ' + settingsString);
 	});
 
-	socket.on('start', (opponentIds, cpus, settingsString) => {
+	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
 		clearModal();
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
@@ -119,7 +120,7 @@ function init(playerInfo) {
 		generateBoards(opponentIds.length + cpus.length + 1);
 
 		// Set up the player's game
-		const currentGame = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettings);
+		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettings);
 
 		let boardDrawerCounter = 2;
 
@@ -146,30 +147,9 @@ function init(playerInfo) {
 			return { game: thisGame, socket: thisSocket, gameId, remove: false };
 		});
 
-		const finishCallback = function(endResult) {
-			switch(endResult) {
-				case 'Win':
-					console.log('You win!');
-					socket.emit('gameEnd', gameId);
-					break;
-				case 'Loss':
-					console.log('You lose...');
-					socket.emit('gameOver', gameId);
-					break;
-				case 'OppDisconnect':
-					console.log('Your opponent has disconnected. This match will be counted as a win.');
-					socket.emit('gameEnd', gameId);
-					break;
-				case 'Disconnect':
-					console.log('Disconnected from the previous game. That match will be counted as a loss.')
-					socket.emit('gameOver', gameId);
-					break;
-			}
-			currentSession = null;
-		};
-
 		// Create the session
-		currentSession = new Session(currentGame, cpuGames, finishCallback);
+		const playerGame = { game, socket, gameId };
+		currentSession = new Session(playerGame, cpuGames, roomId);
 		currentSession.run();
 	});
 
@@ -178,13 +158,27 @@ function init(playerInfo) {
 		document.getElementById(panelId).onclick = () => expand_dropdown(panelId);
 	});
 
-	// Only one modal element
+	// The black overlay that appears when a modal box is shown
 	const modal = Array.from(document.getElementsByClassName('modal'))[0];
 
 	// Set all close buttons to remove modals
 	Array.from(document.getElementsByClassName('close')).forEach(close => {
 		close.onclick = () => clearModal();
-	})
+	});
+
+	// Back button between Room Options and CPU Options
+	document.getElementById('cpu-back').onclick = () => {
+		// Close the Cpu Options menu
+		document.getElementById('createRoomModal').style.display = 'block';
+		document.getElementById('createRoomOptions').style.display = 'flex';
+
+		// Open the Room Options menu
+		document.getElementById('cpuOptionsModal').style.display = 'none';
+		document.getElementById('cpuOptions').style.display = 'none';
+
+		// Tell the submit button to go to CPU Options next
+		createRoomTrigger = 'cpu';
+	}
 
 	// Manage window onclick
 	window.onclick = function(event) {
@@ -210,6 +204,9 @@ function init(playerInfo) {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomOptions').style.display = 'flex';
+		document.getElementById('createRoomSubmit').value = 'Create Room';
+
+		createRoomTrigger = 'custom';
 	}
 
 	// Switch between Tsu and Fever mods on click
@@ -326,7 +323,34 @@ function init(playerInfo) {
 			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
 			.setMinChain(document.getElementById('minChainLength').value).build().toString();
 
-		socket.emit('createRoom', { gameId, settingsString, roomSize });
+		switch(createRoomTrigger) {
+			case 'custom':
+				socket.emit('createRoom', { gameId, settingsString, roomSize });
+				break;
+			case 'cpu':
+				// Save the selected settings
+				cpuRoomSettings = { settingsString, roomSize };
+
+				// Close the Room Options menu
+				document.getElementById('createRoomModal').style.display = 'none';
+				document.getElementById('createRoomOptions').style.display = 'none';
+
+				// Open the CPU Options menu
+				document.getElementById('cpuOptionsModal').style.display = 'block';
+				document.getElementById('cpuOptions').style.display = 'grid';
+
+				// Clear all the cpu options
+				for(let i = 0; i < 6; i++) {
+					document.getElementById('cpu' + (i + 1)).style.display = 'none';
+				}
+
+				// Add only the ones that are needed (minus one since the player doesn't count)
+				for(let i = 0; i < roomSize - 1; i++) {
+					document.getElementById('cpu' + (i + 1)).style.display = 'grid';
+				}
+				break;
+		}
+		createRoomTrigger = null;
 	}
 
 	// Receiving the id of the newly created room
@@ -368,20 +392,105 @@ function init(playerInfo) {
 	}
 
 	// Singleplayer Panel
-	document.getElementById('cpu').onclick = function() {
-		// TODO: Add options for cpu games
-		const roomSize = 2;
-		const settingsString = new Settings().toString();
-		const cpus = [
-			{ id: null, speed: 100, ai: 'Test' }
-		];
+	const aiDropdown = document.createElement('select');
+	aiDropdown.classList.add('aiOption');
 
-		stopCurrentSession();
-		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
+	Cpu.getAllCpuNames().forEach(cpuName => {
+		const option = document.createElement('option');
+		option.value = cpuName;
+		option.innerHTML = cpuName;
+		aiDropdown.appendChild(option);
+	});
+
+	const cpuSpeedSlider = document.createElement('input');
+	cpuSpeedSlider.classList.add('cpuSpeedSlider');
+	cpuSpeedSlider.type = 'range';
+	cpuSpeedSlider.max = '10';
+	cpuSpeedSlider.min = '0';
+	cpuSpeedSlider.defaultValue = '8';
+
+	const speedDisplay = document.createElement('span');
+	speedDisplay.classList.add('option-title');
+	speedDisplay.classList.add('speedDisplay');
+	speedDisplay.innerHTML = cpuSpeedSlider.defaultValue;
+
+	const aiLabel = document.createElement('span');
+	aiLabel.classList.add('aiLabel');
+	aiLabel.classList.add('option-title');
+	aiLabel.innerHTML = 'AI';
+
+	const speedLabel = document.createElement('span');
+	speedLabel.classList.add('speedLabel');
+	speedLabel.classList.add('option-title');
+	speedLabel.innerHTML = 'Speed';
+
+	// Add CPU options selectors
+	for(let i = 0; i < 6; i++) {
+		const cpuOptionElement = document.createElement('div');
+		cpuOptionElement.id = 'cpu' + (i + 1);
+		cpuOptionElement.classList.add('cpuOption');
+
+		const cpuIcon = document.createElement('img');
+		cpuIcon.src = `images/modal_boxes/${puyoImgs[i]}.png`;
+		cpuOptionElement.appendChild(cpuIcon);
+
+		cpuOptionElement.appendChild(aiLabel.cloneNode(true));
+		cpuOptionElement.appendChild(speedLabel.cloneNode(true));
+		cpuOptionElement.appendChild(aiDropdown.cloneNode(true));
+
+		const speedDisplayClone = speedDisplay.cloneNode(true);
+		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true);
+		cpuSpeedSliderClone.oninput = function() {
+			speedDisplayClone.innerHTML = this.value;
+		}
+		cpuOptionElement.appendChild(speedDisplayClone);
+		cpuOptionElement.appendChild(cpuSpeedSliderClone);
+
+		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
 	}
+
+	document.getElementById('cpu').onclick = function() {
+		stopCurrentSession();
+
+		// First, open the Room Options menu
+		modal.style.display = 'block';
+		document.getElementById('createRoomModal').style.display = 'block';
+		document.getElementById('createRoomOptions').style.display = 'flex';
+		document.getElementById('createRoomSubmit').value = 'Select CPUs';
+
+		// Flag to indicate that these room options are for a CPU game
+		createRoomTrigger = 'cpu';
+	}
+
+	document.getElementById('cpuOptionsSubmit').onclick = function() {
+		const { roomSize, settingsString } = cpuRoomSettings;
+
+		const cpus = [];
+
+		document.querySelectorAll('.aiOption').forEach(dropdown => {
+			cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
+		});
+
+		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
+			// slider value is between 0 and 10, map to between 5000 and 0
+			cpus[index].speed = (10 - slider.value) * 500;
+		});
+
+		console.log(cpus);
+
+		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
+
+		cpuRoomSettings = null;
+	}
+
+	// Return a promise that instantly resolves
 	return new Promise(resolve => resolve());
 }
 
+
+/**
+ * Causes the current session to stop updating and emit a "Disconnect" event.
+ */
 function stopCurrentSession() {
 	if(currentSession !== null) {
 		currentSession.stop();
@@ -389,6 +498,9 @@ function stopCurrentSession() {
 	clearBoards();
 }
 
+/**
+ * Removes all modal elements from view.
+ */
 function clearModal() {
 	const modal = Array.from(document.getElementsByClassName('modal'))[0];
 	modal.style.display = "none";
@@ -404,6 +516,9 @@ function clearModal() {
 	});
 }
 
+/**
+ * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
+ */
 function generateBoards (size) {
 	const playArea = document.getElementById('playArea');
 	const firstRow = playArea.insertRow(-1);
@@ -519,7 +634,9 @@ function generateBoards (size) {
 	}
 }
 
-// Clears all boards on screen
+/**
+ * Removes all boards on screen.
+ */
 function clearBoards() {
 	const playArea = document.getElementById('playArea');
 	while(playArea.firstChild) {

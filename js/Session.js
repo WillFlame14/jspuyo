@@ -1,11 +1,11 @@
 'use strict';
 
 class Session {
-	constructor(playerGame, cpuGames, finishCallback) {
+	constructor(playerGame, cpuGames, roomId) {
 		this.playerGame = playerGame;
 		this.cpuGames = cpuGames;
-		this.finish = finishCallback;
 		this.stopped = false;
+		this.roomId = roomId;
 	}
 
 	run() {
@@ -19,11 +19,11 @@ class Session {
 			}
 
 			// Step for all games
-			this.playerGame.step();
+			this.playerGame.game.step();
 			this.cpuGames.forEach(cpuGame => cpuGame.game.step());
 
 			// Check end results
-			const endResult = this.playerGame.end();
+			const endResult = this.playerGame.game.end();
 			if(endResult !== null) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish(endResult);
@@ -50,6 +50,27 @@ class Session {
 			this.cpuGames = this.cpuGames.filter(cpuGame => !cpuGame.remove);
 		}
 		main();
+	}
+
+	finish(endResult) {
+		switch(endResult) {
+			case 'Win':
+				console.log('You win!');
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				break;
+			case 'Loss':
+				console.log('You lose...');
+				this.playerGame.socket.emit('gameOver', this.playerGame.gameId);
+				break;
+			case 'OppDisconnect':
+				console.log('Your opponent has disconnected. This match will be counted as a win.');
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				break;
+			case 'Disconnect':
+				console.log('Disconnected from the previous game. That match will be counted as a loss.')
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				break;
+		}
 	}
 
 	stop() {

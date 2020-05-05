@@ -100,6 +100,28 @@ input[type="button"] {
 	}
 }
 
+button {
+	color: white;
+	font: 32px $font-title;
+
+	background: gray;
+	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+	cursor: pointer;
+}
+
+select {
+	margin: 5px 0px;
+
+	padding: 0px 5px;
+
+	color: white;
+	font: 24px $font-title;
+
+	background: $dark-gray;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+}
+
 .nuisanceQueue {
 	margin: none;
 

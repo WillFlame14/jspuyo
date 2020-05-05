@@ -59,7 +59,10 @@ class Game {
 			if(!opponentIds.includes(gameId)) {
 				return;
 			}
-			console.log('Player with id ' + gameId + ' has topped out.');
+			// Do not log to console for CPUs
+			if(this.gameId > 0) {
+				console.log('Player with id ' + gameId + ' has topped out.');
+			}
 			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'Win';
@@ -70,7 +73,10 @@ class Game {
 			if(!opponentIds.includes(gameId)) {
 				return;
 			}
-			console.log('Player with id ' + gameId + ' has disconnected.');
+			// Do not log to console for CPUs
+			if(this.gameId > 0) {
+				console.log('Player with id ' + gameId + ' has disconnected.');
+			}
 			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'OppDisconnect';

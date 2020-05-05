@@ -120,7 +120,7 @@ function startRoom(roomId) {
 		const opponentIds = opponents.map(opp => opp.gameId).filter(id => id > 0);
 		const cpus = opponents.filter(opp => opp.gameId < 0);
 
-		player.socket.emit('start', opponentIds, cpus, room.settingsString);
+		player.socket.emit('start', roomId, opponentIds, cpus, room.settingsString);
 	});
 
 	console.log(`Started room ${roomId}`);
@@ -213,7 +213,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('cpuMatch', gameInfo => {
-		const { gameId, roomSize, settingsString } = gameInfo;
+		const { gameId, roomSize, settingsString, cpus } = gameInfo;
 
 		leaveCurrentRoomIfPossible(gameId);
 
@@ -221,13 +221,29 @@ io.on('connection', function(socket) {
 
 		// Assign each cpu a negative id
 		for(let i = 0; i < roomSize - 1; i++) {
-			members.push({ gameId: -gameCounter, socket: null });
+			// TODO: Support more CPUS. In the meantime, any extras are given these defaults:
+			const speed = cpus[i] ? cpus[i].speed : 100;
+			const ai = cpus[i] ? cpus[i].ai : 'Test';
+
+			members.push({ gameId: -gameCounter, socket: null, speed, ai });
 			gameCounter++;
 		}
 
 		const roomId = createRoom(members, roomSize, settingsString, 'cpu');
 		startRoom(roomId);
 	});
+
+	socket.on('cpuAssign', gameId => {
+		const room = rooms[idToRoomMap[gameId]];
+
+		// Assign the socket to the CPU player in the room
+		room.members.some(member => {
+			if(member.gameId === gameId) {
+				member.socket = socket;
+				return true;
+			}
+		});
+	})
 
 	socket.on('createRoom', gameInfo => {
 		const { gameId, settingsString, roomSize } = gameInfo;
@@ -340,11 +356,11 @@ io.on('connection', function(socket) {
 	});
 
 	// Game is over for all players
-	socket.on('gameEnd', gameId => {
-		const roomId = idToRoomMap[gameId];
+	socket.on('gameEnd', (gameId, roomId) => {
+		const room = rooms[roomId];
 
-		if(roomId === undefined) {
-			// Ignore undefined gameIds as they are from ended games
+		// Game has already been ended (usually caused by leaving a CPU game)
+		if(room === undefined) {
 			if(gameId !== undefined) {
 				console.log(`ERROR: Received game end signal from gameId ${gameId} that was not assigned to a room.`);
 			}
@@ -354,6 +370,11 @@ io.on('connection', function(socket) {
 		// Remove the players from the maps
 		rooms[roomId].members.forEach(player => {
 			idToRoomMap[player.gameId] = undefined;
+
+			// Disconnect the CPU sockets
+			if(player.gameId < 0) {
+				player.socket.disconnect();
+			}
 		});
 
 		// Clear the room entry

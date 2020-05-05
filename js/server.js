@@ -35,7 +35,7 @@ function indexInRoom(gameId, roomId) {
 	return index;
 }
 
-function createRoom(members, roomSize, settingsString, roomType = false) {
+function createRoom(members, roomSize, settingsString, roomType = null) {
 	const roomId = generateRoomId(6);
 
 	// Temporary max room size

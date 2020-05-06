@@ -1,6 +1,48 @@
 # Changelog
 
+## v0.6 - Improved UI and Navigation Bar
+
+### v0.6.1 (May 6, 2020)
+[`Add interactive boxes to navigation panels #34`](https://github.com/WillFlame14/jspuyo/pull/34)
+**New features:**
+- Switching between modes no longer requires URL manipulation or page refreshes!
+- User-friendly modal boxes for Create Room, Join Room, Play Against CPU and Settings pages
+  - Create Room and Play Against CPU pages let you customize room options, like number of colours or target points
+  - Play Against CPU further allows you to customize AI and speed of CPU opponents
+  - Settings page allows you to customize user settings like DAS/ARR or key bindings
+
+**Other changes:**
+- Fixed https://github.com/WillFlame14/jspuyo/issues/32.
+- Started using Sass and stylelint for better CSS organization
+- Started using npm-run-all for ease of development
+- Split up Main.js to create a Session class, and merged webpage.js into an init() function in Main.js
+
+### v0.6.0 (Apr 27, 2020)
+[`Add navigation bar, more CSS #31`](https://github.com/WillFlame14/jspuyo/pull/31)
+**New features:**
+- Navigation bar to move between features instead of needing to modify the URL.
+  - Currently only works for FFA, Ranked, Sprint/Timed and CPU
+- Basic background image, font/colour additions
+
+**Other changes:**
+- Fixed bug that was causing ChainCpu and FlatCpu to behave incorrectly.
+- TestCpu is no longer deterministic.
+
 ## v0.5 - Better CPUs and Custom Games
+
+### v0.5.3 (Apr 24, 2020)
+[`More settings #30`](https://github.com/WillFlame14/jspuyo/pull/30)
+**New features:**
+- Margin time option
+- Minimum chain length option
+
+**Other changes:**
+- Removed hardcoded start height for drops and max height for the stack.
+- Removed unused CPU sockets to save resources.
+- Board 2's score no longer changes erratically.
+- Increased default skipFrames to improve performance.
+- Made the default CPU slightly easier (again).
+- Improved some room logging.
 
 ### v0.5.2 (Apr 18, 2020)
 [`Support more players #29`](https://github.com/WillFlame14/jspuyo/pull/29)

@@ -8,21 +8,22 @@ class InputManager{
 		this.dasTimer = {};				// Object containing DAS timers for each key
 		this.arrTimer = {};				// Object containing ARR timers for each key
 		this.userSettings = userSettings;
+		this.keyBindings = userSettings.keyBindings;
 
 		document.addEventListener("keydown", event => {
-			this.keysPressed[event.key] = true;
-			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-				this.lastPressed = event.key;
+			this.keysPressed[event.code] = true;
+			if(event.code === this.keyBindings.moveLeft || event.code === this.keyBindings.moveRight) {
+				this.lastPressed = event.code;
 			}
 		});
 
 		document.addEventListener("keyup", event => {
-			this.keysPressed[event.key] = undefined;
-			this.dasTimer[event.key] = undefined;
-			if(this.arrTimer[event.key] !== undefined) {
-				this.arrTimer[event.key] = undefined;
+			this.keysPressed[event.code] = undefined;
+			this.dasTimer[event.code] = undefined;
+			if(this.arrTimer[event.code] !== undefined) {
+				this.arrTimer[event.code] = undefined;
 			}
-			if(event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+			if(event.code === this.keyBindings.moveLeft || event.code === this.keyBindings.moveRight) {
 				this.lastPressed = undefined;
 			}
 		});
@@ -39,38 +40,38 @@ class InputManager{
 		Object.keys(this.keysPressed).filter(key => this.keysPressed[key] !== undefined).forEach(key => {
 
 			// If this key is newly pressed OR the DAS timer has completed
-			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.userSettings.das || key === 'ArrowDown') {
+			if(this.dasTimer[key] === undefined || (Date.now() - this.dasTimer[key]) >= this.userSettings.das || key === this.keyBindings.softDrop) {
 				// If the puyo is undergoing ARR AND the ARR timer has not completed
-				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.userSettings.arr && key !== 'ArrowDown') {
+				if(this.arrTimer[key] !== undefined && (Date.now() - this.arrTimer[key]) < this.userSettings.arr && key !== this.keyBindings.softDrop) {
 					return;
 				}
 
 				// If the puyo is rotating and the rotate button is still held
-				if(this.dasTimer[key] !== undefined && (key === 'z' || key === 'x')) {
+				if(this.dasTimer[key] !== undefined && (key === this.keyBindings.rotateCCW || key === this.keyBindings.rotateCW)) {
 					return;
 				}
 
 				// Perform key action
 				switch(key) {
-					case 'ArrowLeft':
+					case this.keyBindings.moveLeft:
 						// Special case for holding both directions down
-						if(this.lastPressed !== 'ArrowRight') {
+						if(this.lastPressed !== this.keyBindings.moveRight) {
 							this.emit('Move', 'Left', true);
 						}
 						break;
-					case 'ArrowRight':
+					case this.keyBindings.moveRight:
 						// Special case for holding both directions down
-						if(this.lastPressed !== 'ArrowLeft') {
+						if(this.lastPressed !== this.keyBindings.moveLeft) {
 							this.emit('Move', 'Right', true);
 						}
 						break;
-					case 'ArrowDown':
+					case this.keyBindings.softDrop:
 						this.emit('Move', 'Down', true);
 						break;
-					case 'z':
+					case this.keyBindings.rotateCCW:
 						this.emit('Rotate', 'CCW', true);
 						break;
-					case 'x':
+					case this.keyBindings.rotateCW:
 						this.emit('Rotate', 'CW', true);
 						break;
 				}

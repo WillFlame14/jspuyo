@@ -15,7 +15,7 @@ class DrawerWithPuyo {
         this.objectsDrawn = [];
     }
     drawObject(xPos, yPos, size, dX, dY) {
-        this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, xPos, yPos, dX, dY);
+        this.spriteDrawer.drawSubsprite(this.ctx, 'TsuClassic', size, xPos, yPos, dX, dY);
         this.objectsDrawn.push({xPos, yPos, size, dX, dY});
     }
     drawPuyo(colour, size, directions = [], dX, dY) {

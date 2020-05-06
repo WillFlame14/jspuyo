@@ -35,7 +35,7 @@ function indexInRoom(gameId, roomId) {
 	return index;
 }
 
-function createRoom(members, roomSize, settingsString, cpu = false, quickPlay = false) {
+function createRoom(members, roomSize, settingsString, roomType = null) {
 	const roomId = generateRoomId(6);
 
 	// Temporary max room size
@@ -51,37 +51,43 @@ function createRoom(members, roomSize, settingsString, cpu = false, quickPlay = 
 		roomSize,
 		settingsString,
 		started: false,
-		cpu,
-		quickPlay
+		cpu: roomType === 'cpu',
+		quickPlay: roomType === 'ffa'
 	};
 
 	// Set up the maps
 	rooms[roomId] = room;
 	room.members.forEach(member => {
 		idToRoomMap[member.gameId] = roomId;
+
+		// Send update to all players
 		if(member.gameId > 0) {
 			member.socket.emit('roomUpdate', room.members.map(p => p.gameId), room.roomSize, room.settingsString, room.quickPlay);
 		}
 	});
-
-	console.log('Creating room ' + roomId + ' with gameIds: ' + JSON.stringify(room.members.map(member => member.gameId)));
+	console.log(`Creating room ${roomId} with gameIds: ${JSON.stringify(room.members.map(member => member.gameId))}`);
 	return roomId;
 }
 
+/**
+ * Adds a player to an existing room. Throws an error if the room cannot be joined.
+ */
 function joinRoom(gameId, roomId, socket) {
 	const room = rooms[roomId];
 
-	// If the room does not exist or is already full
 	if(room === undefined) {
-		throw new Error('The room you are trying to join (id ' + roomId + ') does not exist.');
+		throw new Error(`The room you are trying to join (id ${roomId}) does not exist.`);
 	}
 	else if(room.members.length === room.roomSize) {
-		throw new Error('The room you are trying to join (id ' + roomId + ') is already full.');
+		throw new Error(`The room you are trying to join (id ${roomId}) is already full.`);
+	}
+	else if(room.started) {
+		throw new Error(`The room you are trying to join (id ${roomId}) has already started a game.`);
 	}
 
-	room.members.push({ gameId, socket});
+	room.members.push({ gameId, socket });
 	idToRoomMap[gameId] = roomId;
-	console.log('Added gameId ' + gameId + ' to room ' + roomId);
+	console.log(`Added gameId ${gameId} to room ${roomId}`);
 
 	// Dynamic allocation of size
 	if(room.members.length === room.roomSize && room.quickPlay) {
@@ -102,98 +108,205 @@ function joinRoom(gameId, roomId, socket) {
 	return true;
 }
 
+/**
+ * Starts a room by sending a 'start' event to all sockets.
+ */
 function startRoom(roomId) {
 	const room = rooms[roomId];
 
 	// Send start to all members who are not CPUs
 	room.members.filter(player => player.gameId > 0).forEach(player => {
-		const opponentIds = room.members.filter(player2 => player2.gameId !== player.gameId).map(player => player.gameId);
-		const playerOppIds = opponentIds.filter(id => id > 0);
-		const cpuOppIds = opponentIds.filter(id => id < 0);
+		const opponents = room.members.filter(player2 => player2.gameId !== player.gameId);
+		const opponentIds = opponents.map(opp => opp.gameId).filter(id => id > 0);
+		const cpus = opponents.filter(opp => opp.gameId < 0);
 
-		player.socket.emit('start', playerOppIds, cpuOppIds, room.settingsString);
+		player.socket.emit('start', roomId, opponentIds, cpus, room.settingsString);
 	});
 
-	console.log('Started room ' + roomId);
+	console.log(`Started room ${roomId}`);
 	room.started = true;
+
 	if(room.quickPlay) {
 		quickPlayTimer = null;
 		defaultQueueRoomId = null;
 	}
+	else if(roomId === rankedRoomId) {
+		rankedRoomId = null;
+	}
 }
+
+/**
+ * Removes a player from a room.
+ */
+function leaveRoom(gameId, roomId) {
+	const room = rooms[roomId];
+
+	if(room === undefined) {
+		console.log(`Attempted to remove ${gameId} from non-existent room ${roomId}`);
+		return;
+	}
+
+	// In a CPU game. Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
+	if(room.cpu) {
+		console.log(`Ending CPU game ${roomId} due to player disconnect.`);
+
+		// Remove all players from the room
+		room.members.forEach(player => {
+			idToRoomMap[player.gameId] = undefined;
+		});
+
+		// Clear room entry
+		rooms[roomId] = undefined;
+	}
+	else {
+		// Remove player from maps
+		const index = indexInRoom(gameId, roomId);
+		room.members.splice(index, 1);
+		idToRoomMap[gameId] = undefined;
+
+		// Game has started, so need to emit disconnect event to all members
+		if(room.started) {
+			room.members.forEach(player => {
+				player.socket.emit('playerDisconnect', gameId);
+			});
+		}
+		// Game is waiting or in queue, so send update to all members
+		else {
+			room.members.forEach(player => {
+				player.socket.emit('roomUpdate', room.members.map(p => p.gameId), room.roomSize, room.settingsString, room.quickPlay);
+			});
+
+			// Cancel start if not enough players
+			if(room.quickPlay && room.members.length < 2) {
+				clearTimeout(quickPlayTimer);
+				quickPlayTimer = null;
+			}
+		}
+
+		console.log(`Removed ${gameId} from room ${roomId}`);
+
+		// Close custom room if it is empty
+		if(room.members.length === 0 && defaultQueueRoomId !== roomId && rankedRoomId !== roomId) {
+			rooms[roomId] = undefined;
+			console.log(`Closed room ${roomId} since it was empty.`);
+		}
+	}
+}
+
+/**
+ * Attempts to leave the current room (to allow joining another one).
+ */
+function leaveCurrentRoomIfPossible(gameId) {
+	if(idToRoomMap[gameId] !== undefined) {
+		leaveRoom(gameId, idToRoomMap[gameId]);
+	}
+}
+
+/*--------------------------------------------------------------------------------------------------------*/
 
 io.on('connection', function(socket) {
 	socket.on('register', () => {
 		socket.emit('getGameId', gameCounter);
 		socketToIdMap[socket.id] = gameCounter;
-		console.log('Assigned gameId ' + gameCounter);
+		console.log(`Assigned gameId ${gameCounter}`);
 		gameCounter++;
 	});
 
 	socket.on('cpuMatch', gameInfo => {
-		const { gameId, roomSize, settingsString } = gameInfo;
+		const { gameId, roomSize, settingsString, cpus } = gameInfo;
+
+		leaveCurrentRoomIfPossible(gameId);
+
 		const members = [{ gameId, socket }];
 
 		// Assign each cpu a negative id
 		for(let i = 0; i < roomSize - 1; i++) {
-			members.push({ gameId: -gameCounter, socket: null });
+			// TODO: Support more CPUS. In the meantime, any extras are given these defaults:
+			const speed = cpus[i] ? cpus[i].speed : 100;
+			const ai = cpus[i] ? cpus[i].ai : 'Test';
+
+			members.push({ gameId: -gameCounter, socket: null, speed, ai });
 			gameCounter++;
 		}
 
-		const roomId = createRoom(members, roomSize, settingsString, true);
+		const roomId = createRoom(members, roomSize, settingsString, 'cpu');
 		startRoom(roomId);
 	});
 
+	socket.on('cpuAssign', gameId => {
+		const room = rooms[idToRoomMap[gameId]];
+
+		// Assign the socket to the CPU player in the room
+		room.members.some(member => {
+			if(member.gameId === gameId) {
+				member.socket = socket;
+				return true;
+			}
+		});
+	})
+
 	socket.on('createRoom', gameInfo => {
 		const { gameId, settingsString, roomSize } = gameInfo;
-		const members = [{ gameId, socket}];
 
-		const roomId = createRoom(members, roomSize, settingsString, true);
+		leaveCurrentRoomIfPossible(gameId);
+
+		const members = [{ gameId, socket}];
+		const roomId = createRoom(members, roomSize, settingsString);
 		socket.emit('giveRoomId', roomId);
 	});
 
 	socket.on('joinRoom', gameInfo => {
 		const { gameId, joinId } = gameInfo;
 
+		leaveCurrentRoomIfPossible(gameId);
+
 		try {
 			joinRoom(gameId, joinId, socket);
 		}
 		catch(err) {
+			console.log(err.message);
 			socket.emit('joinFailure', err.message);
 			return;
 		}
-		console.log(gameId + ' has joined room ' + joinId + '.');
+		console.log(`${gameId} has joined room ${joinId}.`);
 	});
 
 	socket.on('ranked', gameInfo => {
 		const { gameId } = gameInfo;
 
+		leaveCurrentRoomIfPossible(gameId);
+
 		// No pending ranked game
 		if(rankedRoomId === null) {
 			const members = [{ gameId, socket }];
-			const roomId = createRoom(members, 2, defaultSettings, false);
+
+			// Fixed settings for ranked rooms
+			const roomId = createRoom(members, 2, defaultSettings);
 			rankedRoomId = roomId;
 		}
 		// Pending ranked game
 		else {
 			try {
 				joinRoom(gameId, rankedRoomId, socket);
-				rankedRoomId = null;
 			}
 			catch(err) {
 				socket.emit('joinFailure', err.message);
 				return;
 			}
 		}
-		console.log(gameId + ' has joined the ranked queue.');
+		console.log(`${gameId} has joined the ranked queue.`);
 	});
 
-	socket.on('quickPlay', gameInfo => {
+	socket.on('freeForAll', gameInfo => {
 		const { gameId } = gameInfo;
+
+		leaveCurrentRoomIfPossible(gameId);
 
 		if(defaultQueueRoomId === null) {
 			const members = [{ gameId, socket }];
-			const roomId = createRoom(members, 2, defaultSettings, false, true);
+
+			// Fixed settings for FFA rooms
+			const roomId = createRoom(members, 2, defaultSettings, 'ffa');
 			defaultQueueRoomId = roomId;
 		}
 		else {
@@ -209,7 +322,7 @@ io.on('connection', function(socket) {
 				quickPlayTimer = setTimeout(startRoom, 60000, defaultQueueRoomId);
 			}
 		}
-		console.log(gameId + ' has joined the default queue.');
+		console.log(`${gameId} has joined the default queue.`);
 	});
 
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
@@ -243,13 +356,13 @@ io.on('connection', function(socket) {
 	});
 
 	// Game is over for all players
-	socket.on('gameEnd', gameId => {
-		const roomId = idToRoomMap[gameId];
+	socket.on('gameEnd', (gameId, roomId) => {
+		const room = rooms[roomId];
 
-		if(roomId === undefined) {
-			// Ignore undefined gameIds as they are from ended games
+		// Game has already been ended (usually caused by leaving a CPU game)
+		if(room === undefined) {
 			if(gameId !== undefined) {
-				console.log('ERROR: Received game end signal from gameId ' + gameId + ' that was not assigned to a room.');
+				console.log(`ERROR: Received game end signal from gameId ${gameId} that was not assigned to a room.`);
 			}
 			return;
 		}
@@ -258,15 +371,15 @@ io.on('connection', function(socket) {
 		rooms[roomId].members.forEach(player => {
 			idToRoomMap[player.gameId] = undefined;
 
-			// Exclude CPU games as server does not maintain those sockets
-			if(!rooms[roomId].cpu) {
-				socketToIdMap[player.socket.id] = undefined;
+			// Disconnect the CPU sockets
+			if(player.gameId < 0) {
+				player.socket.disconnect();
 			}
 		});
 
 		// Clear the room entry
 		rooms[roomId] = undefined;
-		console.log('Ended game with room id ' + roomId);
+		console.log(`Ended game with room id ${roomId}`);
 	});
 
 	socket.on('disconnect', () => {
@@ -279,50 +392,9 @@ io.on('connection', function(socket) {
 			return;
 		}
 
-		// In a CPU game. Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
-		if(room.cpu) {
-			console.log('Ending CPU game ' + roomId + ' due to player disconnect.');
-
-			// Remove all players from the room
-			room.members.forEach(player => {
-				idToRoomMap[player.gameId] = undefined;
-			});
-
-			// Clear room entry
-			rooms[roomId] = undefined;
-		}
-		else {
-			// Remove player from maps
-			const index = indexInRoom(gameId, roomId);
-			room.members.splice(index, 1);
-			idToRoomMap[gameId] = undefined;
-
-			// Game has started, so need to emit disconnect event to all members
-			if(room.started) {
-				room.members.forEach(player => {
-					player.socket.emit('playerDisconnect', gameId);
-				});
-			}
-			// Game is waiting or in queue, so send update to all members
-			else {
-				room.members.forEach(player => {
-					player.socket.emit('roomUpdate', room.members.map(p => p.gameId), room.roomSize, room.settingsString, room.quickPlay);
-				});
-
-				// Cancel start if not enough players
-				if(room.quickPlay && room.members.length < 2) {
-					clearTimeout(quickPlayTimer);
-					quickPlayTimer = null;
-				}
-			}
-
-			// Close custom room if it is empty
-			if(room.members.length === 0 && defaultQueueRoomId !== roomId && rankedRoomId !== roomId) {
-				rooms[roomId] = undefined;
-			}
-		}
+		leaveRoom(gameId, roomId);
 		socketToIdMap[socket.id] = undefined;
-		console.log('Disconnected id ' + gameId);
+		console.log(`Disconnected id ${gameId}`);
 	});
 });
 

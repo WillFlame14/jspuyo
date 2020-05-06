@@ -5,32 +5,30 @@ Puyo Puyo for your browser.
 
 ## Features
 - **Free-for-all queue** Game will start soon after 2+ players are in queue.
-- **1v1 Matchmaking** Append `?ranked=true` to the URL. No rating system currently implemented.
-- **CPU Opponent** Append `?cpu=true` to the URL. More detailed options are described below.
-- **Custom rooms** Create a room with `?createRoom=true`, and give a join link `?joinRoom=<id>` to your friends!
-- **Support for 4+ players** Append `?size=<number>` to the URL. Only works for non-queue options (CPUs or custom rooms)
-  - If you're experiencing lag, append `?skipFrames=<number>` to skip some frames from being rendered. Use `-1` to skip all animation frames.
-
-Example: [https://jspuyo.azurewebsites.net/?cpu=true&ai=Random&size=4](https://jspuyo.azurewebsites.net/?cpu=true&ai=Random&size=4) to play against 3 CPUs with their AI set to Random.
+- **1v1 Matchmaking** No rating system currently implemented.
+- **CPU Opponent** More detailed options are described below.
+- **Custom rooms** Create a room with custom options, and give a join link `?joinRoom=<id>` to your friends!
+- **Support for 4+ players**  Only works for non-queue options (CPUs or custom rooms)
+  - If you're experiencing lag, try reducing `Intermediate Frames Shown` in Settings to skip some frames from being rendered.
 
 ### CPU Options
-CPU AIs supported: `?cpu=true&ai=<ai_name>`
-- Random (fully random)
+CPU AIs supported:
+- Random (Fully random)
 - Tall (Frog stacking)
 - Flat (Tara stacking)
 - Chain (Looks for small chains)
-- Test (strongest CPU, also the default)
+- Test (Strongest CPU)
 
-If you're having trouble even with the basic CPUs, you can lower their speed by appending `&speed=<number>` to the URL. The number is measured in milliseconds, so try a number like 3000 and adjust from there.
+If you're having trouble even with the basic CPUs, you can try lowering their speed.
 
 ## Development
 - Clone the repository using `git clone`.
 - Navigate into the local repository and install the required modules using `npm install`.
-- Run `npm test` to run the JS code through ESLint and the unit tests. All builds will go through Travis CI, where this command is run.
+- Run `npm test` to run the JS code through ESLint, stylelint and the unit tests. All builds will go through Travis CI, where this command is run.
+- Run `npm run stylelint` to get stylelint to automatically fix as many style issues as possible.
 
 ### Running locally
-- Run `npm run bundle` to start watchify.
-- Run `npm start` to start node.
+- Run `npm start` to bundle the files (using watchify and sass) and start node.
 - Type `localhost:3000` into the browser to access the website. Query options can be appended as usual.
 
 

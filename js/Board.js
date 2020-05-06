@@ -140,9 +140,16 @@ class Board {
 			for(let j = 0; j < board.boardState[i].length; j++) {
 				const puyo = { col: i, row: j, colour: board.boardState[i][j], connections: [] };
 
-				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
-					// Find the extent of this colour, starting here
-					const chain_puyos = dfs(puyo, [puyo]);
+				if(notVisited(puyo)) {
+					let chain_puyos;
+					if(puyo.colour === PUYO_COLOURS['Gray']) {
+						// Force nuisance to only connect to itself
+						chain_puyos = [puyo];
+					}
+					else {
+						// Find the extent of this colour, starting here
+						chain_puyos = dfs(puyo, [puyo]);
+					}
 					if(chain_puyos.length >= minLength) {
 						result.push(chain_puyos);
 					}
@@ -198,7 +205,7 @@ class Board {
 						continue;
 					}
 					if(this.boardState[loc.col + i][loc.row + j] === PUYO_COLOURS['Gray']) {
-						poppedNuisance.push({ col: loc.col + i, row: loc.row + j });
+						poppedNuisance.push({ col: loc.col + i, row: loc.row + j, colour: PUYO_COLOURS['Gray'] });
 					}
 				}
 			}

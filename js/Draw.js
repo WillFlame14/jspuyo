@@ -14,7 +14,7 @@ const SUB_SCALE_FACTOR = 1.05;
  */
 class SpriteDrawer {
     // sX, sY, sWidth, sHeight, are sprite sheet parameters 0-indexed from top-left
-    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1) {
+    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1.025, sHeight = 1.025) {
         if (this.loadSprite(spriteSheet, size) === true) {
             const canvasName = 'c' + size.toString();
             ctx.drawImage(

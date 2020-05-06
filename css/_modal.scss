@@ -296,7 +296,7 @@ input.numPlayerButton {
 /* ---------- Join Room Modal Box ---------- */
 
 #joinRoomModal {
-	width: 25%;
+	width: 30%;
 	margin-top: 20%;
 
 	input {
@@ -306,9 +306,9 @@ input.numPlayerButton {
 	}
 }
 
-// Uneditable text that illustrates the "?joinId=" prefix.
-#joinIdFiller {
-	width: 155px;
+// Uneditable text that illustrates the "?joinRoom=" prefix.
+#joinRoomFiller {
+	width: 225px;
 	margin: 10px -10px 10px 0px;
 
 	color: white;

@@ -21,7 +21,7 @@ class PlayerGame extends Game {
 		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
 			if(id > 0) {
-				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, opponentCounter);
+				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
 				this.opponentIdToBoardDrawer[id] = opponentCounter;
 			}
 			opponentCounter++;
@@ -38,9 +38,9 @@ class PlayerGame extends Game {
 				frame = userSettings.skipFrames;
 			}
 			else{
-				this.updateOpponentScore(gameId, score);
 				frame--;
 			}
+			this.updateOpponentScore(gameId, score);
 		});
 
 		this.socket.on('sendSound', (gameId, sfx_name, index) => {
@@ -64,7 +64,7 @@ class PlayerGame extends Game {
 	 */
 	updateOpponentScore(gameId, score) {
 		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[gameId];
-		document.getElementById(pointsDisplayName).innerHTML = "Score: " + score;
+		document.getElementById(pointsDisplayName).innerHTML = `${score}`.padStart(8, '0');
 	}
 }
 

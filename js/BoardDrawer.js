@@ -234,7 +234,7 @@ class BoardDrawer extends DrawerWithPuyo {
             });
         }
         ctx.restore();
-        return JSON.stringify(this.drawnObjects);
+        return JSON.stringify(this.objectsDrawn);
     }
 
     initNuisanceDrop(nuisanceCascadeFPR) {

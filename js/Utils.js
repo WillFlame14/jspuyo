@@ -90,6 +90,14 @@ class Settings {
 	}
 }
 
+const checkBetweenEq = function(value, min, max) {
+	const number = Number(value);
+	if(number && number >= min && number <= max) {
+		return number;
+	}
+	return undefined;
+}
+
 const checkPositiveInteger = function(value) {
 	const number = Number(value);
 	if(number && number >= 1) {
@@ -123,12 +131,12 @@ class SettingsBuilder {
 	}
 
 	setRows (rows) {
-		this.rows = checkPositiveInteger(rows);
+		this.rows = checkBetweenEq(checkPositiveInteger(rows), 6, 100);
 		return this;
 	}
 
 	setCols(cols) {
-		this.cols = checkPositiveInteger(cols);
+		this.cols = checkBetweenEq(checkPositiveInteger(cols), 3, 50);
 		return this;
 	}
 
@@ -138,12 +146,12 @@ class SettingsBuilder {
 	}
 
 	setNumColours (numColours) {
-		this.numColours = checkPositiveInteger(numColours);
+		this.numColours = checkBetweenEq(checkPositiveInteger(numColours), 1, 6);
 		return this;
 	}
 
 	setTargetPoints (targetPoints) {
-		this.targetPoints = checkPositiveInteger(targetPoints);
+		this.targetPoints = checkBetweenEq(checkPositiveInteger(targetPoints), 1, Infinity);
 		return this;
 	}
 

@@ -15,7 +15,7 @@ class DrawerWithPuyo {
         this.objectsDrawn = [];
     }
     drawObject(xPos, yPos, size, dX, dY) {
-        this.spriteDrawer.drawSubsprite(this.ctx, 'TsuClassic', size, xPos, yPos, dX, dY);
+        this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, xPos, yPos, dX, dY);
         this.objectsDrawn.push({xPos, yPos, size, dX, dY});
     }
     drawPuyo(colour, size, directions = [], dX, dY) {
@@ -156,7 +156,7 @@ class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0, (rows - 1) * this.unitH);
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
 
         // Use the connections array instead of board state
         connections.forEach(group => {
@@ -193,7 +193,7 @@ class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0, (rows - 1) * this.unitH);
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
 
         // Draw the stack in the pre-pop positions, with some puyo mid pop
         if (resolvingState.currentFrame <= this.settings.popFrames) {
@@ -254,7 +254,7 @@ class BoardDrawer extends DrawerWithPuyo {
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0, (rows - 1) * this.unitH);
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
 
         const connections = new Board(this.settings, boardState).getConnections();
         connections.forEach(group => {

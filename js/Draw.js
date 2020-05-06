@@ -9,28 +9,26 @@ const SUB_SCALE_FACTOR = 1.05;
 
 /**
  * Stores and loads scaled sprites.
- * Use loadSprite to pre-emptively load the spritesheet for a given unit scale
+ * Use loadImage to pre-emptively load an unscaled image for use
+ * Use loadSprite to pre-emptively load an appropriately unit scaled version of an image (as an offscreen canvas)
  * Use drawSprite to draw a specific sprite at a specific size onto a desired canvas
+ *
  */
 class SpriteDrawer {
-    // sX, sY, sWidth, sHeight, are sprite sheet parameters 0-indexed from top-left
-    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1.025, sHeight = 1.025) {
-        if (this.loadSprite(spriteSheet, size) === true) {
-            const canvasName = 'c' + size.toString();
-            ctx.drawImage(
-                this[spriteSheet][canvasName],
-                (sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * size,
-                (sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * size,
-                sWidth * size + (sWidth - 1) * size / SHEET_USED_UNIT,
-                sHeight * size + (sHeight - 1) * size / SHEET_USED_UNIT,
-                cX * size - sWidth * size / 2, cY * size - sHeight * size / 2,
-                sWidth * size + (sWidth - 1) * size / SHEET_USED_UNIT,
-                sHeight * size + (sHeight - 1) * size / SHEET_USED_UNIT
-            )
-        }
-    }
-    drawSubsprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1) {
-        const sourceSize = size * SUB_SCALE_FACTOR;
+    /**
+     * @param   {CanvasRenderingContext2D}  ctx         The context to draw on
+     * @param   {String}                    spriteSheet The name of the sprite sheet to use, e.g. "TsuClassic" for TsuClassic.png
+     * @param   {Number}                    size        The size of a single sprite unit on the destination, in pixels
+     * @param   {Number}                    sX          The 0-indexed column number of the leftmost column of the sprite on the sheet
+     * @param   {Number}                    sY          The 0-indexed row number of the topmost row of the sprite on the sheet
+     * @param   {Number}                    cX          How many pixels right to draw the centre of the sprite relative to the current ctx origin
+     * @param   {Number}                    cY          How many pixels down to draw the centre of the sprite relative to the current ctx origin
+     * @param   {Number}                    sWidth      How many columns wide the sprite is on the sheet
+     * @param   {Number}                    sHeight     How many rows tall the sprite is on the sheet
+     * @param   {Boolean}                   merge       If the sprite should be scaled up slightly to ensure visual contiguity
+     */
+    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1, merge = true) {
+        const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
         if (this.loadSprite(spriteSheet, sourceSize) === true) {
             const canvasName = 'c' + sourceSize.toString();
             ctx.drawImage(
@@ -39,7 +37,7 @@ class SpriteDrawer {
                 (sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
                 sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT,
-                cX * size - sWidth * sourceSize / 2, cY * size - sHeight * sourceSize / 2,
+                cX - sWidth * sourceSize / 2, cY - sHeight * sourceSize / 2,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
                 sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT
             )

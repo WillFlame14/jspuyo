@@ -16,7 +16,9 @@ class CpuGame extends Game {
 
 		this.softDropTimer = Date.now();		// Timer to measure milliseconds before soft drop
 		this.movementTimer = Date.now();		// Timer to measure milliseconds before movement
-		this.audioPlayer.disable();
+		this.audioPlayer.disable();				// Do not play audio, but emit sendAudio events
+
+		socket.emit('cpuAssign', gameId);		// Send this socket's information to the server
 	}
 
 	/**

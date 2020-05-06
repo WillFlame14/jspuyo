@@ -1,0 +1,220 @@
+$font-title: "Chelsea Market", sans-serif;
+$dark-gray: #343434;
+
+html {
+	margin: 0px;
+	padding: 0px;
+
+	background-image: url("images/backgrounds/Forest 04.jpg");
+	background-position: center;
+	background-size: cover;
+}
+
+body {
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+
+	background-color: rgba(60, 60, 60, 0.5);
+}
+
+canvas {
+	margin: 0px 10px 0px 0px;
+
+	background: rgba(40, 40, 40, 0.8);
+	border: 4px solid white;
+}
+
+form {
+	margin: 0px 0px 10px;
+
+	color: white;
+	font: 40px $font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px $dark-gray;
+}
+
+label {
+	display: inline-block;
+
+	color: white;
+	font: 32px $font-title;
+	text-align: center;
+}
+
+input {
+	margin: 3px 0px;
+	padding: 2px;
+
+	color: white;
+	font: 28px $font-title;
+	text-align: center;
+
+	background: $dark-gray;
+	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+}
+
+// Formatting for placeholder text in input fields.
+::-webkit-input-placeholder {
+	color: gray;
+}
+
+::-moz-placeholder {
+	color: gray;
+}
+
+:-ms-input-placeholder {
+	color: gray;
+}
+
+::-ms-input-placeholder {
+	color: gray;
+}
+
+::placeholder {
+	color: gray;
+}
+
+// Hide the scroll bars on number inputs.
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+	margin: 0;
+
+	-webkit-appearance: none;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+}
+
+input[type="submit"] {
+	margin: 15px 0px 0px;
+	padding: 5px 10px;
+
+	cursor: pointer;
+}
+
+input[type="button"] {
+	background: #676767;
+	cursor: pointer;
+
+	&.off {
+		background: #770000;
+	}
+
+	&.on {
+		background: #007700;
+	}
+}
+
+input[type="range"] {
+	width: 100%;
+	height: 2px;
+	margin: auto 0px;
+	padding: 0px;
+
+	background: white;
+	outline: none;
+	box-shadow: 1px 1px 3px 1px $dark-gray;
+
+	-webkit-appearance: none;
+}
+
+// The clicky-thing on a range slider
+::-webkit-slider-thumb {
+	width: 20px;
+	height: 20px;
+
+	background: url("../images/modal_boxes/puyo_gray.png");
+	background-size: contain;
+	border: 0;
+	cursor: pointer;
+	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+
+	background: url("../images/modal_boxes/puyo_gray.png");
+	background-size: contain;
+	border: 0;
+	cursor: pointer;
+	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+button {
+	color: white;
+	font: 32px $font-title;
+
+	background: gray;
+	border: 2px solid white;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+	cursor: pointer;
+}
+
+// The built-in HTML dropdown wrapper element
+select {
+	margin: 5px 0px;
+
+	padding: 0px 5px;
+
+	color: white;
+	font: 24px $font-title;
+
+	background: $dark-gray;
+	box-shadow: 3px 3px 5px 1px $dark-gray;
+}
+
+// Horizontally justified flexbox.
+.justify-flexbox {
+	display: flex;
+	justify-content: space-evenly;
+}
+
+// Grid layout split into 2 columns, with a divider
+.left-right-container {
+	display: -ms-grid;
+	display: grid;
+	-ms-grid-rows: auto;
+	grid-template-rows: auto;
+	-ms-grid-columns: 47% 3% 50%;
+	grid-template-columns: 47% 3% 50%;
+}
+
+// A form with all its labels taking up an entire line.
+.block-form {
+	label {
+		display: block;
+	}
+}
+
+.nuisanceQueue {
+	margin: none;
+
+	background: rgba(240, 240, 240, 0.2);
+	border: 0;
+}
+
+.pointsDisplay {
+	display: table;
+	width: 270px;
+
+	color: white;
+	font: 52px $font-title;
+	text-align: center;
+}
+
+#playArea {
+	margin-right: auto;
+	margin-left: auto;
+}

@@ -515,7 +515,12 @@ input.numPlayerButton {
 
 	-webkit-filter: drop-shadow(2px 3px 5px base.$dark-gray);
 
-	filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	filter: drop-shadow(2px 3px 5px base.$dark-gray) grayscale(80%) brightness(40%);
+
+	// Add colour to the selected appearance
+	&.selected {
+		filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	}
 }
 
 #settingsSubmit {

@@ -34,7 +34,7 @@ class Game {
 		this.currentFrame = 0;
 
 		this.boardDrawerId = boardDrawerId;
-		this.boardDrawer = new BoardDrawer(this.settings, this.boardDrawerId);
+		this.boardDrawer = new BoardDrawer(this.settings, this.userSettings.appearance, this.boardDrawerId);
 		this.lastBoardHash = null;
 
 		this.socket = socket;

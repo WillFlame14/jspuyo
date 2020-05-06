@@ -15,7 +15,7 @@ class DrawerWithPuyo {
         this.objectsDrawn = [];
     }
     drawObject(xPos, yPos, size, dX, dY) {
-        this.spriteDrawer.drawSubsprite(this.ctx, 'TsuClassic', size, xPos, yPos, dX, dY);
+        this.spriteDrawer.drawSubsprite(this.ctx, this.appearance, size, xPos, yPos, dX, dY);
         this.objectsDrawn.push({xPos, yPos, size, dX, dY});
     }
     drawPuyo(colour, size, directions = [], dX, dY) {
@@ -122,9 +122,10 @@ class DrawerWithPuyo {
  * The drawer for the main area of the game.
  */
 class BoardDrawer extends DrawerWithPuyo {
-    constructor(settings, boardNum) {
+    constructor(settings, appearance, boardNum) {
         super();
         this.board = document.getElementById("board" + boardNum);
+        this.appearance = appearance;
         this.ctx = this.board.getContext("2d");
         this.settings = settings;
         this.poppedLocs = [];

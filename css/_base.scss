@@ -76,7 +76,7 @@ input {
 	color: gray;
 }
 
-// Hide the scroll bars on number inputs.
+// Hide the scroll bars on number inputs (Chrome).
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
 	margin: 0;
@@ -84,13 +84,16 @@ input::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 }
 
+// Hide the scroll bars on number inputs (Firefox).
 input[type="number"] {
 	-moz-appearance: textfield;
 }
 
-input[type="submit"] {
-	margin: 15px 0px 0px;
-	padding: 5px 10px;
+// Shared formatting between form submission buttons.
+%submit-button {
+	display: block;
+	margin: 20px auto 10px;
+	padding: 4px 20px;
 
 	cursor: pointer;
 }
@@ -179,6 +182,7 @@ select {
 .justify-flexbox {
 	display: flex;
 	justify-content: space-evenly;
+	margin-bottom: 10px;
 }
 
 // Grid layout split into 2 columns, with a divider

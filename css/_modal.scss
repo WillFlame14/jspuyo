@@ -68,9 +68,10 @@
 	text-shadow: 2px 2px 5px base.$dark-gray;
 }
 
+// Shared formatting for the "Back" and "Close" buttons
 %modal-nav-button {
 	position: absolute;
-	top: -20px;
+	top: -20px;			// Overhang the top section of the box
 
 	width: 30px;
 	height: 30px;
@@ -271,7 +272,7 @@ input.numPlayerButton {
 
 // Display of colours currently selected.
 #coloursSelected {
-	display: inline-flex;
+	display: inline-flex;			// Evenly space the images in a flexbox, but share the space with the input field
 	justify-content: space-around;
 	padding: 5px 0px;
 
@@ -288,8 +289,7 @@ input.numPlayerButton {
 
 // Submit button for Create Room.
 #createRoomSubmit {
-	width: auto;
-
+	@extend %submit-button;
 	background: #663388;
 }
 
@@ -314,7 +314,7 @@ input.numPlayerButton {
 	color: white;
 	text-align: right;
 
-	border-right: 0px;
+	border-right: 0px;		// delete the right border for no seam
 }
 
 // The actual input box for joinId.
@@ -324,11 +324,12 @@ input.numPlayerButton {
 
 	text-align: left;
 
-	border-left: 0px;
+	border-left: 0px;		// delete the left border for no seam
 }
 
 // Submit button for Join Room.
 #joinRoomSubmit {
+	@extend %submit-button;
 	background: #2233bb;
 }
 
@@ -356,7 +357,7 @@ input.numPlayerButton {
 	grid-template-rows: auto auto;
 	-ms-grid-columns: 100px fit-content(150px) auto auto;
 	grid-template-columns: 100px fit-content(150px) auto auto;
-	margin: 10px 20px;
+	margin: 5px 10px;
 	padding: 10px;
 
 	img {
@@ -375,6 +376,7 @@ input.numPlayerButton {
 	}
 }
 
+// Label indicating the purpose of the AI dropdown menu
 .aiLabel {
 	-ms-grid-row: 1;
 	grid-row: 1;
@@ -387,6 +389,7 @@ input.numPlayerButton {
 	text-align: right;
 }
 
+// Label indicating the CPU speed slider
 .speedLabel {
 	-ms-grid-row: 2;
 	grid-row: 2;
@@ -415,6 +418,7 @@ input.numPlayerButton {
 	font-size: 32px;
 }
 
+// The CPU speed slider
 .cpuSpeedSlider {
 	-ms-grid-row: 2;
 	grid-row: 2;
@@ -423,11 +427,7 @@ input.numPlayerButton {
 }
 
 #cpuOptionsSubmit {
-	display: block;
-
-	margin: 10px auto;
-	padding: 0px 15px;
-
+	@extend %submit-button;
 	background: #38761d;
 }
 
@@ -435,10 +435,12 @@ input.numPlayerButton {
 
 // Input boxes for DAS and ARR. Since they are alone, they can be larger.
 .dasArrInput {
-	font-size: 36px;
 	width: 100px;
+
+	font-size: 36px;
 }
 
+// Sliders for volume, skipFrames, etc.
 #settingsSliders {
 	label {
 		margin: 20px 0px 10px;
@@ -518,9 +520,6 @@ input.numPlayerButton {
 }
 
 #settingsSubmit {
-	display: block;
-	margin: 25px auto 10px;
-	padding: 0px 15px;
-
+	@extend %submit-button;
 	background-color: #741b47;
 }

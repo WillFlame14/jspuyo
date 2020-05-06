@@ -17,7 +17,7 @@ class DrawerWithPuyo {
     }
     drawPuyo(colour, size, directions = []) {
         if(colour === PUYO_COLOURS['Gray']) {
-            this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, 10, 9, 0, 0);
+            this.spriteDrawer.drawSubsprite(this.ctx, 'Test', size, 10, 9, 0, 0);
             return;
         }
 
@@ -35,7 +35,7 @@ class DrawerWithPuyo {
             xPos += 8;
         }
 
-        this.spriteDrawer.drawSprite(this.ctx, 'TsuClassic', size, xPos, this.colourArray.indexOf(colour), 0, 0);
+        this.spriteDrawer.drawSubsprite(this.ctx, 'Test', size, xPos, this.colourArray.indexOf(colour), 0, 0);
     }
     drawDrop(drop, size) {
         if ("IhLHO".includes(drop.shape)) {

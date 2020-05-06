@@ -11,7 +11,7 @@ const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 
 class Settings {
 	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
-				targetPoints = 70, marginTime = 96000, minChain = 2, seed = Math.random()) {
+				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.rows = rows;					// Number of rows in the game board
@@ -90,12 +90,97 @@ class Settings {
 	}
 }
 
+const checkPositiveInteger = function(value) {
+	const number = Number(value);
+	if(number && number >= 1) {
+		return Math.floor(number);
+	}
+	return undefined;
+}
+
+const checkNonnegativeDecimal = function(value) {
+	const number = Number(value);
+	if(number === 0 || (number && number > 0)) {
+		return number;
+	}
+	return undefined;
+}
+
+class SettingsBuilder {
+	constructor() {
+		// no default constructor
+	}
+
+	setGamemode (gamemode) {		// specific values fixed by options
+		this.gamemode = gamemode;
+
+		return this;
+	}
+
+	setGravity (gravity) {
+		this.gravity = checkNonnegativeDecimal(gravity);
+		return this;
+	}
+
+	setRows (rows) {
+		this.rows = checkPositiveInteger(rows);
+		return this;
+	}
+
+	setCols(cols) {
+		this.cols = checkPositiveInteger(cols);
+		return this;
+	}
+
+	setSoftDrop (softDrop) {
+		this.softDrop = checkNonnegativeDecimal(softDrop);
+		return this;
+	}
+
+	setNumColours (numColours) {
+		this.numColours = checkPositiveInteger(numColours);
+		return this;
+	}
+
+	setTargetPoints (targetPoints) {
+		this.targetPoints = checkPositiveInteger(targetPoints);
+		return this;
+	}
+
+	setMarginTimeInSeconds (marginTime) {
+		const value = Math.floor(checkNonnegativeDecimal(marginTime));
+		if(value) {
+			this.marginTime = value * 1000;
+		}
+		return this;
+	}
+
+	setMinChain (minChain) {
+		this.minChain = Math.floor(checkNonnegativeDecimal(minChain));
+		return this;
+	}
+
+	build () {
+		return new Settings(this.gamemode, this.gravity, this.rows, this.cols, this.softDrop, this.numColours, this.targetPoints, this.marginTime, this.minChain);
+	}
+}
+
 class UserSettings {
-	constructor(das = 200, arr = 20, skipFrames = 0, volume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1) {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
-		this.volume = volume;				// Volume (varies between 0 and 1)
+		this.sfxVolume = sfxVolume;			// SFX Volume (varies between 0 and 1)
+		this.musicVolume = musicVolume;		// Music Volume (varies between 0 and 1)
+
+		this.keyBindings = {				// Default key bindings
+			moveLeft: 'ArrowLeft',
+			moveRight: 'ArrowRight',
+			rotateCCW: 'KeyZ',
+			rotateCW: 'KeyX',
+			softDrop: 'ArrowDown',
+			hardDrop: 'ArrowUp'
+		};
 	}
 
 	set(key, value) {
@@ -104,10 +189,11 @@ class UserSettings {
 }
 
 class AudioPlayer {
-	constructor(gameId, socket, volume) {
+	constructor(gameId, socket, sfxVolume, musicVolume) {
 		this.gameId = gameId;
 		this.socket = socket;
-		this.volume = volume;
+		this.sfxVolume = sfxVolume;
+		this.musicVolume = musicVolume;
 		this.cancel = false;
 
 		this.sfx = {
@@ -174,15 +260,15 @@ class AudioPlayer {
 				return;
 			}
 			if(Array.isArray(sounds)) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.volume);
+				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.sfxVolume);
 			}
 			else if(sounds !== null) {
 				// Win/Lose SFX are especially loud
 				if(key === 'win' || key === 'lose') {
-					sounds.volume = this.volume * 0.6;
+					sounds.volume = this.sfxVolume * 0.6;
 				}
 				else {
-					sounds.volume = this.volume;
+					sounds.volume = this.sfxVolume;
 				}
 			}
 		});
@@ -322,6 +408,7 @@ module.exports = {
 	PUYO_COLOURS,
 	PUYO_EYES_COLOUR,
 	Settings,
+	SettingsBuilder,
 	UserSettings,
 	AudioPlayer,
 	Utils

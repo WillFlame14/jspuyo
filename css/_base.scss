@@ -43,11 +43,12 @@ label {
 }
 
 input {
+	margin: 3px 0px;
+	padding: 2px;
+
 	color: white;
 	font: 28px $font-title;
 	text-align: center;
-	margin: 3px 0px;
-	padding: 2px;
 
 	background: $dark-gray;
 	border: 2px solid white;
@@ -55,6 +56,22 @@ input {
 }
 
 // Formatting for placeholder text in input fields.
+::-webkit-input-placeholder {
+	color: gray;
+}
+
+::-moz-placeholder {
+	color: gray;
+}
+
+:-ms-input-placeholder {
+	color: gray;
+}
+
+::-ms-input-placeholder {
+	color: gray;
+}
+
 ::placeholder {
 	color: gray;
 }
@@ -65,6 +82,10 @@ input::-webkit-inner-spin-button {
 	margin: 0;
 
 	-webkit-appearance: none;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
 }
 
 input[type="submit"] {
@@ -109,6 +130,22 @@ input[type="range"] {
 	background-size: contain;
 	border: 0;
 	cursor: pointer;
+	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
+
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+
+	background: url("../images/modal_boxes/puyo_gray.png");
+	background-size: contain;
+	border: 0;
+	cursor: pointer;
+	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 
 	-webkit-appearance: none;
@@ -146,8 +183,11 @@ select {
 
 // Grid layout split into 2 columns, with a divider
 .left-right-container {
+	display: -ms-grid;
 	display: grid;
+	-ms-grid-rows: auto;
 	grid-template-rows: auto;
+	-ms-grid-columns: 47% 3% 50%;
 	grid-template-columns: 47% 3% 50%;
 }
 

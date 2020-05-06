@@ -12,7 +12,9 @@
   	"selector-no-qualifying-type": [true, {
   		"ignore": ["attribute", "class"]
   	}],
+    "selector-no-vendor-prefix": null,
   	"string-quotes": "double",
+    "value-no-vendor-prefix": null,
   	"order/properties-alphabetical-order": null,
   	"plugin/rational-order": [true, {
   		"empty-line-between-groups": true

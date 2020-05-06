@@ -97,16 +97,22 @@ class Board {
 					if(Math.abs(i) + Math.abs(j) === 1 && board.validLoc(new_puyo)) {
 						new_puyo.colour = board.boardState[col + i][row + j];
 
-						// New location must be unvisited and have the same colour puyo
-						if(notVisited(new_puyo) && colour === new_puyo.colour) {
-							chain_puyos.push(new_puyo);
+						// Add connections if same colour puyo
+						if(colour === new_puyo.colour) {
+							// Do not add the same connection twice
+							if(!connections.includes(getDirection(i, j))) {
+								// console.log(getDirection(-i, -j));
+								new_puyo.connections.push(getDirection(-i, -j));
+								connections.push(getDirection(i, j));
+							}
 
-							// Set connected directions
-							new_puyo.connections.push(getDirection(-i, -j));
-							connections.push(getDirection(i, j));
+							// DFS from new puyo if unvisited
+							if(notVisited(new_puyo)) {
+								chain_puyos.push(new_puyo);
 
-							// Update with the leaf puyo of this branch
-							chain_puyos = dfs(new_puyo, chain_puyos);
+								// Update with the leaf puyo of this branch
+								chain_puyos = dfs(new_puyo, chain_puyos);
+							}
 						}
 					}
 				}

@@ -24,6 +24,28 @@ describe('Board.js', function() {
 			expect(chain_puyos).to.deep.equal([]);
 		});
 
+		it('should return extremely small connections', function() {
+			const boardState = [
+				[red, red],
+				[],
+				[],
+				[],
+				[],
+				[]
+			];
+
+			const board = new Board(new Settings(), boardState);
+			const chain_puyos = board.getConnections();
+
+			const expectedResult = [
+				[
+					{ col: 0, row: 0, colour: red, connections: ['Up'] },
+					{ col: 0, row: 1, colour: red, connections: ['Down'] }
+				]
+			]
+			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
+		});
+
 		it('should return small connections', function() {
 			const boardState = [
 				[red, red, blu],
@@ -90,6 +112,31 @@ describe('Board.js', function() {
 					{ col: 2, row: 1, colour: grn, connections: ['Left', 'Right'] },
 					{ col: 3, row: 1, colour: grn, connections: ['Left', 'Down'] },
 					{ col: 3, row: 0, colour: grn, connections: ['Up'] }
+				]
+			]
+			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
+		});
+
+		it('should return circular connections', function() {
+			const boardState = [
+				[red, red],
+				[red, red],
+				[red],
+				[],
+				[],
+				[]
+			];
+
+			const board = new Board(new Settings(), boardState);
+			const chain_puyos = board.getConnections();
+
+			const expectedResult = [
+				[
+					{ col: 0, row: 0, colour: red, connections: ['Up', 'Right'] },
+					{ col: 0, row: 1, colour: red, connections: ['Down', 'Right'] },
+					{ col: 1, row: 0, colour: red, connections: ['Left', 'Up', 'Right'] },
+					{ col: 1, row: 1, colour: red, connections: ['Left', 'Down'] },
+					{ col: 2, row: 0, colour: red, connections: ['Left'] }
 				]
 			]
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
@@ -247,11 +294,11 @@ describe('Board.js', function() {
 			const nuisancePopped = board.findNuisancePopped(current_chain_puyos);
 
 			const expectedResult = [
-				{ col: 1, row: 1 },
-				{ col: 2, row: 0 },
-				{ col: 2, row: 5 },
-				{ col: 3, row: 1 },
-				{ col: 3, row: 2 },
+				{ col: 1, row: 1, colour: nui },
+				{ col: 2, row: 0, colour: nui },
+				{ col: 2, row: 5, colour: nui },
+				{ col: 3, row: 1, colour: nui },
+				{ col: 3, row: 2, colour: nui },
 			];
 
 			expect(nuisancePopped).to.deep.equalInAnyOrder(expectedResult);

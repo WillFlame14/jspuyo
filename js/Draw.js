@@ -39,7 +39,7 @@ class SpriteDrawer {
                 (sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
                 sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT,
-                cX * size - sWidth * sourceSize / 2, cY * size - sHeight * sourceSize / 2,
+                cX - sWidth * sourceSize / 2, cY - sHeight * sourceSize / 2,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
                 sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT
             )

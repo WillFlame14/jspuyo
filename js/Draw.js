@@ -80,4 +80,4 @@ class SpriteDrawer {
     }
 }
 
-module.exports = { SpriteDrawer }
+module.exports = { SpriteDrawer };

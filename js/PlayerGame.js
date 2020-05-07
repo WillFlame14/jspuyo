@@ -64,7 +64,12 @@ class PlayerGame extends Game {
 	 */
 	updateOpponentScore(gameId, score) {
 		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[gameId];
-		document.getElementById(pointsDisplayName).innerHTML = `${score}`.padStart(8, '0');
+		const pointsDisplay = document.getElementById(pointsDisplayName);
+
+		// Make sure element exists
+		if(pointsDisplay) {
+			pointsDisplay.innerHTML = `${score}`.padStart(8, '0');
+		}
 	}
 }
 

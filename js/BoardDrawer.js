@@ -125,8 +125,8 @@ class BoardDrawer extends DrawerWithPuyo {
     constructor(settings, appearance, boardNum) {
         super();
         this.board = document.getElementById("board" + boardNum);
-        this.appearance = appearance;
         this.ctx = this.board.getContext("2d");
+        this.appearance = appearance;
         this.settings = settings;
         this.poppedLocs = [];
         this.colourArray = [];

@@ -90,6 +90,14 @@ class Settings {
 	}
 }
 
+const checkBetweenEq = function(value, min, max) {
+	const number = Number(value);
+	if(number && number >= min && number <= max) {
+		return number;
+	}
+	return undefined;
+}
+
 const checkPositiveInteger = function(value) {
 	const number = Number(value);
 	if(number && number >= 1) {
@@ -123,12 +131,12 @@ class SettingsBuilder {
 	}
 
 	setRows (rows) {
-		this.rows = checkPositiveInteger(rows);
+		this.rows = checkBetweenEq(checkPositiveInteger(rows), 6, 100);
 		return this;
 	}
 
 	setCols(cols) {
-		this.cols = checkPositiveInteger(cols);
+		this.cols = checkBetweenEq(checkPositiveInteger(cols), 3, 50);
 		return this;
 	}
 
@@ -138,12 +146,12 @@ class SettingsBuilder {
 	}
 
 	setNumColours (numColours) {
-		this.numColours = checkPositiveInteger(numColours);
+		this.numColours = checkBetweenEq(checkPositiveInteger(numColours), 1, 6);
 		return this;
 	}
 
 	setTargetPoints (targetPoints) {
-		this.targetPoints = checkPositiveInteger(targetPoints);
+		this.targetPoints = checkBetweenEq(checkPositiveInteger(targetPoints), 1, Infinity);
 		return this;
 	}
 
@@ -166,12 +174,13 @@ class SettingsBuilder {
 }
 
 class UserSettings {
-	constructor(das = 200, arr = 20, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1) {
+	constructor(das = 200, arr = 20, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1, appearance = 'TsuClassic') {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
 		this.sfxVolume = sfxVolume;			// SFX Volume (varies between 0 and 1)
 		this.musicVolume = musicVolume;		// Music Volume (varies between 0 and 1)
+		this.appearance = appearance;
 
 		this.keyBindings = {				// Default key bindings
 			moveLeft: 'ArrowLeft',

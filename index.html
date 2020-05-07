@@ -56,9 +56,9 @@
                     </div>
                     <form id="boardSizeSelector" autocomplete="off">
                         <label for="numRows">Rows</label>
-                        <input type="number" id="numRows" value="12" min="1" max="50"><br>
+                        <input type="number" id="numRows" value="12" min="6" max="100"><br>
                         <label for="numCols">Columns</label>
-                        <input type="number" id="numCols" value="6" min="1" max="50">
+                        <input type="number" id="numCols" value="6" min="3" max="50">
                     </form>
                     <div id="roomSizeSelector">
                         <div class="option-title">Players</div>
@@ -105,7 +105,7 @@
             <form id="joinIdForm" autocomplete="off">
                 <label for="joinId">Enter the code for the room you wish to join.</label><br>
                 <div class="errorMsg" id="joinIdFormError"></div>
-                <input type="text" id="joinIdFiller" value="?joinId=" disabled>
+                <input type="text" id="joinRoomFiller" value="?joinRoom=" disabled>
                 <input type="text" id="joinId" placeholder="######" maxlength="6"><br>
                 <input type="submit" id="joinRoomSubmit" value="Join Room">
             </form>
@@ -183,12 +183,12 @@
                     </div>
                     <div class="option-title">Appearance</div>
                     <div class="justify-flexbox">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_blue.png">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_red.png">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_green.png">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_purple.png">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_yellow.png">
-                        <img class="appearanceIcon" src="images/modal_boxes/puyo_teal.png">
+                        <img class="appearanceIcon" id="Aqua" src="images/modal_boxes/puyo_aqua.png">
+                        <img class="appearanceIcon" id="Chalk" src="images/modal_boxes/puyo_chalk.png">
+                        <img class="appearanceIcon selected" id="TsuClassic" src="images/modal_boxes/puyo_tsu.png">
+                        <img class="appearanceIcon" id="Custom" src="images/modal_boxes/puyo_custom.png">
+                        <img class="appearanceIcon" id="Test" src="images/modal_boxes/puyo_yellow.png">
+                        <img class="appearanceIcon" id="TestWhite" src="images/modal_boxes/puyo_teal.png">
                     </div>
                     <button id="settingsSubmit">Save Settings</button>
                 </div>

@@ -1,7 +1,8 @@
 'use strict';
 
-const { Drop } = require('./Drop.js');
-const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
+const { Board } = require('./Board.js');
+const { SpriteDrawer } = require('./Draw.js');
+const { PUYO_COLOURS, COLOUR_LIST } = require('./Utils.js');
 
 /**
  * Class to manage updating for any canvas that draws Puyo (the main board or the queue).
@@ -10,114 +11,110 @@ const { PUYO_COLOURS, COLOUR_LIST, PUYO_EYES_COLOUR } = require('./Utils.js');
  */
 class DrawerWithPuyo {
     constructor() {
+        this.spriteDrawer = new SpriteDrawer();
+        this.objectsDrawn = [];
     }
-    drawPuyo(colour, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
-        ctx.fillStyle = colour;
-        ctx.fill();
-        ctx.translate(- size / 5, - size / 10);
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        ctx.translate(2 * size / 5, 0);
-        ctx.arc(0, 0, size / 5, 0, 2 * Math.PI);
-        ctx.fillStyle = PUYO_EYES_COLOUR;
-        ctx.fill();
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- size / 6, - size / 13);
-        ctx.beginPath();
-        ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        ctx.translate(2 * size / 6, 0);
-        ctx.arc(0, 0, size / 8, 0, 2 * Math.PI);
-        ctx.fillStyle = colour;
-        ctx.fill();
-        ctx.restore();
+    drawObject(xPos, yPos, size, dX, dY) {
+        this.spriteDrawer.drawSprite(this.ctx, this.appearance, size, xPos, yPos, dX, dY);
+        this.objectsDrawn.push({xPos, yPos, size, dX, dY});
     }
-    drawDrop(drop, size) {
+    drawPuyo(colour, size, directions = [], dX, dY) {
+        let xPos, yPos;
+        if(colour === PUYO_COLOURS['Gray']) {
+            xPos = 6;
+            yPos = 12;
+        }
+        else {
+            xPos = 0;
+            yPos = this.colourArray.indexOf(colour);
+
+            if(directions.includes('Down')) {
+                xPos += 1;
+            }
+            if(directions.includes('Up')) {
+                xPos += 2;
+            }
+            if(directions.includes('Right')) {
+                xPos += 4;
+            }
+            if(directions.includes('Left')) {
+                xPos += 8;
+            }
+        }
+        this.drawObject(xPos, yPos, size, dX, dY);
+    }
+    drawPoppingPuyo(colour, size, drawPhaseTwo, dX, dY) {
+        if(colour === PUYO_COLOURS['Gray']) {
+            if(!drawPhaseTwo) {
+                this.drawObject(6, 12, size, dX, dY);
+            }
+            return;
+        }
+        const xPos = this.colourArray.indexOf(colour) * 2 + (drawPhaseTwo ? 7 : 6);
+        const yPos = 10;
+
+        this.drawObject(xPos, yPos, size, dX, dY);
+    }
+    drawDrop(drop, size, dX, dY) {
         if ("IhLHO".includes(drop.shape)) {
-            this["draw_" + drop.shape](drop, size);
+            this["draw_" + drop.shape](drop, size, dX, dY);
         }
     }
-    draw_I(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        this.drawPuyo(drop.colours[0], size);
-        ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
+    draw_I(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        dX += size * Math.cos(drop.standardAngle + Math.PI / 2);
+        dY -= size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[1], size, [], dX, dY);
     }
 
-    draw_h(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        this.drawPuyo(drop.colours[0], size);
-        ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
+    draw_h(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[0], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[1], size, [], dX3, dY3);
     }
 
-    draw_L(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        this.drawPuyo(drop.colours[0], size);
-        ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
+    draw_L(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[1], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[0], size, [], dX3, dY3);
     }
 
-    draw_H(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        let xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
-        let yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
-        ctx.translate(- xChange, - yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- yChange, xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(xChange, yChange);
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(yChange, - xChange);
-        this.drawPuyo(drop.colours[1], size);
-        ctx.restore();
+    draw_H(drop, size, dX, dY) {
+        const xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
+        const yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX -yChange, dY + xChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + yChange, dY - xChange);
     }
 
-    draw_O(drop, size) {
-        let ctx = this.ctx;
-        ctx.save();
-        let xChange = size / 2;
-        let yChange = size / 2;
-        ctx.translate(- xChange, - yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(- yChange, xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(xChange, yChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
-        ctx.save();
-        ctx.translate(yChange, - xChange);
-        this.drawPuyo(drop.colours[0], size);
-        ctx.restore();
+    draw_O(drop, size, dX, dY) {
+        const xChange = size / 2;
+        const yChange = size / 2;
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX - yChange, dY - xChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + yChange, dY - xChange);
     }
 }
 
@@ -125,141 +122,119 @@ class DrawerWithPuyo {
  * The drawer for the main area of the game.
  */
 class BoardDrawer extends DrawerWithPuyo {
-    constructor(settings, boardNum) {
+    constructor(settings, appearance, boardNum) {
         super();
         this.board = document.getElementById("board" + boardNum);
         this.ctx = this.board.getContext("2d");
+        this.appearance = appearance;
         this.settings = settings;
-        this.poppingPuyos = [];
+        this.poppedLocs = [];
         this.colourArray = [];
         for (let i = 0; i < COLOUR_LIST.length; i++) {
             this.colourArray.push(PUYO_COLOURS[COLOUR_LIST[i]]);
         }
-        this.nuisanceCascadeFPR = [];
-    }
 
-    drawPopping(colour, size, frame, totalFrames) {
-        this.drawPuyo(colour, size * (1 - frame / totalFrames));
+        this.width = this.board.width;
+        this.height = this.board.height;
+        this.unitW = this.width / this.settings.cols;
+        this.unitH = this.height / this.settings.rows;
+
+        this.nuisanceCascadeFPR = [];
     }
 
     updateBoard(currentBoardState) {
         // Get current information about what to draw and get current width and height in case of resizing
-        const {boardState, currentDrop} = currentBoardState;
-        const {width, height} = this.board;
-        const {cols, rows} = this.settings;
-        const unitW = width / cols;
-        const unitH = height / rows;
-        let ctx = this.ctx;
+        const {connections, currentDrop} = currentBoardState;
+        const {rows} = this.settings;
 
-        ctx.clearRect(0, 0, width, height);
+        // Clear list of drawn objects
+        this.objectsDrawn = [];
+
+        let ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
 
-        for (let i = 0; i < cols; i++) {
-            for (let j = 0; j < rows; j++) {
-                if (boardState[i][j]) {
-                    ctx.save();
-                    ctx.translate(unitW * i, - unitH * j);
-                    this.drawPuyo(boardState[i][j], unitW);
-                    ctx.restore();
-                }
-            }
-        }
+        // Use the connections array instead of board state
+        connections.forEach(group => {
+            group.forEach(puyo => {
+                this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
+            })
+        });
 
         if (currentDrop.schezo.y != null) {
-            ctx.save();
-            ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
-            this.drawPuyo(currentDrop.colours[0], unitW);
-            ctx.restore();
-            ctx.translate(unitW * currentDrop.schezo.x, - unitH * currentDrop.schezo.y);
-            this.drawPuyo(currentDrop.colours[1], unitW);
+            this.drawPuyo(currentDrop.colours[0], this.unitW, [], this.unitW * currentDrop.arle.x, -this.unitH * currentDrop.arle.y);
+            this.drawPuyo(currentDrop.colours[1], this.unitW, [], this.unitW * currentDrop.schezo.x, -this.unitH * currentDrop.schezo.y);
         } else {
-            ctx.translate(unitW * currentDrop.arle.x, - unitH * currentDrop.arle.y);
-            this.drawDrop(currentDrop, unitW);
+            this.drawDrop(currentDrop, this.unitW, this.unitW * currentDrop.arle.x, - this.unitH * currentDrop.arle.y);
         }
 
         // Restore origin to top left
         ctx.restore();
+        return JSON.stringify(this.objectsDrawn);
     }
-    resolveChains(boardState, resolvingState) {
+
+    resolveChains(resolvingState) {
         // Get current information and assign it to convenient variables
-        const {width, height} = this.board;
-        const {cols, rows, popFrames, dropFrames} = this.settings;
-        const unitW = width / cols;
-        const unitH = height / rows;
+        const {popFrames, dropFrames} = this.settings;
+        const {connections, poppedLocs, connectionsAfterPop, unstablePuyos} = resolvingState;
+        const {rows} = this.settings;
+
+        // Clear list of drawn objects
+        this.objectsDrawn = [];
+
         let ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
 
-        if (resolvingState.setup === undefined) {
-            this.poppingPuyos = [];
-            for (let i = 0; i < cols; i++) {
-                this.poppingPuyos.push([]);
-            }
-            for (let i = resolvingState.puyoLocs.length - 1; i >= 0; i--) {
-                this.poppingPuyos[resolvingState.puyoLocs[i].col][resolvingState.puyoLocs[i].row] = true;
-            }
-            for (let i = resolvingState.nuisanceLocs.length - 1; i >= 0; i--) {
-                this.poppingPuyos[resolvingState.nuisanceLocs[i].col][resolvingState.nuisanceLocs[i].row] = true;
-            }
-            resolvingState.setup = true;
-        }
-
-        ctx.clearRect(0, 0, width, height);
-
+        // Save a canvas with the origin at the top left (every save coupled with a restore)
         ctx.save();
 
-        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
+        // Move the canvas with the origin at the middle of the bottom left square
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
+
         // Draw the stack in the pre-pop positions, with some puyo mid pop
         if (resolvingState.currentFrame <= this.settings.popFrames) {
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows + 1; j++) {
-                    if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
-                        ctx.save();
-                        ctx.translate(unitW * i, - unitH * j);
-                        this.drawPuyo(boardState[i][j], unitW);
-                        ctx.restore();
-                    }
-                }
-            }
-        }
-        if (resolvingState.currentFrame <= this.settings.popFrames) {
-            for (let i = 0; i < cols; i++) {
-                for (let j = 0; j < rows + 1; j++) {
-                    if (this.poppingPuyos[i][j] != null) {
-                        ctx.save();
-                        ctx.translate(unitW * i, - unitH * j);
-                        this.drawPopping(boardState[i][j], unitW, resolvingState.currentFrame, popFrames);
-                        ctx.restore();
-                    }
-                }
-            }
+            connections.forEach(group => {
+                group.filter(puyo => !poppedLocs.some(puyo2 => puyo.col === puyo2.col && puyo.row === puyo2.row)).forEach(puyo => {
+                    this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
+                })
+            });
+
+            poppedLocs.forEach(puyo => {
+                this.drawPoppingPuyo(
+                    puyo.colour,
+                    this.unitW,
+                    resolvingState.currentFrame >= this.settings.popFrames / 3,
+                    this.unitW * puyo.col,
+                    -this.unitH * puyo.row
+                );
+            });
         }
         // Draw the stack dropping with the popped puyos gone
         else {
-            for (let i = 0; i < cols; i++) {
-                let numUnder = 0;
-                while (boardState[i][numUnder] != null && this.poppingPuyos[i][numUnder] == null) {
-                    ctx.save();
-                    ctx.translate(unitW * i, - unitH * numUnder);
-                    this.drawPuyo(boardState[i][numUnder], unitW);
-                    ctx.restore();
-                    numUnder++;
-                }
-                for (let j = numUnder + 1; j < boardState[i].length; j++) {
-                    if (boardState[i][j] != null && this.poppingPuyos[i][j] == null) {
-                        ctx.save();
-                        ctx.translate(unitW * i, - unitH * (Math.max(j - (j - numUnder) * (resolvingState.currentFrame - popFrames) / dropFrames, numUnder)));
-                        this.drawPuyo(boardState[i][j], unitW);
-                        ctx.restore();
-                        numUnder++;
-                    }
-                }
-            }
+            // Unaffected puyos
+            connectionsAfterPop.forEach(group => {
+                group.forEach(puyo => {
+                    this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
+                })
+            });
+            // Unstable Puyos
+            unstablePuyos.filter(puyo => !poppedLocs.some(puyo2 => puyo.col === puyo2.col && puyo.row === puyo2.row)).forEach(puyo => {
+                this.drawPuyo(
+                    puyo.colour,
+                    this.unitW,
+                    [],             // Force drawing of isolated puyo
+                    this.unitW * puyo.col,
+                    -this.unitH * Math.max(puyo.row - (puyo.row - puyo.above) * (resolvingState.currentFrame - popFrames) / dropFrames, puyo.above)
+                );
+            });
         }
         ctx.restore();
+        return JSON.stringify(this.objectsDrawn);
     }
 
     initNuisanceDrop(nuisanceCascadeFPR) {
@@ -267,204 +242,60 @@ class BoardDrawer extends DrawerWithPuyo {
     }
 
     dropNuisance(boardState, nuisanceState) {
-        const { nuisanceArray, currentFrame } = nuisanceState;
-        const { width, height } = this.board;
-        const { cols, rows } = this.settings;
-        const unitW = width / cols;
-        const unitH = height / rows;
-        let ctx = this.ctx;
+        const {nuisanceArray, currentFrame} = nuisanceState;
+        const {cols, rows} = this.settings;
 
-        ctx.clearRect(0, 0, width, height);
+        // Clear list of drawn objects
+        this.objectsDrawn = [];
+
+        let ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
         ctx.save();
 
         // Move the canvas with the origin at the middle of the bottom left square
-        ctx.translate(0.5 * unitW, (rows - 0.5) * unitH);
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
+
+        const connections = new Board(this.settings, boardState).getConnections();
+        connections.forEach(group => {
+            group.forEach(puyo => {
+                this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
+            })
+        });
 
         for (let i = 0; i < cols; i++) {
-            for (let j = 0; j < boardState[i].length; j++) {
-                ctx.save();
-                ctx.translate(unitW * i, - unitH * j);
-                this.drawPuyo(boardState[i][j], unitW);
-                ctx.restore();
-            }
             const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
             const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
             for (let j = 0; j < nuisanceArray[i].length; j++) {
-                ctx.save();
-                ctx.translate(unitW * i, - unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
-                this.drawPuyo(PUYO_COLOURS['Gray'], unitW);
-                ctx.restore();
+                this.drawPuyo(PUYO_COLOURS['Gray'], this.unitW, [], this.unitW * i, -this.unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
             }
         }
 
         // Restore origin to top left
         ctx.restore();
+        return JSON.stringify(this.objectsDrawn);
     }
 
     drawFromHash(hash) {
-        let splitHash = hash.split(":");
-        switch (splitHash[0]) {
-            case "0": {
-                let boardState = [];
-                let boardStateCols = splitHash[1].split(",");
-                for (let i = 0; i < this.settings.cols; i++) {
-                    boardState.push([]);
-                    for (let j = 0; j < boardStateCols[i].length; j++) {
-                        boardState[i].push(this.colourArray[boardStateCols[i][j]]);
-                    }
-                }
-                let dropArray = splitHash[2].split(",");
-                let arle = { x: dropArray[3], y: dropArray[4] };
-                let schezo = { x: dropArray[5] == "n" ? null : dropArray[5], y: dropArray[6] == "n" ? null : dropArray[6] };
-                let currentDrop = new Drop(
-                    dropArray[0],
-                    [this.colourArray[dropArray[1]], this.colourArray[dropArray[2]]],
-                    null,
-                    arle,
-                    schezo,
-                    dropArray[7] * 2 * Math.PI,
-                    dropArray[8]);
-                return this.updateBoard({ boardState, currentDrop });
-            }
-            case "1": {
-                let boardState = [];
-                let boardStateCols = splitHash[1].split(",");
-                for (let i = 0; i < this.settings.cols; i++) {
-                    boardState.push([]);
-                    for (let j = 0; j < boardStateCols[i].length; j++) {
-                        boardState[i].push(this.colourArray[boardStateCols[i][j]]);
-                    }
-                }
-                let resolvingStateArray = splitHash[2].split(",")
-                let puyoLocs = [];
-                let puyoLocCols = resolvingStateArray[1].split(">");
-                let puyoLocRows = resolvingStateArray[2].split(">");
-                for (let i = 0; i < puyoLocCols.length - 1; i++) { // excess delimiter in hash causes off-by-one error due to a tailing ">" creating an undefined last element
-                    puyoLocs.push({ col: puyoLocCols[i], row: puyoLocRows[i] });
-                }
-                let nuisanceLocs = [];
-                let nuisanceLocCols = resolvingStateArray[3].split(">");
-                let nuisanceLocRows = resolvingStateArray[4].split(">");
-                for (let i = 0; i < nuisanceLocCols.length - 1; i++) { // excess delimiter in hash causes off-by-one error due to a tailing ">" creating an undefined last element
-                    nuisanceLocs.push({ col: nuisanceLocCols[i], row: nuisanceLocRows[i] });
-                }
+        let objects = JSON.parse(hash);
+        const {rows} = this.settings;
 
-                return this.resolveChains(boardState,
-                    {
-                        chain: resolvingStateArray[0],
-                        puyoLocs,
-                        nuisanceLocs,
-                        currentFrame: resolvingStateArray[5],
-                        totalFrames: resolvingStateArray[6]
-                    }
-                );
-            }
-            case "2": {
-                return this.initNuisanceDrop(splitHash[1].split(","));
-            }
-            case "3": {
-                let boardState = [];
-                let boardStateCols = splitHash[1].split(",");
-                for (let i = 0; i < this.settings.cols; i++) {
-                    boardState.push([]);
-                    for (let j = 0; j < boardStateCols[i].length; j++) {
-                        boardState[i].push(this.colourArray[boardStateCols[i][j]]);
-                    }
-                }
-                const nuisanceState = {
-                    nuisanceArray: splitHash[2].split(",").map(col => col ? col.split(">").map(num => this.colourArray[num]) : []),
-                    nuisanceAmount: Number(splitHash[3]),
-                    currentFrame: Number(splitHash[4]),
-                    totalFrames: Number(splitHash[5])
-                };
-                return this.dropNuisance(boardState, nuisanceState);
-            }
-            default:
-        }
-    }
+        let ctx = this.ctx;
+        ctx.clearRect(0, 0, this.width, this.height);
 
-    hashForUpdate(currentBoardState) {
-        const {boardState, currentDrop} = currentBoardState;
+        // Save a canvas with the origin at the top left (every save coupled with a restore)
+        ctx.save();
 
-        let hash = "0:";
-        for (let i = 0; i < boardState.length; i++) {
-            for (let j = 0; j < boardState[i].length; j++) {
-                hash += this.colourArray.indexOf(boardState[i][j]);
-            }
-            hash += ",";
-        }
-        hash += ":";
-        hash += currentDrop.shape + ","; // 0: shape
-        hash += this.colourArray.indexOf(currentDrop.colours[0]) + ","; // 1: colour 1
-        hash += this.colourArray.indexOf(currentDrop.colours[1]) + ","; // 2: colour 2
-        hash += currentDrop.arle.x + ","; // 3: arle x
-        hash += Math.round(currentDrop.arle.y * this.settings.hashSnapFactor) / this.settings.hashSnapFactor + ","; // 4: arle y (rounded)
-        // 5 and 6: schezo x and rounded y
-        if (currentDrop.schezo.y == null) {
-            hash += "n,n,"
-        } else {
-            hash += currentDrop.schezo.x + ",";
-            hash += Math.round(currentDrop.schezo.y * this.settings.hashSnapFactor) / this.settings.hashSnapFactor + ",";
-        }
-        hash += Math.round(currentDrop.standardAngle / Math.PI / 2 * this.settings.hashRotFactor) / this.settings.hashRotFactor + ","; // 7: angle in rev rounded to nearest gradian
-        hash += currentDrop.rotating; // 8: rotating
-        return hash;
-    }
-    hashForResolving(boardState, resolvingState) {
-        let hash = "1:";
-        for (let i = 0; i < boardState.length; i++) {
-            for (let j = 0; j < boardState[i].length; j++) {
-                hash += this.colourArray.indexOf(boardState[i][j]);
-            }
-            hash += ",";
-        }
-        hash += ":";
-        hash += resolvingState.chain + ","; // 0: chain
-        // 1: puyoLoc cols
-        for (let i = 0; i < resolvingState.puyoLocs.length; i++) {
-            hash += resolvingState.puyoLocs[i].col + ">";
-        }
-        hash += ",";
-        // 2: puyoLoc rows
-        for (let i = 0; i < resolvingState.puyoLocs.length; i++) {
-            hash += resolvingState.puyoLocs[i].row + ">";
-        }
-        hash += ",";
-        // 3: nuisanceLoc cols
-        for (let i = 0; i < resolvingState.nuisanceLocs.length; i++) {
-            hash += resolvingState.nuisanceLocs[i].col + ">";
-        }
-        hash += ",";
-        // 4: nuisanceLoc rows
-        for (let i = 0; i < resolvingState.nuisanceLocs.length; i++) {
-            hash += resolvingState.nuisanceLocs[i].row + ">";
-        }
-        hash += ",";
-        hash += resolvingState.currentFrame + ","; // 5: current frame
-        hash += resolvingState.totalFrames; // 6: total frames
-        return hash;
-    }
+        // Move the canvas with the origin at the middle of the bottom left square
+        ctx.translate(0.5 * this.unitW, (rows - 0.5) * this.unitH);
 
-    hashForNuisanceInit(nuisanceCascadeFPR) {
-        return "2:" + nuisanceCascadeFPR.join(",");
-    }
+        objects.forEach(object => {
+            const { xPos, yPos, size, dX, dY } = object;
+            this.drawObject(xPos, yPos, size, dX, dY);
+        })
 
-    hashForNuisance(boardState, nuisanceState) {
-        let hash = "3:";
-        for (let i = 0; i < boardState.length; i++) {
-            for (let j = 0; j < boardState[i].length; j++) {
-                hash += this.colourArray.indexOf(boardState[i][j]);
-            }
-            hash += ",";
-        }
-        hash += ":";
-        hash += nuisanceState.nuisanceArray.map(col => col.map(puyo => this.colourArray.indexOf(puyo)).join(">")).join(",") + ":";
-        hash += nuisanceState.nuisanceAmount + ":";
-        hash += nuisanceState.currentFrame + ":";
-        hash += nuisanceState.totalFrames;
-        return hash;
+        ctx.restore();
     }
 }
 

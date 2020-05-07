@@ -87,22 +87,32 @@ class Board {
 		 */
 		const dfs = function(puyo, chain_puyos) {
 			visited.push(puyo);
-			const { col, row, colour } = puyo;
+			const { col, row, colour, connections } = puyo;
 
 			// Search in all 4 cardinal directions
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
-					const new_puyo = { col: col + i, row: row + j, colour: null };
+					const new_puyo = { col: col + i, row: row + j, colour: null, connections: [] };
 
 					if(Math.abs(i) + Math.abs(j) === 1 && board.validLoc(new_puyo)) {
 						new_puyo.colour = board.boardState[col + i][row + j];
 
-						// New location must be unvisited and have the same colour puyo
-						if(notVisited(new_puyo) && colour === new_puyo.colour) {
-							chain_puyos.push(new_puyo);
+						// Add connections if same colour puyo
+						if(colour === new_puyo.colour) {
+							// Do not add the same connection twice
+							if(!connections.includes(getDirection(i, j))) {
+								// console.log(getDirection(-i, -j));
+								new_puyo.connections.push(getDirection(-i, -j));
+								connections.push(getDirection(i, j));
+							}
 
-							// Update with the leaf puyo of this branch
-							chain_puyos = dfs(new_puyo, chain_puyos);
+							// DFS from new puyo if unvisited
+							if(notVisited(new_puyo)) {
+								chain_puyos.push(new_puyo);
+
+								// Update with the leaf puyo of this branch
+								chain_puyos = dfs(new_puyo, chain_puyos);
+							}
 						}
 					}
 				}
@@ -119,14 +129,33 @@ class Board {
 			return visited.filter(loc => loc.col === col && loc.row === row).length === 0;
 		}
 
+		/**
+		 * Determines the connected direction of puyos from x and y translation.
+		 */
+		const getDirection = function(x, y) {
+			if(x === 0) {
+				return y === -1 ? 'Down' : 'Up';
+			}
+			else if(y === 0) {
+				return x === -1 ? 'Left' : 'Right';
+			}
+		}
+
 		// Iterate through the entire board to find all starting points
 		for(let i = 0; i < board.boardState.length; i++) {
 			for(let j = 0; j < board.boardState[i].length; j++) {
-				const puyo = { col: i, row: j, colour: board.boardState[i][j] };
+				const puyo = { col: i, row: j, colour: board.boardState[i][j], connections: [] };
 
-				if(notVisited(puyo) && puyo.colour !== PUYO_COLOURS['Gray']) {
-					// Find the extent of this colour, starting here
-					const chain_puyos = dfs(puyo, [puyo]);
+				if(notVisited(puyo)) {
+					let chain_puyos;
+					if(puyo.colour === PUYO_COLOURS['Gray']) {
+						// Force nuisance to only connect to itself
+						chain_puyos = [puyo];
+					}
+					else {
+						// Find the extent of this colour, starting here
+						chain_puyos = dfs(puyo, [puyo]);
+					}
 					if(chain_puyos.length >= minLength) {
 						result.push(chain_puyos);
 					}
@@ -182,7 +211,7 @@ class Board {
 						continue;
 					}
 					if(this.boardState[loc.col + i][loc.row + j] === PUYO_COLOURS['Gray']) {
-						poppedNuisance.push({ col: loc.col + i, row: loc.row + j });
+						poppedNuisance.push({ col: loc.col + i, row: loc.row + j, colour: PUYO_COLOURS['Gray'] });
 					}
 				}
 			}

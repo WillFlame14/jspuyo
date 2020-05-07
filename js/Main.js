@@ -68,6 +68,7 @@ let createRoomOptionsState = {
 };
 let createRoomTrigger = null;
 let cpuRoomSettings = null;
+let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
 let keyBindings = {
 	moveLeft: 'ArrowLeft',
@@ -550,6 +551,18 @@ function init(playerInfo) {
 		}
 	});
 
+	// Attach onclick events for each icon
+	Array.from(document.getElementsByClassName('appearanceIcon')).forEach(icon => {
+		icon.onclick = function() {
+			// Remove selection from previous icon
+			document.getElementById(selectedAppearance).classList.remove('selected');
+
+			// Add newly selected icon
+			icon.classList.add('selected');
+			selectedAppearance = icon.id;
+		}
+	});
+
 	document.getElementById('settingsSubmit').onclick = function() {
 		let das = Number(document.getElementById('das').value);
 		if(!Number.isNaN(das) && das >= 0) {
@@ -580,6 +593,8 @@ function init(playerInfo) {
 		}
 
 		playerInfo.userSettings.set('keyBindings', keyBindings);
+		playerInfo.userSettings.set('appearance', selectedAppearance);
+
 		clearModal();
 	}
 

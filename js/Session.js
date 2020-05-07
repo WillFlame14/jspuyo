@@ -34,10 +34,10 @@ class Session {
 				if(cpuEndResult !== null) {
 					switch(cpuEndResult) {
 						case 'Win':
-							cpuGame.socket.emit('gameEnd', cpuGame.id);
+							cpuGame.socket.emit('gameEnd', cpuGame.gameId);
 							break;
 						case 'Loss':
-							cpuGame.socket.emit('gameOver', cpuGame.id);
+							cpuGame.socket.emit('gameOver', cpuGame.gameId);
 							break;
 						case 'OppDisconnect':
 							// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';

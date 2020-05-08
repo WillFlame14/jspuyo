@@ -2,7 +2,7 @@
 <head>
     <title>jspuyo</title>
     <meta charset="utf-8" />
-    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Rock+Salt&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
@@ -44,7 +44,7 @@
         </span>
         <span id="logo">jspuyo</span>
     </div>
-    <div class="modal">
+    <div class="modal" id="modal-background">
         <div class="modal-content" id="createRoomModal">
             <div class="close">&times;</div>
             <div class="modal-title">Room Options</div>
@@ -195,10 +195,27 @@
             </div>
         </div>
     </div>
+    <div class="modal" id="modal-background-disable">
+        <div class="modal-content" id="forceStopPenalty">
+            <div>
+                You have disconnected from the previous game. That match will be counted as a loss.
+            </div>
+            <input type="submit" id="forceStopAccept" value="OK">
+        </div>
+    </div>
     <main>
-        <table id = "playArea">
-            <!-- Inserted by javascript -->
-        </table>
+        <div class="justify-flexbox" id="main-content">
+            <table id="playArea">
+                <!-- Inserted by javascript -->
+            </table>
+            <div class="status" id="statusArea">
+                <div id="statusMsg"></div>
+                <div id="statusGamemode">
+                    Free for all
+                </div>
+                <div id="statusSettings"></div>
+            </div>
+        </div>
         <script src="bundle.js"></script>
     </main>
 </body>

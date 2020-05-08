@@ -12,7 +12,7 @@
 	overflow: hidden;
 
 	background-color: black; // Fallback color
-	background-color: rgba(0, 0, 0, 0.4); // Black w/ opacity
+	background-color: rgba(0, 0, 0, 0.6); // Black w/ opacity
 }
 
 // Modal Content/Box
@@ -29,7 +29,7 @@
 
 	background-color: #776666;
 	border: 3px solid white;
-	box-shadow: 3px 3px 5px 1px base.$dark-gray;
+	box-shadow: 3px 3px 5px 3px base.$dark-gray;
 }
 
 .modal-title {
@@ -119,6 +119,24 @@
 	&:focus {
 		background: #0000cc;
 	}
+}
+
+/* ---------- Force Stop Penalty ---------- */
+
+#forceStopPenalty {
+	width: 30%;
+	margin-top: 20%;
+
+	color: white;
+
+	font: 28px base.$font-title;
+	text-align: center;
+	display: none;
+}
+
+#forceStopAccept {
+	display: block;
+	margin: 3px auto;
 }
 
 /* ---------- Create Room Modal Box ---------- */

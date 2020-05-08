@@ -4,7 +4,10 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings, SettingsBuilder, UserSettings } = require('./Utils.js');
+const { Utils, Settings, UserSettings } = require('./Utils.js');
+
+const navbarInit = require('./webpage/navbar.js');
+const { panelsInit, clearModal } = require('./webpage/panels.js');
 
 const io = require('socket.io-client');
 let playerInfo;
@@ -42,7 +45,7 @@ class PlayerInfo {
 	await playerInfo.ready();
 
 	// Set up behaviour
-	await init(playerInfo);
+	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession)]);
 
 	// Check if a joinRoom link was used
 	const urlParams = new URLSearchParams(window.location.search);
@@ -59,43 +62,20 @@ class PlayerInfo {
 
 /*----------------------------------------------------------*/
 
-let currentlyExpandedPanel = null;
-let createRoomOptionsState = {
-	selectedMode: 'Tsu',
-	selectedPlayers: '4player',
-	numColours: 4,
-	winCondition: 'FT 3'
-};
-let createRoomTrigger = null;
-let cpuRoomSettings = null;
-let selectedAppearance = 'TsuClassic';
-let keyBindingRegistration = null;
-let keyBindings = {
-	moveLeft: 'ArrowLeft',
-	moveRight: 'ArrowRight',
-	rotateCCW: 'KeyZ',
-	rotateCW: 'KeyX',
-	softDrop: 'ArrowDown',
-	hardDrop: 'ArrowUp'
-};
 let currentSession = null;
 
-const panelDropdowns = {
-	'queuePanel': ['freeForAll', 'ranked'],
-	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
-	'singleplayerPanel': ['sprint', 'timeChallenge', 'cpu'],
-	'profilePanel': ['settings', 'gallery']
-};
-
-const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
-const winConditions = ['FT 3', 'FT 5', 'FT 7'];
+const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 
 // Set up all the event listeners
-function init(playerInfo) {
+async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
 
 	socket.on('roomUpdate', (allIds, roomSize, settingsString, quickPlay) => {
 		clearModal();
+		document.getElementById('statusArea').style.display = 'flex';
+
+		const statusMsg = document.getElementById('statusMsg');
+		const statusSettings = document.getElementById('statusSettings');
 		console.log('Current players: ' + JSON.stringify(allIds));
 
 		// Adjust the number of boards drawn
@@ -104,24 +84,30 @@ function init(playerInfo) {
 
 		if(quickPlay) {
 			if (allIds.length === 1) {
-				console.log('Waiting for more players to start...');
+				statusMsg.innerHTML = 'Waiting for more players to start...';
 			}
 			else {
-				console.log('Game starting soon!');
+				statusMsg.innerHTML = 'Game starting soon!';
 			}
 		}
 		else {
-			console.log('Room size: ' + (allIds.length) + '/' + roomSize + ' players');
+			statusMsg.innerHTML = 'Room size: ' + (allIds.length) + '/' + roomSize + ' players';
 		}
-		console.log('Settings: ' + settingsString);
+		statusSettings.innerHTML = 'Settings: ' + settingsString;
 	});
 
 	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
 		clearModal();
+		document.getElementById('statusArea').style.display = 'none';
+
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
 		const allIds = allOpponentIds.concat(gameId);
 		const settings = Settings.fromString(settingsString);
+		const userSettingsCopy = Utils.objectCopy(userSettings);
+
+		// Add default skipFrames
+		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
 
 		console.log('Game starting!');
 		console.log('Opponents: ' + JSON.stringify(opponentIds) + ' CPUs: ' + JSON.stringify(cpuIds));
@@ -131,7 +117,7 @@ function init(playerInfo) {
 		generateBoards(opponentIds.length + cpus.length + 1);
 
 		// Set up the player's game
-		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettings);
+		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettingsCopy);
 
 		let boardDrawerCounter = 2;
 
@@ -151,7 +137,7 @@ function init(playerInfo) {
 				Cpu.fromString(ai, settings),
 				Number(speed),
 				settings,
-				userSettings
+				userSettingsCopy
 			);
 
 			boardDrawerCounter++;
@@ -164,440 +150,6 @@ function init(playerInfo) {
 		currentSession.run();
 	});
 
-	// Add onclick listener to each panel
-	Object.keys(panelDropdowns).forEach(panelId => {
-		document.getElementById(panelId).onclick = () => expand_dropdown(panelId);
-	});
-
-	// The black overlay that appears when a modal box is shown
-	const modal = Array.from(document.getElementsByClassName('modal'))[0];
-
-	// Set all close buttons to remove modals
-	Array.from(document.getElementsByClassName('close')).forEach(close => {
-		close.onclick = () => clearModal();
-	});
-
-	// Back button between Room Options and CPU Options
-	document.getElementById('cpu-back').onclick = () => {
-		// Close the Cpu Options menu
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-
-		// Open the Room Options menu
-		document.getElementById('cpuOptionsModal').style.display = 'none';
-		document.getElementById('cpuOptions').style.display = 'none';
-
-		// Tell the submit button to go to CPU Options next
-		createRoomTrigger = 'cpu';
-	}
-
-	// Manage window onclick
-	window.onclick = function(event) {
-		if (event.target == modal) {
-			clearModal();
-		}
-	}
-
-	// Turns a code.event string into a more human-readable display
-	const codeToDisplay = function(code) {
-		// Cut off prefixes
-		if(code.includes('Key')) {
-			code = code.substring(3);
-		}
-		else if(code.includes('Digit')) {
-			code = code.substring(5);
-		}
-
-		switch(code) {
-			case 'ArrowLeft':
-				return '\u2190';
-			case 'ArrowRight':
-				return '\u2192';
-			case 'ArrowDown':
-				return '\u2193';
-			case 'ArrowUp':
-				return '\u2191';
-			case 'ShiftLeft':
-				return 'LSH';
-			case 'ShiftRight':
-				return 'RSH';
-			default:
-				return code.toUpperCase();
-		}
-	}
-
-	window.onkeydown = function(event) {
-		if(keyBindingRegistration !== null) {
-			document.getElementById(keyBindingRegistration).value = codeToDisplay(event.code);
-
-			// set the actual key binding
-			keyBindings[keyBindingRegistration.replace('Binding', '')] = event.code;
-
-			keyBindingRegistration = null;
-		}
-	}
-
-	// Switch all toggleable buttons between on/off when clicked
-	Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off'))).forEach(button => {
-		button.onclick = () => {
-			if(button.value === "ON") {
-				button.classList.add('off');
-				button.value = "OFF";
-				button.classList.remove('on');
-			}
-			else {
-				button.classList.add('on');
-				button.value = "ON";
-				button.classList.remove('off');
-			}
-		}
-	});
-
-	// Queue Panel
-	document.getElementById('freeForAll').onclick = () => {
-		stopCurrentSession();
-		socket.emit('freeForAll', { gameId });
-	}
-	document.getElementById('ranked').onclick = () => {
-		stopCurrentSession();
-		socket.emit('ranked', { gameId });
-	}
-
-	// Custom - Create Room
-	document.getElementById('createRoom').onclick = () => {
-		stopCurrentSession();
-
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomSubmit').value = 'Create Room';
-
-		createRoomTrigger = 'custom';
-	}
-
-	// Switch between Tsu and Fever mods on click
-	document.getElementById('modeIcon').onclick = () => {
-		switch(createRoomOptionsState.selectedMode) {
-			case "Tsu":
-				document.getElementById('modeIcon').src = "images/modal_boxes/Fever_icon.png";
-				createRoomOptionsState.selectedMode = "Fever";
-				break;
-			case "Fever":
-				document.getElementById('modeIcon').src = "images/modal_boxes/Tsu_icon.png";
-				createRoomOptionsState.selectedMode = "Tsu";
-				break;
-		}
-	}
-
-	// Maintain the currently selected button and highlight it
-	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
-		element.onclick = () => {
-			const oldId = createRoomOptionsState.selectedPlayers;
-			if(element.id !== oldId) {
-				document.getElementById(oldId).classList.remove('selected');
-				element.classList.add('selected');
-				createRoomOptionsState.selectedPlayers = element.id;
-			}
-		}
-	});
-
-	// Read the input field and update the number of colours displayed accordingly
-	document.getElementById('numColours').oninput = () => {
-		let currentNumber = Math.floor(Number(document.getElementById('numColours').value)) || 0;
-		let lastNumber = createRoomOptionsState.numColours;
-		const coloursSelected = document.getElementById('coloursSelected');
-
-		// Clamp to interval [0, 5]
-		if(currentNumber > 5) {
-			currentNumber = 5;
-		}
-		else if(currentNumber < 0) {
-			currentNumber = 0;
-		}
-
-		while(lastNumber < currentNumber) {
-			const newImg = document.createElement('img');
-			newImg.src = `images/modal_boxes/${puyoImgs[lastNumber]}.png`;
-			coloursSelected.appendChild(newImg);
-			lastNumber++;
-		}
-
-		while(lastNumber > currentNumber) {
-			// Remove last child
-			coloursSelected.removeChild(coloursSelected.children[coloursSelected.children.length - 1]);
-			lastNumber--;
-		}
-		createRoomOptionsState.numColours = currentNumber;
-	};
-
-	// Switch between win conditions on click
-	const winConditionButton = document.getElementById('winCondition');
-	winConditionButton.onclick = () => {
-		let currentIndex = winConditions.indexOf(winConditionButton.value);
-		if(currentIndex === winConditions.length - 1) {
-			currentIndex = 0;
-		}
-		else {
-			currentIndex++;
-		}
-		winConditionButton.value = winConditions[currentIndex];
-	}
-
-	document.getElementById('createRoomSubmit').onclick = function (event) {
-		event.preventDefault();		// Prevent submit button from refreshing the page
-
-		let roomSize;
-		if(createRoomOptionsState.selectedPlayers === '5player') {
-			roomSize = Number(document.getElementById('5player').value);
-
-			// Clamp custom room size to interval [0, 16]
-			if(roomSize < 1) {
-				roomSize = 1;
-			}
-			else if(roomSize > 16) {
-				roomSize = 16;
-			}
-		}
-		else {
-			roomSize = Number(createRoomOptionsState.selectedPlayers.charAt(0));
-		}
-
-		// Generate the validated settings string
-		const settingsString = new SettingsBuilder()
-			.setGamemode(createRoomOptionsState.selectedMode)
-			.setGravity(document.getElementById('gravity').value)
-			.setRows(document.getElementById('numRows').value)
-			.setCols(document.getElementById('numCols').value)
-			.setSoftDrop(document.getElementById('softDrop').value)
-			.setNumColours(document.getElementById('numColours').value)
-			.setTargetPoints(document.getElementById('targetPoints').value)
-			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
-			.setMinChain(document.getElementById('minChainLength').value).build().toString();
-
-		switch(createRoomTrigger) {
-			case 'custom':
-				socket.emit('createRoom', { gameId, settingsString, roomSize });
-				break;
-			case 'cpu':
-				// Save the selected settings
-				cpuRoomSettings = { settingsString, roomSize };
-
-				// Close the Room Options menu
-				document.getElementById('createRoomModal').style.display = 'none';
-
-				// Open the CPU Options menu
-				document.getElementById('cpuOptionsModal').style.display = 'block';
-
-				// Clear all the cpu options
-				for(let i = 0; i < 6; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'none';
-				}
-
-				// Add only the ones that are needed (minus one since the player doesn't count)
-				for(let i = 0; i < roomSize - 1; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'grid';
-				}
-				break;
-		}
-		createRoomTrigger = null;
-	}
-
-	// Receiving the id of the newly created room
-	socket.on('giveRoomId', id => {
-		console.log('Other players can join this room by appending ?joinRoom=' + id);
-	});
-
-	// Custom - Join Room
-	document.getElementById('joinRoom').onclick = () => {
-		modal.style.display = 'block';
-		document.getElementById('joinRoomModal').style.display = 'block';
-	}
-
-	document.getElementById('joinIdForm').onsubmit = function (event) {
-		// Prevent submit button from refreshing the page
-		event.preventDefault();
-		const joinId = document.getElementById('joinId').value;
-
-		stopCurrentSession();
-
-		socket.emit('joinRoom', { gameId, joinId, spectate: false});
-	}
-
-	// Received when room cannot be joined
-	socket.on('joinFailure', (errMessage) => {
-		modal.style.display = 'block';
-
-		document.getElementById('joinIdFormError').innerHTML = errMessage;
-
-		// Make the element containing the error message  visible
-		document.getElementById('joinIdFormError').style.display = 'block';
-	});
-
-	// Custom - Spectate
-	document.getElementById('spectate').onclick = () => {
-		stopCurrentSession();
-		modal.style.display = 'block';
-		// TODO: Create a menu to select games to spectate
-	}
-
-	// Singleplayer Panel
-	const aiDropdown = document.createElement('select');
-	aiDropdown.classList.add('aiOption');
-
-	Cpu.getAllCpuNames().forEach(cpuName => {
-		const option = document.createElement('option');
-		option.value = cpuName;
-		option.innerHTML = cpuName;
-		aiDropdown.appendChild(option);
-	});
-
-	const cpuSpeedSlider = document.createElement('input');
-	cpuSpeedSlider.classList.add('cpuSpeedSlider');
-	cpuSpeedSlider.type = 'range';
-	cpuSpeedSlider.max = '10';
-	cpuSpeedSlider.min = '0';
-	cpuSpeedSlider.defaultValue = '8';
-
-	const speedDisplay = document.createElement('span');
-	speedDisplay.classList.add('option-title');
-	speedDisplay.classList.add('speedDisplay');
-	speedDisplay.innerHTML = cpuSpeedSlider.defaultValue;
-
-	const aiLabel = document.createElement('span');
-	aiLabel.classList.add('aiLabel');
-	aiLabel.classList.add('option-title');
-	aiLabel.innerHTML = 'AI';
-
-	const speedLabel = document.createElement('span');
-	speedLabel.classList.add('speedLabel');
-	speedLabel.classList.add('option-title');
-	speedLabel.innerHTML = 'Speed';
-
-	// Add CPU options selectors
-	for(let i = 0; i < 6; i++) {
-		const cpuOptionElement = document.createElement('div');
-		cpuOptionElement.id = 'cpu' + (i + 1);
-		cpuOptionElement.classList.add('cpuOption');
-
-		const cpuIcon = document.createElement('img');
-		cpuIcon.src = `images/modal_boxes/${puyoImgs[i]}.png`;
-		cpuOptionElement.appendChild(cpuIcon);
-
-		cpuOptionElement.appendChild(aiLabel.cloneNode(true));
-		cpuOptionElement.appendChild(speedLabel.cloneNode(true));
-		cpuOptionElement.appendChild(aiDropdown.cloneNode(true));
-
-		const speedDisplayClone = speedDisplay.cloneNode(true);
-		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true);
-		cpuSpeedSliderClone.oninput = function() {
-			speedDisplayClone.innerHTML = this.value;
-		}
-		cpuOptionElement.appendChild(speedDisplayClone);
-		cpuOptionElement.appendChild(cpuSpeedSliderClone);
-
-		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
-	}
-
-	document.getElementById('cpu').onclick = function() {
-		stopCurrentSession();
-
-		// Open the Room Options menu
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-		document.getElementById('createRoomSubmit').value = 'Select CPUs';
-
-		// Flag to indicate that these room options are for a CPU game
-		createRoomTrigger = 'cpu';
-	}
-
-	document.getElementById('cpuOptionsSubmit').onclick = function() {
-		const { roomSize, settingsString } = cpuRoomSettings;
-
-		const cpus = [];
-
-		document.querySelectorAll('.aiOption').forEach(dropdown => {
-			cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
-		});
-
-		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
-			// slider value is between 0 and 10, map to between 5000 and 0
-			cpus[index].speed = (10 - slider.value) * 500;
-		});
-
-		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
-
-		cpuRoomSettings = null;
-	}
-
-	// Profile Panel - Settings
-	document.getElementById('settings').onclick = function() {
-		stopCurrentSession();
-
-		modal.style.display = 'block';
-
-		// Use saved settings
-		Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
-			button.value = codeToDisplay(keyBindings[button.id.replace('Binding', '')]);
-		});
-
-		document.getElementById('settingsModal').style.display = 'block';
-	}
-
-	// Attach onclick events for each key binding
-	Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
-		button.onclick = function() {
-			button.value = '...';
-			keyBindingRegistration = button.id;
-		}
-	});
-
-	// Attach onclick events for each icon
-	Array.from(document.getElementsByClassName('appearanceIcon')).forEach(icon => {
-		icon.onclick = function() {
-			// Remove selection from previous icon
-			document.getElementById(selectedAppearance).classList.remove('selected');
-
-			// Add newly selected icon
-			icon.classList.add('selected');
-			selectedAppearance = icon.id;
-		}
-	});
-
-	document.getElementById('settingsSubmit').onclick = function() {
-		let das = Number(document.getElementById('das').value);
-		if(!Number.isNaN(das) && das >= 0) {
-			playerInfo.userSettings.set('das', das);
-		}
-
-		let arr = Number(document.getElementById('arr').value);
-		if(!Number.isNaN(arr) && arr >= 0) {
-			playerInfo.userSettings.set('arr', arr);
-		}
-
-		// Ranges from 0 to 50, default 50 - map to 50 to 0
-		let skipFrames = Number(document.getElementById('skipFrames').value);
-		if(!Number.isNaN(skipFrames)) {
-			playerInfo.userSettings.set('skipFrames', 50 - Math.floor(skipFrames));
-		}
-
-		// Ranges from 0 to 100, default 50
-		let sfxVolume = Number(document.getElementById('sfxVolume').value);
-		if(!Number.isNaN(sfxVolume)) {
-			playerInfo.userSettings.set('sfxVolume', (sfxVolume / 100)**2 * 0.4);
-		}
-
-		// Ranges from 0 to 100, default 50
-		let musicVolume = Number(document.getElementById('musicVolume').value);
-		if(!Number.isNaN(musicVolume)) {
-			playerInfo.userSettings.set('musicVolume', (musicVolume / 100)**2 * 0.4);
-		}
-
-		playerInfo.userSettings.set('keyBindings', keyBindings);
-		playerInfo.userSettings.set('appearance', selectedAppearance);
-
-		clearModal();
-	}
-
 	// Return a promise that instantly resolves
 	return new Promise(resolve => resolve());
 }
@@ -608,27 +160,14 @@ function init(playerInfo) {
  */
 function stopCurrentSession() {
 	if(currentSession !== null) {
-		currentSession.stop();
+		// Returning true means the session had not ended yet
+		if (currentSession.stop()) {
+			document.getElementById('modal-background-disable').style.display = 'block';
+			document.getElementById('forceStopPenalty').style.display = 'block';
+		}
 	}
-	clearBoards();
-}
-
-/**
- * Removes all modal elements from view.
- */
-function clearModal() {
-	const modal = Array.from(document.getElementsByClassName('modal'))[0];
-	modal.style.display = "none";
-
-	// Clear all modal content
-	Array.from(document.getElementsByClassName('modal-content')).forEach(element => {
-		element.style.display = 'none';
-	});
-
-	// Clear all error messages
-	Array.from(document.getElementsByClassName('errorMsg')).forEach(element => {
-		element.style.display = 'none';
-	});
+	// clearBoards();
+	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
 }
 
 /**
@@ -636,6 +175,8 @@ function clearModal() {
  */
 function generateBoards (size) {
 	const playArea = document.getElementById('playArea');
+	playArea.style.display = 'table';
+	
 	const firstRow = playArea.insertRow(-1);
 
 	let runningId = 1;
@@ -757,48 +298,5 @@ function clearBoards() {
 	while(playArea.firstChild) {
 		playArea.firstChild.remove();
 	}
-}
-
-/**
- * Expands a dropdown menu and closes any other open dropdown menu.
- * If the current dropdown menu is already open, it is closed.
- */
-function expand_dropdown(id) {
-	const panels = Object.keys(panelDropdowns);
-
-	if(currentlyExpandedPanel === id) {
-		document.getElementById(id).classList.remove('expanded');
-		document.getElementById(id).querySelector('.dropdown').style.height = '0';
-		currentlyExpandedPanel = null;
-	}
-	else {
-		document.getElementById(id).querySelector('.dropdown').style.height = `${panelDropdowns[id].length * 40}`;
-		document.getElementById(id).classList.add('expanded');
-		document.getElementById(id).style.zIndex = '10';
-		if(currentlyExpandedPanel !== null) {
-			document.getElementById(currentlyExpandedPanel).classList.remove('expanded');
-			document.getElementById(currentlyExpandedPanel).querySelector('.dropdown').style.height = '0';
-		}
-		currentlyExpandedPanel = id;
-	}
-
-	// Then set the z-index for each panel on selection for nice shadow cascading.
-	let indexes;
-	switch(id) {
-		case panels[0]:
-			indexes = [6, 5, 4, 3];
-			break;
-		case panels[1]:
-			indexes = [5, 6, 4, 3];
-			break;
-		case panels[2]:
-			indexes = [3, 4, 6, 5];
-			break;
-		case panels[3]:
-			indexes = [3, 4, 5, 6];
-			break;
-	}
-	panels.forEach((panel, i) => {
-		document.getElementById(panel).style.zIndex = indexes[i];
-	});
+	playArea.style.display = 'none';
 }

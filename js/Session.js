@@ -27,6 +27,7 @@ class Session {
 			if(endResult !== null) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish(endResult);
+				this.stopped = true;
 				return;
 			}
 			this.cpuGames.forEach(cpuGame => {
@@ -67,14 +68,23 @@ class Session {
 				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
 				break;
 			case 'Disconnect':
-				console.log('Disconnected from the previous game. That match will be counted as a loss.')
 				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
 				break;
 		}
 	}
 
+	/**
+	 * Forcefully stops the session (if it is still running). Called when a player navigates away from a game.
+	 * Returns true if the force stop had an effect, and false if it did not.
+	 */
 	stop() {
-		this.stopped = true;
+		if(this.stopped) {
+			return false;
+		}
+		else {
+			this.stopped = true;
+			return true;
+		}
 	}
 }
 

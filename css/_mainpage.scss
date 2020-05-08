@@ -1,0 +1,38 @@
+@use "base";
+
+.nuisanceQueue {
+	margin: none;
+
+	background: rgba(240, 240, 240, 0.2);
+	border: 0;
+}
+
+.pointsDisplay {
+	display: table;
+	width: 270px;
+
+	color: white;
+	font: 52px base.$font-title;
+	text-align: center;
+}
+
+#playArea {
+	display: inline;
+}
+
+.status {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	width: 40%;
+
+	color: white;
+	font: 52px base.$font-title;
+	text-align: center;
+
+	text-shadow: 2px 2px 5px base.$dark-gray;
+}
+
+#statusGamemode {
+	font: 56px "Rock Salt", sans-serif;
+}

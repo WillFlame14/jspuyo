@@ -201,24 +201,3 @@ select {
 		display: block;
 	}
 }
-
-.nuisanceQueue {
-	margin: none;
-
-	background: rgba(240, 240, 240, 0.2);
-	border: 0;
-}
-
-.pointsDisplay {
-	display: table;
-	width: 270px;
-
-	color: white;
-	font: 52px $font-title;
-	text-align: center;
-}
-
-#playArea {
-	margin-right: auto;
-	margin-left: auto;
-}

@@ -40,7 +40,8 @@ function createRoom(members, roomSize, settingsString, roomType = null) {
 		started: false,
 		cpu: roomType === 'cpu',
 		quickPlay: roomType === 'ffa',
-		paused: []
+		paused: [],
+		timeout: null
 	};
 
 	// Set up the maps
@@ -323,15 +324,22 @@ io.on('connection', function(socket) {
 		socket.broadcast.emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 
 		const room = rooms[idToRoomMap[gameId]];
+
+		if(room === undefined) {
+			// Leftover socket emissions from a disconnected player
+			return;
+		}
+
 		const player = room.members[gameId];
 		player.frames++;
 
-		let minSteps = Infinity;
+		let minSteps = Infinity, minId = null;
 
 		Object.keys(room.members).forEach(id => {
 			const frames = room.members[id].frames;
 			if(frames < minSteps) {
 				minSteps = frames;
+				minId = id;
 			}
 		});
 
@@ -339,6 +347,23 @@ io.on('connection', function(socket) {
 		if(player.frames - minSteps > MAX_FRAME_DIFFERENCE) {
 			socket.emit('pause');
 			room.paused.push(gameId);
+
+			// Start timeout if everyone except one player is paused
+			if(room.paused.length === Object.keys(room.members).length - 1 && room.timeout === null) {
+				room.timeout = setTimeout(() => {
+					room.members[minId].socket.emit('timeout');
+
+					// Restart all other members
+					Object.keys(room.members).forEach(id => {
+						if(id !== minId) {
+							room.members[id].socket.emit('play');
+							room.members[id].socket.emit('timeoutDisconnect', Number(minId));
+						}
+					});
+
+					leaveRoom(minId, idToRoomMap[gameId]);
+				}, 30000);
+			}
 		}
 		// Caught up
 		else if(player.frames === minSteps) {
@@ -353,6 +378,12 @@ io.on('connection', function(socket) {
 
 			// Remove the restarted ids
 			room.paused = room.paused.filter(id => !toRemove.includes(id));
+
+			// If the slow player has caught up, stop timeout
+			if(room.paused.length < Object.keys(room.members).length - 1 && room.timeout !== null) {
+				clearTimeout(room.timeout);
+				room.timeout = null;
+			}
 		}
 	});
 

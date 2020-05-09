@@ -92,6 +92,21 @@ class Game {
 			this.paused = false;
 		});
 
+		this.socket.on('timeout', () => {
+			this.endResult = 'Timeout';
+		});
+
+		this.socket.on('timeoutDisconnect', gameId => {
+			// Do not log to console for CPUs
+			if(this.gameId > 0) {
+				console.log('Player with id ' + gameId + ' has timed out.');
+			}
+			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'Win';
+			}
+		});
+
 		this.opponentIds.forEach(id => {
 			this.visibleNuisance[id] = 0;
 		});

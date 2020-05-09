@@ -17,6 +17,7 @@ class Game {
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
+		this.paused = false;
 
 		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
@@ -83,6 +84,14 @@ class Game {
 			}
 		});
 
+		this.socket.on('pause', () => {
+			this.paused = true;
+		});
+
+		this.socket.on('play', () => {
+			this.paused = false;
+		});
+
 		this.opponentIds.forEach(id => {
 			this.visibleNuisance[id] = 0;
 		});
@@ -125,6 +134,11 @@ class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
+		// Do not step if game paused
+		if(this.paused) {
+			return;
+		}
+
 		let currentBoardHash = null;
 
 		// Isolated puyo currently dropping

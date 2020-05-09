@@ -208,11 +208,14 @@ function generateBoards (size) {
 		boardCanvas.width = 270 * size;
 		centralArea.appendChild(boardCanvas);
 
-		const queueCanvas = document.createElement('canvas');
-		queueCanvas.id = 'queue' + id;
-		queueCanvas.height = 540 * size;
-		queueCanvas.width = 72 * size;
-		centralArea.appendChild(queueCanvas);
+		// Only draw queue if size is at least 50%
+		if(size > 0.5) {
+			const queueCanvas = document.createElement('canvas');
+			queueCanvas.id = 'queue' + id;
+			queueCanvas.height = 540 * size;
+			queueCanvas.width = 72 * size;
+			centralArea.appendChild(queueCanvas);
+		}
 
 		const pointsArea = document.createElement('div');
 		pointsArea.id = 'pointsArea' + id;
@@ -223,6 +226,7 @@ function generateBoards (size) {
 		pointsDisplay.id = 'pointsDisplay' + id;
 		pointsDisplay.className = 'pointsDisplay';
 		pointsDisplay.innerHTML = '00000000';
+		pointsDisplay.style.fontSize  = 52 * size;
 		pointsArea.appendChild(pointsDisplay);
 
 		return board;
@@ -251,13 +255,6 @@ function generateBoards (size) {
 			createGameCanvas(runningId, secondRow, 0.5);
 			runningId++;
 		}
-		Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
-			if(element.id === "pointsDisplay1") {
-				return;
-			}
-			element.style.fontSize = "26";
-			element.style.width = "50%";
-		});
 	}
 	else {
 		playerBoard.setAttribute('rowspan', '3');
@@ -280,13 +277,6 @@ function generateBoards (size) {
 			createGameCanvas(runningId, thirdRow, 0.33);
 			runningId++;
 		}
-		Array.from(document.getElementsByClassName('pointsDisplay')).forEach(element => {
-			if(element.id === "pointsDisplay1") {
-				return;
-			}
-			element.style.fontSize = "16";
-			element.style.width = "33%";
-		});
 	}
 }
 

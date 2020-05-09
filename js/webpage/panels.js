@@ -102,11 +102,12 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	// Queue Panel
 	document.getElementById('freeForAll').onclick = () => {
 		stopCurrentSession();
-		document.getElementById()
+		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		socket.emit('freeForAll', { gameId });
 	}
 	document.getElementById('ranked').onclick = () => {
 		stopCurrentSession();
+		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId });
 	}
 

@@ -49,7 +49,7 @@ class Game {
 		});
 
 		this.socket.on('activateNuisance', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			this.activeNuisance += this.visibleNuisance[gameId];
@@ -57,7 +57,7 @@ class Game {
 		});
 
 		this.socket.on('gameOver', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			// Do not log to console for CPUs
@@ -71,7 +71,7 @@ class Game {
 		});
 
 		this.socket.on('playerDisconnect', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			// Do not log to console for CPUs

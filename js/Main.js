@@ -8,6 +8,7 @@ const { Utils, Settings, UserSettings } = require('./Utils.js');
 
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
+const { dialogInit } = require('./webpage/dialog.js');
 
 const io = require('socket.io-client');
 let playerInfo;
@@ -45,7 +46,7 @@ class PlayerInfo {
 	await playerInfo.ready();
 
 	// Set up behaviour
-	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession)]);
+	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit()]);
 
 	// Check if a joinRoom link was used
 	const urlParams = new URLSearchParams(window.location.search);

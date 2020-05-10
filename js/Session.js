@@ -1,5 +1,7 @@
 'use strict';
 
+const { showDialog } = require('./webpage/dialog.js');
+
 class Session {
 	constructor(playerGame, cpuGames, roomId) {
 		this.playerGame = playerGame;
@@ -72,6 +74,7 @@ class Session {
 				break;
 			case 'Timeout':
 				console.log('Timed out.');
+				showDialog.timeout();
 				break;
 		}
 	}

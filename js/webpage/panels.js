@@ -447,12 +447,6 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		// Modal is not auto-cleared since a game does not start as a result
 		clearModal();
 	}
-
-	document.getElementById('forceStopAccept').onclick = () => {
-		document.getElementById('forceStopPenalty').style.display = 'none';
-		document.getElementById('modal-background-disable').style.display = 'none';
-	}
-
 	return new Promise(resolve => resolve());
 }
 
@@ -460,9 +454,8 @@ function panelsInit(playerInfo, stopCurrentSession) {
  * Removes all modal elements from view.
  */
 function clearModal() {
-	// Prevent closing modal boxes if penalty dialog box has not been closed yet
-	const forceStopPenalty = document.getElementById('forceStopPenalty');
-	if(forceStopPenalty.style.display !== 'none' && forceStopPenalty.style.display !== '') {
+	// Prevent closing modal boxes if any dialog box has not been closed yet
+	if(document.getElementById('modal-background-disable').style.display === 'block') {
 		return;
 	}
 

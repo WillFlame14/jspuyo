@@ -11,11 +11,10 @@ const { PUYO_COLOURS, COLOUR_LIST } = require('./Utils.js');
  */
 class DrawerWithPuyo {
     constructor() {
-        this.spriteDrawer = new SpriteDrawer();
         this.objectsDrawn = [];
     }
     drawObject(xPos, yPos, size, dX, dY) {
-        this.spriteDrawer.drawSprite(this.ctx, this.appearance, size, xPos, yPos, dX, dY);
+        SpriteDrawer.drawSprite(this.ctx, this.appearance, size, xPos, yPos, dX, dY);
         this.objectsDrawn.push({xPos, yPos, size, dX, dY});
     }
     drawPuyo(colour, size, directions = [], dX, dY) {

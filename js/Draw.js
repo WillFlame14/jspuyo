@@ -14,6 +14,7 @@ const SUB_SCALE_FACTOR = 1.05;
  * Use drawSprite to draw a specific sprite at a specific size onto a desired canvas
  *
  */
+
 class SpriteDrawer {
     /**
      * @param   {CanvasRenderingContext2D}  ctx         The context to draw on
@@ -27,12 +28,13 @@ class SpriteDrawer {
      * @param   {Number}                    sHeight     How many rows tall the sprite is on the sheet
      * @param   {Boolean}                   merge       If the sprite should be scaled up slightly to ensure visual contiguity
      */
-    drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1, merge = true) {
+
+    static drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1, merge = true) {
         const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
-        if (this.loadSprite(spriteSheet, sourceSize) === true) {
+        if (SpriteDrawer.loadSprite(spriteSheet, sourceSize) === true) {
             const canvasName = 'c' + sourceSize.toString();
             ctx.drawImage(
-                this[spriteSheet][canvasName],
+                SpriteDrawer[spriteSheet][canvasName],
                 (sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
                 (sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
@@ -45,37 +47,37 @@ class SpriteDrawer {
     }
     // Loads canvas with scaled sprite sheet if it hasn't been done yet
     // Will return false if the original image hasn't been loaded and cannot be accessed to scale into a canvas
-    loadSprite(spriteSheet, size) {
-        this.loadImage(spriteSheet);
-        if(this[spriteSheet].image.loaded === false) {
+    static loadSprite(spriteSheet, size) {
+        SpriteDrawer.loadImage(spriteSheet);
+        if(SpriteDrawer[spriteSheet].image.loaded === false) {
             return false;
         } else {
             const canvasName = 'c' + size.toString();
-            // this[spriteSheet][canvasName] is an html canvas object
-            // e.g. this['aqua']['c50'] or this.aqua.c50 is a canvas that has aqua.png drawn with unit size 50
-            if(this[spriteSheet][canvasName] == null) {
-                this[spriteSheet][canvasName] = document.createElement('canvas');
-                this[spriteSheet][canvasName].width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
-                this[spriteSheet][canvasName].height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
-                this[spriteSheet][canvasName].getContext('2d').drawImage(
-                    this[spriteSheet].image,
+            // SpriteDrawer[spriteSheet][canvasName] is an html canvas object
+            // e.g. SpriteDrawer['Aqua']['c50'] or SpriteDrawer.Aqua.c50 is a canvas that has Aqua.png drawn with unit size 50
+            if(SpriteDrawer[spriteSheet][canvasName] == null) {
+                SpriteDrawer[spriteSheet][canvasName] = document.createElement('canvas');
+                SpriteDrawer[spriteSheet][canvasName].width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
+                SpriteDrawer[spriteSheet][canvasName].height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
+                SpriteDrawer[spriteSheet][canvasName].getContext('2d').drawImage(
+                    SpriteDrawer[spriteSheet].image,
                     0, 0,
-                    this[spriteSheet][canvasName].width, this[spriteSheet][canvasName].height
+                    SpriteDrawer[spriteSheet][canvasName].width, SpriteDrawer[spriteSheet][canvasName].height
                 );
             }
             return true;
         }
     }
     // Loads sprite sheet image if it hasn't been done yet
-    loadImage(spriteSheet) {
-        if(this[spriteSheet] == null) {
-            this[spriteSheet] = {};
-            this[spriteSheet].image = new Image();
-            this[spriteSheet].image.loaded = false;
-            this[spriteSheet].image.addEventListener('load', function() {
+    static loadImage(spriteSheet) {
+        if(SpriteDrawer[spriteSheet] == null) {
+            SpriteDrawer[spriteSheet] = {};
+            SpriteDrawer[spriteSheet].image = new Image();
+            SpriteDrawer[spriteSheet].image.loaded = false;
+            SpriteDrawer[spriteSheet].image.addEventListener('load', function() {
                 this.loaded = true;
             });
-            this[spriteSheet].image.src = '../images/' + spriteSheet + ".png";
+            SpriteDrawer[spriteSheet].image.src = '../images/' + spriteSheet + ".png";
         }
     }
 }

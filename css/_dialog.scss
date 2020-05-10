@@ -1,0 +1,17 @@
+@use "base";
+
+.dialog {
+	display: none;
+	width: 30%;
+	margin-top: 20%;
+
+	color: white;
+
+	font: 28px base.$font-title;
+	text-align: center;
+
+	input {
+		display: block;
+		margin: 3px auto;
+	}
+}

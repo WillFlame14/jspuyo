@@ -17,6 +17,7 @@ class Game {
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
+		this.paused = false;
 
 		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
@@ -48,7 +49,7 @@ class Game {
 		});
 
 		this.socket.on('activateNuisance', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			this.activeNuisance += this.visibleNuisance[gameId];
@@ -56,7 +57,7 @@ class Game {
 		});
 
 		this.socket.on('gameOver', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			// Do not log to console for CPUs
@@ -70,7 +71,7 @@ class Game {
 		});
 
 		this.socket.on('playerDisconnect', gameId => {
-			if(!opponentIds.includes(gameId)) {
+			if(!this.opponentIds.includes(gameId)) {
 				return;
 			}
 			// Do not log to console for CPUs
@@ -80,6 +81,32 @@ class Game {
 			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'OppDisconnect';
+			}
+		});
+
+		this.socket.on('pause', () => {
+			this.paused = true;
+		});
+
+		this.socket.on('play', () => {
+			this.paused = false;
+		});
+
+		this.socket.on('timeout', () => {
+			this.endResult = 'Timeout';
+		});
+
+		this.socket.on('timeoutDisconnect', gameId => {
+			if(!this.opponentIds.includes(gameId)) {
+				return;
+			}
+			// Do not log to console for CPUs
+			if(this.gameId > 0) {
+				console.log('Player with id ' + gameId + ' has timed out.');
+			}
+			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'Win';
 			}
 		});
 
@@ -125,6 +152,11 @@ class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
+		// Do not step if game paused
+		if(this.paused) {
+			return;
+		}
+
 		let currentBoardHash = null;
 
 		// Isolated puyo currently dropping

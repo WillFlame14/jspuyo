@@ -403,13 +403,27 @@ function objectCopy(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * Clamps a number between a minimum and maximum number.
+ */
+function clampBetween(value, min, max) {
+	if(value < min) {
+		return min;
+	}
+	else if(value > max) {
+		return max;
+	}
+	return value;
+}
+
 const Utils = {
 	getRandomColour,
 	getOtherPuyo,
 	getDropFrames,
 	calculateScore,
 	calculateNuisance,
-	objectCopy
+	objectCopy,
+	clampBetween
 }
 
 module.exports = {

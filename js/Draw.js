@@ -40,7 +40,7 @@ class SpriteDrawer {
                 cX - sWidth * sourceSize / 2, cY - sHeight * sourceSize / 2,
                 sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
                 sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT
-            )
+            );
         }
     }
     // Loads canvas with scaled sprite sheet if it hasn't been done yet

@@ -96,7 +96,7 @@ const checkBetweenEq = function(value, min, max) {
 		return number;
 	}
 	return undefined;
-}
+};
 
 const checkPositiveInteger = function(value) {
 	const number = Number(value);
@@ -104,7 +104,7 @@ const checkPositiveInteger = function(value) {
 		return Math.floor(number);
 	}
 	return undefined;
-}
+};
 
 const checkNonnegativeDecimal = function(value) {
 	const number = Number(value);
@@ -112,7 +112,7 @@ const checkNonnegativeDecimal = function(value) {
 		return number;
 	}
 	return undefined;
-}
+};
 
 class SettingsBuilder {
 	constructor() {
@@ -424,7 +424,7 @@ const Utils = {
 	calculateNuisance,
 	objectCopy,
 	clampBetween
-}
+};
 
 module.exports = {
 	COLOUR_LIST,
@@ -435,4 +435,4 @@ module.exports = {
 	UserSettings,
 	AudioPlayer,
 	Utils
-}
+};

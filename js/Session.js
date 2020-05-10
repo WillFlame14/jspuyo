@@ -12,7 +12,7 @@ class Session {
 
 	run() {
 		const main = () => {
-			let mainFrame =  window.requestAnimationFrame(main);
+			const mainFrame = window.requestAnimationFrame(main);
 
 			if(this.stopped) {
 				window.cancelAnimationFrame(mainFrame);
@@ -51,7 +51,7 @@ class Session {
 				}
 			});
 			this.cpuGames = this.cpuGames.filter(cpuGame => !cpuGame.remove);
-		}
+		};
 		main();
 	}
 

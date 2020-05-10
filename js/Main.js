@@ -11,7 +11,6 @@ const { panelsInit, clearModal } = require('./webpage/panels.js');
 const { dialogInit } = require('./webpage/dialog.js');
 
 const io = require('socket.io-client');
-let playerInfo;
 
 class PlayerInfo {
 	constructor() {
@@ -42,7 +41,7 @@ class PlayerInfo {
 
 // Initialize session. This function is only run once.
 (async function () {
-	playerInfo = new PlayerInfo();
+	const playerInfo = new PlayerInfo();
 	await playerInfo.ready();
 
 	// Set up behaviour
@@ -125,14 +124,15 @@ async function init(playerInfo) {
 
 		// Create the CPU games
 		const cpuGames = cpus.map(cpu => {
-			const { gameId, speed, ai } = cpu;
+			const { speed, ai } = cpu;
+			const cpuId = cpu.gameId;
 			const thisSocket = io();
 			const thisOppIds = allIds.slice();
 			// Remove the cpu player from list of ids
-			thisOppIds.splice(allIds.indexOf(gameId), 1);
+			thisOppIds.splice(allIds.indexOf(cpuId), 1);
 
 			const thisGame = new CpuGame(
-				gameId,
+				cpuId,
 				thisOppIds,
 				thisSocket,
 				boardDrawerCounter,
@@ -143,7 +143,7 @@ async function init(playerInfo) {
 			);
 
 			boardDrawerCounter++;
-			return { game: thisGame, socket: thisSocket, gameId, remove: false };
+			return { game: thisGame, socket: thisSocket, cpuId, remove: false };
 		});
 
 		// Create the session
@@ -175,12 +175,11 @@ function stopCurrentSession() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateBoards (size) {
+function generateBoards (numBoards) {
 	const playArea = document.getElementById('playArea');
 	playArea.style.display = 'table';
-	
-	const firstRow = playArea.insertRow(-1);
 
+	const firstRow = playArea.insertRow(-1);
 	let runningId = 1;
 
 	const createGameCanvas = function(id, row, size) {
@@ -228,40 +227,40 @@ function generateBoards (size) {
 		pointsDisplay.id = 'pointsDisplay' + id;
 		pointsDisplay.className = 'pointsDisplay';
 		pointsDisplay.innerHTML = '00000000';
-		pointsDisplay.style.fontSize  = 52 * size;
+		pointsDisplay.style.fontSize = 52 * size;
 		pointsArea.appendChild(pointsDisplay);
 
 		return board;
 	};
 
-	let playerBoard = createGameCanvas(runningId, firstRow, 1);
+	const playerBoard = createGameCanvas(runningId, firstRow, 1);
 	runningId++;
 
 	// Set up the number of boards displayed
-	if(size < 5) {
-		for(let i = 0; i < size - 1; i++) {
+	if(numBoards < 5) {
+		for(let i = 0; i < numBoards - 1; i++) {
 			createGameCanvas(runningId, firstRow, 1);
 			runningId++;
 		}
 	}
-	else if (size < 10) {
+	else if (numBoards < 10) {
 		playerBoard.setAttribute('rowspan', '2');
 		// Create a larger top row
-		for(let i = 0; i < Math.ceil((size - 1) / 2); i++) {
+		for(let i = 0; i < Math.ceil((numBoards - 1) / 2); i++) {
 			createGameCanvas(runningId, firstRow, 0.5);
 			runningId++;
 		}
 		// And a smaller bottom row
 		const secondRow = playArea.insertRow(-1);
-		for(let i = 0; i < Math.floor((size - 1) / 2); i++) {
+		for(let i = 0; i < Math.floor((numBoards - 1) / 2); i++) {
 			createGameCanvas(runningId, secondRow, 0.5);
 			runningId++;
 		}
 	}
 	else {
 		playerBoard.setAttribute('rowspan', '3');
-		const minPerRow = Math.floor((size - 1) / 3);
-		let extras = size - 1 - minPerRow * 3;
+		const minPerRow = Math.floor((numBoards - 1) / 3);
+		let extras = numBoards - 1 - minPerRow * 3;
 		// Spread rows over the first two rows
 		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
 			createGameCanvas(runningId, firstRow, 0.33);

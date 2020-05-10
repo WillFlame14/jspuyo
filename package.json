@@ -5,6 +5,7 @@
   "main": "Main.js",
   "scripts": {
     "bundle": "watchify js/Main.js -o bundle.js --debug",
+    "eslint": "eslint js/ --fix",
     "node": "node js/server.js",
     "sass": "sass --watch css/style.scss style.css",
     "start": "npm-run-all --parallel bundle node sass",
@@ -32,6 +33,8 @@
     "chai-exclude": "^2.0.2",
     "deep-equal-in-any-order": "^1.0.27",
     "eslint": "^6.8.0",
+    "husky": "^4.2.5",
+    "lint-staged": "^10.2.2",
     "mocha": "^7.1.1",
     "npm-run-all": "^4.1.5",
     "postcss": "^7.0.28",
@@ -42,5 +45,14 @@
     "stylelint-order": "^4.0.0",
     "uglifyify": "^5.0.2",
     "watchify": "^3.11.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix",
+    "*.scss": "stylelint --fix"
   }
 }

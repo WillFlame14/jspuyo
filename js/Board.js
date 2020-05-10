@@ -119,7 +119,7 @@ class Board {
 			}
 			// Done with all branches, return the findings
 			return chain_puyos;
-		}
+		};
 
 		/**
 		 * Determines if the visited array contains the passed location.
@@ -127,7 +127,7 @@ class Board {
 		const notVisited = function(location) {
 			const { col, row } = location;
 			return visited.filter(loc => loc.col === col && loc.row === row).length === 0;
-		}
+		};
 
 		/**
 		 * Determines the connected direction of puyos from x and y translation.
@@ -139,7 +139,7 @@ class Board {
 			else if(y === 0) {
 				return x === -1 ? 'Left' : 'Right';
 			}
-		}
+		};
 
 		// Iterate through the entire board to find all starting points
 		for(let i = 0; i < board.boardState.length; i++) {
@@ -224,7 +224,8 @@ class Board {
 	 * Returns the number of nuisance puyo dropped.
 	 */
 	dropNuisance(nuisance) {
-		let nuisanceDropped = 0, nuisanceArray = [];
+		let nuisanceDropped = 0;
+        const nuisanceArray = [];
 
 		for(let i = 0; i < this.width; i++) {
 			nuisanceArray.push([]);
@@ -258,7 +259,7 @@ class Board {
 
 			// Randomly drop the remaining nuisance
 			for(let i = 0; i < remaining; i++) {
-				let column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
+				const column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
 				nuisanceArray[column].push(PUYO_COLOURS['Gray']);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}

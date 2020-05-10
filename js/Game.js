@@ -97,6 +97,9 @@ class Game {
 		});
 
 		this.socket.on('timeoutDisconnect', gameId => {
+			if(!this.opponentIds.includes(gameId)) {
+				return;
+			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
 				console.log('Player with id ' + gameId + ' has timed out.');

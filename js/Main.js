@@ -58,6 +58,7 @@ class PlayerInfo {
 	}
 	else {
 		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId });
+		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 	}
 })();
 

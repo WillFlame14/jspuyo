@@ -73,7 +73,6 @@ class Session {
 				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
 				break;
 			case 'Timeout':
-				console.log('Timed out.');
 				showDialog.timeout();
 				break;
 		}

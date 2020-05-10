@@ -41,6 +41,7 @@ function createRoom(members, roomSize, settingsString, roomType = null) {
 		cpu: roomType === 'cpu',
 		quickPlay: roomType === 'ffa',
 		paused: [],
+		spectating: [],
 		timeout: null
 	};
 
@@ -173,7 +174,6 @@ function leaveRoom(gameId, roomId) {
 		// Game is waiting or in queue, so send update to all members
 		else {
 			remainingIds.filter(id => id > 0).forEach(playerId => {
-				console.log(`sending update to ${playerId}`);
 				room.members[playerId].socket.emit('roomUpdate', remainingIds, room.roomSize, room.settingsString, room.quickPlay);
 			});
 
@@ -336,10 +336,12 @@ io.on('connection', function(socket) {
 		let minSteps = Infinity, minId = null;
 
 		Object.keys(room.members).forEach(id => {
-			const frames = room.members[id].frames;
-			if(frames < minSteps) {
-				minSteps = frames;
-				minId = id;
+			if(!room.spectating.includes(Number(id))) {		// Exclude spectators
+				const frames = room.members[id].frames;
+				if(frames < minSteps) {
+					minSteps = frames;
+					minId = id;
+				}
 			}
 		});
 
@@ -410,6 +412,7 @@ io.on('connection', function(socket) {
 		if(gameId < 0) {
 			socket.disconnect();
 		}
+		rooms[idToRoomMap[gameId]].spectating.push(gameId);
 	});
 
 	// Game is over for all players

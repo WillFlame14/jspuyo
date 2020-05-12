@@ -5,8 +5,17 @@ const { SpriteDrawer } = require('./Draw.js');
 const { PUYO_COLOURS, COLOUR_LIST } = require('./Utils.js');
 
 class DrawingLayer {
-    constructor(width, height) {
-
+    constructor(width, height, className) {
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = width;
+            this.canvas.height = height;
+            if (className) {
+                this.canvas.className = className;
+            }
+            this.ctx = this.canvas.getContext('2d');
+    }
+    drawHere(spriteSheet, size, ) {
+        SpriteDrawer.drawSprite(this.ctx, )
     }
 }
 

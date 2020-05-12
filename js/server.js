@@ -55,7 +55,7 @@ io.on('connection', function(socket) {
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 
-		const roomId = Room.createRoom(members, roomSize, settingsString);
+		const roomId = Room.createRoom(members, roomSize, settingsString).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 
@@ -95,10 +95,13 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on('freeForAll', gameInfo => {
+	socket.on('freeForAll', (gameInfo, suppress) => {
 		const { gameId } = gameInfo;
 
-		Room.leaveRoom(gameId);
+		// Suppress error from leaving non-existent room
+		if(!suppress === 'suppress') {
+			Room.leaveRoom(gameId);
+		}
 
 		if(Room.defaultQueueRoomId === null) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
@@ -108,13 +111,14 @@ io.on('connection', function(socket) {
 		}
 		else {
 			try {
+				console.log('default queue room id is ' + Room.defaultQueueRoomId);
 				const room = Room.joinRoom(gameId, Room.defaultQueueRoomId, socket);
 
-				// Start game in 1 minute if there are at least 2 players
+				// Start game in 30s if there are at least 2 players
 				if(room.members.size >= 2 && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
 						Room.startRoom(room.roomId);
-					}, 60000);
+					}, 30000);
 				}
 			}
 			catch(err) {
@@ -222,8 +226,12 @@ io.on('connection', function(socket) {
 	});
 
 	// Game is over for all players
-	socket.on('gameEnd', gameId => {
-		Room.disconnectAll(gameId);
+	socket.on('gameEnd', roomId => {
+		Room.disconnectAll(roomId);
+	});
+
+	socket.on('forceDisconnect', gameId => {
+		Room.leaveRoom(gameId);
 	});
 
 	socket.on('disconnect', () => {

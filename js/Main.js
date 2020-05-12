@@ -9,6 +9,7 @@ const { Utils, Settings, UserSettings } = require('./Utils.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
 const { dialogInit } = require('./webpage/dialog.js');
+const { updatePlayers, hidePlayers } = require('./webpage/mainpage.js');
 
 const io = require('socket.io-client');
 
@@ -56,7 +57,7 @@ class PlayerInfo {
 		console.log('Joining a room...');
 	}
 	else {
-		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId });
+		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId }, 'suppress');
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 	}
 })();
@@ -73,15 +74,14 @@ async function init(playerInfo) {
 
 	socket.on('roomUpdate', (allIds, roomSize, settingsString, quickPlay) => {
 		clearModal();
+		clearBoards();
+		generateBoards(1);
+		document.getElementById('main-content').style.gridTemplateColumns = '40% 38% 22%';
 		document.getElementById('statusArea').style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
 		const statusSettings = document.getElementById('statusSettings');
 		console.log('Current players: ' + JSON.stringify(allIds));
-
-		// Adjust the number of boards drawn
-		clearBoards();
-		generateBoards(allIds.length);
 
 		if(quickPlay) {
 			if (allIds.length === 1) {
@@ -95,11 +95,14 @@ async function init(playerInfo) {
 			statusMsg.innerHTML = 'Room size: ' + (allIds.length) + '/' + roomSize + ' players';
 		}
 		statusSettings.innerHTML = 'Settings: ' + settingsString;
+
+		updatePlayers(allIds);
 	});
 
 	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
 		clearModal();
 		document.getElementById('statusArea').style.display = 'none';
+		document.getElementById('main-content').style.gridTemplateColumns = '100% 0% 0%';
 
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
@@ -116,6 +119,7 @@ async function init(playerInfo) {
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(opponentIds.length + cpus.length + 1);
+		hidePlayers();
 
 		// Set up the player's game
 		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettingsCopy);
@@ -147,7 +151,7 @@ async function init(playerInfo) {
 
 		// Create the session
 		const playerGame = { game, socket, gameId };
-		currentSession = new Session(playerGame, cpuGames);
+		currentSession = new Session(playerGame, cpuGames, roomId);
 		currentSession.run();
 	});
 

@@ -1,5 +1,11 @@
 @use "base";
 
+#main-content {
+	display: grid;
+	grid-template-rows: auto;
+	grid-template-columns: 40% 38% 22%;
+}
+
 .nuisanceQueue {
 	margin: none;
 
@@ -17,14 +23,17 @@
 }
 
 #playArea {
-	display: inline;
+	margin: 0px auto;
 }
 
 .status {
+	right: 20px;
+
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
-	width: 40%;
+	width: 80%;
+	margin: 0px 15% 0px 5%;
 
 	color: white;
 	font: 52px base.$font-title;
@@ -35,4 +44,59 @@
 
 #statusGamemode {
 	font: 56px "Rock Salt", sans-serif;
+}
+
+.playersDisplay {
+	height: 45%;
+
+	background-color: #2a2a2a;
+}
+
+#playersTitle {
+	z-index: 50;
+
+	margin-top: -70px;
+	padding: 10px 0px;
+
+	color: white;
+	font: 42px base.$font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px base.$dark-gray;
+
+	background-color: #232323;
+}
+
+.playerList {
+	height: 230px;
+	margin: 0px;
+	padding: 0px;
+	overflow-y: auto;
+
+	color: white;
+	font: 24px base.$font-title;
+
+	list-style: none;
+}
+
+.playerIndividual {
+	display: grid;
+	grid-template-columns: 15% 65% 20%;
+	padding: 8px 5px;
+
+	img {
+		width: 30px;
+		margin: auto 30% auto 10%;
+	}
+
+	&:nth-child(even) {
+		background: base.$dark-gray;
+	}
+
+	&:nth-child(odd) {
+		background: #565656;
+	}
+
+	&:first-child {
+		box-shadow: 0px 3px 5px -3px base.$dark-gray inset;
+	}
 }

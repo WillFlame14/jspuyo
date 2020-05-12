@@ -17,6 +17,25 @@ class Room {
 		this.paused = [];
 		this.spectating = [];
 		this.timeout = null;
+
+		switch(this.roomType) {
+			case 'ffa':
+				Room.defaultQueueRoomId = this.roomId;
+				break;
+			case 'ranked':
+				Room.rankedRoomId = this.roomId;
+				break;
+		}
+
+		this.members.forEach((player, gameId) => {
+			idToRoomId.set(gameId, this.roomId);
+
+			// Send update to all players
+			if(gameId > 0) {
+				player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+			}
+		});
+		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()))}`);
 	}
 
 	/**
@@ -35,19 +54,18 @@ class Room {
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
 		// Room is full
-		if(this.members.size === this.roomSize) {
-			// Dynamic allocation of size for FFA matches
-			if(this.roomType === 'ffa') {
-				this.roomSize++;
-			}
-			else {
-				this.start();
-			}
+		if(this.members.size === this.roomSize && this.roomType !== 'ffa') {
+			this.start();
 		}
 		// Room is not full yet - send progress update to all members who are not CPUs
 		else {
+			// Dynamic allocation of size for FFA matches (even if it might be full)
+			if(this.roomType === 'ffa') {
+				this.roomSize++;
+			}
 			this.members.forEach((player, id) => {
 				if(id > 0) {
+					console.log('sending update to ' + id);
 					player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 				}
 			});
@@ -123,12 +141,12 @@ class Room {
 			else {
 				this.members.forEach((player, id) => {
 					if(id > 0) {
-						player.socket.emit('roomUpdate', this.members, this.roomSize, this.settingsString, this.roomType === 'ffa');
+						player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 					}
 				});
 
 				// Cancel start if not enough players
-				if(this.roomType === 'ffa' && this.members.size < 2) {
+				if(this.roomType === 'ffa' && this.members.size < 2 && this.quickPlayTimer !== null) {
 					clearTimeout(this.quickPlayTimer);
 					this.quickPlayTimer = null;
 					console.log('Cancelled start. Not enough players.');
@@ -148,26 +166,6 @@ class Room {
 	static createRoom(members, roomSize, settingsString, roomType = 'default') {
 		const room = new Room(members, roomSize, settingsString, roomType);
 		roomIdToRoom.set(room.roomId, room);
-
-		switch(roomType) {
-			case 'ffa':
-				Room.defaultQueueRoomId = room.roomId;
-				break;
-			case 'ranked':
-				Room.rankedRoomId = room.roomId;
-				break;
-		}
-
-		room.members.forEach((player, gameId) => {
-			idToRoomId.set(gameId, room.roomId);
-
-			// Send update to all players
-			if(gameId > 0) {
-				player.socket.emit('roomUpdate', Array.from(room.members.keys()), room.roomSize, room.settingsString, room.roomType === 'ffa');
-				player.socket.join(room.roomId);
-			}
-		});
-		console.log(`Creating room ${room.roomId} with gameIds: ${Array.from(room.members.keys())}`);
 		return room;
 	}
 
@@ -202,17 +200,19 @@ class Room {
 
 	static spectateOwnRoom(gameId) {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+		if(room === undefined) {
+			console.log(`Attempted to make ${gameId} a spectator, but they were not in a room.`);
+			return;
+		}
 		room.spectating.push(gameId);
 	}
 
-	static disconnectAll(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+	static disconnectAll(roomId) {
+		const room = roomIdToRoom.get(roomId);
 
 		// Game has already been ended (usually caused by leaving a CPU game)
 		if(room === undefined) {
-			if(gameId !== undefined) {
-				console.log(`ERROR: Received game end signal from gameId ${gameId} that was not assigned to a room.`);
-			}
+			console.log(`ERROR: Received game end signal from non-existent room ${roomId}.`);
 			return;
 		}
 

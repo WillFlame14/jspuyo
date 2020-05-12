@@ -474,6 +474,7 @@ function clearModal() {
 }
 
 module.exports = {
+	puyoImgs,
 	panelsInit,
 	clearModal
 };

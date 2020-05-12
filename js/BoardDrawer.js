@@ -4,6 +4,12 @@ const { Board } = require('./Board.js');
 const { SpriteDrawer } = require('./Draw.js');
 const { PUYO_COLOURS, COLOUR_LIST } = require('./Utils.js');
 
+class DrawingLayer {
+    constructor(width, height) {
+
+    }
+}
+
 /**
  * Class to manage updating for any canvas that draws Puyo (the main board or the queue).
  * The settings should not change over the span of the drawer being used

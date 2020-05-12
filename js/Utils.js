@@ -96,7 +96,7 @@ const checkBetweenEq = function(value, min, max) {
 		return number;
 	}
 	return undefined;
-}
+};
 
 const checkPositiveInteger = function(value) {
 	const number = Number(value);
@@ -104,7 +104,7 @@ const checkPositiveInteger = function(value) {
 		return Math.floor(number);
 	}
 	return undefined;
-}
+};
 
 const checkNonnegativeDecimal = function(value) {
 	const number = Number(value);
@@ -112,7 +112,7 @@ const checkNonnegativeDecimal = function(value) {
 		return number;
 	}
 	return undefined;
-}
+};
 
 class SettingsBuilder {
 	constructor() {
@@ -403,14 +403,28 @@ function objectCopy(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * Clamps a number between a minimum and maximum number.
+ */
+function clampBetween(value, min, max) {
+	if(value < min) {
+		return min;
+	}
+	else if(value > max) {
+		return max;
+	}
+	return value;
+}
+
 const Utils = {
 	getRandomColour,
 	getOtherPuyo,
 	getDropFrames,
 	calculateScore,
 	calculateNuisance,
-	objectCopy
-}
+	objectCopy,
+	clampBetween
+};
 
 module.exports = {
 	COLOUR_LIST,
@@ -421,4 +435,4 @@ module.exports = {
 	UserSettings,
 	AudioPlayer,
 	Utils
-}
+};

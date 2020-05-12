@@ -17,6 +17,7 @@ class Game {
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
+		this.paused = false;
 
 		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
@@ -40,46 +41,72 @@ class Game {
 		this.socket = socket;
 		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
-		this.socket.on('sendNuisance', (gameId, nuisance) => {
-			if(!this.opponentIds.includes(gameId)) {
+		this.socket.on('sendNuisance', (oppId, nuisance) => {
+			if(!this.opponentIds.includes(oppId)) {
 				return;
 			}
-			this.visibleNuisance[gameId] += nuisance;
+			this.visibleNuisance[oppId] += nuisance;
 		});
 
-		this.socket.on('activateNuisance', gameId => {
-			if(!opponentIds.includes(gameId)) {
+		this.socket.on('activateNuisance', oppId => {
+			if(!this.opponentIds.includes(oppId)) {
 				return;
 			}
-			this.activeNuisance += this.visibleNuisance[gameId];
-			this.visibleNuisance[gameId] = 0;
+			this.activeNuisance += this.visibleNuisance[oppId];
+			this.visibleNuisance[oppId] = 0;
 		});
 
-		this.socket.on('gameOver', gameId => {
-			if(!opponentIds.includes(gameId)) {
+		this.socket.on('gameOver', oppId => {
+			if(!this.opponentIds.includes(oppId)) {
 				return;
 			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
-				console.log('Player with id ' + gameId + ' has topped out.');
+				console.log('Player with id ' + oppId + ' has topped out.');
 			}
-			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'Win';
 			}
 		});
 
-		this.socket.on('playerDisconnect', gameId => {
-			if(!opponentIds.includes(gameId)) {
+		this.socket.on('playerDisconnect', oppId => {
+			if(!this.opponentIds.includes(oppId)) {
 				return;
 			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
-				console.log('Player with id ' + gameId + ' has disconnected.');
+				console.log('Player with id ' + oppId + ' has disconnected.');
 			}
-			this.opponentIds.splice(this.opponentIds.indexOf(gameId), 1);
+			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
 				this.endResult = 'OppDisconnect';
+			}
+		});
+
+		this.socket.on('pause', () => {
+			this.paused = true;
+		});
+
+		this.socket.on('play', () => {
+			this.paused = false;
+		});
+
+		this.socket.on('timeout', () => {
+			this.endResult = 'Timeout';
+		});
+
+		this.socket.on('timeoutDisconnect', oppId => {
+			if(!this.opponentIds.includes(oppId)) {
+				return;
+			}
+			// Do not log to console for CPUs
+			if(this.gameId > 0) {
+				console.log('Player with id ' + oppId + ' has timed out.');
+			}
+			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
+			if(this.opponentIds.length === 0) {
+				this.endResult = 'Win';
 			}
 		});
 
@@ -125,6 +152,11 @@ class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step() {
+		// Do not step if game paused
+		if(this.paused) {
+			return;
+		}
+
 		let currentBoardHash = null;
 
 		// Isolated puyo currently dropping
@@ -161,7 +193,7 @@ class Game {
 				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
-					
+
 					// Only do not start squishing puyos if drop was split
 					if(this.currentDrop.schezo.y === null) {
 						this.squishState.currentFrame = 0;
@@ -278,7 +310,7 @@ class Game {
 			this.nuisanceState.currentFrame = 1;
 
 			let maxFrames = 0;
-			let nuisanceCascadeFPR = [];
+			const nuisanceCascadeFPR = [];
 
 			for (let i = 0; i < this.settings.cols; i++) {
 				// Generate a semi-random value for "frames per row"
@@ -573,7 +605,7 @@ class Game {
 		// Force round the schezo before it is put on the stack
 		currentDrop.schezo.x = Math.round(currentDrop.schezo.x);
 
-		if(currentDrop.arle.x == currentDrop.schezo.x) {		// vertical orientation
+		if(currentDrop.arle.x === currentDrop.schezo.x) {		// vertical orientation
 			if(currentDrop.arle.y < currentDrop.schezo.y) {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
@@ -619,9 +651,9 @@ class Game {
 		// Update target points if margin time is in effect
 		this.settings.checkMarginTime();
 
-		let { nuisanceSent, leftoverNuisance } =
-			Utils.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
-		this.leftoverNuisance = leftoverNuisance;
+		const result = Utils.calculateNuisance(this.currentScore - this.preChainScore, this.settings.targetPoints, this.leftoverNuisance);
+		let { nuisanceSent } = result;
+		this.leftoverNuisance = result.leftoverNuisance;
 
 		// Send an extra rock if all clear
 		if(this.allClear) {

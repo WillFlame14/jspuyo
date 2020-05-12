@@ -28,23 +28,23 @@ class PlayerGame extends Game {
 		});
 
 		// eslint-disable-next-line no-unused-vars
-		this.socket.on('sendState', (gameId, boardHash, score, nuisance) => {
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
-			if(!this.opponentIds.includes(gameId) || gameId < 0) {
+			if(!this.opponentIds.includes(oppId) || oppId < 0) {
 				return;
 			}
 			if(frame === 0) {
-				this.opponentBoardDrawers[gameId].drawFromHash(boardHash);
+				this.opponentBoardDrawers[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
 			else{
 				frame--;
 			}
-			this.updateOpponentScore(gameId, score);
+			this.updateOpponentScore(oppId, score);
 		});
 
-		this.socket.on('sendSound', (gameId, sfx_name, index) => {
-			if(!this.opponentIds.includes(gameId)) {
+		this.socket.on('sendSound', (oppId, sfx_name, index) => {
+			if(!this.opponentIds.includes(oppId)) {
 				return;
 			}
 			this.audioPlayer.playSfx(sfx_name, index);
@@ -62,8 +62,8 @@ class PlayerGame extends Game {
 	/**
 	 * Updates the score for opponents.
 	 */
-	updateOpponentScore(gameId, score) {
-		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[gameId];
+	updateOpponentScore(oppId, score) {
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[oppId];
 		const pointsDisplay = document.getElementById(pointsDisplayName);
 
 		// Make sure element exists

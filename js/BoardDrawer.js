@@ -150,7 +150,7 @@ class BoardDrawer extends DrawerWithPuyo {
         // Clear list of drawn objects
         this.objectsDrawn = [];
 
-        let ctx = this.ctx;
+        const ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
@@ -163,7 +163,7 @@ class BoardDrawer extends DrawerWithPuyo {
         connections.forEach(group => {
             group.forEach(puyo => {
                 this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
-            })
+            });
         });
 
         if (currentDrop.schezo.y != null) {
@@ -187,7 +187,7 @@ class BoardDrawer extends DrawerWithPuyo {
         // Clear list of drawn objects
         this.objectsDrawn = [];
 
-        let ctx = this.ctx;
+        const ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
@@ -201,7 +201,7 @@ class BoardDrawer extends DrawerWithPuyo {
             connections.forEach(group => {
                 group.filter(puyo => !poppedLocs.some(puyo2 => puyo.col === puyo2.col && puyo.row === puyo2.row)).forEach(puyo => {
                     this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
-                })
+                });
             });
 
             poppedLocs.forEach(puyo => {
@@ -220,7 +220,7 @@ class BoardDrawer extends DrawerWithPuyo {
             connectionsAfterPop.forEach(group => {
                 group.forEach(puyo => {
                     this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
-                })
+                });
             });
             // Unstable Puyos
             unstablePuyos.filter(puyo => !poppedLocs.some(puyo2 => puyo.col === puyo2.col && puyo.row === puyo2.row)).forEach(puyo => {
@@ -248,7 +248,7 @@ class BoardDrawer extends DrawerWithPuyo {
         // Clear list of drawn objects
         this.objectsDrawn = [];
 
-        let ctx = this.ctx;
+        const ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
@@ -261,7 +261,7 @@ class BoardDrawer extends DrawerWithPuyo {
         connections.forEach(group => {
             group.forEach(puyo => {
                 this.drawPuyo(puyo.colour, this.unitW, puyo.connections, this.unitW * puyo.col, - this.unitH * puyo.row);
-            })
+            });
         });
 
         for (let i = 0; i < cols; i++) {
@@ -278,10 +278,10 @@ class BoardDrawer extends DrawerWithPuyo {
     }
 
     drawFromHash(hash) {
-        let objects = JSON.parse(hash);
+        const objects = JSON.parse(hash);
         const {rows} = this.settings;
 
-        let ctx = this.ctx;
+        const ctx = this.ctx;
         ctx.clearRect(0, 0, this.width, this.height);
 
         // Save a canvas with the origin at the top left (every save coupled with a restore)
@@ -293,7 +293,7 @@ class BoardDrawer extends DrawerWithPuyo {
         objects.forEach(object => {
             const { xPos, yPos, size, dX, dY } = object;
             this.drawObject(xPos, yPos, size, dX, dY);
-        })
+        });
 
         ctx.restore();
     }

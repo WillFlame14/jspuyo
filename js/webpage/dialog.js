@@ -6,12 +6,12 @@ function dialogInit() {
 	document.getElementById('forceStopAccept').onclick = () => {
 		document.getElementById('forceStopPenalty').style.display = 'none';
 		dialogBackground.style.display = 'none';
-	}
+	};
 
 	document.getElementById('timeoutAccept').onclick = () => {
 		document.getElementById('timeoutInfo').style.display = 'none';
 		dialogBackground.style.display = 'none';
-	}
+	};
 }
 
 function timeout() {

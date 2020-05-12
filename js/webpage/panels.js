@@ -6,7 +6,7 @@ const { Utils, SettingsBuilder } = require('../Utils.js');
 const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
 
-let createRoomOptionsState = {
+const createRoomOptionsState = {
 	selectedMode: 'Tsu',
 	selectedPlayers: '4player',
 	numColours: 4,
@@ -17,7 +17,7 @@ let cpuRoomSettings = null;
 
 let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
-let keyBindings = {
+const keyBindings = {
 	moveLeft: 'ArrowLeft',
 	moveRight: 'ArrowRight',
 	rotateCCW: 'KeyZ',
@@ -39,10 +39,10 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 	// Manage window onclick
 	window.onclick = function(event) {
-		if (event.target == modal) {
+		if (event.target === modal) {
 			clearModal();
 		}
-	}
+	};
 
 	// Turns a code.event string into a more human-readable display
 	const codeToDisplay = function(code) {
@@ -70,7 +70,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			default:
 				return code.toUpperCase();
 		}
-	}
+	};
 
 	window.onkeydown = function(event) {
 		if(keyBindingRegistration !== null) {
@@ -81,7 +81,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 			keyBindingRegistration = null;
 		}
-	}
+	};
 
 	// Switch all toggleable buttons between on/off when clicked
 	Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off'))).forEach(button => {
@@ -96,7 +96,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 				button.value = "ON";
 				button.classList.remove('off');
 			}
-		}
+		};
 	});
 
 	// Queue Panel
@@ -104,12 +104,12 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		socket.emit('freeForAll', { gameId });
-	}
+	};
 	document.getElementById('ranked').onclick = () => {
 		stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId });
-	}
+	};
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
@@ -120,7 +120,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		document.getElementById('createRoomSubmit').value = 'Create Room';
 
 		createRoomTrigger = 'custom';
-	}
+	};
 
 	// Switch between Tsu and Fever mods on click
 	const modeIcon = document.getElementById('modeIcon');
@@ -135,7 +135,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 				createRoomOptionsState.selectedMode = "Tsu";
 				break;
 		}
-	}
+	};
 
 	// Maintain the currently selected button and highlight it
 	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
@@ -146,7 +146,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 				element.classList.add('selected');
 				createRoomOptionsState.selectedPlayers = element.id;
 			}
-		}
+		};
 	});
 
 	// Read the input field and update the number of colours displayed accordingly
@@ -183,7 +183,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			currentIndex++;
 		}
 		winConditionButton.value = winConditions[currentIndex];
-	}
+	};
 
 	document.getElementById('createRoomSubmit').onclick = function (event) {
 		event.preventDefault();		// Prevent submit button from refreshing the page
@@ -235,7 +235,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 				break;
 		}
 		createRoomTrigger = null;
-	}
+	};
 
 	// Back button between Room Options and CPU Options
 	document.getElementById('cpu-back').onclick = () => {
@@ -249,7 +249,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		// Tell the submit button to go to CPU Options next
 		createRoomTrigger = 'cpu';
-	}
+	};
 
 	// Receiving the id of the newly created room
 	socket.on('giveRoomId', id => {
@@ -260,7 +260,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	document.getElementById('joinRoom').onclick = () => {
 		modal.style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'block';
-	}
+	};
 
 	document.getElementById('joinIdForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
@@ -270,7 +270,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		stopCurrentSession();
 
 		socket.emit('joinRoom', { gameId, joinId, spectate: false});
-	}
+	};
 
 	// Received when room cannot be joined
 	socket.on('joinFailure', (errMessage) => {
@@ -289,7 +289,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		stopCurrentSession();
 		modal.style.display = 'block';
 		// TODO: Create a menu to select games to spectate
-	}
+	};
 
 	// Singleplayer Panel
 	const aiDropdown = document.createElement('select');
@@ -339,7 +339,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true);
 		cpuSpeedSliderClone.oninput = function() {
 			speedDisplayClone.innerHTML = this.value;
-		}
+		};
 		cpuOptionElement.appendChild(speedDisplayClone);
 		cpuOptionElement.appendChild(cpuSpeedSliderClone);
 
@@ -357,7 +357,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		// Flag to indicate that these room options are for a CPU game
 		createRoomTrigger = 'cpu';
-	}
+	};
 
 	document.getElementById('cpuOptionsSubmit').onclick = function() {
 		const { roomSize, settingsString } = cpuRoomSettings;
@@ -376,7 +376,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
 
 		cpuRoomSettings = null;
-	}
+	};
 
 	// Profile Panel - Settings
 	document.getElementById('settings').onclick = function() {
@@ -390,14 +390,14 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		});
 
 		document.getElementById('settingsModal').style.display = 'block';
-	}
+	};
 
 	// Attach onclick events for each key binding
 	Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
 		button.onclick = function() {
 			button.value = '...';
 			keyBindingRegistration = button.id;
-		}
+		};
 	});
 
 	// Attach onclick events for each icon
@@ -409,34 +409,34 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			// Add newly selected icon
 			icon.classList.add('selected');
 			selectedAppearance = icon.id;
-		}
+		};
 	});
 
 	document.getElementById('settingsSubmit').onclick = function() {
-		let das = Number(document.getElementById('das').value);
+		const das = Number(document.getElementById('das').value);
 		if(!Number.isNaN(das) && das >= 0) {
 			userSettings.set('das', das);
 		}
 
-		let arr = Number(document.getElementById('arr').value);
+		const arr = Number(document.getElementById('arr').value);
 		if(!Number.isNaN(arr) && arr >= 0) {
 			userSettings.set('arr', arr);
 		}
 
 		// Ranges from 0 to 50, default 50 - map to 50 to 0
-		let skipFrames = Number(document.getElementById('skipFrames').value);
+		const skipFrames = Number(document.getElementById('skipFrames').value);
 		if(!Number.isNaN(skipFrames)) {
 			userSettings.set('skipFrames', 50 - Math.floor(skipFrames));
 		}
 
 		// Ranges from 0 to 100, default 50
-		let sfxVolume = Number(document.getElementById('sfxVolume').value);
+		const sfxVolume = Number(document.getElementById('sfxVolume').value);
 		if(!Number.isNaN(sfxVolume)) {
 			userSettings.set('sfxVolume', (sfxVolume / 100)**2 * 0.4);
 		}
 
 		// Ranges from 0 to 100, default 50
-		let musicVolume = Number(document.getElementById('musicVolume').value);
+		const musicVolume = Number(document.getElementById('musicVolume').value);
 		if(!Number.isNaN(musicVolume)) {
 			userSettings.set('musicVolume', (musicVolume / 100)**2 * 0.4);
 		}
@@ -446,7 +446,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		// Modal is not auto-cleared since a game does not start as a result
 		clearModal();
-	}
+	};
 	return new Promise(resolve => resolve());
 }
 

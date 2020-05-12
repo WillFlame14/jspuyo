@@ -35,24 +35,30 @@ class Drop {
 			}
 		}
 
-		// Returns an array of colours based on the shape of the drop
-		const getPuyosFromShape = function (shape) {
-			const first_col = (colours && colours[0]) || Utils.getRandomColour(settings.numColours);
-			const second_col = (colours && colours[1]) || Utils.getRandomColour(settings.numColours);
-			switch(shape) {
-				case 'I':
-					return [first_col, second_col];
-				case 'h':
-					return [first_col, first_col, second_col];
-				case 'L':
-					return [first_col, second_col, second_col];
-				case 'H':
-					return [first_col, first_col, second_col, second_col];
-				case 'O':
-					return [first_col, first_col, first_col, first_col];
-			}
+		// Generate array of colours based on the shape of the drop
+		let puyos;
+		const first_col = (colours && colours[0]) || Utils.getRandomColour(settings.numColours);
+		const second_col = (colours && colours[1]) || Utils.getRandomColour(settings.numColours);
+
+		switch(shape) {
+			case 'I':
+				puyos = [first_col, second_col];
+				break;
+			case 'h':
+				puyos = [first_col, first_col, second_col];
+				break;
+			case 'L':
+				puyos = [first_col, second_col, second_col];
+				break;
+			case 'H':
+				puyos = [first_col, first_col, second_col, second_col];
+				break;
+			case 'O':
+				puyos = [first_col, first_col, first_col, first_col];
+				break;
 		}
-		return new Drop(shape, getPuyosFromShape(shape), settings);
+
+		return new Drop(shape, puyos, settings);
 	}
 
 	/**
@@ -118,10 +124,10 @@ class Drop {
 	 */
 	affectRotation() {
 		let angleToRotate;
-		if(this.rotating == 'CW') {
+		if(this.rotating === 'CW') {
 			angleToRotate = -Math.PI / (2 * this.settings.frames_per_rotation);
 		}
-		else if(this.rotating == 'CCW') {
+		else if(this.rotating === 'CCW') {
 			angleToRotate = Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else {
@@ -144,7 +150,7 @@ class Drop {
 		}
 
 		// Check if reached a right angle
-		if(Math.round(this.standardAngle * 10000) % Math.round(Math.PI  * 5000) < 0.01) {
+		if(Math.round(this.standardAngle * 10000) % Math.round(Math.PI * 5000) < 0.01) {
 			if(this.rotating180 === 2) {
 				// Begin rotating the second set of PI/2 radians
 				this.rotating180 = 1;
@@ -199,7 +205,7 @@ class DropGenerator {
 		// Generate the 3 colours that will be used for the first 3 drops
 		const firstColours = [];
 		while(firstColours.length < 3) {
-			let colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
+			const colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
 			if(!firstColours.includes(colour)) {
 				firstColours.push(colour);
 			}

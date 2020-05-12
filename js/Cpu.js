@@ -143,8 +143,8 @@ class RandomCpu extends Cpu {
 
 	// eslint-disable-next-line no-unused-vars
 	getMove(boardState, currentDrop) {
-		let col = Math.floor(Math.random() * this.settings.cols);
-		let rotations = Math.floor(Math.random() * 4) - 2;
+		const col = Math.floor(Math.random() * this.settings.cols);
+		const rotations = Math.floor(Math.random() * 4) - 2;
 		return { col, rotations };
 	}
 }
@@ -159,7 +159,7 @@ class FlatCpu extends Cpu {
 
 	getMove(boardState, currentDrop) {
 		let col = 0;
-		let rotations = 0;
+		const rotations = 0;
 		let minHeight = -1;
 		for(let i = 0; i < this.settings.cols - 1; i++) {
 			if(boardState[i].length < minHeight) {
@@ -233,7 +233,7 @@ class ChainCpu extends Cpu {
 
 	getMove(boardState, currentDrop) {
 		let col = Math.floor(Math.random() * this.settings.cols);
-		let rotations = 0;
+		const rotations = 0;
 
 		// Deter against random placements in column 2 (when 0-indexed)
 		while(col === 2) {
@@ -260,7 +260,7 @@ class TestCpu extends Cpu {
 
 	getMove(boardState, currentDrop) {
 		const averageHeight = super.getAverageHeight(boardState);
-		let minChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
+		const minChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
 							(averageHeight > this.settings.rows / 2) ? 2 :
 							(averageHeight > this.settings.rows / 2) ? 3 : 4;
 
@@ -303,7 +303,7 @@ class TestCpu extends Cpu {
 				}
 
 				// Deter from placing in column 2, as well as building skyscrapers
-				let deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
+				const deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
 				const value = this.evaluateBoard(board) + (Math.random() * 2) - deterrent;
 
 				if(value > maxValue) {
@@ -315,7 +315,7 @@ class TestCpu extends Cpu {
 		}
 
 		// Still cannot find an appropriate placement, so place semi-randomly
-		if(col === -1)  {
+		if(col === -1) {
 			const allowedCols = [0, 5];
 			for(let i = 0; i < this.settings.cols; i++) {
 				if(i !== 0 && i !== this.settings.cols - 1) {
@@ -378,4 +378,4 @@ module.exports = {
 	TallCpu,
 	ChainCpu,
 	TestCpu
-}
+};

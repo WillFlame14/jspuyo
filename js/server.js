@@ -181,7 +181,7 @@ function leaveRoom(gameId, roomId) {
 			if(room.quickPlay && remainingIds.length < 2) {
 				clearTimeout(quickPlayTimer);
 				quickPlayTimer = null;
-				console.log('Cancelled start. Not enough players.')
+				console.log('Cancelled start. Not enough players.');
 			}
 
 			// Close custom room if it is empty
@@ -238,7 +238,7 @@ io.on('connection', function(socket) {
 
 		// Assign the socket to the CPU player in the room
 		room.members[gameId].socket = socket;
-	})
+	});
 
 	socket.on('createRoom', gameInfo => {
 		const { gameId, settingsString, roomSize } = gameInfo;
@@ -392,12 +392,12 @@ io.on('connection', function(socket) {
 	// Player emitted a sound
 	socket.on('sendSound', (gameId, sfx_name, index) => {
 		socket.broadcast.emit('sendSound', gameId, sfx_name, index);
-	})
+	});
 
 	// Player started sending nuisance
 	socket.on('sendNuisance', (gameId, nuisance) => {
 		socket.broadcast.emit('sendNuisance', gameId, nuisance);
-	})
+	});
 
 	// Player finished a chain
 	socket.on('activateNuisance', gameId => {

@@ -125,14 +125,13 @@ async function init(playerInfo) {
 		// Create the CPU games
 		const cpuGames = cpus.map(cpu => {
 			const { speed, ai } = cpu;
-			const cpuId = cpu.gameId;
 			const thisSocket = io();
 			const thisOppIds = allIds.slice();
 			// Remove the cpu player from list of ids
-			thisOppIds.splice(allIds.indexOf(cpuId), 1);
+			thisOppIds.splice(allIds.indexOf(cpu.gameId), 1);
 
 			const thisGame = new CpuGame(
-				cpuId,
+				cpu.gameId,
 				thisOppIds,
 				thisSocket,
 				boardDrawerCounter,
@@ -143,12 +142,12 @@ async function init(playerInfo) {
 			);
 
 			boardDrawerCounter++;
-			return { game: thisGame, socket: thisSocket, cpuId, remove: false };
+			return { game: thisGame, socket: thisSocket, gameId: cpu.gameId, remove: false };
 		});
 
 		// Create the session
 		const playerGame = { game, socket, gameId };
-		currentSession = new Session(playerGame, cpuGames, roomId);
+		currentSession = new Session(playerGame, cpuGames);
 		currentSession.run();
 	});
 

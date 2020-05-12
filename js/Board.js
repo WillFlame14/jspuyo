@@ -225,7 +225,7 @@ class Board {
 	 */
 	dropNuisance(nuisance) {
 		let nuisanceDropped = 0;
-        const nuisanceArray = [];
+		const nuisanceArray = [];
 
 		for(let i = 0; i < this.width; i++) {
 			nuisanceArray.push([]);

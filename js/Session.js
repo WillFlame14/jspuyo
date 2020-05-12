@@ -3,11 +3,10 @@
 const { showDialog } = require('./webpage/dialog.js');
 
 class Session {
-	constructor(playerGame, cpuGames, roomId) {
+	constructor(playerGame, cpuGames) {
 		this.playerGame = playerGame;
 		this.cpuGames = cpuGames;
 		this.stopped = false;
-		this.roomId = roomId;
 	}
 
 	run() {
@@ -59,7 +58,7 @@ class Session {
 		switch(endResult) {
 			case 'Win':
 				console.log('You win!');
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId);
 				break;
 			case 'Loss':
 				console.log('You lose...');
@@ -67,10 +66,10 @@ class Session {
 				break;
 			case 'OppDisconnect':
 				console.log('Your opponent has disconnected. This match will be counted as a win.');
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId);
 				break;
 			case 'Disconnect':
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId);
 				break;
 			case 'Timeout':
 				showDialog.timeout();

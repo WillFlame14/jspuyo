@@ -33,6 +33,7 @@ class Room {
 			// Send update to all players
 			if(gameId > 0) {
 				player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+				player.socket.join(this.roomId);
 			}
 		});
 		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()))}`);
@@ -51,6 +52,7 @@ class Room {
 
 		this.members.set(gameId, { socket, frames: 0 });
 		idToRoomId.set(gameId, this.roomId);
+		socket.join(this.roomId);
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
 		// Room is full
@@ -65,7 +67,6 @@ class Room {
 			}
 			this.members.forEach((player, id) => {
 				if(id > 0) {
-					console.log('sending update to ' + id);
 					player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 				}
 			});
@@ -110,19 +111,15 @@ class Room {
 	 * Removes a player from a room (if possible).
 	 */
 	leave(gameId) {
-		// In a CPU game. Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
 		if(this.roomType === 'cpu') {
 			console.log(`Ending CPU game ${this.roomId} due to player disconnect.`);
 
-			// Remove all players from the room
-			this.members.forEach((player, id) => {
-				idToRoomId[id] = undefined;
-			});
-
-			// Clear room entry
-			roomIdToRoom.delete(this.roomId);
+			this.end();		// Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
 		}
 		else {
+			this.members.get(gameId).socket.leave(this.roomId);
+			console.log(`${gameId} has left ${this.roomId}`);
+
 			// Remove player from maps
 			this.members.delete(gameId);
 			idToRoomId.delete(gameId);
@@ -161,6 +158,29 @@ class Room {
 		}
 	}
 
+	/**
+	 * Ends the room by removing all players and the room from maps.
+	 */
+	end() {
+		// Remove all players from the room
+		this.members.forEach((player, id) => {
+			idToRoomId.delete(id);
+
+			// Disconnect the CPU sockets
+			if(id < 0) {
+				player.socket.disconnect();
+			}
+			// Remove the player sockets from the room
+			else {
+				player.socket.leave(this.roomId);
+				console.log(`${id} has left ${this.roomId}`);
+			}
+		});
+
+		// Clear room entry
+		roomIdToRoom.delete(this.roomId);
+	}
+
 	/* ------------------------------ Helper Methods (RoomManager) ------------------------------*/
 
 	static createRoom(members, roomSize, settingsString, roomType = 'default') {
@@ -171,6 +191,9 @@ class Room {
 
 	static joinRoom(gameId, roomId, socket) {
 		const room = roomIdToRoom.get(roomId);
+		if(room === undefined) {
+			throw new Error(`The room you are trying to join (id ${roomId}) does not exist.`);
+		}
 		room.join(gameId, socket);
 		return room;
 	}
@@ -181,8 +204,15 @@ class Room {
 		return room;
 	}
 
-	static leaveRoom(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+	static leaveRoom(gameId, roomId) {
+		let room;
+		if(roomId !== undefined) {		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
+			room = roomIdToRoom.get(roomId);
+		}
+		else {
+			room = roomIdToRoom.get(idToRoomId.get(gameId));
+		}
+
 		if(room === undefined) {
 			console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
 			return;
@@ -196,6 +226,7 @@ class Room {
 
 		// Assign the socket to the CPU player in the room
 		room.members.get(gameId).socket = socket;
+		socket.join(room.roomId);
 	}
 
 	static spectateOwnRoom(gameId) {
@@ -216,19 +247,12 @@ class Room {
 			return;
 		}
 
-		// Remove the players from the maps
-		room.members.forEach((player, id) => {
-			idToRoomId.delete(id);
-
-			// Disconnect the CPU sockets
-			if(id < 0) {
-				player.socket.disconnect();
-			}
-		});
-
-		// Clear the room entry
-		roomIdToRoom.delete(room.roomId);
+		room.end();
 		console.log(`Ended game with room id ${room.roomId}`);
+	}
+
+	static getRoomIdFromId(gameId) {
+		return idToRoomId.get(gameId);
 	}
 
 	// clunky. try to remove if possible

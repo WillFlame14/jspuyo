@@ -70,7 +70,7 @@ class Session {
 				this.playerGame.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Disconnect':
-				this.playerGame.socket.emit('forceDisconnect', this.playerGame.gameId);
+				this.playerGame.socket.emit('forceDisconnect', this.playerGame.gameId, this.roomId);
 				break;
 			case 'Timeout':
 				showDialog.timeout();

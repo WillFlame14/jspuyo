@@ -13,14 +13,14 @@ const MAX_FRAME_DIFFERENCE = 20;
 
 let gameCounter = 1;		// The running number of games (used for assigning ids)
 
-const socketToIdMap = {};
+const socketIdToId = new Map();
 
 app.use(express.static('./'));
 
 io.on('connection', function(socket) {
 	socket.on('register', () => {
 		socket.emit('getGameId', gameCounter);
-		socketToIdMap[socket.id] = gameCounter;
+		socketIdToId.set(socket.id, gameCounter);
 		console.log(`Assigned gameId ${gameCounter}`);
 		gameCounter++;
 	});
@@ -46,6 +46,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('cpuAssign', gameId => {
+		socketIdToId.set(socket.id, gameId);
 		Room.cpuAssign(gameId, socket);
 	});
 
@@ -130,7 +131,7 @@ io.on('connection', function(socket) {
 
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
 	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
-		socket.broadcast.emit('sendState', gameId, boardHash, currentScore, totalNuisance);
+		socket.to(Room.getRoomIdFromId(gameId)).emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 
 		const room = Room.getRoomFromId(gameId);
 
@@ -200,29 +201,31 @@ io.on('connection', function(socket) {
 
 	// Player emitted a sound
 	socket.on('sendSound', (gameId, sfx_name, index) => {
-		socket.broadcast.emit('sendSound', gameId, sfx_name, index);
+		socket.to(Room.getRoomIdFromId(gameId)).emit('sendSound', gameId, sfx_name, index);
 	});
 
 	// Player started sending nuisance
 	socket.on('sendNuisance', (gameId, nuisance) => {
-		socket.broadcast.emit('sendNuisance', gameId, nuisance);
+		socket.to(Room.getRoomIdFromId(gameId)).emit('sendNuisance', gameId, nuisance);
 	});
 
 	// Player finished a chain
 	socket.on('activateNuisance', gameId => {
-		socket.broadcast.emit('activateNuisance', gameId);
+		socket.to(Room.getRoomIdFromId(gameId)).emit('activateNuisance', gameId);
 	});
 
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
-		socket.broadcast.emit('gameOver', gameId);
+		socket.to(Room.getRoomIdFromId(gameId)).emit('gameOver', gameId);
 
 		// Disconnect any cpus who have lost to conserve resources
 		if(gameId < 0) {
+			Room.leaveRoom(gameId);
 			socket.disconnect();
 		}
-
-		Room.spectateOwnRoom(gameId);
+		else {
+			Room.spectateOwnRoom(gameId);
+		}
 	});
 
 	// Game is over for all players
@@ -230,14 +233,18 @@ io.on('connection', function(socket) {
 		Room.disconnectAll(roomId);
 	});
 
-	socket.on('forceDisconnect', gameId => {
-		Room.leaveRoom(gameId);
+	socket.on('forceDisconnect', (gameId, roomId) => {
+		Room.leaveRoom(gameId, roomId);
 	});
 
 	socket.on('disconnect', () => {
-		const gameId = socketToIdMap[socket.id];
-		Room.leaveRoom(gameId);
-		socketToIdMap[socket.id] = undefined;
+		const gameId = socketIdToId.get(socket.id);
+
+		// CPU sockets get disconnected by the server - they have already been removed from the room
+		if(gameId > 0) {
+			Room.leaveRoom(gameId);
+		}
+		socketIdToId.delete(socket.id);
 		console.log(`Disconnected id ${gameId}`);
 	});
 });

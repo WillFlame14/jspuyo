@@ -112,7 +112,6 @@ io.on('connection', function(socket) {
 		}
 		else {
 			try {
-				console.log('default queue room id is ' + Room.defaultQueueRoomId);
 				const room = Room.joinRoom(gameId, Room.defaultQueueRoomId, socket);
 
 				// Start game in 30s if there are at least 2 players
@@ -197,6 +196,12 @@ io.on('connection', function(socket) {
 				room.timeout = null;
 			}
 		}
+	});
+
+	// Player sent a chat message
+	socket.on('sendMessage', (gameId, message) => {
+		// Send to everyone in the room, including sender
+		io.in(Room.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
 	});
 
 	// Player emitted a sound

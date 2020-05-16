@@ -6,44 +6,6 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-    <div id="navbar">
-        <span id="navbarSpacer"></span>
-        <span class="navPanel" id="queuePanel">
-            <img src="images/navbar/QueueIcon.png" class="navIcon">
-            <span class="panelName">Queue</span>
-            <div class="dropdown">
-                <a id="freeForAll">Free for all</a>
-                <a id="ranked">Ranked</a>
-            </div>
-        </span>
-        <span class="navPanel" id="customPanel">
-            <img src="images/navbar/CustomIcon.png" class="navIcon">
-            <span class="panelName">Custom</span>
-            <div class="dropdown">
-                <a id="createRoom">Create Room</a>
-                <a id="joinRoom">Join Room</a>
-                <a id="spectate">Spectate</a>
-            </div>
-        </span>
-        <span class="navPanel" id="singleplayerPanel">
-            <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
-            <span class="panelName">Singleplayer</span>
-            <div class="dropdown">
-                <a id="sprint">Sprint</a>
-                <a id="timeChallenge">Time Challenge</a>
-                <a id="cpu">Play Against CPU</a>
-            </div>
-        </span>
-        <span class="navPanel" id="profilePanel">
-            <img src="images/navbar/ProfileIcon.png" class="navIcon">
-            <span class="panelName">Profile</span>
-            <div class="dropdown">
-                <a id="gallery">Gallery</a>
-                <a id="settings">Settings</a>
-            </div>
-        </span>
-        <span id="logo">jspuyo</span>
-    </div>
     <div class="modal" id="modal-background">
         <div class="modal-content" id="createRoomModal">
             <div class="close">&times;</div>
@@ -80,7 +42,7 @@
                         </span>
                     </form>
                 </div>
-                <div class="divider" id="createRoomDivider"></div>
+                <div class="divider vertical" id="createRoomDivider"></div>
                 <form autocomplete="off">
                     <label for="marginTime" class="roomOptionLabel">Margin Time</label>
                     <input type="number" class="roomOptionInput" id="marginTime" value="96" min="0" max="1000"><br>
@@ -143,7 +105,7 @@
                         <input type="range" id="skipFrames" value="50" min="0" max="50">
                     </form>
                 </div>
-                <div class="divider" id="settingsDivider"></div>
+                <div class="divider vertical" id="settingsDivider"></div>
                 <div>
                     <div class="keyBindings">
                         <form autocomplete="off">
@@ -210,6 +172,44 @@
         </div>
     </div>
     <main>
+        <div id="navbar">
+            <span id="navbarSpacer"></span>
+            <span class="navPanel" id="queuePanel">
+                <img src="images/navbar/QueueIcon.png" class="navIcon">
+                <span class="panelName">Queue</span>
+                <div class="dropdown">
+                    <a id="freeForAll">Free for all</a>
+                    <a id="ranked">Ranked</a>
+                </div>
+            </span>
+            <span class="navPanel" id="customPanel">
+                <img src="images/navbar/CustomIcon.png" class="navIcon">
+                <span class="panelName">Custom</span>
+                <div class="dropdown">
+                    <a id="createRoom">Create Room</a>
+                    <a id="joinRoom">Join Room</a>
+                    <a id="spectate">Spectate</a>
+                </div>
+            </span>
+            <span class="navPanel" id="singleplayerPanel">
+                <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
+                <span class="panelName">Singleplayer</span>
+                <div class="dropdown">
+                    <a id="sprint">Sprint</a>
+                    <a id="timeChallenge">Time Challenge</a>
+                    <a id="cpu">Play Against CPU</a>
+                </div>
+            </span>
+            <span class="navPanel" id="profilePanel">
+                <img src="images/navbar/ProfileIcon.png" class="navIcon">
+                <span class="panelName">Profile</span>
+                <div class="dropdown">
+                    <a id="gallery">Gallery</a>
+                    <a id="settings">Settings</a>
+                </div>
+            </span>
+            <span id="logo">jspuyo</span>
+        </div>
         <div id="main-content">
             <table id="playArea">
                 <!-- Inserted by javascript -->
@@ -226,7 +226,14 @@
                         <!-- Inserted by javascript -->
                     </ul>
                 </div>
+                <div class="divider horizontal"></div>
                 <div class="chat">
+                    <ul class="chatMessages" id="chatMessages">
+                        <!-- Inserted by javascript -->
+                    </ul>
+                    <form autocomplete="off" id="sendMessage">
+                        <input type="text" id="messageField">
+                    </form>
                 </div>
             </div>
         </div>

@@ -2,8 +2,10 @@
 
 #main-content {
 	display: grid;
+	flex: 1 0 auto;
+	grid-gap: 25px;
 	grid-template-rows: auto;
-	grid-template-columns: 40% 38% 22%;
+	grid-template-columns: minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%);
 }
 
 .nuisanceQueue {
@@ -23,7 +25,7 @@
 }
 
 #playArea {
-	margin: 0px auto;
+	margin: 70px auto 0px;
 }
 
 .status {
@@ -33,7 +35,6 @@
 	flex-direction: column;
 	justify-content: space-around;
 	width: 80%;
-	margin: 0px 15% 0px 5%;
 
 	color: white;
 	font: 52px base.$font-title;
@@ -46,16 +47,21 @@
 	font: 56px "Rock Salt", sans-serif;
 }
 
+/* ---------- Sidebar (Player List and Chat) ---------- */
+
+#sidebar {
+	display: flex;
+	flex-direction: column;
+}
+
+// Division containing the "Players" title and the player list
 .playersDisplay {
-	height: 45%;
+	flex: 0 0 40%;
 
 	background-color: #2a2a2a;
 }
 
 #playersTitle {
-	z-index: 50;
-
-	margin-top: -70px;
 	padding: 10px 0px;
 
 	color: white;
@@ -63,14 +69,13 @@
 	text-align: center;
 	text-shadow: 2px 2px 5px base.$dark-gray;
 
-	background-color: #232323;
+	background-color: #232323;		// Slightly darker than dark-gray
 }
 
 .playerList {
-	height: 230px;
 	margin: 0px;
 	padding: 0px;
-	overflow-y: auto;
+	overflow-y: auto;		// Add a scroll bar only when necessary
 
 	color: white;
 	font: 24px base.$font-title;
@@ -78,16 +83,19 @@
 	list-style: none;
 }
 
+// An entry in the player list
 .playerIndividual {
 	display: grid;
 	grid-template-columns: 15% 65% 20%;
 	padding: 8px 5px;
 
+	// The icon next to each player's name
 	img {
 		width: 30px;
 		margin: auto 30% auto 10%;
 	}
 
+	// Alternate background colours for each player in the list
 	&:nth-child(even) {
 		background: base.$dark-gray;
 	}
@@ -96,7 +104,67 @@
 		background: #565656;
 	}
 
+	// Shadow on the first child from the "Players" title
 	&:first-child {
 		box-shadow: 0px 3px 5px -3px base.$dark-gray inset;
 	}
+}
+
+// Flexbox containing chat messages and the input field
+.chat {
+	display: flex;
+	flex: 1 0 50%;
+	flex-direction: column;
+	min-height: 0px;
+
+	background: rgba(34, 34, 34, 0.8);
+}
+
+// List of chat messages
+.chatMessages {
+	flex: 0 1 476px;
+	margin: 0px;
+	padding: 0px;
+	overflow-y: auto;		// Add a scroll bar when needed
+
+	color: white;
+	font: 20px base.$font-title;
+
+	list-style: none;
+}
+
+// An individual message
+.chatMsg {
+	display: grid;
+
+	grid-gap: 10px;
+
+	grid-template-rows: auto;
+	grid-template-columns: auto minmax(0, 1fr);
+	padding: 5px 0px 5px 10px;
+
+	.senderName {
+		color: white;		// Name in white
+		text-align: center;
+	}
+
+	.message {
+		color: #bcbcbc;		// Message in light gray
+	}
+}
+
+// The form for sending messages
+#sendMessage {
+	flex: 0 0 auto;
+	width: 100%;
+	margin: 0px;
+}
+
+// The input field for sending messages
+#messageField {
+	width: 100%;
+	padding: 3px 3px 3px 7px;
+
+	font-size: 20px;
+	text-align: left;
 }

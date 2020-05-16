@@ -9,7 +9,7 @@ const { Utils, Settings, UserSettings } = require('./Utils.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
 const { dialogInit } = require('./webpage/dialog.js');
-const { updatePlayers, hidePlayers } = require('./webpage/mainpage.js');
+const { mainpageInit, clearMessages, updatePlayers, hidePlayers } = require('./webpage/mainpage.js');
 
 const io = require('socket.io-client');
 
@@ -46,7 +46,7 @@ class PlayerInfo {
 	await playerInfo.ready();
 
 	// Set up behaviour
-	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit()]);
+	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit(), mainpageInit(playerInfo)]);
 
 	// Check if a joinRoom link was used
 	const urlParams = new URLSearchParams(window.location.search);
@@ -65,6 +65,7 @@ class PlayerInfo {
 /*----------------------------------------------------------*/
 
 let currentSession = null;
+let currentRoomId = null;
 
 const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 
@@ -72,16 +73,21 @@ const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25
 async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
 
-	socket.on('roomUpdate', (allIds, roomSize, settingsString, quickPlay) => {
+	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, quickPlay) => {
+		// Clear messages only if joining a new room
+		if(currentRoomId && currentRoomId !== roomId) {
+			clearMessages();
+		}
+		currentRoomId = roomId;
 		clearModal();
 		clearBoards();
 		generateBoards(1);
-		document.getElementById('main-content').style.gridTemplateColumns = '40% 38% 22%';
+		document.getElementById('main-content').style.gridTemplateColumns = 'minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%)';
 		document.getElementById('statusArea').style.display = 'flex';
+		document.getElementById('sidebar').style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
 		const statusSettings = document.getElementById('statusSettings');
-		console.log('Current players: ' + JSON.stringify(allIds));
 
 		if(quickPlay) {
 			if (allIds.length === 1) {
@@ -100,8 +106,11 @@ async function init(playerInfo) {
 	});
 
 	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
+		currentRoomId = roomId;
 		clearModal();
+		clearMessages();
 		document.getElementById('statusArea').style.display = 'none';
+		document.getElementById('sidebar').style.display = 'none';
 		document.getElementById('main-content').style.gridTemplateColumns = '100% 0% 0%';
 
 		const cpuIds = cpus.map(cpu => cpu.gameId);
@@ -112,9 +121,6 @@ async function init(playerInfo) {
 
 		// Add default skipFrames
 		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
-
-		console.log('Game starting!');
-		console.log('Opponents: ' + JSON.stringify(opponentIds) + ' CPUs: ' + JSON.stringify(cpuIds));
 
 		// Adjust the number of boards drawn
 		clearBoards();
@@ -169,6 +175,7 @@ function stopCurrentSession() {
 		if (currentSession.stop()) {
 			document.getElementById('modal-background-disable').style.display = 'block';
 			document.getElementById('forceStopPenalty').style.display = 'block';
+			clearMessages();
 		}
 	}
 	// clearBoards();

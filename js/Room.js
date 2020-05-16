@@ -32,7 +32,7 @@ class Room {
 
 			// Send update to all players
 			if(gameId > 0) {
-				player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+				player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 				player.socket.join(this.roomId);
 			}
 		});
@@ -67,7 +67,7 @@ class Room {
 			}
 			this.members.forEach((player, id) => {
 				if(id > 0) {
-					player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+					player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 				}
 			});
 		}
@@ -117,11 +117,14 @@ class Room {
 			this.end();		// Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
 		}
 		else {
-			this.members.get(gameId).socket.leave(this.roomId);
+			this.members.get(gameId).socket.leave(this.roomId);		// Remove the socket from the room
 			console.log(`${gameId} has left ${this.roomId}`);
 
 			// Remove player from maps
 			this.members.delete(gameId);
+			if(this.paused.includes(gameId)) {
+				this.paused.splice(this.paused.indexOf(gameId), 1);
+			}
 			idToRoomId.delete(gameId);
 
 			console.log(`Removed ${gameId} from room ${this.roomId}`);
@@ -138,7 +141,7 @@ class Room {
 			else {
 				this.members.forEach((player, id) => {
 					if(id > 0) {
-						player.socket.emit('roomUpdate', Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+						player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 					}
 				});
 

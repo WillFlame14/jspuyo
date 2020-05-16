@@ -3,7 +3,70 @@
 const { puyoImgs } = require('./panels.js');
 
 const playerList = document.getElementById('playerList');
+const messageList = document.getElementById('chatMessages');
+let messageId = 0;
+let lastSender = null;
 
+function mainpageInit(playerInfo) {
+	const { socket, gameId } = playerInfo;
+
+	const sendMessageField = document.getElementById('sendMessage');
+	const messageField = document.getElementById('messageField');
+	sendMessageField.addEventListener("submit", event => {
+		event.preventDefault();		// Do not refresh the page
+
+		// Send message and clear the input field
+		socket.emit('sendMessage', gameId, messageField.value);
+		messageField.value = '';
+	});
+
+	socket.on('sendMessage', (sender, message) => {
+		addMessage(sender, message);
+	});
+}
+
+/**
+ * Adds a message to the chat box.
+ */
+function addMessage(sender, message) {
+	if(lastSender === sender) {
+		const element = document.getElementById('message' + (messageId - 1)).querySelector('.message');
+		element.innerHTML += '<br>' + message;
+	}
+	else {
+		const element = document.createElement('li');
+		element.classList.add('chatMsg');
+		element.id = 'message' + messageId;
+		messageId++;
+
+		const senderElement = document.createElement('span');
+		senderElement.innerHTML = sender;
+		lastSender = sender;
+		senderElement.classList.add('senderName');
+		element.appendChild(senderElement);
+
+		const messageElement = document.createElement('span');
+		messageElement.innerHTML = message;
+		messageElement.classList.add('message');
+		element.appendChild(messageElement);
+
+		messageList.appendChild(element);
+	}
+	messageList.scrollTop = messageList.scrollHeight;		// automatically scroll to latest message
+}
+
+/**
+ * Clears all messages from the chat.
+ */
+function clearMessages() {
+	while(messageList.firstChild) {
+		messageList.firstChild.remove();
+	}
+}
+
+/**
+ * Adds a player to the list of players.
+ */
 function addPlayer(name, rating = 1000) {
 	const newPlayer = document.createElement('li');
 	newPlayer.classList.add('playerIndividual');
@@ -24,6 +87,9 @@ function addPlayer(name, rating = 1000) {
 	playerList.appendChild(newPlayer);
 }
 
+/**
+ * Removes all players from the list of players.
+ */
 function clearPlayers() {
 	while(playerList.firstChild) {
 		playerList.firstChild.remove();
@@ -47,6 +113,9 @@ function hidePlayers() {
 }
 
 module.exports = {
+	mainpageInit,
+	addMessage,
+	clearMessages,
 	updatePlayers,
 	hidePlayers
 };

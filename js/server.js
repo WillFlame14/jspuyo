@@ -209,6 +209,11 @@ io.on('connection', function(socket) {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendSound', gameId, sfx_name, index);
 	});
 
+	// Player emitted a voiced clip
+	socket.on('sendVoice', (gameId, character, audio_name, index) => {
+		socket.to(Room.getRoomIdFromId(gameId)).emit('sendVoice', gameId, character, audio_name, index);
+	});
+
 	// Player started sending nuisance
 	socket.on('sendNuisance', (gameId, nuisance) => {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendNuisance', gameId, nuisance);

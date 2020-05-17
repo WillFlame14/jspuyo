@@ -31,7 +31,7 @@ class CpuGame extends Game {
 		}
 
 		// Do not move/rotate if movement timer is not fulfilled
-		if(Date.now() - this.movementTimer < this.movementSpeed) {
+		if(Date.now() - this.movementTimer < this.movementSpeed + 250 - Math.random() * 500) {
 			return;
 		}
 

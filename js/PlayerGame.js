@@ -30,6 +30,7 @@ class PlayerGame extends Game {
 		// Reset the event listeners
 		this.socket.off('sendState');
 		this.socket.off('sendSound');
+		this.socket.off('sendVoice');
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
@@ -49,6 +50,10 @@ class PlayerGame extends Game {
 
 		this.socket.on('sendSound', (oppId, sfx_name, index) => {
 			this.audioPlayer.playSfx(sfx_name, index);
+		});
+
+		this.socket.on('sendVoice', (oppId, character, audio_name, index) => {
+			this.audioPlayer.playVoice(character, audio_name, index);
 		});
 	}
 

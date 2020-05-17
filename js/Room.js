@@ -111,13 +111,14 @@ class Room {
 	 * Removes a player from a room (if possible).
 	 */
 	leave(gameId) {
-		if(this.roomType === 'cpu') {
+		if(this.roomType === 'cpu' && gameId > 0) {
 			console.log(`Ending CPU game ${this.roomId} due to player disconnect.`);
 
 			this.end();		// Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
 		}
 		else {
-			this.members.get(gameId).socket.leave(this.roomId);		// Remove the socket from the room
+			const socket = this.members.get(gameId).socket;
+			socket.leave(this.roomId);		// Remove the socket from the room
 
 			// Remove player from maps
 			this.members.delete(gameId);
@@ -127,6 +128,12 @@ class Room {
 			idToRoomId.delete(gameId);
 
 			console.log(`Removed ${gameId} from room ${this.roomId}`);
+
+			// Disconnect the CPU socket, since they leave due to game over
+			if(gameId < 0) {
+				socket.disconnect();
+				return;
+			}
 
 			// Game has started, so need to emit disconnect event to all members
 			if(this.started) {

@@ -1,6 +1,49 @@
 # Changelog
 
+## v0.7 - Better rooms, Spectate feature
+
+###v0.7.0 (May 16, 2020)
+[`Room overhaul, add chat #42`](https://github.com/WillFlame14/jspuyo/pull/42)
+**New features:**
+- New sidebar containing a dynamic list of players in the room, as well as the room chat
+  - Player list will eventually show usernames and rankings, but have placeholder values for now
+  - Room chat auto-scrolls to the latest message
+- Creating a room now shows a modal box with the join link
+  - Also an option to copy link to clipboard
+
+**Other changes:**
+- Fixed https://github.com/WillFlame14/jspuyo/issues/38, https://github.com/WillFlame14/jspuyo/issues/39.
+- Sockets receive *significantly* less traffic and no longer perform leftover actions repeatedly
+- CPU sockets are now correctly disconnected, reducing the number of total connections
+- Further reduced amount of console logging due to new UI features
+
+
 ## v0.6 - Improved UI and Navigation Bar
+
+### v0.6.3 (May 10, 2020)
+[`Minor improvements #36`](https://github.com/WillFlame14/jspuyo/pull/36)
+**New features:**
+- Game buffering if one player falls too far behind
+  - Followed by timeout if socket is unresponsive
+- Some console logging moved to UI instead
+  - New dialog boxes for forced game stop and socket timeout
+
+**Other changes:**
+- Minor visual improvements to games with > 4 players
+- Separated the large initialization code into separate files
+
+### v0.6.2 (May 6, 2020)
+[`Sprite loading #35`](https://github.com/WillFlame14/jspuyo/pull/35)
+**New features:**
+- Sprite drawing has replaced the old ImprovedHouseAndMoon style
+  - supports Aqua, Chalk, TsuClassic and some custom skins (mostly broken)
+  - Appearance can be changed in User Settings
+- Connected puyos are now drawn correctly
+- Popping puyos now use the spritesheet animation
+
+**Other changes:**
+- Game streaming now only sends lower level data (i.e. only the puyos to draw)
+- Room options now have certain restrictions (breaking them will cause them to use defaults)
 
 ### v0.6.1 (May 6, 2020)
 [`Add interactive boxes to navigation panels #34`](https://github.com/WillFlame14/jspuyo/pull/34)

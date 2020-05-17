@@ -41,25 +41,19 @@ class Game {
 		this.socket = socket;
 		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
+		this.socket.off('sendNuisance');
 		this.socket.on('sendNuisance', (oppId, nuisance) => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			this.visibleNuisance[oppId] += nuisance;
 		});
 
+		this.socket.off('activateNuisance');
 		this.socket.on('activateNuisance', oppId => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			this.activeNuisance += this.visibleNuisance[oppId];
 			this.visibleNuisance[oppId] = 0;
 		});
 
+		this.socket.off('gameOver');
 		this.socket.on('gameOver', oppId => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
 				console.log('Player with id ' + oppId + ' has topped out.');
@@ -70,10 +64,8 @@ class Game {
 			}
 		});
 
+		this.socket.off('playerDisconnect');
 		this.socket.on('playerDisconnect', oppId => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
 				console.log('Player with id ' + oppId + ' has disconnected.');
@@ -84,22 +76,23 @@ class Game {
 			}
 		});
 
+		this.socket.off('pause');
 		this.socket.on('pause', () => {
 			this.paused = true;
 		});
 
+		this.socket.off('play');
 		this.socket.on('play', () => {
 			this.paused = false;
 		});
 
+		this.socket.off('timeout');
 		this.socket.on('timeout', () => {
 			this.endResult = 'Timeout';
 		});
 
+		this.socket.off('timeoutDisconnect');
 		this.socket.on('timeoutDisconnect', oppId => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			// Do not log to console for CPUs
 			if(this.gameId > 0) {
 				console.log('Player with id ' + oppId + ' has timed out.');

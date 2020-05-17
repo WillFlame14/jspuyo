@@ -51,13 +51,6 @@
 	text-shadow: 1px 1px 2px base.$dark-gray;
 }
 
-// Basic divider
-.divider {
-	margin-left: 20px;
-
-	border-left: 3px solid white;
-}
-
 // Default formatting for option titles.
 .option-title {
 	margin: 10px 0px;
@@ -154,6 +147,10 @@
 // Input boxes on the right half
 .roomOptionInput {
 	width: 95px;
+}
+
+#createRoomDivider {
+	margin-left: 20px;
 }
 
 // Selector between Tsu and Fever modes.
@@ -291,6 +288,36 @@ input.numPlayerButton {
 #createRoomSubmit {
 	@extend %submit-button;
 	background: #663388;
+}
+
+/* ---------- Give Join ID Modal Box ---------- */
+
+#giveJoinId {
+	width: 500px;
+	margin-top: 20%;
+
+	color: white;
+	font: 28px base.$font-title;
+	text-align: center;
+}
+
+#joinIdLink {
+	width: 85%;
+
+	font-size: 20px;
+}
+
+#copyJoinId {
+	padding: 2px 6px;
+
+	font-size: 20px;
+}
+
+#joinIdCopied {
+	display: none;
+
+	color: #dedede;
+	font-size: 22px;
 }
 
 /* ---------- Join Room Modal Box ---------- */
@@ -460,6 +487,8 @@ input.numPlayerButton {
 #settingsDivider {
 	-ms-grid-column: 2;
 	grid-column: 2;
+
+	margin-left: 20px;
 }
 
 // The container for the key bindings section. (3 rows x 2 columns)

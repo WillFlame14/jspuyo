@@ -1,6 +1,11 @@
 $font-title: "Chelsea Market", sans-serif;
 $dark-gray: #343434;
 
+// Uncomment to add borders on elements. Can be useful in determining which elements are taking up what space.
+// * {
+//   border: 1px solid #f00 !important;
+// }
+
 html {
 	margin: 0px;
 	padding: 0px;
@@ -11,11 +16,15 @@ html {
 }
 
 body {
-	width: 100%;
-	height: 100%;
 	margin: 0px;
 
-	background-color: rgba(60, 60, 60, 0.5);
+	background-color: rgba(60, 60, 60, 0.5);	// Dark gray filter on background
+}
+
+main {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 }
 
 canvas {
@@ -193,6 +202,17 @@ select {
 	grid-template-rows: auto;
 	-ms-grid-columns: 47% 3% 50%;
 	grid-template-columns: 47% 3% 50%;
+}
+
+// Basic divider
+.divider {
+	&.vertical {
+		border-left: 3px solid white;
+	}
+
+	&.horizontal {
+		border-bottom: 3px solid white;
+	}
 }
 
 // A form with all its labels taking up an entire line.

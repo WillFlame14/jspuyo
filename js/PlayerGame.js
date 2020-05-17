@@ -27,10 +27,14 @@ class PlayerGame extends Game {
 			opponentCounter++;
 		});
 
+		// Reset the event listeners
+		this.socket.off('sendState');
+		this.socket.off('sendSound');
+
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
-			if(!this.opponentIds.includes(oppId) || oppId < 0) {
+			if(oppId < 0) {
 				return;
 			}
 			if(frame === 0) {
@@ -44,9 +48,6 @@ class PlayerGame extends Game {
 		});
 
 		this.socket.on('sendSound', (oppId, sfx_name, index) => {
-			if(!this.opponentIds.includes(oppId)) {
-				return;
-			}
 			this.audioPlayer.playSfx(sfx_name, index);
 		});
 	}

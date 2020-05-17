@@ -9,6 +9,7 @@ const { Utils, Settings, UserSettings } = require('./Utils.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
 const { dialogInit } = require('./webpage/dialog.js');
+const { mainpageInit, clearMessages, updatePlayers, hidePlayers } = require('./webpage/mainpage.js');
 
 const io = require('socket.io-client');
 
@@ -45,7 +46,7 @@ class PlayerInfo {
 	await playerInfo.ready();
 
 	// Set up behaviour
-	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit()]);
+	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit(), mainpageInit(playerInfo)]);
 
 	// Check if a joinRoom link was used
 	const urlParams = new URLSearchParams(window.location.search);
@@ -56,7 +57,7 @@ class PlayerInfo {
 		console.log('Joining a room...');
 	}
 	else {
-		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId });
+		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId }, 'suppress');
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 	}
 })();
@@ -64,6 +65,7 @@ class PlayerInfo {
 /*----------------------------------------------------------*/
 
 let currentSession = null;
+let currentRoomId = null;
 
 const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 
@@ -71,17 +73,23 @@ const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25
 async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
 
-	socket.on('roomUpdate', (allIds, roomSize, settingsString, quickPlay) => {
+	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, quickPlay) => {
+		// Clear messages only if joining a new room
+		if(currentRoomId && currentRoomId !== roomId) {
+			clearMessages();
+		}
+		currentRoomId = roomId;
 		clearModal();
+		clearBoards();
+		generateBoards(1);
+		if(document.getElementById('main-content').classList.contains('ingame')) {
+			document.getElementById('main-content').classList.remove('ingame');
+		}
 		document.getElementById('statusArea').style.display = 'flex';
+		document.getElementById('sidebar').style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
 		const statusSettings = document.getElementById('statusSettings');
-		console.log('Current players: ' + JSON.stringify(allIds));
-
-		// Adjust the number of boards drawn
-		clearBoards();
-		generateBoards(allIds.length);
 
 		if(quickPlay) {
 			if (allIds.length === 1) {
@@ -95,11 +103,19 @@ async function init(playerInfo) {
 			statusMsg.innerHTML = 'Room size: ' + (allIds.length) + '/' + roomSize + ' players';
 		}
 		statusSettings.innerHTML = 'Settings: ' + settingsString;
+
+		updatePlayers(allIds);
 	});
 
 	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
+		currentRoomId = roomId;
 		clearModal();
+		clearMessages();
 		document.getElementById('statusArea').style.display = 'none';
+		document.getElementById('sidebar').style.display = 'none';
+		if(!document.getElementById('main-content').classList.contains('ingame')) {
+			document.getElementById('main-content').classList.add('ingame');
+		}
 
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
@@ -110,12 +126,10 @@ async function init(playerInfo) {
 		// Add default skipFrames
 		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
 
-		console.log('Game starting!');
-		console.log('Opponents: ' + JSON.stringify(opponentIds) + ' CPUs: ' + JSON.stringify(cpuIds));
-
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(opponentIds.length + cpus.length + 1);
+		hidePlayers();
 
 		// Set up the player's game
 		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettingsCopy);
@@ -125,14 +139,13 @@ async function init(playerInfo) {
 		// Create the CPU games
 		const cpuGames = cpus.map(cpu => {
 			const { speed, ai } = cpu;
-			const cpuId = cpu.gameId;
 			const thisSocket = io();
 			const thisOppIds = allIds.slice();
 			// Remove the cpu player from list of ids
-			thisOppIds.splice(allIds.indexOf(cpuId), 1);
+			thisOppIds.splice(allIds.indexOf(cpu.gameId), 1);
 
 			const thisGame = new CpuGame(
-				cpuId,
+				cpu.gameId,
 				thisOppIds,
 				thisSocket,
 				boardDrawerCounter,
@@ -143,7 +156,7 @@ async function init(playerInfo) {
 			);
 
 			boardDrawerCounter++;
-			return { game: thisGame, socket: thisSocket, cpuId, remove: false };
+			return { game: thisGame, socket: thisSocket, gameId: cpu.gameId, remove: false };
 		});
 
 		// Create the session
@@ -166,10 +179,13 @@ function stopCurrentSession() {
 		if (currentSession.stop()) {
 			document.getElementById('modal-background-disable').style.display = 'block';
 			document.getElementById('forceStopPenalty').style.display = 'block';
+			clearMessages();
 		}
 	}
-	// clearBoards();
 	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
+	document.getElementById('statusGamemode').innerHTML = '';
+	document.getElementById('statusSettings').innerHTML = '';
+	updatePlayers([]);
 }
 
 /**

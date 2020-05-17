@@ -290,6 +290,36 @@ input.numPlayerButton {
 	background: #663388;
 }
 
+/* ---------- Give Join ID Modal Box ---------- */
+
+#giveJoinId {
+	width: 500px;
+	margin-top: 20%;
+
+	color: white;
+	font: 28px base.$font-title;
+	text-align: center;
+}
+
+#joinIdLink {
+	width: 85%;
+
+	font-size: 20px;
+}
+
+#copyJoinId {
+	padding: 2px 6px;
+
+	font-size: 20px;
+}
+
+#joinIdCopied {
+	display: none;
+
+	color: #dedede;
+	font-size: 22px;
+}
+
 /* ---------- Join Room Modal Box ---------- */
 
 #joinRoomModal {

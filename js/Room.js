@@ -118,7 +118,6 @@ class Room {
 		}
 		else {
 			this.members.get(gameId).socket.leave(this.roomId);		// Remove the socket from the room
-			console.log(`${gameId} has left ${this.roomId}`);
 
 			// Remove player from maps
 			this.members.delete(gameId);

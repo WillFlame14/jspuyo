@@ -82,7 +82,9 @@ async function init(playerInfo) {
 		clearModal();
 		clearBoards();
 		generateBoards(1);
-		document.getElementById('main-content').style.gridTemplateColumns = 'minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%)';
+		if(document.getElementById('main-content').classList.contains('ingame')) {
+			document.getElementById('main-content').classList.remove('ingame');
+		}
 		document.getElementById('statusArea').style.display = 'flex';
 		document.getElementById('sidebar').style.display = 'flex';
 
@@ -111,7 +113,9 @@ async function init(playerInfo) {
 		clearMessages();
 		document.getElementById('statusArea').style.display = 'none';
 		document.getElementById('sidebar').style.display = 'none';
-		document.getElementById('main-content').style.gridTemplateColumns = '100% 0% 0%';
+		if(!document.getElementById('main-content').classList.contains('ingame')) {
+			document.getElementById('main-content').classList.add('ingame');
+		}
 
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
@@ -178,8 +182,10 @@ function stopCurrentSession() {
 			clearMessages();
 		}
 	}
-	// clearBoards();
 	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
+	document.getElementById('statusGamemode').innerHTML = '';
+	document.getElementById('statusSettings').innerHTML = '';
+	updatePlayers([]);
 }
 
 /**

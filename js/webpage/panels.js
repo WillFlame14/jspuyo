@@ -253,8 +253,31 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 	// Receiving the id of the newly created room
 	socket.on('giveRoomId', id => {
-		console.log('Other players can join this room by appending ?joinRoom=' + id);
+		// Hide the "Copied" message
+		document.getElementById('joinIdCopied').style.display = 'none';
+
+		modal.style.display = 'block';
+		document.getElementById('giveJoinId').style.display = 'block';
+		document.getElementById('joinIdLink').value = `${window.location}?joinRoom=${id}`;
 	});
+
+	// Setting the click event for copying link to clipboard
+	document.getElementById('copyJoinId').onclick = function() {
+		// Select the input field with the link
+		document.getElementById('joinIdLink').select();
+		try {
+			// Copy the selected text and show "Copied!" message
+			document.execCommand('copy');
+			document.getElementById('joinIdCopied').style.display = 'block';
+		}
+		catch(err) {
+			console.warn(err);
+		}
+		finally {
+			// Deselect the input field
+			document.getSelection().removeAllRanges();
+		}
+	};
 
 	// Custom - Join Room
 	document.getElementById('joinRoom').onclick = () => {

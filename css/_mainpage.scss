@@ -6,6 +6,10 @@
 	grid-gap: 25px;
 	grid-template-rows: auto;
 	grid-template-columns: minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%);
+
+	&.ingame {
+		grid-template-columns: 100% 0px 0px;
+	}
 }
 
 .nuisanceQueue {

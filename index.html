@@ -62,6 +62,15 @@
                 </form>
             </div>
         </div>
+        <div class="modal-content" id="giveJoinId">
+            <div class="close">&times;</div>
+            <div>A room has been created with the following link:</div>
+            <form autocomplete="off">
+                <input type="text" id="joinIdLink">
+                <input type="button" id="copyJoinId" value="&#x1F4CB">
+            </form>
+            <div id="joinIdCopied">Copied to clipboard!</div>
+        </div>
         <div class="modal-content" id="joinRoomModal">
             <div class="close">&times;</div>
             <form id="joinIdForm" autocomplete="off">
@@ -159,15 +168,11 @@
     </div>
     <div class="modal" id="modal-background-disable">
         <div class="modal-content dialog" id="forceStopPenalty">
-            <div>
-                You have disconnected from the previous game. That match will be counted as a loss.
-            </div>
+            <div>You have disconnected from the previous game. That match will be counted as a loss.</div>
             <input type="submit" id="forceStopAccept" value="OK">
         </div>
         <div class="modal-content dialog" id="timeoutInfo">
-            <div>
-                You have been disconnected from the game due to connection timeout.
-            </div>
+            <div>You have been disconnected from the game due to connection timeout.</div>
             <input type="submit" id="timeoutAccept" value="OK">
         </div>
     </div>

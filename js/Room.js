@@ -15,7 +15,7 @@ class Room {
 
 		this.started = false;
 		this.paused = [];
-		this.spectating = [];
+		this.spectating = new Map();
 		this.timeout = null;
 
 		switch(this.roomType) {
@@ -74,6 +74,21 @@ class Room {
 	}
 
 	/**
+	 * Spectates a room (receives player data but does not play).
+	 */
+	spectate(gameId, socket) {
+		if(this.members.has(gameId)) {
+			this.members.delete(gameId);
+		}
+		else {
+			socket.join(this.roomId);
+			idToRoomId.set(gameId, this.roomId);
+			socket.emit('spectate', this.roomId, Array.from(this.members.keys()), this.settingsString);
+		}
+		this.spectating.set(gameId, socket);
+	}
+
+	/**
 	 * Starts a room by sending a 'start' event to all sockets.
 	 */
 	start() {
@@ -111,12 +126,20 @@ class Room {
 	 * Removes a player from a room (if possible).
 	 */
 	leave(gameId) {
-		if(this.roomType === 'cpu' && gameId > 0) {
+		if(this.roomType === 'cpu' && gameId > 0 && this.members.has(gameId)) {
 			console.log(`Ending CPU game ${this.roomId} due to player disconnect.`);
 
 			this.end();		// Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
 		}
 		else {
+			if(this.spectating.has(gameId)) {
+				const socket = this.spectating.get(gameId);
+				socket.leave(this.roomId);
+				idToRoomId.delete(gameId);
+				console.log(`Removed spectator ${gameId} from room ${this.roomId}`);
+				return;
+			}
+
 			const socket = this.members.get(gameId).socket;
 			socket.leave(this.roomId);		// Remove the socket from the room
 
@@ -182,12 +205,12 @@ class Room {
 			// Remove the player sockets from the room
 			else {
 				player.socket.leave(this.roomId);
-				console.log(`${id} has left ${this.roomId}`);
 			}
 		});
 
 		// Clear room entry
 		roomIdToRoom.delete(this.roomId);
+		roomIds.delete(this.roomId);
 	}
 
 	/* ------------------------------ Helper Methods (RoomManager) ------------------------------*/
@@ -207,20 +230,25 @@ class Room {
 		return room;
 	}
 
+	static spectateRoom(gameId, socket, roomId = null) {
+		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
+		if(room === undefined) {
+			console.log(`Tried to join undefined room ${roomId}`);
+			return;
+		}
+		room.spectate(gameId, socket);
+		return room;
+	}
+
 	static startRoom(roomId) {
 		const room = roomIdToRoom.get(roomId);
 		room.start();
 		return room;
 	}
 
-	static leaveRoom(gameId, roomId) {
-		let room;
-		if(roomId !== undefined) {		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
-			room = roomIdToRoom.get(roomId);
-		}
-		else {
-			room = roomIdToRoom.get(idToRoomId.get(gameId));
-		}
+	static leaveRoom(gameId, roomId = null) {
+		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
+		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
 			console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
@@ -230,21 +258,16 @@ class Room {
 		return room;
 	}
 
+	static getAllRooms() {
+		return Array.from(roomIds).filter(id => roomIdToRoom.get(id).started);
+	}
+
 	static cpuAssign(gameId, socket) {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		// Assign the socket to the CPU player in the room
 		room.members.get(gameId).socket = socket;
 		socket.join(room.roomId);
-	}
-
-	static spectateOwnRoom(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-		if(room === undefined) {
-			console.log(`Attempted to make ${gameId} a spectator, but they were not in a room.`);
-			return;
-		}
-		room.spectating.push(gameId);
 	}
 
 	static disconnectAll(roomId) {

@@ -2,7 +2,7 @@
 
 const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
-const { PlayerGame } = require('./PlayerGame.js');
+const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
 const { Utils, Settings, UserSettings } = require('./Utils.js');
 
@@ -109,13 +109,7 @@ async function init(playerInfo) {
 
 	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
 		currentRoomId = roomId;
-		clearModal();
-		clearMessages();
-		document.getElementById('statusArea').style.display = 'none';
-		document.getElementById('sidebar').style.display = 'none';
-		if(!document.getElementById('main-content').classList.contains('ingame')) {
-			document.getElementById('main-content').classList.add('ingame');
-		}
+		showGameOnly();
 
 		const cpuIds = cpus.map(cpu => cpu.gameId);
 		const allOpponentIds = opponentIds.concat(cpuIds);
@@ -129,7 +123,6 @@ async function init(playerInfo) {
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(opponentIds.length + cpus.length + 1);
-		hidePlayers();
 
 		// Set up the player's game
 		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettingsCopy);
@@ -165,6 +158,26 @@ async function init(playerInfo) {
 		currentSession.run();
 	});
 
+	socket.on('spectate', (roomId, allIds, settingsString) => {
+		currentRoomId = roomId;
+		showGameOnly();
+		const settings = Settings.fromString(settingsString);
+		const userSettingsCopy = Utils.objectCopy(userSettings);
+
+		// Add default skipFrames
+		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
+
+		// Adjust the number of boards drawn
+		clearBoards();
+		generateBoards(allIds.length);
+
+		const game = new SpectateGame(gameId, allIds, socket, settings, userSettingsCopy);
+		const playerGame = { game, socket, gameId};
+		currentSession = new Session(playerGame, [], roomId);
+		currentSession.spectate = true;
+		currentSession.run();
+	});
+
 	// Return a promise that instantly resolves
 	return new Promise(resolve => resolve());
 }
@@ -176,7 +189,7 @@ async function init(playerInfo) {
 function stopCurrentSession() {
 	if(currentSession !== null) {
 		// Returning true means the session had not ended yet
-		if (currentSession.stop()) {
+		if (currentSession.stop() && !currentSession.spectate) {
 			document.getElementById('modal-background-disable').style.display = 'block';
 			document.getElementById('forceStopPenalty').style.display = 'block';
 			clearMessages();
@@ -186,6 +199,20 @@ function stopCurrentSession() {
 	document.getElementById('statusGamemode').innerHTML = '';
 	document.getElementById('statusSettings').innerHTML = '';
 	updatePlayers([]);
+}
+
+/**
+ * Hides all elements on the mainpage except the game area, which is maximized.
+ */
+function showGameOnly() {
+	clearModal();
+	clearMessages();
+	document.getElementById('statusArea').style.display = 'none';
+	document.getElementById('sidebar').style.display = 'none';
+	if(!document.getElementById('main-content').classList.contains('ingame')) {
+		document.getElementById('main-content').classList.add('ingame');
+	}
+	hidePlayers();
 }
 
 /**

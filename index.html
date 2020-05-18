@@ -81,6 +81,17 @@
                 <input type="submit" id="joinRoomSubmit" value="Join Room">
             </form>
         </div>
+        <div class="modal-content" id="spectateRoomModal">
+            <div class="close">&times;</div>
+            <form id="spectateForm" autocomplete="off">
+                <label>Select a room you wish to spectate.</label><br>
+                <div class="errorMsg" id="spectateFormError">There are no rooms currently available to spectate.</div>
+                <select id="roomList">
+                    <!-- Inserted by javascript -->
+                </select>
+                <input type="submit" id="spectateSubmit" value="Spectate Room">
+            </form>
+        </div>
         <div class="modal-content" id="cpuOptionsModal">
             <div class="close">&times;</div>
             <div class="back" id="cpu-back">&lt;</div>

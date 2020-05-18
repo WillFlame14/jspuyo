@@ -360,6 +360,27 @@ input.numPlayerButton {
 	background: #2233bb;
 }
 
+/* ---------- Spectate Room Modal Box ---------- */
+
+#spectateRoomModal {
+	width: 30%;
+}
+
+#spectateFormError {
+	display: none;
+}
+
+#spectateSubmit {
+	@extend %submit-button;
+	background: #439375;
+
+	&.disable {
+		color: #afafaf;
+
+		background: #575757;
+	}
+}
+
 /* ---------- CPU Options Modal Box ---------- */
 
 #cpuOptionsModal {

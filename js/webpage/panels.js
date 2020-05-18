@@ -292,7 +292,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		stopCurrentSession();
 
-		socket.emit('joinRoom', { gameId, joinId, spectate: false});
+		socket.emit('joinRoom', { gameId, joinId });
 	};
 
 	// Received when room cannot be joined
@@ -310,8 +310,55 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
 		stopCurrentSession();
+		socket.emit('getAllRooms');
+
 		modal.style.display = 'block';
-		// TODO: Create a menu to select games to spectate
+		document.getElementById('spectateRoomModal').style.display = 'block';
+	};
+
+	socket.on('allRooms', roomIds => {
+		const roomList = document.getElementById('roomList');
+		const noRoomsMsg = document.getElementById('spectateFormError');
+		const spectateSubmit = document.getElementById('spectateSubmit');
+
+		while(roomList.firstChild) {
+			roomList.firstChild.remove();
+		}
+
+		// Add all the room ids to the dropdown menu
+		roomIds.forEach(id => {
+			const option = document.createElement('option');
+			option.value = id;
+			option.innerHTML = id;
+			roomList.appendChild(option);
+		});
+
+		if(roomIds.length === 0) {
+			roomList.style.display = 'none';
+			noRoomsMsg.style.display = 'block';
+			if(!spectateSubmit.classList.contains('disable')) {
+				spectateSubmit.classList.add('disable');
+			}
+			spectateSubmit.disabled = true;
+		}
+		else {
+			roomList.style.display = 'inline-block';
+			noRoomsMsg.style.display = 'none';
+			if(spectateSubmit.classList.contains('disable')) {
+				spectateSubmit.classList.remove('disable');
+			}
+			spectateSubmit.disabled = false;
+		}
+	});
+
+	document.getElementById('spectateForm').onsubmit = event => {
+		event.preventDefault();
+		const roomList = document.getElementById('roomList');
+		const roomId = roomList.options[roomList.selectedIndex].value;
+
+		// Input field for room id instead?
+
+		socket.emit('spectate', { gameId, roomId });
 	};
 
 	// Singleplayer Panel

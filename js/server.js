@@ -82,6 +82,10 @@ io.on('connection', function(socket) {
 		socket.emit('allRooms', Room.getAllRooms());
 	});
 
+	socket.on('getPlayers', roomId => {
+		socket.emit('givePlayers', Room.getPlayers(roomId));
+	});
+
 	socket.on('ranked', gameInfo => {
 		const { gameId } = gameInfo;
 		Room.leaveRoom(gameId);
@@ -243,7 +247,7 @@ io.on('connection', function(socket) {
 			socket.disconnect();
 		}
 		else {
-			Room.spectateRoom(gameId);
+			Room.spectateRoom(gameId, socket);
 		}
 	});
 

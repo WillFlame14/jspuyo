@@ -84,11 +84,13 @@
         <div class="modal-content" id="spectateRoomModal">
             <div class="close">&times;</div>
             <form id="spectateForm" autocomplete="off">
-                <label>Select a room you wish to spectate.</label><br>
-                <div class="errorMsg" id="spectateFormError">There are no rooms currently available to spectate.</div>
-                <select id="roomList">
+                <label for="roomList">Select a room you wish to spectate.</label><br>
+                <div class="errorMsg" id="spectateFormError"></div>
+                <input list="roomIds" id="roomList" name="roomList">
+                <datalist id="roomIds">
                     <!-- Inserted by javascript -->
-                </select>
+                </datalist>
+                <div id="roomPlayers"></div>
                 <input type="submit" id="spectateSubmit" value="Spectate Room">
             </form>
         </div>

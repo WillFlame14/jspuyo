@@ -24,7 +24,7 @@
 
 	display: none;
 	width: 60%;
-	margin: 10% auto;
+	margin: 12% auto;
 	padding: 10px;
 
 	background-color: #776666;
@@ -364,16 +364,31 @@ input.numPlayerButton {
 
 #spectateRoomModal {
 	width: 30%;
+	margin-top: 20%;
 }
 
+// Error message (invisible at first).
 #spectateFormError {
 	display: none;
 }
 
+// The datalist containing room ids.
+#roomList {
+	margin-top: 10px;
+}
+
+#roomPlayers {
+	margin-top: 10px;
+
+	font-size: 24px;
+}
+
+// Submit button for the Spectate menu.
 #spectateSubmit {
 	@extend %submit-button;
 	background: #439375;
 
+	// Disabled when there are no rooms to spectate.
 	&.disable {
 		color: #afafaf;
 

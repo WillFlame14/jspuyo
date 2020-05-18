@@ -316,13 +316,16 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		document.getElementById('spectateRoomModal').style.display = 'block';
 	};
 
+	const roomList = document.getElementById('roomList');
+	const roomPlayers = document.getElementById('roomPlayers');
+
 	socket.on('allRooms', roomIds => {
-		const roomList = document.getElementById('roomList');
-		const noRoomsMsg = document.getElementById('spectateFormError');
+		const roomIdsElement = document.getElementById('roomIds');
+		const spectateFormError = document.getElementById('spectateFormError');
 		const spectateSubmit = document.getElementById('spectateSubmit');
 
-		while(roomList.firstChild) {
-			roomList.firstChild.remove();
+		while(roomIdsElement.firstChild) {
+			roomIdsElement.firstChild.remove();
 		}
 
 		// Add all the room ids to the dropdown menu
@@ -330,12 +333,14 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			const option = document.createElement('option');
 			option.value = id;
 			option.innerHTML = id;
-			roomList.appendChild(option);
+			roomIdsElement.appendChild(option);
 		});
 
 		if(roomIds.length === 0) {
 			roomList.style.display = 'none';
-			noRoomsMsg.style.display = 'block';
+			roomPlayers.style.display = 'none';
+			spectateFormError.innerHTML = 'There are no rooms currently available to spectate.';
+			spectateFormError.style.display = 'block';
 			if(!spectateSubmit.classList.contains('disable')) {
 				spectateSubmit.classList.add('disable');
 			}
@@ -343,7 +348,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		}
 		else {
 			roomList.style.display = 'inline-block';
-			noRoomsMsg.style.display = 'none';
+			spectateFormError.style.display = 'none';
 			if(spectateSubmit.classList.contains('disable')) {
 				spectateSubmit.classList.remove('disable');
 			}
@@ -351,15 +356,43 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		}
 	});
 
+	// Attempt to display the players in the room by sending a request to the server
+	roomList.addEventListener('input', () => {
+		// All valid room ids are of length 6
+		if(roomList.value.length === 6) {
+			socket.emit('getPlayers', roomList.value);
+		}
+		else {
+			roomPlayers.style.display = 'none';
+		}
+	});
+
+	// Receiving the results of the request
+	socket.on('givePlayers', players => {
+		// Server returns an empty array if room does not exist
+		if(players.length === 0) {
+			roomPlayers.style.display = 'none';
+		}
+		else {
+			roomPlayers.style.display = 'block';
+			roomPlayers.innerHTML = `Players: ${JSON.stringify(players)}`;
+		}
+	});
+
 	document.getElementById('spectateForm').onsubmit = event => {
+		// Do not refresh the page on submit
 		event.preventDefault();
-		const roomList = document.getElementById('roomList');
-		const roomId = roomList.options[roomList.selectedIndex].value;
 
-		// Input field for room id instead?
-
-		socket.emit('spectate', { gameId, roomId });
+		socket.emit('spectate', { gameId, roomId: roomList.value });
 	};
+
+	// Received when attempting to spectate an invalid room
+	socket.on('spectateFailure', errMessage => {
+		const spectateFormError = document.getElementById('spectateFormError');
+
+		spectateFormError.innerHTML = errMessage;
+		spectateFormError.style.display = 'block';
+	});
 
 	// Singleplayer Panel
 	const aiDropdown = document.createElement('select');

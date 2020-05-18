@@ -175,7 +175,8 @@ button {
 }
 
 // The built-in HTML dropdown wrapper element
-select {
+select,
+datalist {
 	margin: 5px 0px;
 
 	padding: 0px 5px;

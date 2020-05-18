@@ -79,6 +79,9 @@ class PlayerGame extends Game {
 	}
 }
 
+/**
+ * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
+ */
 class SpectateGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
 		super(gameId, opponentIds, socket, 1, settings, userSettings);

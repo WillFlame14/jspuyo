@@ -184,6 +184,7 @@ class Room {
 				// Close custom room if it is empty
 				if(this.members.size === 0 && this.roomType === 'default') {
 					roomIdToRoom.delete(this.roomId);
+					roomIds.delete(this.roomId);
 					console.log(`Closed room ${this.roomId} since it was empty.`);
 				}
 			}
@@ -233,7 +234,7 @@ class Room {
 	static spectateRoom(gameId, socket, roomId = null) {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 		if(room === undefined) {
-			console.log(`Tried to join undefined room ${roomId}`);
+			socket.emit('spectateFailure', 'The room you are trying to join does not exist or has ended.');
 			return;
 		}
 		room.spectate(gameId, socket);
@@ -258,8 +259,26 @@ class Room {
 		return room;
 	}
 
-	static getAllRooms() {
-		return Array.from(roomIds).filter(id => roomIdToRoom.get(id).started);
+	/**
+	 * Returns a list of room ids excluding the one the player is already part of.
+	 */
+	static getAllRooms(gameId) {
+		return Array.from(roomIds).filter(id => {
+			const room = roomIdToRoom.get(id);
+			return room.started && !room.members.has(gameId);
+		});
+	}
+
+	/**
+	 * Returns a list of the players in the room, if the room is valid.
+	 */
+	static getPlayers(roomId) {
+		const room = roomIdToRoom.get(roomId);
+
+		if(room === undefined || !room.started) {
+			return [];
+		}
+		return Array.from(room.members.keys());
 	}
 
 	static cpuAssign(gameId, socket) {

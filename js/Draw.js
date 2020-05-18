@@ -22,26 +22,26 @@ class SpriteDrawer {
      * @param   {Number}                    size        The size of a single sprite unit on the destination, in pixels
      * @param   {Number}                    sX          The 0-indexed column number of the leftmost column of the sprite on the sheet
      * @param   {Number}                    sY          The 0-indexed row number of the topmost row of the sprite on the sheet
-     * @param   {Number}                    cX          How many pixels right to draw the centre of the sprite relative to the current ctx origin
-     * @param   {Number}                    cY          How many pixels down to draw the centre of the sprite relative to the current ctx origin
+     * @param   {Number}                    dX          How many pixels right to draw the centre of the sprite relative to the current ctx origin
+     * @param   {Number}                    dY          How many pixels down to draw the centre of the sprite relative to the current ctx origin
      * @param   {Number}                    sWidth      How many columns wide the sprite is on the sheet
      * @param   {Number}                    sHeight     How many rows tall the sprite is on the sheet
      * @param   {Boolean}                   merge       If the sprite should be scaled up slightly to ensure visual contiguity
      */
 
-    static drawSprite(ctx, spriteSheet, size, sX, sY, cX, cY, sWidth = 1, sHeight = 1, merge = true) {
+    static drawSprite(ctx, spriteSheet, size, sX, sY, dX = 0, dY = 0, sWidth = 1, sHeight = 1, merge = true) {
         const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
         if (SpriteDrawer.loadSprite(spriteSheet, sourceSize) === true) {
             const canvasName = 'c' + sourceSize.toString();
+            const spriteWidth = sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT;
+            const spriteHeight = sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT;
             ctx.drawImage(
                 SpriteDrawer[spriteSheet][canvasName],
                 (sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
                 (sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
-                sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
-                sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT,
-                cX - sWidth * sourceSize / 2, cY - sHeight * sourceSize / 2,
-                sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT,
-                sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT
+                spriteWidth, spriteHeight,
+                dX - sWidth * sourceSize / 2, dY - sHeight * sourceSize / 2,
+                spriteWidth, spriteHeight
             );
         }
     }

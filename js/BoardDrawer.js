@@ -2,20 +2,179 @@
 
 const { Board } = require('./Board.js');
 const { SpriteDrawer } = require('./Draw.js');
-const { PUYO_COLOURS, COLOUR_LIST } = require('./Utils.js');
+const { DIMENSIONS } = require('./Utils.js');
+const { POSITIONS } = require('../images/sprite-positions.json');
 
 class DrawingLayer {
-    constructor(width, height, className) {
+    constructor(width, height, unit, className) {
             this.canvas = document.createElement('canvas');
             this.canvas.width = width;
             this.canvas.height = height;
             if (className) {
                 this.canvas.className = className;
             }
+            this.unit = unit;
             this.ctx = this.canvas.getContext('2d');
+            this.objectsDrawn = [];
     }
-    drawHere(spriteSheet, size, ) {
-        SpriteDrawer.drawSprite(this.ctx, )
+    drawHere(spriteSheet, size, sX, sY, dX, dY, sWidth, sHeight, scale) {
+        this.storeSprite(spriteSheet, size, sX, sY, dX, dY, sWidth, sHeight, scale);
+        SpriteDrawer.drawSprite(
+            this.ctx, spriteSheet,
+            size * this.unit, sX * this.unit, sY * this.unit,
+            dX, dY, sWidth, sHeight, scale
+        );
+    }
+    /* eslint-disable-next-line no-unused-vars */
+    storeSprite(spriteSheet, size, sX, sY, dX, dY, sWidth, sHeight, scale) {
+        throw new Error('storeSprite(spriteSheet, size, sX, sY, dX, dY, sWidth, sHeight, scale) must be implemented by the subclass.');
+    }
+}
+
+class PuyoDrawingLayer extends DrawingLayer {
+    constructor(width, height, unit, className) {
+        super(width, height, unit, className);
+    }
+    drawPuyo(spriteSheet, size, colour, directions = [], dX, dY) {
+        let xPos, yPos;
+        if(colour === 0) {
+            xPos = POSITIONS.NUISANCE.X;
+            yPos = POSITIONS.NUISANCE.Y;
+        }
+        else {
+            xPos = POSITIONS.PUYO_START.X;
+            yPos = POSITIONS.PUYO_START.Y + colour - 1;
+            if(directions.includes('Down')) {
+                xPos += 1;
+            }
+            if(directions.includes('Up')) {
+                xPos += 2;
+            }
+            if(directions.includes('Right')) {
+                xPos += 4;
+            }
+            if(directions.includes('Left')) {
+                xPos += 8;
+            }
+        }
+        this.drawHere(spriteSheet, size, xPos, yPos, dX, dY);
+    }
+    drawPoppingPuyo(spriteSheet, size, colour, drawPhaseTwo, dX, dY) {
+        if(colour === 0) {
+            if(!drawPhaseTwo) {
+                const xPos = POSITIONS.NUISANCE.X;
+                const yPos = POSITIONS.NUISANCE.Y;
+                this.drawHere(spriteSheet, size, xPos, yPos, dX, dY)
+            }
+        }
+        else {
+            const xPos = (colour - 1) * 2 + (drawPhaseTwo ? 7 : 6);
+            const yPos = 10;
+            this.drawHere(spriteSheet, size, xPos, yPos, dX, dY);
+        }
+    }
+    drawDrop(drop, size, dX, dY) {
+        if("IhLHO".includes(drop.shape)) {
+            this["draw_" + drop.shape](drop, size, dX, dY);
+        }
+    }
+    draw_I(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        dX += size * Math.cos(drop.standardAngle + Math.PI / 2);
+        dY -= size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[1], size, [], dX, dY);
+    }
+    draw_h(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[0], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[1], size, [], dX3, dY3);
+    }
+    draw_L(drop, size, dX, dY) {
+        this.drawPuyo(drop.colours[0], size, [], dX, dY);
+
+        const dX2 = dX + size * Math.cos(drop.standardAngle + Math.PI / 2);
+        const dY2 = dY - size * Math.sin(drop.standardAngle + Math.PI / 2);
+
+        this.drawPuyo(drop.colours[1], size, [], dX2, dY2);
+
+        const dX3 = dX + size * Math.cos(drop.standardAngle);
+        const dY3 = dY - size * Math.sin(drop.standardAngle);
+
+        this.drawPuyo(drop.colours[0], size, [], dX3, dY3);
+    }
+    draw_H(drop, size, dX, dY) {
+        const xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
+        const yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX -yChange, dY + xChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[1], size, [], dX + yChange, dY - xChange);
+    }
+    draw_O(drop, size, dX, dY) {
+        const xChange = size / 2;
+        const yChange = size / 2;
+
+        this.drawPuyo(drop.colours[0], size, [], dX - xChange, dY - yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX - yChange, dY - xChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + xChange, dY + yChange);
+        this.drawPuyo(drop.colours[0], size, [], dX + yChange, dY - xChange);
+    }
+}
+
+class GameArea extends PuyoDrawingLayer {
+    constructor(settings, appearance, scaleFactor) {
+        let width = DIMENSIONS.BOARD.W * scaleFactor;
+        let height = DIMENSIONS.BOARD.H * scaleFactor;
+        width += DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor
+        if (scaleFactor > DIMENSIONS.MIN_SCALE) {
+            height += DIMENSIONS.MARGIN + DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor;
+        }
+        super (width, height);
+        this.settings = settings;
+        this.appearance = appearance;
+        this.boardLayer = new BoardLayer(settings, appearance, scaleFactor);
+        this.nuisanceLayer = new NuisanceLayer(appearance, scaleFactor);
+        this.simplified = true;
+        if (scaleFactor > DIMENSIONS.MIN_SCALE) {
+            this.simplified = false;
+            this.queueLayer = new QueueLayer(appearance, scaleFactor);
+        }
+    }
+
+}
+
+class BoardLayer extends PuyoDrawingLayer {
+    constructor(settings, appearance, scaleFactor) {
+        super(scaleFactor * DIMENSIONS.BOARD.W, scaleFactor * DIMENSIONS.BOARD.H);
+        this.settings = settings;
+        this.appearance = appearance;
+    }
+}
+
+class NuisanceLayer extends PuyoDrawingLayer {
+    constructor(appearance, scaleFactor) {
+        super(scaleFactor * DIMENSIONS.NUISANCE_QUEUE.W, scaleFactor * DIMENSIONS.NUISANCE_QUEUE.H);
+        this.appearance = appearance;
+        this.scaleFactor = scaleFactor;
+    }
+}
+
+class QueueLayer extends PuyoDrawingLayer {
+    constructor(appearance, scaleFactor) {
+        super(scaleFactor * DIMENSIONS.QUEUE.W, scaleFactor * DIMENSIONS.QUEUE.H);
+        this.appearance = appearance;
+        this.scaleFactor = scaleFactor;
     }
 }
 
@@ -34,13 +193,13 @@ class DrawerWithPuyo {
     }
     drawPuyo(colour, size, directions = [], dX, dY) {
         let xPos, yPos;
-        if(colour === PUYO_COLOURS['Gray']) {
+        if(colour === 0) {
             xPos = 6;
             yPos = 12;
         }
         else {
             xPos = 0;
-            yPos = this.colourArray.indexOf(colour);
+            yPos = colour - 1;
 
             if(directions.includes('Down')) {
                 xPos += 1;
@@ -58,13 +217,13 @@ class DrawerWithPuyo {
         this.drawObject(xPos, yPos, size, dX, dY);
     }
     drawPoppingPuyo(colour, size, drawPhaseTwo, dX, dY) {
-        if(colour === PUYO_COLOURS['Gray']) {
+        if(colour === 0) {
             if(!drawPhaseTwo) {
                 this.drawObject(6, 12, size, dX, dY);
             }
             return;
         }
-        const xPos = this.colourArray.indexOf(colour) * 2 + (drawPhaseTwo ? 7 : 6);
+        const xPos = (colour - 1) * 2 + (drawPhaseTwo ? 7 : 6);
         const yPos = 10;
 
         this.drawObject(xPos, yPos, size, dX, dY);
@@ -142,11 +301,6 @@ class BoardDrawer extends DrawerWithPuyo {
         this.ctx = this.board.getContext("2d");
         this.appearance = appearance;
         this.settings = settings;
-        this.poppedLocs = [];
-        this.colourArray = [];
-        for (let i = 0; i < COLOUR_LIST.length; i++) {
-            this.colourArray.push(PUYO_COLOURS[COLOUR_LIST[i]]);
-        }
 
         this.width = this.board.width;
         this.height = this.board.height;
@@ -282,7 +436,7 @@ class BoardDrawer extends DrawerWithPuyo {
             const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
             const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
             for (let j = 0; j < nuisanceArray[i].length; j++) {
-                this.drawPuyo(PUYO_COLOURS['Gray'], this.unitW, [], this.unitW * i, -this.unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
+                this.drawPuyo(0, this.unitW, [], this.unitW * i, -this.unitH * (this.settings.nuisanceSpawnRow - rowsDropped + j));
             }
         }
 

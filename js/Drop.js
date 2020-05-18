@@ -1,6 +1,6 @@
 'use strict';
 
-const { Utils, PUYO_COLOURS } = require('./Utils.js');
+const { Utils } = require('./Utils.js');
 
 class Drop {
 	constructor (shape, colours, settings, arle, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
@@ -192,7 +192,7 @@ class DropGenerator {
 		this.settings = settings;
 		this.seed = this.settings.seed;
 		this.drops = [];
-		this.colourList = Object.keys(PUYO_COLOURS).slice(0, this.settings.numColours).map(colour_name => PUYO_COLOURS[colour_name]);
+		this.colourList = [...Array(this.settings.numColours + 1).keys()].slice(1);
 		this.colourBuckets = {};
 		this.drops[0] = [];
 

@@ -5,13 +5,13 @@ const chaiExclude = require('chai-exclude');
 const { expect } = require('chai').use(deepEqualInAnyOrder).use(chaiExclude);
 const { Board } = require('../js/Board.js');
 const { Drop } = require('../js/Drop.js');
-const { Utils, Settings, PUYO_COLOURS } = require('../js/Utils.js');
+const { Utils, Settings } = require('../js/Utils.js');
 
-const red = PUYO_COLOURS['Red'];
-const grn = PUYO_COLOURS['Green'];
-const blu = PUYO_COLOURS['Blue'];
-const prp = PUYO_COLOURS['Purple'];
-const nui = PUYO_COLOURS['Gray'];
+const red = 1;
+const grn = 2;
+const blu = 3;
+const prp = 4;
+const nui = 0;
 
 const settings = new Settings();
 

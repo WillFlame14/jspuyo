@@ -253,8 +253,31 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 	// Receiving the id of the newly created room
 	socket.on('giveRoomId', id => {
-		console.log('Other players can join this room by appending ?joinRoom=' + id);
+		// Hide the "Copied" message
+		document.getElementById('joinIdCopied').style.display = 'none';
+
+		modal.style.display = 'block';
+		document.getElementById('giveJoinId').style.display = 'block';
+		document.getElementById('joinIdLink').value = `${window.location}?joinRoom=${id}`;
 	});
+
+	// Setting the click event for copying link to clipboard
+	document.getElementById('copyJoinId').onclick = function() {
+		// Select the input field with the link
+		document.getElementById('joinIdLink').select();
+		try {
+			// Copy the selected text and show "Copied!" message
+			document.execCommand('copy');
+			document.getElementById('joinIdCopied').style.display = 'block';
+		}
+		catch(err) {
+			console.warn(err);
+		}
+		finally {
+			// Deselect the input field
+			document.getSelection().removeAllRanges();
+		}
+	};
 
 	// Custom - Join Room
 	document.getElementById('joinRoom').onclick = () => {
@@ -269,7 +292,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		stopCurrentSession();
 
-		socket.emit('joinRoom', { gameId, joinId, spectate: false});
+		socket.emit('joinRoom', { gameId, joinId });
 	};
 
 	// Received when room cannot be joined
@@ -287,9 +310,89 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
 		stopCurrentSession();
+		socket.emit('getAllRooms');
+
 		modal.style.display = 'block';
-		// TODO: Create a menu to select games to spectate
+		document.getElementById('spectateRoomModal').style.display = 'block';
 	};
+
+	const roomList = document.getElementById('roomList');
+	const roomPlayers = document.getElementById('roomPlayers');
+
+	socket.on('allRooms', roomIds => {
+		const roomIdsElement = document.getElementById('roomIds');
+		const spectateFormError = document.getElementById('spectateFormError');
+		const spectateSubmit = document.getElementById('spectateSubmit');
+
+		while(roomIdsElement.firstChild) {
+			roomIdsElement.firstChild.remove();
+		}
+
+		// Add all the room ids to the dropdown menu
+		roomIds.forEach(id => {
+			const option = document.createElement('option');
+			option.value = id;
+			option.innerHTML = id;
+			roomIdsElement.appendChild(option);
+		});
+
+		if(roomIds.length === 0) {
+			roomList.style.display = 'none';
+			roomPlayers.style.display = 'none';
+			spectateFormError.innerHTML = 'There are no rooms currently available to spectate.';
+			spectateFormError.style.display = 'block';
+			if(!spectateSubmit.classList.contains('disable')) {
+				spectateSubmit.classList.add('disable');
+			}
+			spectateSubmit.disabled = true;
+		}
+		else {
+			roomList.style.display = 'inline-block';
+			spectateFormError.style.display = 'none';
+			if(spectateSubmit.classList.contains('disable')) {
+				spectateSubmit.classList.remove('disable');
+			}
+			spectateSubmit.disabled = false;
+		}
+	});
+
+	// Attempt to display the players in the room by sending a request to the server
+	roomList.addEventListener('input', () => {
+		// All valid room ids are of length 6
+		if(roomList.value.length === 6) {
+			socket.emit('getPlayers', roomList.value);
+		}
+		else {
+			roomPlayers.style.display = 'none';
+		}
+	});
+
+	// Receiving the results of the request
+	socket.on('givePlayers', players => {
+		// Server returns an empty array if room does not exist
+		if(players.length === 0) {
+			roomPlayers.style.display = 'none';
+		}
+		else {
+			roomPlayers.style.display = 'block';
+			roomPlayers.innerHTML = `Players: ${JSON.stringify(players)}`;
+		}
+	});
+
+	document.getElementById('spectateForm').onsubmit = event => {
+		// Do not refresh the page on submit
+		event.preventDefault();
+
+		socket.emit('spectate', { gameId, roomId: roomList.value });
+	};
+
+	// Received when attempting to spectate an invalid room
+	socket.on('spectateFailure', errMessage => {
+		const spectateFormError = document.getElementById('spectateFormError');
+
+		spectateFormError.innerHTML = errMessage;
+		spectateFormError.style.display = 'block';
+	});
 
 	// Singleplayer Panel
 	const aiDropdown = document.createElement('select');
@@ -474,6 +577,7 @@ function clearModal() {
 }
 
 module.exports = {
+	puyoImgs,
 	panelsInit,
 	clearModal
 };

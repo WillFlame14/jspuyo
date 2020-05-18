@@ -37,7 +37,7 @@ class Session {
 				if(cpuEndResult !== null) {
 					switch(cpuEndResult) {
 						case 'Win':
-							cpuGame.socket.emit('gameEnd', cpuGame.gameId);
+							cpuGame.socket.emit('gameEnd', this.roomId);
 							break;
 						case 'Loss':
 							cpuGame.socket.emit('gameOver', cpuGame.gameId);
@@ -59,7 +59,7 @@ class Session {
 		switch(endResult) {
 			case 'Win':
 				console.log('You win!');
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Loss':
 				console.log('You lose...');
@@ -67,10 +67,10 @@ class Session {
 				break;
 			case 'OppDisconnect':
 				console.log('Your opponent has disconnected. This match will be counted as a win.');
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Disconnect':
-				this.playerGame.socket.emit('gameEnd', this.playerGame.gameId, this.roomId);
+				this.playerGame.socket.emit('forceDisconnect', this.playerGame.gameId, this.roomId);
 				break;
 			case 'Timeout':
 				showDialog.timeout();

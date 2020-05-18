@@ -193,6 +193,18 @@ class UserSettings {
 	}
 }
 
+const audioFilenames = {
+	move: { numClips: 1 },
+	rotate: { numClips: 1 },
+	win: { numClips: 1 },
+	loss: { numClips: 1 },
+	chain: { numClips: 7, start: 1 },
+	nuisance_send: { numClips: 4, start: 2 },
+	nuisance_fall: { numClips: 2 },
+	all_clear: { numClips: 1 }
+};
+const characterNames = ['akari'];
+
 class AudioPlayer {
 	constructor(gameId, socket, sfxVolume, musicVolume) {
 		this.gameId = gameId;
@@ -201,97 +213,81 @@ class AudioPlayer {
 		this.musicVolume = musicVolume;
 		this.cancel = false;
 
-		this.sfx = {
-			'move': new Audio('../sounds/SE_T07_move.wav'),
-			'rotate': new Audio('../sounds/SE_T08_rotate.wav'),
-			'win': new Audio('../sounds/SE_T19_win.wav'),
-			'loss': new Audio('../sounds/se_puy20_lose.wav'),
-			'chain': [
-				null,
-				new Audio('../sounds/SE_T00_ren1.wav'),
-				new Audio('../sounds/SE_T01_ren2.wav'),
-				new Audio('../sounds/SE_T02_ren3.wav'),
-				new Audio('../sounds/SE_T03_ren4.wav'),
-				new Audio('../sounds/SE_T04_ren5.wav'),
-				new Audio('../sounds/SE_T05_ren6.wav'),
-				new Audio('../sounds/SE_T06_ren7.wav')
-			],
-			'chain_voiced': [
-				null
-			],
-			'akari_chain': [
-				null,
-				new Audio('../sounds/voices/akari/chain_1.ogg'),
-				new Audio('../sounds/voices/akari/chain_2.ogg'),
-				new Audio('../sounds/voices/akari/chain_3.ogg'),
-				new Audio('../sounds/voices/akari/chain_4.ogg'),
-				new Audio('../sounds/voices/akari/chain_5.ogg'),
-				new Audio('../sounds/voices/akari/chain_6.ogg'),
-				new Audio('../sounds/voices/akari/chain_7.ogg'),
-				new Audio('../sounds/voices/akari/chain_8.ogg'),
-				new Audio('../sounds/voices/akari/chain_9.ogg'),
-				new Audio('../sounds/voices/akari/chain_10.ogg'),
-				new Audio('../sounds/voices/akari/chain_11.ogg'),
-				new Audio('../sounds/voices/akari/chain_12.ogg'),
-				new Audio('../sounds/voices/akari/chain_13.ogg')
-			],
-			'akari_spell': [
-				null,
-				new Audio('../sounds/voices/akari/spell_1.ogg'),
-				new Audio('../sounds/voices/akari/spell_2.ogg'),
-				new Audio('../sounds/voices/akari/spell_3.ogg'),
-				new Audio('../sounds/voices/akari/spell_4.ogg'),
-				new Audio('../sounds/voices/akari/spell_5.ogg')
-			],
-			'nuisanceSend': [
-				null,
-				null,
-				new Audio('../sounds/SE_T14_oj_okuri1.wav'),
-				new Audio('../sounds/SE_T15_oj_okuri2.wav'),
-				new Audio('../sounds/SE_T16_oj_okuri3.wav'),
-				new Audio('../sounds/SE_T17_oj_okuri4.wav')
-			],
-			'nuisanceFall1': new Audio('../sounds/SE_T12_ojama1.wav'),
-			'nuisanceFall2': new Audio('../sounds/SE_T13_ojama2.wav'),
-			'allClear': new Audio('../sounds/SE_T22_zenkesi.wav')
-		};
+		this.sfx = {};
 
-		// Set volume for each sound
-		Object.keys(this.sfx).forEach(key => {
-			const sounds = this.sfx[key];
-			// Voiced sfx
-			if(key.includes('chain') || key.includes('spell')) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = 0.3);
-				return;
+		Object.keys(audioFilenames).forEach(name => {
+			const audioInfo = audioFilenames[name];
+
+			if(audioInfo.numClips === 1) {
+				const audio = new Audio(`../sounds/${name}.wav`);
+				audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
+				this.sfx[name] = [audio];
 			}
-			if(Array.isArray(sounds)) {
-				sounds.filter(sound => sound !== null).forEach(sound => sound.volume = this.sfxVolume);
-			}
-			else if(sounds !== null) {
-				// Win/Lose SFX are especially loud
-				if(key === 'win' || key === 'lose') {
-					sounds.volume = this.sfxVolume * 0.6;
+			else {
+				const start = audioInfo.start || 0;
+				const audioFiles = Array(start).fill(null);		// Fill array with null until start
+
+				for(let i = 0; i < audioInfo.numClips; i++) {
+					const audio = new Audio(`../sounds/${name}_${i + 1}.wav`);
+					audio.volume = this.sfxVolume;
+					audioFiles.push([audio]);
 				}
-				else {
-					sounds.volume = this.sfxVolume;
-				}
+				this.sfx[name] = audioFiles;
 			}
+		});
+
+		this.voices = {};
+
+		characterNames.forEach(name => {
+			const chainAudio = [null];
+			for(let i = 0; i < 13; i++) {
+				const audio = new Audio(`../sounds/voices/${name}/chain_${i + 1}.ogg`);
+				audio.volume = 0.3;
+				chainAudio.push([audio]);
+			}
+
+			const spellAudio = [null];
+			for(let i = 0; i < 5; i++) {
+				const audio = new Audio(`../sounds/voices/${name}/spell_${i + 1}.ogg`);
+				audio.volume = 0.3;
+				spellAudio.push([audio]);
+			}
+			this.voices[name] = { chain: chainAudio, spell: spellAudio };
 		});
 	}
 
 	/**
-	 * Plays a sound effect. An 1-based index parameter is provided for more detailed selection.
+	 * Plays an audio clip. An 1-based index parameter is provided for more detailed selection.
 	 */
+	playAudio(audio) {
+		let channel = 0;
+		while(channel < audio.length && !audio[channel].paused) {
+			channel++;
+		}
+
+		// Generate a new audio object
+		if(channel === audio.length) {
+			const newsfx = audio[channel - 1].cloneNode();
+			newsfx.volume = audio[channel - 1].volume;
+			audio.push(newsfx);
+		}
+		audio[channel].play();
+	}
+
 	playSfx(sfx_name, index = null) {
 		if(this.cancel) {
 			return;
 		}
-		if(index !== null) {
-			this.sfx[sfx_name][index].play();
+		const audio = (index === null) ? this.sfx[sfx_name] : this.sfx[sfx_name][index];
+		this.playAudio(audio);
+	}
+
+	playVoice(character, audio_name, index = null) {
+		if(this.cancel) {
+			return;
 		}
-		else {
-			this.sfx[sfx_name].play();
-		}
+		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
+		this.playAudio(audio);
 	}
 
 	/**
@@ -301,6 +297,15 @@ class AudioPlayer {
 	playAndEmitSfx(sfx_name, index = null) {
 		this.playSfx(sfx_name, index);
 		this.socket.emit('sendSound', this.gameId, sfx_name, index);
+	}
+
+	/**
+	 * Plays a voiced audio clip, and emits the sound to the server.
+	 * Used so that other players can hear the appropriate sound.
+	 */
+	playAndEmitVoice(character, audio_name, index = null) {
+		this.playVoice(character, audio_name, index);
+		this.socket.emit('sendVoice', this.gameId, character, audio_name, index);
 	}
 
 	disable() {

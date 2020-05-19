@@ -64,7 +64,7 @@ class PuyoDrawingLayer extends DrawingLayer {
             if(!drawPhaseTwo) {
                 const xPos = POSITIONS.NUISANCE.X;
                 const yPos = POSITIONS.NUISANCE.Y;
-                this.drawHere(spriteSheet, size, xPos, yPos, dX, dY)
+                this.drawHere(spriteSheet, size, xPos, yPos, dX, dY);
             }
         }
         else {
@@ -132,11 +132,12 @@ class PuyoDrawingLayer extends DrawingLayer {
     }
 }
 
+/* eslint-disable-next-line */
 class GameArea extends PuyoDrawingLayer {
     constructor(settings, appearance, scaleFactor) {
         let width = DIMENSIONS.BOARD.W * scaleFactor;
         let height = DIMENSIONS.BOARD.H * scaleFactor;
-        width += DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor
+        width += DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor;
         if (scaleFactor > DIMENSIONS.MIN_SCALE) {
             height += DIMENSIONS.MARGIN + DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor;
         }

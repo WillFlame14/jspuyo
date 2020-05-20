@@ -337,14 +337,15 @@ class Game {
 		// Once done falling, play SFX
 		if(this.nuisanceState.currentFrame === this.nuisanceState.totalFrames - this.settings.nuisanceLandFrames) {
 			if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
-				this.audioPlayer.playAndEmitSfx('nuisanceFall2');
+				this.audioPlayer.playAndEmitSfx('nuisance_fall', 1);
 			}
 			else {
 				if(this.nuisanceState.nuisanceAmount > this.settings.cols) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+					this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
+					setTimeout(() => this.audioPlayer.playAndEmitSfx('nuisance_fall', 0), 300);
 				}
 				if(this.nuisanceState.nuisanceAmount > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisanceFall1');
+					this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
 				}
 			}
 		}
@@ -434,14 +435,14 @@ class Game {
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play sfx
 			if(this.resolvingState.chain === this.resolvingChains.length && this.resolvingState.chain > 2) {
-				this.audioPlayer.playAndEmitSfx('akari_spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
+				this.audioPlayer.playAndEmitVoice('akari', 'spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
 			}
 			else {
-				this.audioPlayer.playAndEmitSfx('akari_chain', this.resolvingState.chain);
+				this.audioPlayer.playAndEmitVoice('akari', 'chain', this.resolvingState.chain);
 			}
 			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
 			if(this.resolvingState.chain > 1) {
-				this.audioPlayer.playAndEmitSfx('nuisanceSend', this.resolvingState.chain > 5 ? 5 : this.resolvingState.chain);
+				this.audioPlayer.playAndEmitSfx('nuisance_send', this.resolvingState.chain > 5 ? 5 : this.resolvingState.chain);
 			}
 		}
 
@@ -469,7 +470,7 @@ class Game {
 				// Check for all clear
 				if(this.board.boardState.every(col => col.length === 0)) {
 					this.allClear = true;
-					this.audioPlayer.playAndEmitSfx('allClear');
+					this.audioPlayer.playAndEmitSfx('all_clear');
 				}
 			}
 			// Still have more chains to resolve

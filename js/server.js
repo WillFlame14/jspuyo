@@ -73,6 +73,19 @@ io.on('connection', function(socket) {
 		}
 	});
 
+	socket.on('spectate', gameInfo => {
+		const { gameId, roomId } = gameInfo;
+		Room.spectateRoom(gameId, socket, roomId);
+	});
+
+	socket.on('getAllRooms', () => {
+		socket.emit('allRooms', Room.getAllRooms());
+	});
+
+	socket.on('getPlayers', roomId => {
+		socket.emit('givePlayers', Room.getPlayers(roomId));
+	});
+
 	socket.on('ranked', gameInfo => {
 		const { gameId } = gameInfo;
 		Room.leaveRoom(gameId);
@@ -145,7 +158,7 @@ io.on('connection', function(socket) {
 		let minSteps = Infinity, minId = null;
 
 		room.members.forEach((player, id) => {
-			if(!room.spectating.includes(id)) {		// Exclude spectators
+			if(!room.spectating.has(id)) {		// Exclude spectators
 				const frames = player.frames;
 				if(frames < minSteps) {
 					minSteps = frames;
@@ -209,6 +222,11 @@ io.on('connection', function(socket) {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendSound', gameId, sfx_name, index);
 	});
 
+	// Player emitted a voiced clip
+	socket.on('sendVoice', (gameId, character, audio_name, index) => {
+		socket.to(Room.getRoomIdFromId(gameId)).emit('sendVoice', gameId, character, audio_name, index);
+	});
+
 	// Player started sending nuisance
 	socket.on('sendNuisance', (gameId, nuisance) => {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendNuisance', gameId, nuisance);
@@ -229,7 +247,7 @@ io.on('connection', function(socket) {
 			socket.disconnect();
 		}
 		else {
-			Room.spectateOwnRoom(gameId);
+			Room.spectateRoom(gameId, socket);
 		}
 	});
 

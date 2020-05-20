@@ -30,6 +30,7 @@ class PlayerGame extends Game {
 		// Reset the event listeners
 		this.socket.off('sendState');
 		this.socket.off('sendSound');
+		this.socket.off('sendVoice');
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
@@ -49,6 +50,10 @@ class PlayerGame extends Game {
 
 		this.socket.on('sendSound', (oppId, sfx_name, index) => {
 			this.audioPlayer.playSfx(sfx_name, index);
+		});
+
+		this.socket.on('sendVoice', (oppId, character, audio_name, index) => {
+			this.audioPlayer.playVoice(character, audio_name, index);
 		});
 	}
 
@@ -74,4 +79,74 @@ class PlayerGame extends Game {
 	}
 }
 
-module.exports = { PlayerGame };
+/**
+ * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
+ */
+class SpectateGame extends Game {
+	constructor(gameId, opponentIds, socket, settings, userSettings) {
+		super(gameId, opponentIds, socket, 1, settings, userSettings);
+
+		let frame = 0;
+		this.opponentBoardDrawers = {};
+		this.opponentIdToBoardDrawer = {};
+
+		// Add a BoardDrawer for each opponent.
+		let opponentCounter = 1;
+		this.opponentIds.forEach(id => {
+			this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
+			this.opponentIdToBoardDrawer[id] = opponentCounter;
+			opponentCounter++;
+		});
+
+		// Reset the event listeners
+		this.socket.off('sendState');
+		this.socket.off('sendSound');
+		this.socket.off('sendVoice');
+
+		// eslint-disable-next-line no-unused-vars
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
+			if(frame === 0) {
+				this.opponentBoardDrawers[oppId].drawFromHash(boardHash);
+				frame = userSettings.skipFrames;
+			}
+			else{
+				frame--;
+			}
+			this.updateOpponentScore(oppId, score);
+		});
+
+		this.socket.on('sendSound', (oppId, sfx_name, index) => {
+			this.audioPlayer.playSfx(sfx_name, index);
+		});
+
+		this.socket.on('sendVoice', (oppId, character, audio_name, index) => {
+			this.audioPlayer.playVoice(character, audio_name, index);
+		});
+	}
+
+	/**
+	 * @Override
+	 * Increments the game. Since player is spectating, do nothing.
+	 */
+	step() {
+		return;
+	}
+
+	/**
+	 * Updates the score for opponents.
+	 */
+	updateOpponentScore(oppId, score) {
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[oppId];
+		const pointsDisplay = document.getElementById(pointsDisplayName);
+
+		// Make sure element exists
+		if(pointsDisplay) {
+			pointsDisplay.innerHTML = `${score}`.padStart(8, '0');
+		}
+	}
+}
+
+module.exports = {
+	PlayerGame,
+	SpectateGame
+};

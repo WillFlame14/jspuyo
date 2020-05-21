@@ -198,6 +198,7 @@ function stopCurrentSession() {
 	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
 	document.getElementById('statusGamemode').innerHTML = '';
 	document.getElementById('statusSettings').innerHTML = '';
+	document.getElementById('sidebar').style.display = 'none';
 	updatePlayers([]);
 }
 

@@ -18,7 +18,7 @@
                     </div>
                     <form id="boardSizeSelector" autocomplete="off">
                         <label for="numRows">Rows</label>
-                        <input type="number" id="numRows" value="12" min="6" max="100"><br>
+                        <input type="number" id="numRows" value="12" min="6" max="100">
                         <label for="numCols">Columns</label>
                         <input type="number" id="numCols" value="6" min="3" max="50">
                     </form>
@@ -43,21 +43,21 @@
                     </form>
                 </div>
                 <div class="divider vertical" id="createRoomDivider"></div>
-                <form autocomplete="off">
+                <form id="createRoomOptionsAdvanced" autocomplete="off">
                     <label for="marginTime" class="roomOptionLabel">Margin Time</label>
-                    <input type="number" class="roomOptionInput" id="marginTime" value="96" min="0" max="1000"><br>
+                    <input type="number" class="roomOptionInput" id="marginTime" value="96" min="0" max="1000">
                     <label for="targetPoints" class="roomOptionLabel">Target Points</label>
-                    <input type="number" class="roomOptionInput" id="targetPoints" value="70" min="0" max="100000"><br>
+                    <input type="number" class="roomOptionInput" id="targetPoints" value="70" min="0" max="100000">
                     <label for="minChainLength" class="roomOptionLabel">Min Chain Length</label>
-                    <input type="number" class="roomOptionInput" id="minChainLength" value="0" min="0" max="16"><br>
+                    <input type="number" class="roomOptionInput" id="minChainLength" value="0" min="0" max="16">
                     <label for="gravity" class="roomOptionLabel">Gravity</label>
-                    <input type="number" class="roomOptionInput" id="gravity" value="0.036" min="0" max="0.2"><br>
+                    <input type="number" class="roomOptionInput" id="gravity" value="0.036" min="0" max="0.2">
                     <label for="softDrop" class="roomOptionLabel">Soft Drop</label>
-                    <input type="number" class="roomOptionInput" id="softDrop" value="0.27" min="0" max="1"><br>
+                    <input type="number" class="roomOptionInput" id="softDrop" value="0.27" min="0" max="1">
                     <label for="hardDrop" class="roomOptionLabel">Hard Drop</label>
-                    <input type="button" class="roomOptionInput off" id="hardDrop" value="OFF"><br>
+                    <input type="button" class="roomOptionInput off" id="hardDrop" value="OFF">
                     <label for="winCondition" class="roomOptionLabel">Win Condition</label>
-                    <input type="button" class="roomOptionInput" id="winCondition" value="FT 3"><br>
+                    <input type="button" class="roomOptionInput" id="winCondition" value="FT 3">
                     <input type="submit" id="createRoomSubmit" value="Create Room">
                 </form>
             </div>
@@ -76,8 +76,10 @@
             <form id="joinIdForm" autocomplete="off">
                 <label for="joinId">Enter the code for the room you wish to join.</label><br>
                 <div class="errorMsg" id="joinIdFormError"></div>
-                <input type="text" id="joinRoomFiller" value="?joinRoom=" disabled>
-                <input type="text" id="joinId" placeholder="######" maxlength="6"><br>
+                <div id="joinIdInput">
+                    <input type="text" id="joinRoomFiller" value="?joinRoom=" disabled>
+                    <input type="text" id="joinId" placeholder="######" maxlength="6">
+                </div>
                 <input type="submit" id="joinRoomSubmit" value="Join Room">
             </form>
         </div>

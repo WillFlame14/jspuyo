@@ -1,7 +1,11 @@
 $font-title: "Chelsea Market", sans-serif;
 $dark-gray: #343434;
+$text-drop-shadow: 2px 2px 5px $dark-gray;
+$box-drop-shadow: 3px 3px 5px 1px $dark-gray;
+$larger: 1.2rem;
+$smaller: 0.86rem;
 
-// Uncomment to add borders on elements. Can be useful in determining which elements are taking up what space.
+// Uncomment to add borders on elrements. Can be useful in determining which elrements are taking up what space.
 // * {
 //   border: 1px solid #f00 !important;
 // }
@@ -9,6 +13,8 @@ $dark-gray: #343434;
 html {
 	margin: 0px;
 	padding: 0px;
+
+	font-size: 1.6vw;
 
 	background-image: url("images/backgrounds/Forest 04.jpg");
 	background-position: center;
@@ -24,7 +30,7 @@ body {
 main {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
+	height: 100%;		// Take up entire height instead of fitting to size
 }
 
 canvas {
@@ -35,19 +41,18 @@ canvas {
 }
 
 form {
-	margin: 0px 0px 10px;
+	margin-bottom: 10px;
 
 	color: white;
-	font: 40px $font-title;
 	text-align: center;
-	text-shadow: 2px 2px 5px $dark-gray;
+	text-shadow: $text-drop-shadow;
 }
 
 label {
 	display: inline-block;
 
 	color: white;
-	font: 32px $font-title;
+	font: $larger $font-title;
 	text-align: center;
 }
 
@@ -56,31 +61,15 @@ input {
 	padding: 2px;
 
 	color: white;
-	font: 28px $font-title;
+	font: 1rem $font-title;
 	text-align: center;
 
 	background: $dark-gray;
 	border: 2px solid white;
-	box-shadow: 3px 3px 5px 1px $dark-gray;
+	box-shadow: $box-drop-shadow;
 }
 
 // Formatting for placeholder text in input fields.
-::-webkit-input-placeholder {
-	color: gray;
-}
-
-::-moz-placeholder {
-	color: gray;
-}
-
-:-ms-input-placeholder {
-	color: gray;
-}
-
-::-ms-input-placeholder {
-	color: gray;
-}
-
 ::placeholder {
 	color: gray;
 }
@@ -101,7 +90,7 @@ input[type="number"] {
 // Shared formatting between form submission buttons.
 %submit-button {
 	display: block;
-	margin: 20px auto 10px;
+	margin: 15px auto 10px;
 	padding: 4px 20px;
 
 	cursor: pointer;
@@ -130,7 +119,7 @@ input[type="range"] {
 	outline: none;
 	box-shadow: 1px 1px 3px 1px $dark-gray;
 
-	-webkit-appearance: none;
+	-webkit-appearance: none;		// Hide default formatting (Chrome)
 }
 
 // The clicky-thing on a range slider
@@ -142,11 +131,9 @@ input[type="range"] {
 	background-size: contain;
 	border: 0;
 	cursor: pointer;
-	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 
 	-webkit-appearance: none;
-	appearance: none;
 }
 
 ::-moz-range-thumb {
@@ -157,24 +144,22 @@ input[type="range"] {
 	background-size: contain;
 	border: 0;
 	cursor: pointer;
-	-webkit-backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 	backdrop-filter: drop-shadow(0px 0px 15px $dark-gray);
 
-	-webkit-appearance: none;
 	appearance: none;
 }
 
 button {
 	color: white;
-	font: 32px $font-title;
+	font: $larger $font-title;
 
 	background: gray;
 	border: 2px solid white;
-	box-shadow: 3px 3px 5px 1px $dark-gray;
+	box-shadow: $box-drop-shadow;
 	cursor: pointer;
 }
 
-// The built-in HTML dropdown wrapper element
+// The built-in HTML dropdown wrapper elrement
 select,
 datalist {
 	margin: 5px 0px;
@@ -182,26 +167,36 @@ datalist {
 	padding: 0px 5px;
 
 	color: white;
-	font: 24px $font-title;
+	font: $smaller $font-title;
 
 	background: $dark-gray;
-	box-shadow: 3px 3px 5px 1px $dark-gray;
+	box-shadow: $box-drop-shadow;
 }
 
-// Horizontally justified flexbox.
+// Justified flexbox.
 .justify-flexbox {
 	display: flex;
 	justify-content: space-evenly;
 	margin-bottom: 10px;
+
+	&.horizontal {
+		flex-direction: column;
+	}
+}
+
+// Horizontally and vertically centre-aligned elrement
+%absolute-centre {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+
+	transform: translate(-50%, -50%);
 }
 
 // Grid layout split into 2 columns, with a divider
 .left-right-container {
-	display: -ms-grid;
 	display: grid;
-	-ms-grid-rows: auto;
 	grid-template-rows: auto;
-	-ms-grid-columns: 47% 3% 50%;
 	grid-template-columns: 47% 3% 50%;
 }
 

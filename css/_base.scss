@@ -5,7 +5,7 @@ $box-drop-shadow: 3px 3px 5px 1px $dark-gray;
 $larger: 1.2rem;
 $smaller: 0.86rem;
 
-// Uncomment to add borders on elrements. Can be useful in determining which elrements are taking up what space.
+// Uncomment to add borders on elements. Can be useful in determining which elements are taking up what space.
 // * {
 //   border: 1px solid #f00 !important;
 // }
@@ -159,7 +159,7 @@ button {
 	cursor: pointer;
 }
 
-// The built-in HTML dropdown wrapper elrement
+// The built-in HTML dropdown wrapper element
 select,
 datalist {
 	margin: 5px 0px;
@@ -184,7 +184,7 @@ datalist {
 	}
 }
 
-// Horizontally and vertically centre-aligned elrement
+// Horizontally and vertically centre-aligned element
 %absolute-centre {
 	position: absolute;
 	top: 50%;

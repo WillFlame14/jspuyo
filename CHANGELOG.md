@@ -2,6 +2,23 @@
 
 ## v0.7 - Better rooms, Spectate feature
 
+###v0.7.2 (May 22, 2020)
+[`Minor CSS improvements #44`](https://github.com/WillFlame14/jspuyo/pull/44)
+**New features:**
+- Modal boxes (and their content) now automatically resize to fit the window. (Mainpage later...)
+- Autoprefixer now handles CSS vendor prefixes, so support for browsers other than Chrome (not including IE) should be improved
+
+###v0.7.1 (May 19, 2020)
+[`Add Spectate feature #43`](https://github.com/WillFlame14/jspuyo/pull/43)
+**New features:**
+- Can now spectate rooms that have started
+  - Spectators can come and go regardless of room size
+  - Can view a list of players in the room before deciding to spectate
+
+**Other changes:**
+- Fixed https://github.com/WillFlame14/jspuyo/issues/33.
+- CPUs are now slightly less deterministic.
+
 ###v0.7.0 (May 16, 2020)
 [`Room overhaul, add chat #42`](https://github.com/WillFlame14/jspuyo/pull/42)
 **New features:**
@@ -16,7 +33,6 @@
 - Sockets receive *significantly* less traffic and no longer perform leftover actions repeatedly
 - CPU sockets are now correctly disconnected, reducing the number of total connections
 - Further reduced amount of console logging due to new UI features
-
 
 ## v0.6 - Improved UI and Navigation Bar
 

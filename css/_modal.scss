@@ -61,7 +61,7 @@
 // Shared formatting for the "Back" and "Close" buttons
 %modal-nav-button {
 	position: absolute;
-	top: -0.75rem;			// Overhang the top section of the box
+	top: -0.65rem;			// Overhang the top section of the box
 
 	width: 1rem;
 	height: 1rem;
@@ -88,7 +88,7 @@
 // The "Close" button
 .close {
 	@extend %modal-nav-button;
-	right: -0.75rem;
+	right: -0.65rem;
 
 	background: red;
 
@@ -102,7 +102,7 @@
 // The "Back" button
 .back {
 	@extend %modal-nav-button;
-	left: -0.075rem;
+	left: -0.65rem;
 
 	background: blue;
 

@@ -4,12 +4,14 @@
 
 ### v0.7.2 (May 22, 2020)
 [`Minor CSS improvements #44`](https://github.com/WillFlame14/jspuyo/pull/44)
+
 **New features:**
 - Modal boxes (and their content) now automatically resize to fit the window. (Mainpage later...)
 - Autoprefixer now handles CSS vendor prefixes, so support for browsers other than Chrome (not including IE) should be improved
 
 ### v0.7.1 (May 19, 2020)
 [`Add Spectate feature #43`](https://github.com/WillFlame14/jspuyo/pull/43)
+
 **New features:**
 - Can now spectate rooms that have started
   - Spectators can come and go regardless of room size
@@ -21,6 +23,7 @@
 
 ### v0.7.0 (May 16, 2020)
 [`Room overhaul, add chat #42`](https://github.com/WillFlame14/jspuyo/pull/42)
+
 **New features:**
 - New sidebar containing a dynamic list of players in the room, as well as the room chat
   - Player list will eventually show usernames and rankings, but have placeholder values for now
@@ -38,6 +41,7 @@
 
 ### v0.6.3 (May 10, 2020)
 [`Minor improvements #36`](https://github.com/WillFlame14/jspuyo/pull/36)
+
 **New features:**
 - Game buffering if one player falls too far behind
   - Followed by timeout if socket is unresponsive
@@ -50,6 +54,7 @@
 
 ### v0.6.2 (May 6, 2020)
 [`Sprite loading #35`](https://github.com/WillFlame14/jspuyo/pull/35)
+
 **New features:**
 - Sprite drawing has replaced the old ImprovedHouseAndMoon style
   - supports Aqua, Chalk, TsuClassic and some custom skins (mostly broken)
@@ -63,6 +68,7 @@
 
 ### v0.6.1 (May 6, 2020)
 [`Add interactive boxes to navigation panels #34`](https://github.com/WillFlame14/jspuyo/pull/34)
+
 **New features:**
 - Switching between modes no longer requires URL manipulation or page refreshes!
 - User-friendly modal boxes for Create Room, Join Room, Play Against CPU and Settings pages
@@ -78,6 +84,7 @@
 
 ### v0.6.0 (Apr 27, 2020)
 [`Add navigation bar, more CSS #31`](https://github.com/WillFlame14/jspuyo/pull/31)
+
 **New features:**
 - Navigation bar to move between features instead of needing to modify the URL.
   - Currently only works for FFA, Ranked, Sprint/Timed and CPU
@@ -91,6 +98,7 @@
 
 ### v0.5.3 (Apr 24, 2020)
 [`More settings #30`](https://github.com/WillFlame14/jspuyo/pull/30)
+
 **New features:**
 - Margin time option
 - Minimum chain length option
@@ -105,6 +113,7 @@
 
 ### v0.5.2 (Apr 18, 2020)
 [`Support more players #29`](https://github.com/WillFlame14/jspuyo/pull/29)
+
 **New features:**
 - Room size can now be customized by appending `?size=<number>` into the URL.
 - Animation frames can be skipped (to improve performance) by appending `?skipFrames=<number>` to the URL. 

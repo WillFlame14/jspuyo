@@ -240,12 +240,11 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	// Back button between Room Options and CPU Options
 	document.getElementById('cpu-back').onclick = () => {
 		// Close the Cpu Options menu
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
+		document.getElementById('cpuOptionsModal').style.display = 'none';
 
 		// Open the Room Options menu
-		document.getElementById('cpuOptionsModal').style.display = 'none';
-		document.getElementById('cpuOptions').style.display = 'none';
+		document.getElementById('createRoomModal').style.display = 'block';
+		document.getElementById('createRoomOptions').style.display = 'grid';
 
 		// Tell the submit button to go to CPU Options next
 		createRoomTrigger = 'cpu';

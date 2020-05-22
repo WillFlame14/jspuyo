@@ -12,33 +12,30 @@
 	overflow: hidden;
 
 	background-color: black; // Fallback color
-	background-color: rgba(0, 0, 0, 0.6); // Black w/ opacity
+	background-color: rgba(0, 0, 0, 0.6);
 }
 
 // Modal Content/Box
 .modal-content {
-	position: absolute;
-	right: 0;
-	left: 0;
+	@extend %absolute-centre;
 	z-index: 11;
 
 	display: none;
 	width: 60%;
-	margin: 12% auto;
 	padding: 10px;
 
 	background-color: #776666;
 	border: 3px solid white;
-	box-shadow: 3px 3px 5px 3px base.$dark-gray;
+	box-shadow: base.$box-drop-shadow;
 }
 
 .modal-title {
 	margin-bottom: 10px;
 
 	color: white;
-	font: 48px base.$font-title;
+	font: 2rem base.$font-title;
 	text-align: center;
-	text-shadow: 2px 2px 5px base.$dark-gray;
+	text-shadow: base.$text-drop-shadow;
 }
 
 // Error message that appears in modal boxes.
@@ -56,26 +53,27 @@
 	margin: 10px 0px;
 
 	color: white;
-	font: 36px base.$font-title;
+	font: 1.28rem base.$font-title;
 	text-align: center;
-	text-shadow: 2px 2px 5px base.$dark-gray;
+	text-shadow: base.$text-drop-shadow;
 }
 
 // Shared formatting for the "Back" and "Close" buttons
 %modal-nav-button {
 	position: absolute;
-	top: -20px;			// Overhang the top section of the box
+	top: -0.65rem;			// Overhang the top section of the box
 
-	width: 30px;
-	height: 30px;
+	width: 1rem;
+	height: 1rem;
 
 	color: white;
 	font-weight: bold;
-	font-size: 28px;
+	font-size: 1rem;
+	line-height: 1rem;		// Vertically align the text
 	text-align: center;
 
 	border: 2px solid white;
-	box-shadow: 3px 3px 5px 1px base.$dark-gray;
+	box-shadow: base.$box-drop-shadow;
 	cursor: pointer;
 
 	&:hover,
@@ -90,7 +88,7 @@
 // The "Close" button
 .close {
 	@extend %modal-nav-button;
-	right: -20px;
+	right: -0.65rem;
 
 	background: red;
 
@@ -104,7 +102,7 @@
 // The "Back" button
 .back {
 	@extend %modal-nav-button;
-	left: -20px;
+	left: -0.65rem;
 
 	background: blue;
 
@@ -116,37 +114,11 @@
 
 /* ---------- Create Room Modal Box ---------- */
 
-// Default styles
-.createRoomModal {
-	width: 900px;
-
-	input {
-		font: 28px base.$font-title;
-	}
-
-	label {
-		display: inline-block;
-	}
-}
-
 // Left half of the Room Options menu.
 #createRoomOptionsLeft {
-	display: -ms-grid;
 	display: grid;
-	-ms-grid-rows: auto auto auto;
 	grid-template-rows: auto auto auto;
-	-ms-grid-columns: 40% 60%;
 	grid-template-columns: 40% 60%;
-}
-
-// Labels on the right half, fixed width to give illusion of table
-.roomOptionLabel {
-	width: 300px;
-}
-
-// Input boxes on the right half
-.roomOptionInput {
-	width: 95px;
 }
 
 #createRoomDivider {
@@ -155,57 +127,51 @@
 
 // Selector between Tsu and Fever modes.
 #modeSelector {
-	-ms-grid-row: 1;
 	grid-row: 1;
-	-ms-grid-column: 1;
 	grid-column: 1;
 	margin: 0px auto;
 
 	img {
-		width: 115px;
-		height: 115px;
+		display: block;
+		width: 65%;
+		margin: 0px auto;
 
 		cursor: pointer;
-		-webkit-filter: drop-shadow(2px 5px 5px base.$dark-gray);
 		filter: drop-shadow(2px 5px 5px base.$dark-gray);
 	}
 }
 
 // Input boxes for the number of rows and columns.
 #boardSizeSelector {
-	-ms-grid-row: 1;
+	display: grid;
+	grid-gap: 15px 10px;
 	grid-row: 1;
-	-ms-grid-column: 2;
 	grid-column: 2;
+	grid-template-rows: 1fr 1fr;
+	grid-template-columns: 6fr 4fr;
+	height: 70%;
 
 	margin: auto 0px;
 
 	label {
-		width: 125px;
-		margin-top: 15px;
-
-		font: 28px base.$font-title;
+		margin: auto 0px;
 	}
 
 	input[type="number"] {
-		width: 75px;
+		width: 75%;
+
+		font-size: base.$larger;
 	}
 }
 
 // Selector for player count
 #roomSizeSelector {
-	-ms-grid-row: 2;
 	grid-row: 2;
-	-ms-grid-column: 1;
-	-ms-grid-column-span: 2;
 	grid-column: 1 / span 2;
 }
 
 #coloursSelector {
-	-ms-grid-row: 3;
 	grid-row: 3;
-	-ms-grid-column: 1;
-	-ms-grid-column-span: 2;
 	grid-column: 1 / span 2;
 }
 
@@ -213,22 +179,25 @@
 #playerButtons {
 	display: flex;
 	justify-content: center;
+	margin-bottom: 0px;
 }
 
 // Each button is a span except "5", which accepts a user-inputted size
 .numPlayerButton {
 	display: inline-block;
-	flex: 0 0 70px;
+	flex: 0 0 15%;
+	width: 100%;
+	min-width: 0%;
 	margin: 5px 10px;
 	padding: 2px;
 
 	color: #aaaaaa;			// darkened while unselected
-	font: 28px base.$font-title;
+	font: 1rem base.$font-title;
 	text-align: center;
 
 	background: #274e13;	// dark green
 	border: 3px solid gray;
-	box-shadow: 2px 2px 3px 1px base.$dark-gray;
+	box-shadow: 2px 2px 3px 1px base.$dark-gray;		// Smaller shadow while deselcted
 	cursor: pointer;
 
 	// The selected button
@@ -237,33 +206,33 @@
 
 		background: #38761d;	// light green
 		border: 3px solid white;
-		box-shadow: 3px 3px 5px 1px base.$dark-gray;
+		box-shadow: base.$box-drop-shadow;
 	}
 }
 
 // Formatting required to override normal style of input boxes
 input.numPlayerButton {
-	width: 80px;
-	max-width: 80px;
+	flex-basis: 17.5%;
 
-	text-shadow: 2px 2px 5px base.$dark-gray;
+	text-shadow: base.$text-drop-shadow;
 }
 
 // Option title for selecting number of colours.
 #coloursSelectorTitle {
 	display: inline-block;
-	margin-top: 25px;
+	margin-top: 20px;
 	margin-bottom: 10px;
 
-	font-size: 36px;
+	font-size: 1.28rem;
 }
 
 // Input box for selecting number of colours.
 #numColours {
-	width: 65px;
+	width: 2em;
+	padding: 4px 8px;
 
 	// On its own, so it deserves a larger font size
-	font-size: 36px;
+	font-size: 1.28rem;
 	vertical-align: top;
 }
 
@@ -271,22 +240,40 @@ input.numPlayerButton {
 #coloursSelected {
 	display: inline-flex;			// Evenly space the images in a flexbox, but share the space with the input field
 	justify-content: space-around;
+	width: 65%;
+	margin-left: 10px;
 	padding: 5px 0px;
 
 	img {
-		flex: 0 0 45px;
-		height: 45px;
+		width: 17%;
 		margin: 0px 10px;
 
-		-webkit-filter: drop-shadow(2px 3px 5px base.$dark-gray);
-
 		filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	}
+}
+
+#createRoomOptionsAdvanced {
+	display: grid;
+	grid-gap: 5px 10px;
+	grid-template-rows: repeat(7, 1fr);
+	grid-template-columns: 75% 25%;
+
+	.roomOptionInput {
+		width: 75%;
+		height: 90%;
+	}
+
+	.roomOptionLabel {
+		margin: auto 0px;
 	}
 }
 
 // Submit button for Create Room.
 #createRoomSubmit {
 	@extend %submit-button;
+
+	grid-column: 1 / span 2;
+
 	background: #663388;
 }
 
@@ -294,10 +281,9 @@ input.numPlayerButton {
 
 #giveJoinId {
 	width: 500px;
-	margin-top: 20%;
 
 	color: white;
-	font: 28px base.$font-title;
+	font: 1rem base.$font-title;
 	text-align: center;
 }
 
@@ -324,19 +310,24 @@ input.numPlayerButton {
 
 #joinRoomModal {
 	width: 30%;
-	margin-top: 20%;
 
 	input {
-		font: 36px base.$font-title;
+		font: 1.28rem base.$font-title;
 
 		border-width: 3px;
 	}
 }
 
+#joinIdInput {
+	display: grid;
+	grid-template-columns: 54% 46%;
+	margin-top: 3%;
+	padding: 0px 10%;
+}
+
 // Uneditable text that illustrates the "?joinRoom=" prefix.
 #joinRoomFiller {
-	width: 225px;
-	margin: 10px -10px 10px 0px;
+	width: 100%;
 
 	color: white;
 	text-align: right;
@@ -346,8 +337,7 @@ input.numPlayerButton {
 
 // The actual input box for joinId.
 #joinId {
-	width: 200px;
-	margin: 10px 0px 10px -10px;
+	width: 100%;
 
 	text-align: left;
 
@@ -364,7 +354,6 @@ input.numPlayerButton {
 
 #spectateRoomModal {
 	width: 30%;
-	margin-top: 20%;
 }
 
 // Error message (invisible at first).
@@ -399,41 +388,32 @@ input.numPlayerButton {
 /* ---------- CPU Options Modal Box ---------- */
 
 #cpuOptionsModal {
-	width: 850px;
+	padding: 0.5%;
 }
 
 .cpu-container {
-	display: -ms-grid;
 	display: grid;
-	-ms-grid-rows: auto auto auto;
 	grid-template-rows: auto auto auto;
-	-ms-grid-columns: auto auto;
 	grid-template-columns: auto auto;
+	margin: auto 0px;
 	padding: 0px 10px;
 }
 
 // A container for one set of CPU options.
 .cpuOption {
 	display: none;
-	-ms-grid-rows: auto auto;
+	grid-gap: 0px 3%;
 
 	grid-template-rows: auto auto;
-	-ms-grid-columns: 100px fit-content(150px) auto auto;
-	grid-template-columns: 100px fit-content(150px) auto auto;
-	margin: 5px 10px;
-	padding: 10px;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2fr;
+	margin: 1.5% 3%;
+	padding: 3%;
 
 	img {
-		-ms-grid-row: 1;
-		-ms-grid-row-span: 2;
-
 		grid-row: 1 / span 2;
-		-ms-grid-column: 1;
 		grid-column: 1;
-		width: 100px;
-		height: 100px;
-
-		-webkit-filter: drop-shadow(2px 3px 5px base.$dark-gray);
+		width: 100%;
+		margin: auto;
 
 		filter: drop-shadow(2px 3px 5px base.$dark-gray);
 	}
@@ -441,27 +421,23 @@ input.numPlayerButton {
 
 // Label indicating the purpose of the AI dropdown menu
 .aiLabel {
-	-ms-grid-row: 1;
 	grid-row: 1;
-	-ms-grid-column: 2;
 	grid-column: 2;
 	margin: 5px 0px;
 	padding-right: 15px;
 
-	font-size: 28px;
+	font-size: 1rem;
 	text-align: right;
 }
 
 // Label indicating the CPU speed slider
 .speedLabel {
-	-ms-grid-row: 2;
 	grid-row: 2;
-	-ms-grid-column: 2;
 	grid-column: 2;
 	margin: 5px 0px;
 	padding-right: 15px;
 
-	font-size: 28px;
+	font-size: 1rem;
 	text-align: right;
 }
 
@@ -469,23 +445,16 @@ input.numPlayerButton {
 .speedDisplay {
 	z-index: 2;
 
-	-ms-grid-row: 1;
-
-	-ms-grid-row-span: 2;
-
 	grid-row: 1 / span 2;
-	-ms-grid-column: 1;
 	grid-column: 1;
 	margin: auto;
 
-	font-size: 32px;
+	font-size: base.$larger;
 }
 
 // The CPU speed slider
 .cpuSpeedSlider {
-	-ms-grid-row: 2;
 	grid-row: 2;
-	-ms-grid-column: 3;
 	grid-column: 3;
 }
 
@@ -498,9 +467,9 @@ input.numPlayerButton {
 
 // Input boxes for DAS and ARR. Since they are alone, they can be larger.
 .dasArrInput {
-	width: 100px;
+	width: 3em;
 
-	font-size: 36px;
+	font-size: 1.28rem;
 }
 
 // Sliders for volume, skipFrames, etc.
@@ -517,11 +486,10 @@ input.numPlayerButton {
 
 // Since "Intermediate Frames Shown" is a mouthful.
 #skipFramesLabel {
-	font-size: 28px;
+	font-size: 1rem;
 }
 
 #settingsDivider {
-	-ms-grid-column: 2;
 	grid-column: 2;
 
 	margin-left: 20px;
@@ -529,31 +497,32 @@ input.numPlayerButton {
 
 // The container for the key bindings section. (3 rows x 2 columns)
 .keyBindings {
-	display: -ms-grid;
 	display: grid;
-	-ms-grid-rows: auto auto auto;
 	grid-template-rows: auto auto auto;
-	-ms-grid-columns: auto auto;
 	grid-template-columns: auto auto;
 
 	margin-right: 15px;
 
 	form {
+		display: grid;
+		grid-gap: 0px 20px;
+		grid-template-columns: 70% 30%;
 		margin-bottom: 0px;
 	}
 
 	label {
-		width: 155px;
+		width: 100%;
+		margin: auto 0px;
 
-		font-size: 24px;
+		font-size: base.$smaller;
 		text-align: right;
 	}
 
 	input[type="button"] {
-		width: 50px;
+		width: 70%;
 		padding: 2px 0px;
 
-		font-size: 24px;
+		font-size: base.$smaller;
 	}
 }
 
@@ -564,22 +533,20 @@ input.numPlayerButton {
 	label {
 		margin-bottom: 5px;
 
-		font-size: 24px;
+		font-size: base.$smaller;
 	}
 
 	input[type="button"] {
-		width: 75px;
+		width: 3em;
 
-		font-size: 28px;
+		font-size: 1rem;
 	}
 }
 
 // Icons for each spritesheet.
 .appearanceIcon {
-	width: 50px;
-	height: 50px;
-
-	-webkit-filter: drop-shadow(2px 3px 5px base.$dark-gray);
+	width: 11%;
+	height: 11%;
 
 	filter: drop-shadow(2px 3px 5px base.$dark-gray) grayscale(80%) brightness(40%);
 

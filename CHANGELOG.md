@@ -2,13 +2,13 @@
 
 ## v0.7 - Better rooms, Spectate feature
 
-###v0.7.2 (May 22, 2020)
+### v0.7.2 (May 22, 2020)
 [`Minor CSS improvements #44`](https://github.com/WillFlame14/jspuyo/pull/44)
 **New features:**
 - Modal boxes (and their content) now automatically resize to fit the window. (Mainpage later...)
 - Autoprefixer now handles CSS vendor prefixes, so support for browsers other than Chrome (not including IE) should be improved
 
-###v0.7.1 (May 19, 2020)
+### v0.7.1 (May 19, 2020)
 [`Add Spectate feature #43`](https://github.com/WillFlame14/jspuyo/pull/43)
 **New features:**
 - Can now spectate rooms that have started
@@ -16,10 +16,10 @@
   - Can view a list of players in the room before deciding to spectate
 
 **Other changes:**
-- Fixed https://github.com/WillFlame14/jspuyo/issues/33.
+- Fixed [`#33`](https://github.com/WillFlame14/jspuyo/issues/33).
 - CPUs are now slightly less deterministic.
 
-###v0.7.0 (May 16, 2020)
+### v0.7.0 (May 16, 2020)
 [`Room overhaul, add chat #42`](https://github.com/WillFlame14/jspuyo/pull/42)
 **New features:**
 - New sidebar containing a dynamic list of players in the room, as well as the room chat
@@ -29,7 +29,7 @@
   - Also an option to copy link to clipboard
 
 **Other changes:**
-- Fixed https://github.com/WillFlame14/jspuyo/issues/38, https://github.com/WillFlame14/jspuyo/issues/39.
+- Fixed [`#38`](https://github.com/WillFlame14/jspuyo/issues/38), [`#39`](https://github.com/WillFlame14/jspuyo/issues/39).
 - Sockets receive *significantly* less traffic and no longer perform leftover actions repeatedly
 - CPU sockets are now correctly disconnected, reducing the number of total connections
 - Further reduced amount of console logging due to new UI features
@@ -71,7 +71,7 @@
   - Settings page allows you to customize user settings like DAS/ARR or key bindings
 
 **Other changes:**
-- Fixed https://github.com/WillFlame14/jspuyo/issues/32.
+- Fixed [`#32`](https://github.com/WillFlame14/jspuyo/issues/32).
 - Started using Sass and stylelint for better CSS organization
 - Started using npm-run-all for ease of development
 - Split up Main.js to create a Session class, and merged webpage.js into an init() function in Main.js

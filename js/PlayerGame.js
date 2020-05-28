@@ -3,10 +3,11 @@
 const { BoardDrawer } = require('./BoardDrawer');
 const { Game } = require('./Game.js');
 const { InputManager } = require('./InputManager.js');
+const { AudioPlayer } = require('./Utils.js');
 
 class PlayerGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
-		super(gameId, opponentIds, socket, 1, settings, userSettings);
+		super(gameId, opponentIds, socket, settings, userSettings, 1);
 
 		let frame = 0;
 
@@ -20,12 +21,12 @@ class PlayerGame extends Game {
 		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
 		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
-			if(id > 0) {
-				this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
-				this.opponentIdToBoardDrawer[id] = opponentCounter;
-			}
+			this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
+			this.opponentIdToBoardDrawer[id] = opponentCounter;
 			opponentCounter++;
 		});
+
+		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
 		// Reset the event listeners
 		this.socket.off('sendState');
@@ -34,10 +35,6 @@ class PlayerGame extends Game {
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
-			// Do not need to use states from CPUs (since no player/cpu mix yet). Everything is handled on their own.
-			if(oppId < 0) {
-				return;
-			}
 			if(frame === 0) {
 				this.opponentBoardDrawers[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
@@ -63,6 +60,25 @@ class PlayerGame extends Game {
 	 */
 	getInputs() {
 		this.inputManager.executeKeys();
+	}
+
+	/**
+	 * @Override
+	 * Also draws the necessary boards.
+	 */
+	step() {
+		const currentBoardHash = super.step();
+		if(currentBoardHash !== null) {
+			this.boardDrawer.drawFromHash(currentBoardHash);
+		}
+	}
+
+	/**
+	 * @Override
+	 * Updates the visible score.
+	 */
+	updateVisibleScore(pointsDisplayName, score) {
+		document.getElementById(pointsDisplayName).innerHTML = `${score}`.padStart(8, '0');
 	}
 
 	/**

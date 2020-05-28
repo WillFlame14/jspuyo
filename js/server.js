@@ -4,16 +4,18 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, { perMessageDeflate: false });
+const io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
 const { Room } = require('./Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
-const MAX_FRAME_DIFFERENCE = 20;
 
 let gameCounter = 1;		// The running number of games (used for assigning ids)
+let cpuCounter = 1;
 
 const socketIdToId = new Map();
+const cpuInfos = new Map();
 
 app.use(express.static('./'));
 
@@ -25,29 +27,46 @@ io.on('connection', function(socket) {
 		gameCounter++;
 	});
 
-	socket.on('cpuMatch', gameInfo => {
+	socket.on('cpuMatch', async gameInfo => {
 		const { gameId, roomSize, settingsString, cpus } = gameInfo;
 		Room.leaveRoom(gameId);
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
+		const promises = [];
+		cpuInfos.set(gameId, new Map());
 
 		// Assign each cpu a negative id
-		for(let i = 0; i < roomSize - 1; i++) {
+		cpus.forEach(cpu => {
 			// TODO: Support more CPUS. In the meantime, any extras are given these defaults:
-			const speed = cpus[i] ? cpus[i].speed : 100;
-			const ai = cpus[i] ? cpus[i].ai : 'Test';
+			const cpuSocket = io_client.connect('http://localhost:3000');
+			const cpuId = -cpuCounter;
+			cpuCounter++;
 
-			members.set(-gameCounter, { socket: null, frames: 0, speed, ai });
-			gameCounter++;
-		}
+			cpuInfos.get(gameId).set(cpuId, { client_socket: cpuSocket });
 
-		const roomId = Room.createRoom(members, roomSize, settingsString, 'cpu').roomId;
+			const promise =	new Promise(resolve => {
+				cpuSocket.emit('cpuAssign', gameId, cpuId, cpu, () => resolve());
+			});
+			promises.push(promise);
+		});
+		await Promise.all(promises);
+
+		const roomId = Room.createRoom(gameId, members, cpuInfos.get(gameId), roomSize, settingsString).roomId;
+		cpuInfos.delete(gameId);
 		Room.startRoom(roomId);
 	});
 
-	socket.on('cpuAssign', gameId => {
-		socketIdToId.set(socket.id, gameId);
-		Room.cpuAssign(gameId, socket);
+	socket.on('cpuAssign', (gameId, cpuId, cpu, callback) => {
+		const { speed, ai } = cpu;
+
+		socketIdToId.set(socket.id, cpuId);
+		const cpuInfo = cpuInfos.get(gameId).get(cpuId);
+		cpuInfo.socket = socket;
+		cpuInfo.speed = speed;
+		cpuInfo.ai = ai;
+		cpuInfos.get(gameId).set(cpuId, cpuInfo);
+
+		callback();
 	});
 
 	socket.on('createRoom', gameInfo => {
@@ -56,25 +75,21 @@ io.on('connection', function(socket) {
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 
-		const roomId = Room.createRoom(members, roomSize, settingsString).roomId;
+		const roomId = Room.createRoom(gameId, members, [], roomSize, settingsString).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 
 	socket.on('joinRoom', gameInfo => {
 		const { gameId, joinId } = gameInfo;
 		Room.leaveRoom(gameId);
-
-		try {
-			Room.joinRoom(gameId, joinId, socket);
-			console.log(`${gameId} has joined room ${joinId}.`);
-		}
-		catch(err) {
-			socket.emit('joinFailure', err.message);
-		}
+		Room.joinRoom(gameId, joinId, socket);
 	});
 
 	socket.on('spectate', gameInfo => {
+		console.log(gameInfo);
+		console.log(socket.id);
 		const { gameId, roomId } = gameInfo;
+		Room.leaveRoom(gameId);
 		Room.spectateRoom(gameId, socket, roomId);
 	});
 
@@ -95,7 +110,7 @@ io.on('connection', function(socket) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 
 			// Fixed settings for ranked rooms
-			Room.createRoom(members, 2, defaultSettings, 'ranked');
+			Room.createRoom(gameId, members, [], 2, defaultSettings, 'ranked');
 		}
 		// Pending ranked game
 		else {
@@ -121,7 +136,7 @@ io.on('connection', function(socket) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 
 			// Fixed settings for FFA rooms
-			Room.createRoom(members, 2, defaultSettings, 'ffa');
+			Room.createRoom(gameId, members, [], 2, defaultSettings, 'ffa');
 		}
 		else {
 			try {
@@ -145,69 +160,9 @@ io.on('connection', function(socket) {
 	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendState', gameId, boardHash, currentScore, totalNuisance);
 
-		const room = Room.getRoomFromId(gameId);
-
-		if(room === undefined) {
-			// Leftover socket emissions from a disconnected player
-			return;
-		}
-
-		const thisPlayer = room.members.get(gameId);
-		thisPlayer.frames++;
-
-		let minSteps = Infinity, minId = null;
-
-		room.members.forEach((player, id) => {
-			if(!room.spectating.has(id)) {		// Exclude spectators
-				const frames = player.frames;
-				if(frames < minSteps) {
-					minSteps = frames;
-					minId = id;
-				}
-			}
-		});
-
-		// Too fast
-		if(thisPlayer.frames - minSteps > MAX_FRAME_DIFFERENCE) {
-			socket.emit('pause');
-			room.paused.push(gameId);
-
-			// Start timeout if everyone except one player is paused
-			if(room.paused.length === room.members.size - 1 && room.timeout === null) {
-				room.timeout = setTimeout(() => {
-					room.members.get(minId).socket.emit('timeout');
-
-					// Restart all other members
-					room.members.forEach((player, id) => {
-						if(id !== minId) {
-							player.socket.emit('play');
-							player.socket.emit('timeoutDisconnect', minId);
-						}
-					});
-
-					Room.leaveRoom(minId);
-				}, 30000);
-			}
-		}
-		// Caught up
-		else if(thisPlayer.frames === minSteps) {
-			const toRemove = [];
-			room.paused.forEach(id => {
-				// Restart every socket that is no longer too far ahead
-				if(room.members.get(id).frames - thisPlayer.frames < MAX_FRAME_DIFFERENCE - 5) {
-					room.members.get(id).socket.emit('play');
-					toRemove.push(id);
-				}
-			});
-
-			// Remove the restarted ids
-			room.paused = room.paused.filter(id => !toRemove.includes(id));
-
-			// If the slow player has caught up, stop timeout
-			if(room.paused.length < room.members.size - 1 && room.timeout !== null) {
-				clearTimeout(room.timeout);
-				room.timeout = null;
-			}
+		// CPUs do not trigger frame advances
+		if(gameId > 0) {
+			Room.advanceFrame(gameId);
 		}
 	});
 
@@ -240,15 +195,6 @@ io.on('connection', function(socket) {
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('gameOver', gameId);
-
-		// Disconnect any cpus who have lost to conserve resources
-		if(gameId < 0) {
-			Room.leaveRoom(gameId);
-			socket.disconnect();
-		}
-		else {
-			Room.spectateRoom(gameId, socket);
-		}
 	});
 
 	// Game is over for all players

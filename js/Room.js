@@ -1,22 +1,33 @@
 'use strict';
 
+const { Cpu } = require('./Cpu.js');
+const { CpuGame } = require('./CpuGame.js');
+const { Settings } = require('./Utils.js');
+
 const roomIds = new Set();		// Set of roomIds currently in use
 const roomIdToRoom = new Map();
 const idToRoomId = new Map();
 
+const MAX_FRAME_DIFFERENCE = 20;
+
 class Room {
-	constructor(members, roomSize, settingsString, roomType = 'default') {
+	constructor(members, cpus, roomSize, settingsString, roomType = 'default') {
 		this.roomId = generateRoomId(6);
+		this.members = members;
+		this.cpus = cpus;
+		this.cpuGames = [];
 		this.roomSize = (roomSize > 16) ? 16 : (roomSize < 1) ? 1 : roomSize;	// clamp between 1 and 16
 		this.settingsString = settingsString;
-		this.members = members;
 		this.roomType = roomType;
 		this.quickPlayTimer = null;		// Only used if roomType is 'ffa'
 
-		this.started = false;
+		this.ingame = false;
 		this.paused = [];
 		this.spectating = new Map();
+		this.defeated = [];
 		this.timeout = null;
+
+		this.cpuFrame = 0;
 
 		switch(this.roomType) {
 			case 'ffa':
@@ -31,46 +42,60 @@ class Room {
 			idToRoomId.set(gameId, this.roomId);
 
 			// Send update to all players
-			if(gameId > 0) {
-				player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
-				player.socket.join(this.roomId);
-			}
+			player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+			player.socket.join(this.roomId);
 		});
+
+		this.cpus.forEach((cpu, gameId) => {
+			idToRoomId.set(gameId, this.roomId);
+			cpu.socket.join(this.roomId);
+		});
+
 		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()))}`);
 	}
 
 	/**
-	 * Adds a player to an existing room. Returns the new room size. Throws an error if the room cannot be joined.
+	 * Adds a player/CPU to an existing room.
 	 */
-	join(gameId, socket) {
+	join(gameId, socket, cpuInfo = null) {
+		// Room is full
 		if(this.members.size === this.roomSize) {
-			throw new Error(`The room you are trying to join (id ${this.roomId}) is already full.`);
+			if(cpuInfo === null) {
+				throw new Error('The room is full.');
+			}
+			else {
+				this.spectate(gameId, socket);
+			}
+			return;
 		}
-		else if(this.started) {
-			throw new Error(`The room you are trying to join (id ${this.roomId}) has already started a game.`);
+		// Room is currently in a game
+		else if(this.ingame) {
+			this.spectate(gameId, socket);
+			return;
 		}
 
-		this.members.set(gameId, { socket, frames: 0 });
-		idToRoomId.set(gameId, this.roomId);
-		socket.join(this.roomId);
+		if(this.spectating.has(gameId)) {
+			this.spectating.delete(gameId);
+		}
+		else {
+			socket.join(this.roomId);
+			idToRoomId.set(gameId, this.roomId);
+		}
+
+		if(cpuInfo === null) {
+			this.members.set(gameId, { socket, frames: 0 });
+		}
+		else {
+			const { speed, ai } = cpuInfo;
+			this.cpus.set(gameId, { socket, frames: 0, speed, ai });
+		}
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
-		// Room is full
-		if(this.members.size === this.roomSize && this.roomType !== 'ffa') {
-			this.start();
-		}
-		// Room is not full yet - send progress update to all members who are not CPUs
-		else {
-			// Dynamic allocation of size for FFA matches (even if it might be full)
-			if(this.roomType === 'ffa') {
-				this.roomSize++;
+		this.members.forEach((player, id) => {
+			if(id > 0) {
+				player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
 			}
-			this.members.forEach((player, id) => {
-				if(id > 0) {
-					player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
-				}
-			});
-		}
+		});
 	}
 
 	/**
@@ -86,26 +111,43 @@ class Room {
 			socket.emit('spectate', this.roomId, Array.from(this.members.keys()), this.settingsString);
 		}
 		this.spectating.set(gameId, socket);
+		console.log(`Added gameId ${gameId} to room ${this.roomId} as a spectator`);
 	}
 
 	/**
 	 * Starts a room by sending a 'start' event to all sockets.
 	 */
 	start() {
-		const allIds = Array.from(this.members.keys());
+		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
+		const settings = Settings.fromString(this.settingsString);
 
+		// Clear the CPU games, then regenerate them
+		this.cpuGames = [];
+		this.cpuFrame = 0;
+
+		this.cpus.forEach((cpu, cpuId) => {
+			const { client_socket, speed, ai } = cpu;
+			const opponentIds = allIds.filter(id => id !== cpuId);
+
+			const game = new CpuGame(
+				cpuId,
+				opponentIds,
+				client_socket,
+				Cpu.fromString(ai, settings),
+				Number(speed),
+				settings
+			);
+
+			this.cpuGames.push({ game, socket: client_socket, gameId: cpuId, remove: false });
+		});
+
+		console.log(allIds);
+
+		// Send start to the players
 		this.members.forEach((player, gameId) => {
-			// Send start to all members who are not CPUs
-			if(gameId > 0) {
-				const opponentIds = allIds.filter(id => id > 0 && id !== gameId);
-				const cpus = allIds.filter(id => id < 0).map(cpuId => {
-					// Add the gameId to the cpu object
-					const cpu = this.members.get(cpuId);
-					cpu.gameId = cpuId;
-					return cpu;
-				});
-				player.socket.emit('start', this.roomId, opponentIds, cpus, this.settingsString);
-			}
+			const opponentIds = allIds.filter(id => id !== gameId);
+			player.frames = 0;
+			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
 		});
 
 		switch(this.roomType) {
@@ -125,118 +167,198 @@ class Room {
 	/**
 	 * Removes a player from a room (if possible).
 	 */
-	leave(gameId) {
-		if(this.roomType === 'cpu' && gameId > 0 && this.members.has(gameId)) {
-			console.log(`Ending CPU game ${this.roomId} due to player disconnect.`);
-
-			this.end();		// Since only games with 1 player and the rest CPU are supported, the game must end on player disconnect.
-		}
-		else {
-			if(this.spectating.has(gameId)) {
-				const socket = this.spectating.get(gameId);
-				socket.leave(this.roomId);
-				idToRoomId.delete(gameId);
-				console.log(`Removed spectator ${gameId} from room ${this.roomId}`);
-				return;
-			}
-
-			const socket = this.members.get(gameId).socket;
-			socket.leave(this.roomId);		// Remove the socket from the room
-
-			// Remove player from maps
-			this.members.delete(gameId);
-			if(this.paused.includes(gameId)) {
-				this.paused.splice(this.paused.indexOf(gameId), 1);
-			}
+	leave(gameId, notify = true) {
+		if(this.spectating.has(gameId)) {
+			const socket = this.spectating.get(gameId);
+			socket.leave(this.roomId);
 			idToRoomId.delete(gameId);
+			console.log(`Removed spectator ${gameId} from room ${this.roomId}`);
+			return;
+		}
 
-			console.log(`Removed ${gameId} from room ${this.roomId}`);
+		// Select the correct map to remove the player from
+		const playerList = (gameId > 0) ? this.members : this.cpus;
 
-			// Disconnect the CPU socket, since they leave due to game over
-			if(gameId < 0) {
-				socket.disconnect();
-				return;
-			}
+		const socket = playerList.get(gameId).socket;
+		socket.leave(this.roomId);
 
-			// Game has started, so need to emit disconnect event to all members
-			if(this.started) {
-				this.members.forEach((player, id) => {
-					if(id > 0) {
-						player.socket.emit('playerDisconnect', gameId);
-					}
-				});
-			}
-			// Game is waiting or in queue, so send update to all members
-			else {
-				this.members.forEach((player, id) => {
-					if(id > 0) {
-						player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
-					}
-				});
+		// Remove player from maps
+		playerList.delete(gameId);
+		if(this.paused.includes(gameId)) {
+			this.paused.splice(this.paused.indexOf(gameId), 1);
+		}
+		idToRoomId.delete(gameId);
 
-				// Cancel start if not enough players
-				if(this.roomType === 'ffa' && this.members.size < 2 && this.quickPlayTimer !== null) {
-					clearTimeout(this.quickPlayTimer);
-					this.quickPlayTimer = null;
-					console.log('Cancelled start. Not enough players.');
+		console.log(`Removed ${gameId} from room ${this.roomId}`);
+
+		// Disconnect the CPU socket, since they cannot exist outside of the room
+		if(gameId < 0) {
+			socket.disconnect();
+			return;
+		}
+
+		// Game has started, so need to emit disconnect event to all members
+		if(this.ingame) {
+			this.members.forEach((player, id) => {
+				if(id > 0) {
+					player.socket.emit('playerDisconnect', gameId);
 				}
+			});
+			return;
+		}
 
-				// Close custom room if it is empty
-				if(this.members.size === 0 && this.roomType === 'default') {
-					roomIdToRoom.delete(this.roomId);
-					roomIds.delete(this.roomId);
-					console.log(`Closed room ${this.roomId} since it was empty.`);
-				}
-			}
+		if(notify) {
+			this.members.forEach((player) => {
+				player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+			});
+		}
+
+		// Cancel start if not enough players
+		if(this.roomType === 'ffa' && this.members.size < 2 && this.quickPlayTimer !== null) {
+			clearTimeout(this.quickPlayTimer);
+			this.quickPlayTimer = null;
+			console.log('Cancelled start. Not enough players.');
+		}
+
+		// Close room if it contains no more players
+		if(this.members.size === 0 && this.roomType === 'default') {
+			this.cpus.forEach((cpu, cpuId) => {
+				this.leave(cpuId, false);
+			});
+
+			// Clear room entry
+			roomIdToRoom.delete(this.roomId);
+			roomIds.delete(this.roomId);
+			console.log(`Closed room ${this.roomId}`);
 		}
 	}
 
 	/**
-	 * Ends the room by removing all players and the room from maps.
+	 * Ends the room by removing all players (triggering room cleanup).
 	 */
 	end() {
-		// Remove all players from the room
 		this.members.forEach((player, id) => {
-			idToRoomId.delete(id);
+			this.leave(id, false);
+		});
+	}
 
-			// Disconnect the CPU sockets
-			if(id < 0) {
-				player.socket.disconnect();
-			}
-			// Remove the player sockets from the room
-			else {
-				player.socket.leave(this.roomId);
+	/**
+	 * Increments the frame counter for a player, and determines whether other games should be paused/resumed.
+	 * Also increments CPU games to match with the slowest player.
+	 */
+	advance(gameId) {
+		const thisPlayer = this.members.get(gameId);
+		thisPlayer.frames++;
+
+		let minFrames = Infinity, minId = null;
+
+		this.members.forEach((player, id) => {
+			if(!this.defeated.includes(id)) {		// Exclude defeated players
+				const frames = player.frames;
+				if(frames < minFrames) {
+					minFrames = frames;
+					minId = id;
+				}
 			}
 		});
 
-		// Clear room entry
-		roomIdToRoom.delete(this.roomId);
-		roomIds.delete(this.roomId);
+		// CPU games are behind
+		if(minFrames > this.cpuFrame) {
+			this.cpuGames.forEach(cpuGame => {
+				cpuGame.game.step();
+				const cpuEndResult = cpuGame.game.end();
+				if(cpuEndResult !== null) {
+					switch(cpuEndResult) {
+						case 'Win':
+							cpuGame.socket.emit('gameEnd', this.roomId);
+							break;
+						case 'Loss':
+							cpuGame.socket.emit('gameOver', cpuGame.gameId);
+							break;
+						case 'OppDisconnect':
+							// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
+							break;
+					}
+					// Set the game to be removed
+					cpuGame.remove = true;
+				}
+			});
+			// Prevent topped out games from being advanced further by removing them
+			this.cpuGames = this.cpuGames.filter(cpuGame => !cpuGame.remove);
+		}
+
+		// Too fast
+		if(thisPlayer.frames - minFrames > MAX_FRAME_DIFFERENCE) {
+			thisPlayer.socket.emit('pause');
+			this.paused.push(gameId);
+
+			// Start timeout if everyone except one player is paused
+			if(this.paused.length === this.members.size - 1 && this.timeout === null) {
+				this.timeout = setTimeout(() => {
+					this.members.get(minId).socket.emit('timeout');
+
+					// Resume all other members
+					this.members.forEach((player, id) => {
+						if(id !== minId) {
+							player.socket.emit('play');
+							player.socket.emit('timeoutDisconnect', minId);
+						}
+					});
+
+					this.leave(minId);
+				}, 30000);
+			}
+		}
+		// Catching up
+		else if(thisPlayer.frames === minFrames) {
+			const toRemove = [];
+			this.paused.forEach(id => {
+				// Restart every socket that is no longer too far ahead
+				if(this.members.get(id).frames - thisPlayer.frames < MAX_FRAME_DIFFERENCE - 5) {
+					this.members.get(id).socket.emit('play');
+					toRemove.push(id);
+				}
+			});
+
+			// Remove the restarted ids
+			this.paused = this.paused.filter(id => !toRemove.includes(id));
+
+			// If anyone has resumed, stop timeout
+			if(this.paused.length < this.members.size - 1 && this.timeout !== null) {
+				clearTimeout(this.timeout);
+				this.timeout = null;
+			}
+		}
 	}
 
 	/* ------------------------------ Helper Methods (RoomManager) ------------------------------*/
 
-	static createRoom(members, roomSize, settingsString, roomType = 'default') {
-		const room = new Room(members, roomSize, settingsString, roomType);
+	static createRoom(gameId, members, cpus, roomSize, settingsString, roomType = 'default') {
+		const room = new Room(members, cpus, roomSize, settingsString, roomType);
 		roomIdToRoom.set(room.roomId, room);
 		return room;
 	}
 
-	static joinRoom(gameId, roomId, socket) {
+	static joinRoom(gameId, roomId, socket, cpuInfo) {
 		const room = roomIdToRoom.get(roomId);
+
 		if(room === undefined) {
-			throw new Error(`The room you are trying to join (id ${roomId}) does not exist.`);
+			socket.emit('joinFailure', `The room you are trying to join (id ${roomId}) does not exist.`);
+			return;
 		}
-		room.join(gameId, socket);
+
+		room.join(gameId, socket, cpuInfo);
 		return room;
 	}
 
 	static spectateRoom(gameId, socket, roomId = null) {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
+
 		if(room === undefined) {
 			socket.emit('spectateFailure', 'The room you are trying to join does not exist or has ended.');
 			return;
 		}
+
 		room.spectate(gameId, socket);
 		return room;
 	}
@@ -247,16 +369,29 @@ class Room {
 		return room;
 	}
 
-	static leaveRoom(gameId, roomId = null) {
+	static leaveRoom(gameId, roomId = null, notify = false) {
 		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
-			console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
+			if(notify) {
+				console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
+			}
 			return;
 		}
 		room.leave(gameId);
 		return room;
+	}
+
+	static advanceFrame(gameId) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		if(room === undefined) {
+			console.log(`Received sendState from gameId ${gameId}, but they were not in a room.`);
+			return;
+		}
+
+		room.advance(gameId);
 	}
 
 	/**
@@ -304,11 +439,6 @@ class Room {
 
 	static getRoomIdFromId(gameId) {
 		return idToRoomId.get(gameId);
-	}
-
-	// clunky. try to remove if possible
-	static getRoomFromId(gameId) {
-		return roomIdToRoom.get(idToRoomId.get(gameId));
 	}
 }
 

@@ -1,7 +1,5 @@
 'use strict';
 
-const { Cpu } = require('./Cpu.js');
-const { CpuGame } = require('./CpuGame.js');
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
 const { Utils, Settings, UserSettings } = require('./Utils.js');
@@ -69,6 +67,9 @@ let currentRoomId = null;
 
 const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 
+const mainContent = document.getElementById('main-content');
+const sidebar = document.getElementById('sidebar');
+
 // Set up all the event listeners
 async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
@@ -82,11 +83,11 @@ async function init(playerInfo) {
 		clearModal();
 		clearBoards();
 		generateBoards(1);
-		if(document.getElementById('main-content').classList.contains('ingame')) {
-			document.getElementById('main-content').classList.remove('ingame');
+		if(mainContent.classList.contains('ingame')) {
+			mainContent.classList.remove('ingame');
 		}
 		document.getElementById('statusArea').style.display = 'flex';
-		document.getElementById('sidebar').style.display = 'flex';
+		sidebar.style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
 		const statusSettings = document.getElementById('statusSettings');
@@ -107,60 +108,32 @@ async function init(playerInfo) {
 		updatePlayers(allIds);
 	});
 
-	socket.on('start', (roomId, opponentIds, cpus, settingsString) => {
+	socket.on('start', (roomId, opponentIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
-		const cpuIds = cpus.map(cpu => cpu.gameId);
-		const allOpponentIds = opponentIds.concat(cpuIds);
-		const allIds = allOpponentIds.concat(gameId);
 		const settings = Settings.fromString(settingsString);
 		const userSettingsCopy = Utils.objectCopy(userSettings);
 
 		// Add default skipFrames
-		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
+		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[opponentIds.length + 1];
 
 		// Adjust the number of boards drawn
 		clearBoards();
-		generateBoards(opponentIds.length + cpus.length + 1);
+		generateBoards(opponentIds.length + 1);
 
 		// Set up the player's game
-		const game = new PlayerGame(gameId, allOpponentIds, socket, settings, userSettingsCopy);
-
-		let boardDrawerCounter = 2;
-
-		// Create the CPU games
-		const cpuGames = cpus.map(cpu => {
-			const { speed, ai } = cpu;
-			const thisSocket = io();
-			const thisOppIds = allIds.slice();
-			// Remove the cpu player from list of ids
-			thisOppIds.splice(allIds.indexOf(cpu.gameId), 1);
-
-			const thisGame = new CpuGame(
-				cpu.gameId,
-				thisOppIds,
-				thisSocket,
-				boardDrawerCounter,
-				Cpu.fromString(ai, settings),
-				Number(speed),
-				settings,
-				userSettingsCopy
-			);
-
-			boardDrawerCounter++;
-			return { game: thisGame, socket: thisSocket, gameId: cpu.gameId, remove: false };
-		});
+		const game = new PlayerGame(gameId, opponentIds, socket, settings, userSettingsCopy);
 
 		// Create the session
-		const playerGame = { game, socket, gameId };
-		currentSession = new Session(playerGame, cpuGames, roomId);
+		currentSession = new Session(gameId, game, socket, roomId);
 		currentSession.run();
 	});
 
 	socket.on('spectate', (roomId, allIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
+
 		const settings = Settings.fromString(settingsString);
 		const userSettingsCopy = Utils.objectCopy(userSettings);
 
@@ -172,8 +145,9 @@ async function init(playerInfo) {
 		generateBoards(allIds.length);
 
 		const game = new SpectateGame(gameId, allIds, socket, settings, userSettingsCopy);
-		const playerGame = { game, socket, gameId};
-		currentSession = new Session(playerGame, [], roomId);
+
+		// Create the session
+		currentSession = new Session(gameId, game, socket, roomId);
 		currentSession.spectate = true;
 		currentSession.run();
 	});
@@ -198,7 +172,7 @@ function stopCurrentSession() {
 	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
 	document.getElementById('statusGamemode').innerHTML = '';
 	document.getElementById('statusSettings').innerHTML = '';
-	document.getElementById('sidebar').style.display = 'none';
+	sidebar.style.display = 'none';
 	updatePlayers([]);
 }
 
@@ -209,9 +183,9 @@ function showGameOnly() {
 	clearModal();
 	clearMessages();
 	document.getElementById('statusArea').style.display = 'none';
-	document.getElementById('sidebar').style.display = 'none';
-	if(!document.getElementById('main-content').classList.contains('ingame')) {
-		document.getElementById('main-content').classList.add('ingame');
+	sidebar.style.display = 'none';
+	if(!mainContent.classList.contains('ingame')) {
+		mainContent.classList.add('ingame');
 	}
 	hidePlayers();
 }

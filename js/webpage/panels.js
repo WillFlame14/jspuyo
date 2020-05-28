@@ -467,14 +467,17 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		const cpus = [];
 
 		document.querySelectorAll('.aiOption').forEach(dropdown => {
-			cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
+			if(window.getComputedStyle(dropdown).getPropertyValue('display') === 'block') {
+				cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
+			}
 		});
 
 		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
-			// slider value is between 0 and 10, map to between 5000 and 0
-			cpus[index].speed = (10 - slider.value) * 500;
+			if(window.getComputedStyle(slider).getPropertyValue('display') === 'block') {
+				// Slider value is between 0 and 10, map to between 5000 and 0
+				cpus[index].speed = (10 - slider.value) * 500;
+			}
 		});
-
 		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
 
 		cpuRoomSettings = null;

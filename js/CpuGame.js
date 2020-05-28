@@ -1,15 +1,15 @@
 'use strict';
 
 const { Game } = require('./Game.js');
+const { AudioPlayer, UserSettings } = require('./Utils.js');
+
+const defaultUserSettings = new UserSettings();
 
 class CpuGame extends Game {
-	constructor(gameId, opponentIds, socket, boardDrawerId, ai, speed, settings, userSettings) {
-		super(gameId, opponentIds, socket, boardDrawerId, settings, userSettings);
-
-		socket.emit('cpuAssign', gameId);		// Send this socket's information to the server
+	constructor(gameId, opponentIds, socket, ai, speed, settings) {
+		super(gameId, opponentIds, socket, settings, defaultUserSettings, null);
 
 		this.ai = ai;							// The algorithm used to determine the optimal move
-		this.ai.assignSettings(this.settings);
 		this.softDropSpeed = speed;				// Number of milliseconds to wait before soft dropping
 		this.movementSpeed = speed / 8;			// Number of milliseconds to wait before performing a move
 		this.currentMove = null;				// The current optimal move
@@ -18,7 +18,9 @@ class CpuGame extends Game {
 
 		this.softDropTimer = Date.now();		// Timer to measure milliseconds before soft drop
 		this.movementTimer = Date.now();		// Timer to measure milliseconds before movement
-		this.audioPlayer.disable();				// Do not play audio, but emit sendAudio events
+
+		// Disable certain classes
+		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume, 'disable');
 	}
 
 	/**

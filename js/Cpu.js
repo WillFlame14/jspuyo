@@ -257,8 +257,8 @@ class TestCpu extends Cpu {
 	getMove(boardState, currentDrop) {
 		const averageHeight = super.getAverageHeight(boardState);
 		const minChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
-			(averageHeight > this.settings.rows / 2) ? 2 :
-				(averageHeight > this.settings.rows / 2) ? 3 : 4;
+						(averageHeight > this.settings.rows / 2) ? 2 :		// eslint-disable-line indent
+						(averageHeight > this.settings.rows / 2) ? 3 : 4;	// eslint-disable-line indent
 
 		let { col, rotations} = super.checkForAllChains(boardState, currentDrop, minChain);
 

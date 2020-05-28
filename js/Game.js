@@ -1,7 +1,7 @@
 'use strict';
 
 const { Board } = require('./Board.js');
-const { BoardDrawer } = require('./BoardDrawer');
+const { BoardDrawer } = require('./BoardDrawer.js');
 const { DropGenerator } = require('./Drop.js');
 const { Utils } = require('./Utils.js');
 
@@ -220,9 +220,6 @@ class Game {
 
 		// Emit board state to all opponents
 		if(currentBoardHash !== null) {
-			if(JSON.parse(currentBoardHash).includes(null)) {
-				console.log('aaaaaaaaaaaaaaaaaaaaaaaaa');
-			}
 			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
 		}
 

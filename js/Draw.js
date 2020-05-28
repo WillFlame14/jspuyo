@@ -18,7 +18,8 @@ class SpriteDrawer {
 	/**
 	 * @param   {CanvasRenderingContext2D}  ctx         The context to draw on
 	 * @param   {String}                    spriteSheet The name of the sprite sheet to use, e.g. "TsuClassic" for TsuClassic.png
-	 * @param   {Number}                    size        The size of a single sprite unit on the destination, in pixels
+	 * @param   {Number}                    sizeX       The size (width) of a single sprite unit on the destination, in pixels
+	 * @param   {Number}                    sizeY       The size (height) of a single sprite unit on the destination, in pixels
 	 * @param   {Number}                    sX          The 0-indexed column number of the leftmost column of the sprite on the sheet
 	 * @param   {Number}                    sY          The 0-indexed row number of the topmost row of the sprite on the sheet
 	 * @param   {Number}                    cX          How many pixels right to draw the centre of the sprite relative to the current ctx origin

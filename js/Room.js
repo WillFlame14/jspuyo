@@ -121,10 +121,6 @@ class Room {
 		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 		const settings = Settings.fromString(this.settingsString);
 
-		// Clear the CPU games, then regenerate them
-		this.cpuGames = [];
-		this.cpuFrame = 0;
-
 		this.cpus.forEach((cpu, cpuId) => {
 			const { client_socket, speed, ai } = cpu;
 			const opponentIds = allIds.filter(id => id !== cpuId);
@@ -140,8 +136,6 @@ class Room {
 
 			this.cpuGames.push({ game, socket: client_socket, gameId: cpuId, remove: false });
 		});
-
-		console.log(allIds);
 
 		// Send start to the players
 		this.members.forEach((player, gameId) => {
@@ -161,7 +155,7 @@ class Room {
 		}
 
 		console.log(`Started room ${this.roomId}`);
-		this.started = true;
+		this.ingame = true;
 	}
 
 	/**
@@ -234,12 +228,21 @@ class Room {
 	}
 
 	/**
-	 * Ends the room by removing all players (triggering room cleanup).
+	 * Ends the game.
 	 */
 	end() {
-		this.members.forEach((player, id) => {
-			this.leave(id, false);
-		});
+		this.ingame = false;
+
+		// Clear the CPU games
+		this.cpuGames = [];
+		this.cpuFrame = 0;
+
+		// Bring back to room info screen in 5 seconds.
+		setTimeout(() => {
+			this.members.forEach(player => {
+				player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType === 'ffa');
+			});
+		}, 5000);
 	}
 
 	/**
@@ -369,6 +372,12 @@ class Room {
 		return room;
 	}
 
+	static endRoom(roomId) {
+		const room = roomIdToRoom.get(roomId);
+		room.end();
+		return room;
+	}
+
 	static leaveRoom(gameId, roomId = null, notify = false) {
 		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
@@ -400,7 +409,7 @@ class Room {
 	static getAllRooms(gameId) {
 		return Array.from(roomIds).filter(id => {
 			const room = roomIdToRoom.get(id);
-			return room.started && !room.members.has(gameId);
+			return !room.members.has(gameId);
 		});
 	}
 
@@ -410,31 +419,10 @@ class Room {
 	static getPlayers(roomId) {
 		const room = roomIdToRoom.get(roomId);
 
-		if(room === undefined || !room.started) {
+		if(room === undefined) {
 			return [];
 		}
 		return Array.from(room.members.keys());
-	}
-
-	static cpuAssign(gameId, socket) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		// Assign the socket to the CPU player in the room
-		room.members.get(gameId).socket = socket;
-		socket.join(room.roomId);
-	}
-
-	static disconnectAll(roomId) {
-		const room = roomIdToRoom.get(roomId);
-
-		// Game has already been ended (usually caused by leaving a CPU game)
-		if(room === undefined) {
-			console.log(`ERROR: Received game end signal from non-existent room ${roomId}.`);
-			return;
-		}
-
-		room.end();
-		console.log(`Ended game with room id ${room.roomId}`);
 	}
 
 	static getRoomIdFromId(gameId) {

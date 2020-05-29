@@ -23,6 +23,18 @@ function mainpageInit(playerInfo) {
 	socket.on('sendMessage', (sender, message) => {
 		addMessage(sender, message);
 	});
+
+	const modal = document.getElementById('modal-background');
+
+	document.getElementById('manageCpus').onclick = function() {
+		modal.style.display = 'block';
+		document.getElementById('cpuOptionsModal').style.display = 'block';
+	};
+
+	document.getElementById('manageSettings').onclick = function() {
+		modal.style.display = 'block';
+		document.getElementById('createRoomModal').style.display = 'block';
+	};
 }
 
 /**

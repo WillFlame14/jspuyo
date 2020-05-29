@@ -223,14 +223,14 @@ function panelsInit(playerInfo, stopCurrentSession) {
 				// Open the CPU Options menu
 				document.getElementById('cpuOptionsModal').style.display = 'block';
 
-				// Clear all the cpu options
-				for(let i = 0; i < 6; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'none';
-				}
-
 				// Add only the ones that are needed (minus one since the player doesn't count)
-				for(let i = 0; i < roomSize - 1; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'grid';
+				for(let i = 0; i < 6; i++) {
+					if(i < roomSize - 1) {
+						document.getElementById('cpu' + (i + 1)).style.display = 'grid';
+					}
+					else {
+						document.getElementById('cpu' + (i + 1)).style.display = 'none';
+					}
 				}
 				break;
 		}

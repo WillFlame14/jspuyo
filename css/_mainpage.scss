@@ -44,10 +44,70 @@
 	font: 52px base.$font-title;
 	text-align: center;
 
-	text-shadow: 2px 2px 5px base.$dark-gray;
+	text-shadow: base.$text-drop-shadow;
+}
+
+#roomManage {
+	display: none;
+	margin-top: 0px;
+	padding-left: 0px;
+
+	font: 42px base.$font-title;
+
+	list-style: none;
+
+	li {
+		display: grid;
+		grid-template-columns: 20% 80%;
+		margin: 25px 0px;
+		padding: 10px 0px;
+
+		text-align: left;
+
+		text-shadow: base.$text-drop-shadow;
+
+		box-shadow: base.$box-drop-shadow;
+	}
+}
+
+.roomManageIcon {
+	height: 80%;
+	margin: auto;
+
+	filter: drop-shadow(0px 0px 15px base.$dark-gray);
+}
+
+#manageCpus {
+	background: #351c75;
+}
+
+#manageSettings {
+	background: #0b5394;
+
+	.roomManageicon {
+		filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
+#manageStartRoom {
+	background: #134f5c;
+
+	.roomManageicon {
+		filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
+#manageSpectate {
+	background: #555555;
+}
+
+#statusMsg {
+	display: none;
 }
 
 #statusGamemode {
+	display: none;
+
 	font: 56px "Rock Salt", sans-serif;
 }
 

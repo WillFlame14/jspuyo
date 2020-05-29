@@ -199,7 +199,7 @@ io.on('connection', function(socket) {
 
 	// Game is over for all players
 	socket.on('gameEnd', roomId => {
-		Room.disconnectAll(roomId);
+		Room.endRoom(roomId);
 	});
 
 	socket.on('forceDisconnect', (gameId, roomId) => {

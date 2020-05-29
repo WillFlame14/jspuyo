@@ -90,9 +90,13 @@ async function init(playerInfo) {
 		sidebar.style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
+		const statusGamemode = document.getElementById('statusGamemode');
 		const statusSettings = document.getElementById('statusSettings');
+		const roomManageOptions = document.getElementById('roomManage');
 
 		if(quickPlay) {
+			statusMsg.style.display = 'block';
+			statusGamemode.style.display = 'block';
 			if (allIds.length === 1) {
 				statusMsg.innerHTML = 'Waiting for more players to start...';
 			}
@@ -101,7 +105,11 @@ async function init(playerInfo) {
 			}
 		}
 		else {
-			statusMsg.innerHTML = 'Room size: ' + (allIds.length) + '/' + roomSize + ' players';
+			statusMsg.style.display = 'none';
+			statusGamemode.style.display = 'none';
+			roomManageOptions.style.display = 'block';
+
+			document.getElementById('manageSpectate').querySelector('span').innerHTML = 'Spectate';
 		}
 		statusSettings.innerHTML = 'Settings: ' + settingsString;
 

@@ -223,7 +223,6 @@ class Game {
 			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
 		}
 
-
 		return currentBoardHash;
 	}
 

@@ -15,7 +15,7 @@ class Room {
 		this.roomId = generateRoomId(6);
 		this.members = members;
 		this.cpus = cpus;
-		this.cpuGames = [];
+		this.games = new Map();
 		this.roomSize = (roomSize > 16) ? 16 : (roomSize < 1) ? 1 : roomSize;	// clamp between 1 and 16
 		this.settingsString = settingsString;
 		this.roomType = roomType;
@@ -26,8 +26,6 @@ class Room {
 		this.spectating = new Map();
 		this.defeated = [];
 		this.timeout = null;
-
-		this.cpuFrame = 0;
 
 		switch(this.roomType) {
 			case 'ffa':
@@ -83,11 +81,11 @@ class Room {
 		}
 
 		if(cpuInfo === null) {
-			this.members.set(gameId, { socket, frames: 0 });
+			this.members.set(gameId, { socket });
 		}
 		else {
 			const { speed, ai } = cpuInfo;
-			this.cpus.set(gameId, { socket, frames: 0, speed, ai });
+			this.cpus.set(gameId, { socket, speed, ai });
 		}
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
@@ -134,13 +132,41 @@ class Room {
 				settings
 			);
 
-			this.cpuGames.push({ game, socket: client_socket, gameId: cpuId, remove: false });
+			let cpuTimer;
+
+			const timeout = () => {
+				game.step();
+
+				const cpuEndResult = game.end();
+				if(cpuEndResult !== null) {
+					switch(cpuEndResult) {
+						case 'Win':
+							game.socket.emit('gameEnd', this.roomId);
+							break;
+						case 'Loss':
+							game.socket.emit('gameOver', cpuId);
+							break;
+						case 'OppDisconnect':
+							// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
+							break;
+					}
+					this.defeated.push(cpuId);
+				}
+				else {
+					cpuTimer = setTimeout(timeout, 16.67);
+				}
+			};
+
+			// Start the timer
+			cpuTimer = setTimeout(timeout, 16.67);
+
+			this.games.set(cpuId, { frames: 0, socket: client_socket, timeout: cpuTimer });
 		});
 
 		// Send start to the players
 		this.members.forEach((player, gameId) => {
 			const opponentIds = allIds.filter(id => id !== gameId);
-			player.frames = 0;
+			this.games.set(gameId, { frames: 0, socket: player.socket });
 			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
 		});
 
@@ -187,12 +213,18 @@ class Room {
 
 		// Disconnect the CPU socket, since they cannot exist outside of the room
 		if(gameId < 0) {
+			if(this.games.has(gameId)) {
+				clearTimeout(this.games.timeout);
+				this.games.delete(gameId);
+			}
 			socket.disconnect();
 			return;
 		}
 
-		// Game has started, so need to emit disconnect event to all members
 		if(this.ingame) {
+			this.games.delete(gameId);
+
+			// Emit midgame disconnect event to all members
 			this.members.forEach((player, id) => {
 				if(id > 0) {
 					player.socket.emit('playerDisconnect', gameId);
@@ -233,9 +265,13 @@ class Room {
 	end() {
 		this.ingame = false;
 
-		// Clear the CPU games
-		this.cpuGames = [];
-		this.cpuFrame = 0;
+		// Stop all CPU timers
+		this.games.forEach((player, id) => {
+			if(id < 0) {
+				clearTimeout(player.timeout);
+			}
+		});
+		this.games = [];
 
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
@@ -247,15 +283,14 @@ class Room {
 
 	/**
 	 * Increments the frame counter for a player, and determines whether other games should be paused/resumed.
-	 * Also increments CPU games to match with the slowest player.
 	 */
 	advance(gameId) {
-		const thisPlayer = this.members.get(gameId);
+		const thisPlayer = this.games.get(gameId);
 		thisPlayer.frames++;
 
 		let minFrames = Infinity, minId = null;
 
-		this.members.forEach((player, id) => {
+		this.games.forEach((player, id) => {
 			if(!this.defeated.includes(id)) {		// Exclude defeated players
 				const frames = player.frames;
 				if(frames < minFrames) {
@@ -265,49 +300,23 @@ class Room {
 			}
 		});
 
-		// CPU games are behind
-		if(minFrames > this.cpuFrame) {
-			this.cpuGames.forEach(cpuGame => {
-				cpuGame.game.step();
-				const cpuEndResult = cpuGame.game.end();
-				if(cpuEndResult !== null) {
-					switch(cpuEndResult) {
-						case 'Win':
-							cpuGame.socket.emit('gameEnd', this.roomId);
-							break;
-						case 'Loss':
-							cpuGame.socket.emit('gameOver', cpuGame.gameId);
-							break;
-						case 'OppDisconnect':
-							// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
-							break;
-					}
-					// Set the game to be removed
-					cpuGame.remove = true;
-				}
-			});
-			// Prevent topped out games from being advanced further by removing them
-			this.cpuGames = this.cpuGames.filter(cpuGame => !cpuGame.remove);
-		}
-
 		// Too fast
 		if(thisPlayer.frames - minFrames > MAX_FRAME_DIFFERENCE) {
 			thisPlayer.socket.emit('pause');
 			this.paused.push(gameId);
 
 			// Start timeout if everyone except one player is paused
-			if(this.paused.length === this.members.size - 1 && this.timeout === null) {
+			if(this.paused.length === this.games.size - 1 && this.timeout === null) {
 				this.timeout = setTimeout(() => {
-					this.members.get(minId).socket.emit('timeout');
+					this.games.get(minId).socket.emit('timeout');
 
-					// Resume all other members
-					this.members.forEach((player, id) => {
+					// Resume all other players
+					this.games.forEach((player, id) => {
 						if(id !== minId) {
 							player.socket.emit('play');
 							player.socket.emit('timeoutDisconnect', minId);
 						}
 					});
-
 					this.leave(minId);
 				}, 30000);
 			}
@@ -317,8 +326,8 @@ class Room {
 			const toRemove = [];
 			this.paused.forEach(id => {
 				// Restart every socket that is no longer too far ahead
-				if(this.members.get(id).frames - thisPlayer.frames < MAX_FRAME_DIFFERENCE - 5) {
-					this.members.get(id).socket.emit('play');
+				if(this.games.get(id).frames - thisPlayer.frames < MAX_FRAME_DIFFERENCE - 5) {
+					this.games.get(id).socket.emit('play');
 					toRemove.push(id);
 				}
 			});
@@ -327,7 +336,7 @@ class Room {
 			this.paused = this.paused.filter(id => !toRemove.includes(id));
 
 			// If anyone has resumed, stop timeout
-			if(this.paused.length < this.members.size - 1 && this.timeout !== null) {
+			if(this.paused.length < this.games.size - 1 && this.timeout !== null) {
 				clearTimeout(this.timeout);
 				this.timeout = null;
 			}
@@ -401,6 +410,12 @@ class Room {
 		}
 
 		room.advance(gameId);
+	}
+
+	static beenDefeated(gameId, roomId) {
+		const room = roomIdToRoom.get(roomId);
+
+		room.defeated.push(gameId);
 	}
 
 	/**

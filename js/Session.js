@@ -21,7 +21,6 @@ class Session {
 				return;
 			}
 
-			// Step for all games
 			this.game.step();
 
 			// Check end results

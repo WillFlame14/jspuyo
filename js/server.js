@@ -37,7 +37,6 @@ io.on('connection', function(socket) {
 
 		// Assign each cpu a negative id
 		cpus.forEach(cpu => {
-			// TODO: Support more CPUS. In the meantime, any extras are given these defaults:
 			const cpuSocket = io_client.connect('http://localhost:3000');
 			const cpuId = -cpuCounter;
 			cpuCounter++;
@@ -159,11 +158,7 @@ io.on('connection', function(socket) {
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
 	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
 		socket.to(Room.getRoomIdFromId(gameId)).emit('sendState', gameId, boardHash, currentScore, totalNuisance);
-
-		// CPUs do not trigger frame advances
-		if(gameId > 0) {
-			Room.advanceFrame(gameId);
-		}
+		Room.advanceFrame(gameId);
 	});
 
 	// Player sent a chat message
@@ -194,7 +189,9 @@ io.on('connection', function(socket) {
 
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('gameOver', gameId);
+		const roomId = Room.getRoomIdFromId(gameId);
+		socket.to(roomId).emit('gameOver', gameId);
+		Room.beenDefeated(gameId, roomId);
 	});
 
 	// Game is over for all players

@@ -75,7 +75,7 @@
 	height: 80%;
 	margin: auto;
 
-	filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
 }
 
 #manageCpus {
@@ -84,22 +84,22 @@
 
 #manageSettings {
 	background: #0b5394;
+}
 
-	.roomManageicon {
-		filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
-	}
+#manageJoinLink {
+	background: #134f5c;
 }
 
 #manageStartRoom {
-	background: #134f5c;
-
-	.roomManageicon {
-		filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
-	}
+	background: #245631;
 }
 
 #manageSpectate {
 	background: #555555;
+
+	.roomManageIcon {
+		filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	}
 }
 
 #statusMsg {

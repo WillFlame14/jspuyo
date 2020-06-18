@@ -1,6 +1,7 @@
 'use strict';
 
 const { puyoImgs } = require('./panels.js');
+const { showDialog } = require('./dialog.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -25,25 +26,30 @@ function mainpageInit(playerInfo) {
 	});
 
 	const modal = document.getElementById('modal-background');
+	const cpuOptionsError = document.getElementById('cpuOptionsError');
 
 	document.getElementById('manageCpus').onclick = function() {
 		modal.style.display = 'block';
+		cpuOptionsError.style.display = 'none';
 		document.getElementById('cpuOptionsModal').style.display = 'block';
 	};
 
 	document.getElementById('cpuOptionsAdd').onclick = function() {
 		// Add only up to roomsize (or 6)
 		socket.emit('addCpu', gameId);
+		cpuOptionsError.style.display = 'none';
 	};
 
 	socket.on('addCpuReply', index => {
 		if(index === -1) {
 			// No space in room
-			console.log('no space');
+			cpuOptionsError.style.display = 'block';
+			cpuOptionsError.innerHTML = 'There is no more space in the room.';
 			return;
 		}
 		// Turn on the cpu at the provided index
 		document.getElementById('cpu' + (index + 1)).style.display = 'grid';
+		cpuOptionsError.style.display = 'none';
 	});
 
 	document.getElementById('cpuOptionsRemove').onclick = function() {
@@ -54,11 +60,13 @@ function mainpageInit(playerInfo) {
 	socket.on('removeCpuReply', index => {
 		if(index === -1) {
 			// No CPUs in room
-			console.log('no cpus');
+			cpuOptionsError.style.display = 'block';
+			cpuOptionsError.innerHTML = 'There no CPUs currently in the room.';
 			return;
 		}
 		// Turn off the cpu at the provided index
 		document.getElementById('cpu' + (index + 1)).style.display = 'none';
+		cpuOptionsError.style.display = 'none';
 	});
 
 	document.getElementById('cpuOptionsSubmit').onclick = function() {
@@ -88,6 +96,18 @@ function mainpageInit(playerInfo) {
 	document.getElementById('manageSettings').onclick = function() {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
+	};
+
+	document.getElementById('manageStartRoom').onclick = function() {
+		socket.emit('startRoom', gameId);
+	};
+
+	socket.on('startFailure', () => {
+		showDialog.startFailure();
+	});
+
+	document.getElementById('manageJoinLink').onclick = function() {
+		socket.emit('requestJoinLink', gameId);
 	};
 }
 

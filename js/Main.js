@@ -74,7 +74,7 @@ const sidebar = document.getElementById('sidebar');
 async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
 
-	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, quickPlay) => {
+	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
 			clearMessages();
@@ -86,6 +86,7 @@ async function init(playerInfo) {
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
+
 		document.getElementById('statusArea').style.display = 'flex';
 		sidebar.style.display = 'flex';
 
@@ -94,24 +95,23 @@ async function init(playerInfo) {
 		const statusSettings = document.getElementById('statusSettings');
 		const roomManageOptions = document.getElementById('roomManage');
 
-		if(quickPlay) {
+		if(roomType === 'ffa' || roomType === 'ranked') {
 			statusMsg.style.display = 'block';
 			statusGamemode.style.display = 'block';
+			roomManageOptions.style.display = 'none';
 			if (allIds.length === 1) {
 				statusMsg.innerHTML = 'Waiting for more players to start...';
 			}
 			else {
 				statusMsg.innerHTML = 'Game starting soon!';
 			}
+			statusSettings.innerHTML = 'Settings: ' + settingsString;
 		}
 		else {
 			statusMsg.style.display = 'none';
 			statusGamemode.style.display = 'none';
 			roomManageOptions.style.display = 'block';
-
-			document.getElementById('manageSpectate').querySelector('span').innerHTML = 'Spectate';
 		}
-		statusSettings.innerHTML = 'Settings: ' + settingsString;
 
 		updatePlayers(allIds);
 	});

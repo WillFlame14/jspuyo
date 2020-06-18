@@ -68,7 +68,7 @@ class PlayerGame extends Game {
 	 */
 	step() {
 		const currentBoardHash = super.step();
-		if(currentBoardHash !== null) {
+		if(currentBoardHash) {
 			this.boardDrawer.drawFromHash(currentBoardHash);
 		}
 	}

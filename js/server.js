@@ -66,32 +66,8 @@ io.on('connection', function(socket) {
 		cpuInfos.delete(gameId);
 	});
 
-	socket.on('cpuMatch', async gameInfo => {
-		const { gameId, roomSize, settingsString, cpus } = gameInfo;
-		Room.leaveRoom(gameId);
-
-		const members = new Map().set(gameId, { socket, frames: 0 });
-		const promises = [];
-		cpuInfos.set(gameId, new Map());
-
-		// Assign each cpu a negative id
-		cpus.forEach(cpu => {
-			const cpuSocket = io_client.connect('http://localhost:3000');
-			const cpuId = -cpuCounter;
-			cpuCounter++;
-
-			cpuInfos.get(gameId).set(cpuId, { client_socket: cpuSocket });
-
-			const promise =	new Promise(resolve => {
-				cpuSocket.emit('cpuAssign', gameId, cpuId, cpu, () => resolve());
-			});
-			promises.push(promise);
-		});
-		await Promise.all(promises);
-
-		const roomId = Room.createRoom(gameId, members, cpuInfos.get(gameId), roomSize, settingsString).roomId;
-		cpuInfos.delete(gameId);
-		Room.startRoom(roomId);
+	socket.on('startRoom', async gameId => {
+		Room.startRoom(null, gameId, socket);
 	});
 
 	socket.on('cpuAssign', (gameId, cpuId, cpu, callback) => {
@@ -114,7 +90,12 @@ io.on('connection', function(socket) {
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 
-		const roomId = Room.createRoom(gameId, members, new Map(), roomSize, settingsString).roomId;
+		const roomId = Room.createRoom(gameId, members, roomSize, settingsString).roomId;
+		socket.emit('giveRoomId', roomId);
+	});
+
+	socket.on('requestJoinLink', gameId => {
+		const roomId = Room.getRoomIdFromId(gameId);
 		socket.emit('giveRoomId', roomId);
 	});
 
@@ -125,8 +106,6 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('spectate', gameInfo => {
-		console.log(gameInfo);
-		console.log(socket.id);
 		const { gameId, roomId } = gameInfo;
 		Room.leaveRoom(gameId);
 		Room.spectateRoom(gameId, socket, roomId);
@@ -149,7 +128,7 @@ io.on('connection', function(socket) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 
 			// Fixed settings for ranked rooms
-			Room.createRoom(gameId, members, new Map(), 2, defaultSettings, 'ranked');
+			Room.createRoom(gameId, members, 2, defaultSettings, 'ranked');
 		}
 		// Pending ranked game
 		else {
@@ -175,7 +154,7 @@ io.on('connection', function(socket) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 
 			// Fixed settings for FFA rooms
-			Room.createRoom(gameId, members, new Map(), 2, defaultSettings, 'ffa');
+			Room.createRoom(gameId, members, 2, defaultSettings, 'ffa');
 		}
 		else {
 			try {

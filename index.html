@@ -64,7 +64,7 @@
         </div>
         <div class="modal-content" id="giveJoinId">
             <div class="close">&times;</div>
-            <div>A room has been created with the following link:</div>
+            <div>Use the following link to join the room:</div>
             <form autocomplete="off">
                 <input type="text" id="joinIdLink">
                 <input type="button" id="copyJoinId" value="&#x1F4CB">
@@ -99,6 +99,7 @@
         <div class="modal-content" id="cpuOptionsModal">
             <div class="close">&times;</div>
             <div class="modal-title">CPU Options</div>
+            <div class="errorMsg" id="cpuOptionsError"></div>
             <div class="cpu-container" id="cpuOptions">
                 <!-- Inserted by javascript -->
             </div>
@@ -193,6 +194,10 @@
             <div>You have been disconnected from the game due to connection timeout.</div>
             <input type="submit" id="timeoutAccept" value="OK">
         </div>
+        <div class="modal-content dialog" id="startFailure">
+            <div>There are not enough players in the room to start.</div>
+            <input type="submit" id="startFailureAccept" value="OK">
+        </div>
     </div>
     <main>
         <div id="navbar">
@@ -245,6 +250,10 @@
                     <li id="manageSettings">
                         <img class="roomManageIcon" src="images/mainpage/settings.png">
                         <span>Settings</span>
+                    </li>
+                    <li id="manageJoinLink">
+                        <img class="roomManageIcon" src="images/mainpage/link.png">
+                        <span>Show Join Link</span>
                     </li>
                     <li id="manageStartRoom">
                         <img class="roomManageIcon" src="images/mainpage/start.png">

@@ -12,6 +12,11 @@ function dialogInit() {
 		document.getElementById('timeoutInfo').style.display = 'none';
 		dialogBackground.style.display = 'none';
 	};
+
+	document.getElementById('startFailureAccept').onclick = () => {
+		document.getElementById('startFailure').style.display = 'none';
+		dialogBackground.style.display = 'none';
+	};
 }
 
 function timeout() {
@@ -19,8 +24,14 @@ function timeout() {
 	document.getElementById('timeoutInfo').style.display = 'block';
 }
 
+function startFailure() {
+	dialogBackground.style.display = 'block';
+	document.getElementById('startFailure').style.display = 'block';
+}
+
 const showDialog = {
-	timeout
+	timeout,
+	startFailure
 };
 
 module.exports = {

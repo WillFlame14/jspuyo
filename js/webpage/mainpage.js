@@ -31,6 +31,60 @@ function mainpageInit(playerInfo) {
 		document.getElementById('cpuOptionsModal').style.display = 'block';
 	};
 
+	document.getElementById('cpuOptionsAdd').onclick = function() {
+		// Add only up to roomsize (or 6)
+		socket.emit('addCpu', gameId);
+	};
+
+	socket.on('addCpuReply', index => {
+		if(index === -1) {
+			// No space in room
+			console.log('no space');
+			return;
+		}
+		// Turn on the cpu at the provided index
+		document.getElementById('cpu' + (index + 1)).style.display = 'grid';
+	});
+
+	document.getElementById('cpuOptionsRemove').onclick = function() {
+		// Remove only if there are any CPUs
+		socket.emit('removeCpu', gameId);
+	};
+
+	socket.on('removeCpuReply', index => {
+		if(index === -1) {
+			// No CPUs in room
+			console.log('no cpus');
+			return;
+		}
+		// Turn off the cpu at the provided index
+		document.getElementById('cpu' + (index + 1)).style.display = 'none';
+	});
+
+	document.getElementById('cpuOptionsSubmit').onclick = function() {
+		const cpus = [];
+
+		document.querySelectorAll('.aiOption').forEach(dropdown => {
+			// Do not read from invisible options
+			if(window.getComputedStyle(dropdown).getPropertyValue('display') === 'block') {
+				cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
+			}
+		});
+
+		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
+			// Do not read from invisible options
+			if(window.getComputedStyle(slider).getPropertyValue('display') === 'block') {
+				// Slider value is between 0 and 10, map to between 5000 and 0
+				cpus[index].speed = (10 - slider.value) * 500;
+			}
+		});
+		socket.emit('setCpus', { gameId, cpus });
+
+		// Close the CPU options menu
+		document.getElementById('cpuOptionsModal').style.display = 'none';
+		modal.style.display = 'none';
+	};
+
 	document.getElementById('manageSettings').onclick = function() {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';

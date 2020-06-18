@@ -98,12 +98,15 @@
         </div>
         <div class="modal-content" id="cpuOptionsModal">
             <div class="close">&times;</div>
-            <div class="back" id="cpu-back">&lt;</div>
             <div class="modal-title">CPU Options</div>
             <div class="cpu-container" id="cpuOptions">
                 <!-- Inserted by javascript -->
             </div>
-            <button id="cpuOptionsSubmit">Start Game</button>
+            <div id="cpuOptionsButtons">
+                <button id="cpuOptionsAdd">Add CPU</button>
+                <button id="cpuOptionsSubmit">Save CPU Selections</button>
+                <button id="cpuOptionsRemove">Remove CPU</button>
+            </div>
         </div>
         <div class="modal-content" id="settingsModal">
             <div class="close">&times;</div>
@@ -217,7 +220,6 @@
                 <div class="dropdown">
                     <a id="sprint">Sprint</a>
                     <a id="timeChallenge">Time Challenge</a>
-                    <a id="cpu">Play Against CPU</a>
                 </div>
             </span>
             <span class="navPanel" id="profilePanel">

@@ -458,9 +458,25 @@ input.numPlayerButton {
 	grid-column: 3;
 }
 
+#cpuOptionsButtons {
+	display: grid;
+	grid-template-columns: auto auto auto;
+
+	button {
+		@extend %submit-button;
+	}
+}
+
+#cpuOptionsAdd {
+	background: #68569d;
+}
+
 #cpuOptionsSubmit {
-	@extend %submit-button;
 	background: #38761d;
+}
+
+#cpuOptionsRemove {
+	background: #88244d;
 }
 
 /* ---------- User Settings Modal Box ---------- */

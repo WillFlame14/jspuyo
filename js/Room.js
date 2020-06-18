@@ -15,6 +15,7 @@ class Room {
 		this.roomId = generateRoomId(6);
 		this.members = members;
 		this.cpus = cpus;
+		this.numCpus = cpus.size;
 		this.games = new Map();
 		this.roomSize = (roomSize > 16) ? 16 : (roomSize < 1) ? 1 : roomSize;	// clamp between 1 and 16
 		this.settingsString = settingsString;
@@ -399,6 +400,46 @@ class Room {
 		}
 		room.leave(gameId);
 		return room;
+	}
+
+	static addCpu(gameId) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		if(room.members.size + room.numCpus === room.roomSize) {
+			return -1;
+		}
+		else {
+			room.numCpus++;
+			return room.numCpus - 1;
+		}
+	}
+
+	static removeCpu(gameId) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		if(room.numCpus === 0) {
+			return -1;
+		}
+		else {
+			room.numCpus--;
+			return room.numCpus;
+		}
+	}
+
+	static setCpus(gameId, cpuInfos) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		// Disconnect sockets for previous cpus
+		room.cpus.forEach(cpu => {
+			// Ignore dummy cpus
+			if(cpu !== null) {
+				cpu.socket.disconnect();
+			}
+		});
+
+		// Set new cpus and update the size
+		room.cpus = cpuInfos;
+		room.numCpus = room.cpus.size;
 	}
 
 	static advanceFrame(gameId) {

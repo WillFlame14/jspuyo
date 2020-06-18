@@ -12,8 +12,6 @@ const createRoomOptionsState = {
 	numColours: 4,
 	winCondition: 'FT 3'
 };
-let createRoomTrigger = null;
-let cpuRoomSettings = null;
 
 let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
@@ -118,8 +116,6 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomSubmit').value = 'Create Room';
-
-		createRoomTrigger = 'custom';
 	};
 
 	// Switch between Tsu and Fever mods on click
@@ -209,45 +205,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
 			.setMinChain(document.getElementById('minChainLength').value).build().toString();
 
-		switch(createRoomTrigger) {
-			case 'custom':
-				socket.emit('createRoom', { gameId, settingsString, roomSize });
-				break;
-			case 'cpu':
-				// Save the selected settings
-				cpuRoomSettings = { settingsString, roomSize };
-
-				// Close the Room Options menu
-				document.getElementById('createRoomModal').style.display = 'none';
-
-				// Open the CPU Options menu
-				document.getElementById('cpuOptionsModal').style.display = 'block';
-
-				// Add only the ones that are needed (minus one since the player doesn't count)
-				for(let i = 0; i < 6; i++) {
-					if(i < roomSize - 1) {
-						document.getElementById('cpu' + (i + 1)).style.display = 'grid';
-					}
-					else {
-						document.getElementById('cpu' + (i + 1)).style.display = 'none';
-					}
-				}
-				break;
-		}
-		createRoomTrigger = null;
-	};
-
-	// Back button between Room Options and CPU Options
-	document.getElementById('cpu-back').onclick = () => {
-		// Close the Cpu Options menu
-		document.getElementById('cpuOptionsModal').style.display = 'none';
-
-		// Open the Room Options menu
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-
-		// Tell the submit button to go to CPU Options next
-		createRoomTrigger = 'cpu';
+		socket.emit('createRoom', { gameId, settingsString, roomSize });
 	};
 
 	// Receiving the id of the newly created room
@@ -447,43 +405,6 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
 	}
-
-	document.getElementById('cpu').onclick = function() {
-		stopCurrentSession();
-
-		// Open the Room Options menu
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-		document.getElementById('createRoomSubmit').value = 'Select CPUs';
-
-		// Flag to indicate that these room options are for a CPU game
-		createRoomTrigger = 'cpu';
-	};
-
-	document.getElementById('cpuOptionsSubmit').onclick = function() {
-		const { roomSize, settingsString } = cpuRoomSettings;
-
-		const cpus = [];
-
-		document.querySelectorAll('.aiOption').forEach(dropdown => {
-			// Do not read from invisible options
-			if(window.getComputedStyle(dropdown).getPropertyValue('display') === 'block') {
-				cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
-			}
-		});
-
-		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
-			// Do not read from invisible options
-			if(window.getComputedStyle(slider).getPropertyValue('display') === 'block') {
-				// Slider value is between 0 and 10, map to between 5000 and 0
-				cpus[index].speed = (10 - slider.value) * 500;
-			}
-		});
-		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
-
-		cpuRoomSettings = null;
-	};
 
 	// Profile Panel - Settings
 	document.getElementById('settings').onclick = function() {

@@ -99,6 +99,10 @@ io.on('connection', function(socket) {
 		socket.emit('giveRoomId', roomId);
 	});
 
+	socket.on('changeSettings', (gameId, settingsString, roomSize) => {
+		Room.changeSettings(gameId, settingsString, roomSize);
+	});
+
 	socket.on('joinRoom', gameInfo => {
 		const { gameId, joinId } = gameInfo;
 		Room.leaveRoom(gameId);

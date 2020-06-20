@@ -209,6 +209,12 @@
 		border: 3px solid white;
 		box-shadow: base.$box-drop-shadow;
 	}
+
+	&.disabled {
+		color: #bbbbbb;
+
+		background: #464646;
+	}
 }
 
 // Formatting required to override normal style of input boxes

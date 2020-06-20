@@ -24,6 +24,8 @@ const keyBindings = {
 	hardDrop: 'ArrowUp'
 };
 
+let createRoomTrigger;
+
 function panelsInit(playerInfo, stopCurrentSession) {
 	const { socket, gameId, userSettings } = playerInfo;
 
@@ -111,11 +113,17 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
-		stopCurrentSession();
-
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomSubmit').value = 'Create Room';
+
+		// Re-enable the roomsize options
+		document.querySelectorAll('.numPlayerButton').forEach(element => {
+			element.classList.remove('disabled');
+		});
+		document.getElementById('5player').disabled = false;
+
+		setCreateRoomTrigger('create');
 	};
 
 	// Switch between Tsu and Fever mods on click
@@ -137,7 +145,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
 		element.onclick = () => {
 			const oldId = createRoomOptionsState.selectedPlayers;
-			if(element.id !== oldId) {
+			if(element.id !== oldId && !element.classList.contains('disabled')) {
 				document.getElementById(oldId).classList.remove('selected');
 				element.classList.add('selected');
 				createRoomOptionsState.selectedPlayers = element.id;
@@ -205,7 +213,19 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
 			.setMinChain(document.getElementById('minChainLength').value).build().toString();
 
-		socket.emit('createRoom', { gameId, settingsString, roomSize });
+		switch(createRoomTrigger) {
+			case 'create':
+				stopCurrentSession();
+				socket.emit('createRoom', { gameId, settingsString, roomSize });
+				break;
+			case 'set':
+				socket.emit('changeSettings', gameId, settingsString, roomSize);
+
+				// Close the CPU options menu
+				document.getElementById('createRoomModal').style.display = 'none';
+				modal.style.display = 'none';
+				break;
+		}
 	};
 
 	// Receiving the id of the newly created room
@@ -501,8 +521,13 @@ function clearModal() {
 	});
 }
 
+function setCreateRoomTrigger(trigger) {
+	createRoomTrigger = trigger;
+}
+
 module.exports = {
 	puyoImgs,
 	panelsInit,
-	clearModal
+	clearModal,
+	setCreateRoomTrigger
 };

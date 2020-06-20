@@ -18,7 +18,7 @@ class Room {
 		this.numCpus = 0;
 		this.games = new Map();
 
-		this.roomSize = (roomSize > 16) ? 16 : (roomSize < 1) ? 1 : roomSize;	// clamp between 1 and 16
+		this.roomSize = roomSize;
 		this.settingsString = settingsString;
 		this.roomType = roomType;
 		this.quickPlayTimer = null;		// Only used if roomType is 'ffa'
@@ -47,6 +47,14 @@ class Room {
 		});
 
 		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()))}`);
+	}
+
+	/**
+	 * Sets new settings of the room.
+	 */
+	changeSettings(settingsString, roomSize) {
+		this.settingsString = settingsString;
+		this.roomSize = roomSize;
 	}
 
 	/**
@@ -363,6 +371,13 @@ class Room {
 	static createRoom(gameId, members, roomSize, settingsString, roomType = 'default') {
 		const room = new Room(members, roomSize, settingsString, roomType);
 		roomIdToRoom.set(room.roomId, room);
+		return room;
+	}
+
+	static changeSettings(gameId, settingsString, roomSize) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		room.changeSettings(settingsString, roomSize);
 		return room;
 	}
 

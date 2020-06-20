@@ -1,6 +1,7 @@
 'use strict';
 
 const { puyoImgs } = require('./panels.js');
+const { setCreateRoomTrigger } = require('./panels.js');
 const { showDialog } = require('./dialog.js');
 
 const playerList = document.getElementById('playerList');
@@ -37,7 +38,6 @@ function mainpageInit(playerInfo) {
 	document.getElementById('cpuOptionsAdd').onclick = function() {
 		// Add only up to roomsize (or 6)
 		socket.emit('addCpu', gameId);
-		cpuOptionsError.style.display = 'none';
 	};
 
 	socket.on('addCpuReply', index => {
@@ -96,6 +96,15 @@ function mainpageInit(playerInfo) {
 	document.getElementById('manageSettings').onclick = function() {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
+		document.getElementById('createRoomSubmit').value = 'Save Settings';
+
+		// Disable the roomsize options
+		document.querySelectorAll('.numPlayerButton').forEach(element => {
+			element.classList.add('disabled');
+		});
+		document.getElementById('5player').disabled = true;
+
+		setCreateRoomTrigger('set');
 	};
 
 	document.getElementById('manageStartRoom').onclick = function() {

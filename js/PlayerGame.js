@@ -100,7 +100,8 @@ class PlayerGame extends Game {
  */
 class SpectateGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
-		super(gameId, opponentIds, socket, 1, settings, userSettings);
+		console.log('in constructor');
+		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;
 		this.opponentBoardDrawers = {};

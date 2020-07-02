@@ -366,6 +366,19 @@ class Room {
 					false		// Not spectating
 				);
 			});
+
+			this.spectating.forEach(socket => {
+				socket.emit(
+					'roomUpdate',
+					this.roomId,
+					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+					this.roomSize,
+					this.settingsString,
+					this.roomType,
+					false,		// Not host
+					true		// Spectating
+				);
+			});
 		}, 5000);
 	}
 
@@ -374,6 +387,10 @@ class Room {
 	 */
 	advance(gameId) {
 		const thisPlayer = this.games.get(gameId);
+		if(thisPlayer === undefined) {
+			console.log(`Attempted to advance undefined game with id ${gameId}`);
+			return;
+		}
 		thisPlayer.frames++;
 
 		let minFrames = Infinity, minId = null;
@@ -396,7 +413,10 @@ class Room {
 			// Start timeout if everyone except one player is paused
 			if(this.paused.length === this.games.size - 1 && this.timeout === null) {
 				this.timeout = setTimeout(() => {
-					this.games.get(minId).socket.emit('timeout');
+					// Time out the user if they are still in the game
+					if(this.games.has(minId)) {
+						this.games.get(minId).socket.emit('timeout');
+					}
 
 					// Resume all other players
 					this.games.forEach((player, id) => {

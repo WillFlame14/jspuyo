@@ -115,8 +115,10 @@ async function init(playerInfo) {
 		}
 		else {		// Spectating
 			roomManageOptions.style.display = 'none';
-			statusMsg.style.display = 'none';
+			statusMsg.style.display = 'block';
 			statusGamemode.style.display = 'none';
+
+			statusMsg.innerHTML = 'You are currently spectating this room.';
 		}
 
 		updatePlayers(allIds);
@@ -145,7 +147,6 @@ async function init(playerInfo) {
 	});
 
 	socket.on('spectate', (roomId, allIds, settingsString) => {
-		console.log('start spectating');
 		currentRoomId = roomId;
 		showGameOnly();
 

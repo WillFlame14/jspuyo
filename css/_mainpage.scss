@@ -3,9 +3,9 @@
 #main-content {
 	display: grid;
 	flex: 1 0 auto;
-	grid-gap: 25px;
+	grid-gap: 1vw;
 	grid-template-rows: auto;
-	grid-template-columns: minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%);
+	grid-template-columns: minmax(385px, 30%) minmax(auto, 47%) minmax(236px, 23%);
 
 	&.ingame {
 		grid-template-columns: 100% 0px 0px;
@@ -33,15 +33,14 @@
 }
 
 .status {
-	right: 20px;
-
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
-	width: 80%;
+	width: 75%;
+	margin: 0 auto;
 
 	color: white;
-	font: 52px base.$font-title;
+	font: 1.9rem base.$font-title;
 	text-align: center;
 
 	text-shadow: base.$text-drop-shadow;
@@ -52,7 +51,7 @@
 	margin-top: 0px;
 	padding-left: 0px;
 
-	font: 42px base.$font-title;
+	font: 1.7rem base.$font-title;
 
 	list-style: none;
 
@@ -109,7 +108,7 @@
 #statusGamemode {
 	display: none;
 
-	font: 56px "Rock Salt", sans-serif;
+	font: 2.4rem "Rock Salt", sans-serif;
 }
 
 /* ---------- Sidebar (Player List and Chat) ---------- */

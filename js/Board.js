@@ -101,7 +101,6 @@ class Board {
 						if(colour === new_puyo.colour) {
 							// Do not add the same connection twice
 							if(!connections.includes(getDirection(i, j))) {
-								// console.log(getDirection(-i, -j));
 								new_puyo.connections.push(getDirection(-i, -j));
 								connections.push(getDirection(i, j));
 							}

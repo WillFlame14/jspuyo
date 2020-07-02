@@ -2,12 +2,13 @@
 
 const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
-const { showDialog } = require('./dialog.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
 let messageId = 0;
 let lastSender = null;
+
+let currentlyHost = false;
 
 function mainpageInit(playerInfo) {
 	const { socket, gameId } = playerInfo;
@@ -26,17 +27,38 @@ function mainpageInit(playerInfo) {
 		addMessage(sender, message);
 	});
 
-	const modal = document.getElementById('modal-background');
-	const cpuOptionsError = document.getElementById('cpuOptionsError');
+	const modal = document.getElementById('modal-background');				// The semi-transparent gray background
+	const cpuOptionsError = document.getElementById('cpuOptionsError');		// The error message that appears when performing an invalid action (invisible otherwise)
+	const cpuOptionsEmpty = document.getElementById('cpuOptionsEmpty');		// The division that indicates there are currently no CPUs (invisible otherwise)
 
 	document.getElementById('manageCpus').onclick = function() {
+		toggleHost(currentlyHost);
+
 		modal.style.display = 'block';
 		cpuOptionsError.style.display = 'none';
 		document.getElementById('cpuOptionsModal').style.display = 'block';
+		socket.emit('requestCpus', gameId);
 	};
 
+	socket.on('requestCpusReply', cpus => {
+		// Hide ("delete") all existing CPUs
+		document.querySelectorAll('.cpuOption').forEach(option => {
+			option.style.display = 'none';
+		});
+
+		// Then add the current CPUs
+		cpus.forEach((cpu, index) => {
+			const { ai, speed } = cpu;
+			const cpuElement = document.getElementById('cpu' + (index + 1));
+			cpuElement.style.display = 'grid';
+			cpuElement.querySelector('.aiOption').value = ai;
+			cpuElement.querySelector('.cpuSpeedSlider').value = speed;
+		});
+		cpuOptionsEmpty.style.display = (cpus.length === 0) ? 'block' : 'none';
+	});
+
 	document.getElementById('cpuOptionsAdd').onclick = function() {
-		// Add only up to roomsize (or 6)
+		// Send request to server to add CPU (can only add only up to roomsize)
 		socket.emit('addCpu', gameId);
 	};
 
@@ -47,13 +69,17 @@ function mainpageInit(playerInfo) {
 			cpuOptionsError.innerHTML = 'There is no more space in the room.';
 			return;
 		}
+		else if(index === 0) {
+			// Adding the first CPU, so remove the empty message
+			cpuOptionsEmpty.style.display = 'none';
+		}
 		// Turn on the cpu at the provided index
 		document.getElementById('cpu' + (index + 1)).style.display = 'grid';
 		cpuOptionsError.style.display = 'none';
 	});
 
 	document.getElementById('cpuOptionsRemove').onclick = function() {
-		// Remove only if there are any CPUs
+		// Send request to server to remove CPU (can only remove if there are any CPUs)
 		socket.emit('removeCpu', gameId);
 	};
 
@@ -63,6 +89,10 @@ function mainpageInit(playerInfo) {
 			cpuOptionsError.style.display = 'block';
 			cpuOptionsError.innerHTML = 'There no CPUs currently in the room.';
 			return;
+		}
+		else if(index === 0) {
+			// Removing the last CPU, so add the empty message
+			cpuOptionsEmpty.style.display = 'block';
 		}
 		// Turn off the cpu at the provided index
 		document.getElementById('cpu' + (index + 1)).style.display = 'none';
@@ -94,6 +124,8 @@ function mainpageInit(playerInfo) {
 	};
 
 	document.getElementById('manageSettings').onclick = function() {
+		toggleHost(currentlyHost);
+
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomSubmit').value = 'Save Settings';
@@ -104,6 +136,7 @@ function mainpageInit(playerInfo) {
 		});
 		document.getElementById('5player').disabled = true;
 
+		// Flag so the submit button causes settings to be changed (instead of creating a new room)
 		setCreateRoomTrigger('set');
 	};
 
@@ -111,12 +144,12 @@ function mainpageInit(playerInfo) {
 		socket.emit('startRoom', gameId);
 	};
 
-	socket.on('startFailure', () => {
-		showDialog.startFailure();
-	});
-
 	document.getElementById('manageJoinLink').onclick = function() {
 		socket.emit('requestJoinLink', gameId);
+	};
+
+	document.getElementById('manageSpectate').onclick = function() {
+		socket.emit('spectate', gameId);
 	};
 }
 
@@ -207,10 +240,40 @@ function hidePlayers() {
 	document.getElementById('playersDisplay').style.display = 'none';
 }
 
+function toggleHost(host) {
+	currentlyHost = host;
+	// The Add/Remove/Save CPU buttons
+	document.getElementById('cpuOptionsButtons').style.display = host ? 'grid' : 'none';
+
+	// The CPU control options
+	document.querySelectorAll('.aiOption').forEach(dropdown => {
+		dropdown.disabled = !host;
+	});
+	document.querySelectorAll('.cpuSpeedSlider').forEach(slider => {
+		slider.disabled = !host;
+	});
+
+	// The main Room Options (Disable the mode icon in future?)
+	document.getElementById('numRows').disabled = !host;
+	document.getElementById('numCols').disabled = !host;
+	document.getElementById('numColours').disabled = !host;
+
+	// The advanced Room Options
+	document.querySelectorAll('.roomOptionInput').forEach(input => {
+		input.disabled = !host;
+	});
+
+	// The submit button for Room Options
+	document.getElementById('createRoomSubmit').style.display = host ? 'block' : 'none';
+
+	document.getElementById('manageStartRoom').style.display = host ? 'grid' : 'none';
+}
+
 module.exports = {
 	mainpageInit,
 	addMessage,
 	clearMessages,
 	updatePlayers,
-	hidePlayers
+	hidePlayers,
+	toggleHost
 };

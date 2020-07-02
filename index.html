@@ -100,6 +100,7 @@
             <div class="close">&times;</div>
             <div class="modal-title">CPU Options</div>
             <div class="errorMsg" id="cpuOptionsError"></div>
+            <div id="cpuOptionsEmpty">No CPUs in room</div>
             <div class="cpu-container" id="cpuOptions">
                 <!-- Inserted by javascript -->
             </div>
@@ -186,17 +187,9 @@
         </div>
     </div>
     <div class="modal" id="modal-background-disable">
-        <div class="modal-content dialog" id="forceStopPenalty">
-            <div>You have disconnected from the previous game. That match will be counted as a loss.</div>
-            <input type="submit" id="forceStopAccept" value="OK">
-        </div>
-        <div class="modal-content dialog" id="timeoutInfo">
-            <div>You have been disconnected from the game due to connection timeout.</div>
-            <input type="submit" id="timeoutAccept" value="OK">
-        </div>
-        <div class="modal-content dialog" id="startFailure">
-            <div>There are not enough players in the room to start.</div>
-            <input type="submit" id="startFailureAccept" value="OK">
+        <div class="modal-content dialog" id="dialogBox">
+            <div id="dialogText"></div>
+            <input type="submit" id="dialogAccept" value="OK">
         </div>
     </div>
     <main>

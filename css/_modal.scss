@@ -465,6 +465,19 @@ input.numPlayerButton {
 	grid-column: 3;
 }
 
+#cpuOptionsEmpty {
+	width: 85%;
+	margin: 0 auto;
+	padding: 5%;
+
+	color: white;
+	font: base.$larger base.$font-title;
+
+	text-align: center;
+
+	background: #554444;
+}
+
 #cpuOptionsButtons {
 	display: grid;
 	grid-template-columns: auto auto auto;

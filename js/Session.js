@@ -53,7 +53,7 @@ class Session {
 				this.socket.emit('forceDisconnect', this.gameId, this.roomId);
 				break;
 			case 'Timeout':
-				showDialog.timeout();
+				showDialog('You have been disconnected from the game due to connection timeout.');
 				break;
 		}
 	}

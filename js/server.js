@@ -37,6 +37,11 @@ io.on('connection', function(socket) {
 		socket.emit('removeCpuReply', index);
 	});
 
+	socket.on('requestCpus', gameId => {
+		const cpus = Room.requestCpus(gameId);
+		socket.emit('requestCpusReply', cpus);
+	});
+
 	socket.on('setCpus', async (gameInfo) => {
 		const { gameId, cpus } = gameInfo;
 
@@ -89,8 +94,10 @@ io.on('connection', function(socket) {
 		Room.leaveRoom(gameId);
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
+		// Room creator becomes the host
+		const host = gameId;
 
-		const roomId = Room.createRoom(gameId, members, roomSize, settingsString).roomId;
+		const roomId = Room.createRoom(gameId, members, host, roomSize, settingsString).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 
@@ -109,9 +116,11 @@ io.on('connection', function(socket) {
 		Room.joinRoom(gameId, joinId, socket);
 	});
 
-	socket.on('spectate', gameInfo => {
-		const { gameId, roomId } = gameInfo;
-		Room.leaveRoom(gameId);
+	socket.on('spectate', (gameId, roomId = null) => {
+		// RoomId is null if the user wishes to spectate their own room
+		if(roomId !== null) {
+			Room.leaveRoom(gameId);
+		}
 		Room.spectateRoom(gameId, socket, roomId);
 	});
 
@@ -130,9 +139,10 @@ io.on('connection', function(socket) {
 		// No pending ranked game
 		if(Room.rankedRoomId === null) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
+			const roomSize = 2;		// Fixed room size
+			const host = null;		// No host for ranked games
 
-			// Fixed settings for ranked rooms
-			Room.createRoom(gameId, members, 2, defaultSettings, 'ranked');
+			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ranked');
 		}
 		// Pending ranked game
 		else {
@@ -156,9 +166,11 @@ io.on('connection', function(socket) {
 
 		if(Room.defaultQueueRoomId === null) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
+			const roomSize = 2;		// Fixed room size
+			const host = null;		// No host for FFA games
 
 			// Fixed settings for FFA rooms
-			Room.createRoom(gameId, members, 2, defaultSettings, 'ffa');
+			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
 		}
 		else {
 			try {

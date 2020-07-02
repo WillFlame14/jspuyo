@@ -3,36 +3,17 @@
 const dialogBackground = document.getElementById('modal-background-disable');
 
 function dialogInit() {
-	document.getElementById('forceStopAccept').onclick = () => {
-		document.getElementById('forceStopPenalty').style.display = 'none';
-		dialogBackground.style.display = 'none';
-	};
-
-	document.getElementById('timeoutAccept').onclick = () => {
-		document.getElementById('timeoutInfo').style.display = 'none';
-		dialogBackground.style.display = 'none';
-	};
-
-	document.getElementById('startFailureAccept').onclick = () => {
-		document.getElementById('startFailure').style.display = 'none';
+	document.getElementById('dialogAccept').onclick = () => {
+		document.getElementById('dialogBox').style.display = 'none';
 		dialogBackground.style.display = 'none';
 	};
 }
 
-function timeout() {
+function showDialog(message) {
 	dialogBackground.style.display = 'block';
-	document.getElementById('timeoutInfo').style.display = 'block';
+	document.getElementById('dialogText').innerHTML = message;
+	document.getElementById('dialogBox').style.display = 'block';
 }
-
-function startFailure() {
-	dialogBackground.style.display = 'block';
-	document.getElementById('startFailure').style.display = 'block';
-}
-
-const showDialog = {
-	timeout,
-	startFailure
-};
 
 module.exports = {
 	dialogInit,

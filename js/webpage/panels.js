@@ -123,6 +123,20 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		});
 		document.getElementById('5player').disabled = false;
 
+		// Re-enable the main Room Options (Disable the mode icon in future?)
+		document.getElementById('numRows').disabled = false;
+		document.getElementById('numCols').disabled = false;
+		document.getElementById('numColours').disabled = false;
+
+		// Re-enable the advanced Room Options
+		document.querySelectorAll('.roomOptionInput').forEach(input => {
+			input.disabled = false;
+		});
+
+		// Re-enable the submit button
+		document.getElementById('createRoomSubmit').style.display = 'block';
+
+		// Set the new trigger
 		setCreateRoomTrigger('create');
 	};
 
@@ -235,7 +249,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		modal.style.display = 'block';
 		document.getElementById('giveJoinId').style.display = 'block';
-		document.getElementById('joinIdLink').value = `${window.location}?joinRoom=${id}`;
+		document.getElementById('joinIdLink').value = `${window.location.href.split('?')[0]}?joinRoom=${id}`;
 	});
 
 	// Setting the click event for copying link to clipboard
@@ -360,7 +374,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		// Do not refresh the page on submit
 		event.preventDefault();
 
-		socket.emit('spectate', { gameId, roomId: roomList.value });
+		socket.emit('spectate', gameId, roomList.value);
 	};
 
 	// Received when attempting to spectate an invalid room

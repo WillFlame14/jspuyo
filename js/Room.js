@@ -11,7 +11,7 @@ const idToRoomId = new Map();
 const MAX_FRAME_DIFFERENCE = 20;
 
 class Room {
-	constructor(members, roomSize, settingsString, roomType = 'default') {
+	constructor(members, host, roomSize, settingsString, roomType = 'default') {
 		this.roomId = generateRoomId(6);
 		this.members = members;
 		this.cpus = new Map();
@@ -24,6 +24,7 @@ class Room {
 		this.quickPlayTimer = null;		// Only used if roomType is 'ffa'
 
 		this.ingame = false;
+		this.host = host;
 		this.paused = [];
 		this.spectating = new Map();
 		this.defeated = [];
@@ -42,7 +43,17 @@ class Room {
 			idToRoomId.set(gameId, this.roomId);
 
 			// Send update to all players
-			player.socket.emit('roomUpdate', this.roomId, Array.from(this.members.keys()), this.roomSize, this.settingsString, this.roomType);
+			player.socket.emit(
+				'roomUpdate',
+				this.roomId,
+				Array.from(this.members.keys()),
+				this.roomSize,
+				this.settingsString,
+				this.roomType,
+				gameId === this.host,
+				false		// Not spectating
+			);
+
 			player.socket.join(this.roomId);
 		});
 
@@ -86,16 +97,29 @@ class Room {
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
 		this.members.forEach((player, id) => {
-			if(id > 0) {
-				player.socket.emit(
-					'roomUpdate',
-					this.roomId,
-					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-					this.roomSize,
-					this.settingsString,
-					this.roomType
-				);
-			}
+			player.socket.emit(
+				'roomUpdate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.roomSize,
+				this.settingsString,
+				this.roomType,
+				id === this.host,
+				false		// Not spectating
+			);
+		});
+
+		this.spectating.forEach(spectatorSocket => {
+			spectatorSocket.emit(
+				'roomUpdate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.roomSize,
+				this.settingsString,
+				this.roomType,
+				false,		// Not host
+				true		// Spectating
+			);
 		});
 	}
 
@@ -104,19 +128,26 @@ class Room {
 	 */
 	spectate(gameId, socket) {
 		if(this.members.has(gameId)) {
-			this.members.delete(gameId);
+			this.leave(gameId, true, true);
 		}
 		else {
+			// Need to separate socket join since leaving (and re-joining) is extremely slow
 			socket.join(this.roomId);
-			idToRoomId.set(gameId, this.roomId);
-			socket.emit(
-				'spectate',
-				this.roomId,
-				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-				this.settingsString
-			);
 		}
+
+		idToRoomId.set(gameId, this.roomId);
+
 		this.spectating.set(gameId, socket);
+		socket.emit(
+			'roomUpdate',
+			this.roomId,
+			Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+			this.roomSize,
+			this.settingsString,
+			this.roomType,
+			false,		// Not host
+			true 		// Spectating
+		);
 		console.log(`Added gameId ${gameId} to room ${this.roomId} as a spectator`);
 	}
 
@@ -179,6 +210,16 @@ class Room {
 			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
 		});
 
+		// Send start to the spectators
+		this.spectating.forEach(socket => {
+			socket.emit(
+				'spectate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.settingsString
+			);
+		});
+
 		switch(this.roomType) {
 			case 'ffa':
 				this.quickPlayTimer = null;
@@ -196,7 +237,7 @@ class Room {
 	/**
 	 * Removes a player from a room (if possible).
 	 */
-	leave(gameId, notify = true) {
+	leave(gameId, notify = true, spectate = false) {
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
 			socket.leave(this.roomId);
@@ -209,7 +250,9 @@ class Room {
 		const playerList = (gameId > 0) ? this.members : this.cpus;
 
 		const socket = playerList.get(gameId).socket;
-		socket.leave(this.roomId);
+		if(!spectate) {
+			socket.leave(this.roomId);
+		}
 
 		// Remove player from maps
 		playerList.delete(gameId);
@@ -217,6 +260,11 @@ class Room {
 			this.paused.splice(this.paused.indexOf(gameId), 1);
 		}
 		idToRoomId.delete(gameId);
+
+		// Transfer host privileges to next oldest member in room
+		if(gameId === this.host) {
+			this.host = Array.from(this.members.keys())[0];
+		}
 
 		console.log(`Removed ${gameId} from room ${this.roomId}`);
 
@@ -243,14 +291,29 @@ class Room {
 		}
 
 		if(notify) {
-			this.members.forEach((player) => {
+			this.members.forEach((player, id) => {
 				player.socket.emit(
 					'roomUpdate',
 					this.roomId,
 					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 					this.roomSize,
 					this.settingsString,
-					this.roomType
+					this.roomType,
+					id === this.host,
+					false		// Not spectating
+				);
+			});
+
+			this.spectating.forEach(spectatorSocket => {
+				spectatorSocket.emit(
+					'roomUpdate',
+					this.roomId,
+					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+					this.roomSize,
+					this.settingsString,
+					this.roomType,
+					false,		// Not host
+					true		// Spectating
 				);
 			});
 		}
@@ -291,14 +354,16 @@ class Room {
 
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
-			this.members.forEach(player => {
+			this.members.forEach((player, id) => {
 				player.socket.emit(
 					'roomUpdate',
 					this.roomId,
 					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 					this.roomSize,
 					this.settingsString,
-					this.roomType
+					this.roomType,
+					id === this.host,
+					false		// Not spectating
 				);
 			});
 		}, 5000);
@@ -368,8 +433,8 @@ class Room {
 
 	/* ------------------------------ Helper Methods (RoomManager) ------------------------------*/
 
-	static createRoom(gameId, members, roomSize, settingsString, roomType = 'default') {
-		const room = new Room(members, roomSize, settingsString, roomType);
+	static createRoom(gameId, members, host, roomSize, settingsString, roomType = 'default') {
+		const room = new Room(members, host, roomSize, settingsString, roomType);
 		roomIdToRoom.set(room.roomId, room);
 		return room;
 	}
@@ -401,6 +466,11 @@ class Room {
 			return;
 		}
 
+		if(room.members.size === 1) {
+			socket.emit('showDialog', 'You cannot spectate a room if you are the only player.');
+			return;
+		}
+
 		room.spectate(gameId, socket);
 		return room;
 	}
@@ -411,7 +481,7 @@ class Room {
 			room.start();
 		}
 		else {
-			socket.emit('startFailure');
+			socket.emit('showDialog', 'There are not enough players in the room to start.');
 		}
 		return room;
 	}
@@ -465,6 +535,29 @@ class Room {
 		else {
 			room.numCpus--;
 			return room.numCpus;
+		}
+	}
+
+	/**
+	 * Returns the current list of CPUs in the room, or an empty array if there are none.
+	 */
+	static requestCpus(gameId) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		if(room.numCpus === 0) {
+			return [];
+		}
+		else {
+			const cpuInfos = Array.from(room.cpus.values());
+			const cpus = [];		// The cpuInfo object has too much data. Only send the speed and AI of each CPU.
+
+			cpuInfos.forEach(cpuInfo => {
+				const { ai, speed } = cpuInfo;
+				// Undo the speed conversion
+				cpus.push({ ai, speed: 10 - (speed / 500) });
+			});
+
+			return cpus;
 		}
 	}
 

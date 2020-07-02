@@ -6,8 +6,8 @@ const { Utils, Settings, UserSettings } = require('./Utils.js');
 
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
-const { dialogInit } = require('./webpage/dialog.js');
-const { mainpageInit, clearMessages, updatePlayers, hidePlayers } = require('./webpage/mainpage.js');
+const { dialogInit, showDialog } = require('./webpage/dialog.js');
+const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
 
 const io = require('socket.io-client');
 
@@ -74,7 +74,7 @@ const sidebar = document.getElementById('sidebar');
 async function init(playerInfo) {
 	const { socket, gameId, userSettings } = playerInfo;
 
-	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType) => {
+	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType, host, spectating) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
 			clearMessages();
@@ -107,10 +107,16 @@ async function init(playerInfo) {
 			}
 			statusSettings.innerHTML = 'Settings: ' + settingsString;
 		}
-		else {
+		else if (!spectating) {
+			toggleHost(host);
+			roomManageOptions.style.display = 'block';
 			statusMsg.style.display = 'none';
 			statusGamemode.style.display = 'none';
-			roomManageOptions.style.display = 'block';
+		}
+		else {		// Spectating
+			roomManageOptions.style.display = 'none';
+			statusMsg.style.display = 'none';
+			statusGamemode.style.display = 'none';
 		}
 
 		updatePlayers(allIds);
@@ -139,6 +145,7 @@ async function init(playerInfo) {
 	});
 
 	socket.on('spectate', (roomId, allIds, settingsString) => {
+		console.log('start spectating');
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -160,6 +167,10 @@ async function init(playerInfo) {
 		currentSession.run();
 	});
 
+	socket.on('showDialog', message => {
+		showDialog(message);
+	});
+
 	// Return a promise that instantly resolves
 	return new Promise(resolve => resolve());
 }
@@ -172,8 +183,7 @@ function stopCurrentSession() {
 	if(currentSession !== null) {
 		// Returning true means the session had not ended yet
 		if (currentSession.stop() && !currentSession.spectate) {
-			document.getElementById('modal-background-disable').style.display = 'block';
-			document.getElementById('forceStopPenalty').style.display = 'block';
+			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
 			clearMessages();
 		}
 	}

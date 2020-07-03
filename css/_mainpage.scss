@@ -32,6 +32,8 @@
 	margin: 70px auto 0px;
 }
 
+/* ---------- Status Column (Room Management/Status Information) ---------- */
+
 .status {
 	display: flex;
 	flex-direction: column;
@@ -46,6 +48,7 @@
 	text-shadow: base.$text-drop-shadow;
 }
 
+// Container for the room management options
 #roomManage {
 	display: none;
 	margin-top: 0px;
@@ -55,6 +58,7 @@
 
 	list-style: none;
 
+	// An individual management option
 	li {
 		display: grid;
 		grid-template-columns: 20% 80%;
@@ -70,6 +74,7 @@
 	}
 }
 
+// The icon for the room management option
 .roomManageIcon {
 	height: 80%;
 	margin: auto;
@@ -77,6 +82,7 @@
 	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
 }
 
+// The background colours for each option
 #manageCpus {
 	background: #351c75;
 }
@@ -96,15 +102,18 @@
 #manageSpectate {
 	background: #555555;
 
+	// This icon is already gray/white, so do not need to invert
 	.roomManageIcon {
 		filter: drop-shadow(0px 0px 15px base.$dark-gray);
 	}
 }
 
+// General message describing the status of the room
 #statusMsg {
 	display: none;
 }
 
+// Indicates the room's gamemode
 #statusGamemode {
 	display: none;
 

@@ -465,6 +465,7 @@ input.numPlayerButton {
 	grid-column: 3;
 }
 
+// Visual indicator that appears when there are no CPUs in the room
 #cpuOptionsEmpty {
 	width: 85%;
 	margin: 0 auto;
@@ -478,6 +479,7 @@ input.numPlayerButton {
 	background: #554444;
 }
 
+// Buttons to add/remove/set CPUs
 #cpuOptionsButtons {
 	display: grid;
 	grid-template-columns: auto auto auto;

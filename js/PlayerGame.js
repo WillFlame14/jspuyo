@@ -64,7 +64,7 @@ class PlayerGame extends Game {
 
 	/**
 	 * @Override
-	 * Also draws the necessary boards.
+	 * Draws the board with the new hash after stepping.
 	 */
 	step() {
 		const currentBoardHash = super.step();
@@ -75,14 +75,14 @@ class PlayerGame extends Game {
 
 	/**
 	 * @Override
-	 * Updates the visible score.
+	 * Updates the score displayed on screen.
 	 */
 	updateVisibleScore(pointsDisplayName, score) {
 		document.getElementById(pointsDisplayName).innerHTML = `${score}`.padStart(8, '0');
 	}
 
 	/**
-	 * Updates the score for opponents.
+	 * Updates the score displayed on screen for opponents.
 	 */
 	updateOpponentScore(oppId, score) {
 		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[oppId];
@@ -100,7 +100,6 @@ class PlayerGame extends Game {
  */
 class SpectateGame extends Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings) {
-		console.log('in constructor');
 		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;

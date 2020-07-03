@@ -152,12 +152,13 @@ class Room {
 	}
 
 	/**
-	 * Starts a room by sending a 'start' event to all sockets.
+	 * Starts a room by generating necessary CPU games and sending a 'start' event to all sockets in the room.
 	 */
 	start() {
 		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 		const settings = Settings.fromString(this.settingsString);
 
+		// Generate the CPU games
 		this.cpus.forEach((cpu, cpuId) => {
 			const { client_socket, socket, speed, ai } = cpu;
 			const opponentIds = allIds.filter(id => id !== cpuId);
@@ -173,6 +174,7 @@ class Room {
 
 			let cpuTimer;
 
+			// Called every "frame" to simulate the game loop
 			const timeout = () => {
 				game.step();
 
@@ -193,6 +195,7 @@ class Room {
 					this.defeated.push(cpuId);
 				}
 				else {
+					// If CPU game has not ended, recursively set a new timeout
 					cpuTimer = setTimeout(timeout, 16.67);
 				}
 			};
@@ -281,54 +284,59 @@ class Room {
 		if(this.ingame) {
 			this.games.delete(gameId);
 
-			// Emit midgame disconnect event to all members
-			this.members.forEach((player, id) => {
-				if(id > 0) {
-					player.socket.emit('playerDisconnect', gameId);
-				}
+			// Emit midgame disconnect event to all players in the room
+			this.games.forEach(player => {
+				player.socket.emit('playerDisconnect', gameId);
 			});
 			return;
 		}
+		else {
+			if(notify) {
+				this.members.forEach((player, id) => {
+					player.socket.emit(
+						'roomUpdate',
+						this.roomId,
+						Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+						this.roomSize,
+						this.settingsString,
+						this.roomType,
+						id === this.host,
+						false		// Not spectating
+					);
+				});
 
-		if(notify) {
-			this.members.forEach((player, id) => {
-				player.socket.emit(
-					'roomUpdate',
-					this.roomId,
-					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-					this.roomSize,
-					this.settingsString,
-					this.roomType,
-					id === this.host,
-					false		// Not spectating
-				);
-			});
+				this.spectating.forEach(spectatorSocket => {
+					spectatorSocket.emit(
+						'roomUpdate',
+						this.roomId,
+						Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+						this.roomSize,
+						this.settingsString,
+						this.roomType,
+						false,		// Not host
+						true		// Spectating
+					);
+				});
+			}
 
-			this.spectating.forEach(spectatorSocket => {
-				spectatorSocket.emit(
-					'roomUpdate',
-					this.roomId,
-					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-					this.roomSize,
-					this.settingsString,
-					this.roomType,
-					false,		// Not host
-					true		// Spectating
-				);
-			});
-		}
-
-		// Cancel start if not enough players
-		if(this.roomType && this.members.size < 2 && this.quickPlayTimer !== null) {
-			clearTimeout(this.quickPlayTimer);
-			this.quickPlayTimer = null;
-			console.log('Cancelled start. Not enough players.');
+			// Cancel start if not enough players
+			if(this.roomType && this.members.size < 2 && this.quickPlayTimer !== null) {
+				clearTimeout(this.quickPlayTimer);
+				this.quickPlayTimer = null;
+				console.log('Cancelled start. Not enough players.');
+			}
 		}
 
 		// Close room if it contains no more players
 		if(this.members.size === 0 && this.roomType === 'default') {
 			this.cpus.forEach((cpu, cpuId) => {
 				this.leave(cpuId, false);
+			});
+
+			// eslint-disable-next-line no-unused-vars
+			this.spectating.forEach((spectatorSocket, id) => {
+				this.leave(id, false);
+				// TODO: Kick to main menu?
 			});
 
 			// Clear room entry

@@ -617,13 +617,15 @@ class Game {
 		}
 	}
 
-	// Overridden by the subclass.
+	/**
+	 * Updates the score displayed on the screen.
+	 */
 	updateVisibleScore() {
-
+		// Overridden by the subclass.
 	}
 
 	/**
-	 * Updates the displayed score and sends nuisance to opponents.
+	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
 	updateScore() {
 		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;

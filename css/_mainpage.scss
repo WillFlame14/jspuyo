@@ -3,9 +3,9 @@
 #main-content {
 	display: grid;
 	flex: 1 0 auto;
-	grid-gap: 25px;
+	grid-gap: 1vw;
 	grid-template-rows: auto;
-	grid-template-columns: minmax(auto, 40%) minmax(auto, 38%) minmax(auto, 22%);
+	grid-template-columns: minmax(385px, 30%) minmax(auto, 47%) minmax(236px, 23%);
 
 	&.ingame {
 		grid-template-columns: 100% 0px 0px;
@@ -32,23 +32,92 @@
 	margin: 70px auto 0px;
 }
 
-.status {
-	right: 20px;
+/* ---------- Status Column (Room Management/Status Information) ---------- */
 
+.status {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-around;
-	width: 80%;
+	width: 75%;
+	margin: 0 auto;
 
 	color: white;
-	font: 52px base.$font-title;
+	font: 1.9rem base.$font-title;
 	text-align: center;
 
-	text-shadow: 2px 2px 5px base.$dark-gray;
+	text-shadow: base.$text-drop-shadow;
 }
 
+// Container for the room management options
+#roomManage {
+	display: none;
+	margin-top: 0px;
+	padding-left: 0px;
+
+	font: 1.7rem base.$font-title;
+
+	list-style: none;
+
+	// An individual management option
+	li {
+		display: grid;
+		grid-template-columns: 20% 80%;
+		margin: 25px 0px;
+		padding: 10px 0px;
+
+		text-align: left;
+
+		text-shadow: base.$text-drop-shadow;
+
+		box-shadow: base.$box-drop-shadow;
+		cursor: pointer;
+	}
+}
+
+// The icon for the room management option
+.roomManageIcon {
+	height: 80%;
+	margin: auto;
+
+	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
+}
+
+// The background colours for each option
+#manageCpus {
+	background: #351c75;
+}
+
+#manageSettings {
+	background: #0b5394;
+}
+
+#manageJoinLink {
+	background: #134f5c;
+}
+
+#manageStartRoom {
+	background: #245631;
+}
+
+#manageSpectate {
+	background: #555555;
+
+	// This icon is already gray/white, so do not need to invert
+	.roomManageIcon {
+		filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
+// General message describing the status of the room
+#statusMsg {
+	display: none;
+}
+
+// Indicates the room's gamemode
 #statusGamemode {
-	font: 56px "Rock Salt", sans-serif;
+	display: none;
+
+	font: 2.4rem "Rock Salt", sans-serif;
 }
 
 /* ---------- Sidebar (Player List and Chat) ---------- */

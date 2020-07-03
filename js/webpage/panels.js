@@ -12,8 +12,6 @@ const createRoomOptionsState = {
 	numColours: 4,
 	winCondition: 'FT 3'
 };
-let createRoomTrigger = null;
-let cpuRoomSettings = null;
 
 let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
@@ -25,6 +23,8 @@ const keyBindings = {
 	softDrop: 'ArrowDown',
 	hardDrop: 'ArrowUp'
 };
+
+let createRoomTrigger;
 
 function panelsInit(playerInfo, stopCurrentSession) {
 	const { socket, gameId, userSettings } = playerInfo;
@@ -113,13 +113,31 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
-		stopCurrentSession();
-
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
 		document.getElementById('createRoomSubmit').value = 'Create Room';
 
-		createRoomTrigger = 'custom';
+		// Re-enable the roomsize options
+		document.querySelectorAll('.numPlayerButton').forEach(element => {
+			element.classList.remove('disabled');
+		});
+		document.getElementById('5player').disabled = false;
+
+		// Re-enable the main Room Options (Disable the mode icon in future?)
+		document.getElementById('numRows').disabled = false;
+		document.getElementById('numCols').disabled = false;
+		document.getElementById('numColours').disabled = false;
+
+		// Re-enable the advanced Room Options
+		document.querySelectorAll('.roomOptionInput').forEach(input => {
+			input.disabled = false;
+		});
+
+		// Re-enable the submit button
+		document.getElementById('createRoomSubmit').style.display = 'block';
+
+		// Set the new trigger
+		setCreateRoomTrigger('create');
 	};
 
 	// Switch between Tsu and Fever mods on click
@@ -141,7 +159,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
 		element.onclick = () => {
 			const oldId = createRoomOptionsState.selectedPlayers;
-			if(element.id !== oldId) {
+			if(element.id !== oldId && !element.classList.contains('disabled')) {
 				document.getElementById(oldId).classList.remove('selected');
 				element.classList.add('selected');
 				createRoomOptionsState.selectedPlayers = element.id;
@@ -210,44 +228,18 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			.setMinChain(document.getElementById('minChainLength').value).build().toString();
 
 		switch(createRoomTrigger) {
-			case 'custom':
+			case 'create':
+				stopCurrentSession();
 				socket.emit('createRoom', { gameId, settingsString, roomSize });
 				break;
-			case 'cpu':
-				// Save the selected settings
-				cpuRoomSettings = { settingsString, roomSize };
+			case 'set':
+				socket.emit('changeSettings', gameId, settingsString, roomSize);
 
-				// Close the Room Options menu
+				// Close the CPU options menu
 				document.getElementById('createRoomModal').style.display = 'none';
-
-				// Open the CPU Options menu
-				document.getElementById('cpuOptionsModal').style.display = 'block';
-
-				// Clear all the cpu options
-				for(let i = 0; i < 6; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'none';
-				}
-
-				// Add only the ones that are needed (minus one since the player doesn't count)
-				for(let i = 0; i < roomSize - 1; i++) {
-					document.getElementById('cpu' + (i + 1)).style.display = 'grid';
-				}
+				modal.style.display = 'none';
 				break;
 		}
-		createRoomTrigger = null;
-	};
-
-	// Back button between Room Options and CPU Options
-	document.getElementById('cpu-back').onclick = () => {
-		// Close the Cpu Options menu
-		document.getElementById('cpuOptionsModal').style.display = 'none';
-
-		// Open the Room Options menu
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-
-		// Tell the submit button to go to CPU Options next
-		createRoomTrigger = 'cpu';
 	};
 
 	// Receiving the id of the newly created room
@@ -257,7 +249,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		modal.style.display = 'block';
 		document.getElementById('giveJoinId').style.display = 'block';
-		document.getElementById('joinIdLink').value = `${window.location}?joinRoom=${id}`;
+		document.getElementById('joinIdLink').value = `${window.location.href.split('?')[0]}?joinRoom=${id}`;
 	});
 
 	// Setting the click event for copying link to clipboard
@@ -382,7 +374,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		// Do not refresh the page on submit
 		event.preventDefault();
 
-		socket.emit('spectate', { gameId, roomId: roomList.value });
+		socket.emit('spectate', gameId, roomList.value);
 	};
 
 	// Received when attempting to spectate an invalid room
@@ -447,38 +439,6 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
 	}
-
-	document.getElementById('cpu').onclick = function() {
-		stopCurrentSession();
-
-		// Open the Room Options menu
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomOptions').style.display = 'grid';
-		document.getElementById('createRoomSubmit').value = 'Select CPUs';
-
-		// Flag to indicate that these room options are for a CPU game
-		createRoomTrigger = 'cpu';
-	};
-
-	document.getElementById('cpuOptionsSubmit').onclick = function() {
-		const { roomSize, settingsString } = cpuRoomSettings;
-
-		const cpus = [];
-
-		document.querySelectorAll('.aiOption').forEach(dropdown => {
-			cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
-		});
-
-		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
-			// slider value is between 0 and 10, map to between 5000 and 0
-			cpus[index].speed = (10 - slider.value) * 500;
-		});
-
-		socket.emit('cpuMatch', { gameId, roomSize, settingsString, cpus });
-
-		cpuRoomSettings = null;
-	};
 
 	// Profile Panel - Settings
 	document.getElementById('settings').onclick = function() {
@@ -575,8 +535,13 @@ function clearModal() {
 	});
 }
 
+function setCreateRoomTrigger(trigger) {
+	createRoomTrigger = trigger;
+}
+
 module.exports = {
 	puyoImgs,
 	panelsInit,
-	clearModal
+	clearModal,
+	setCreateRoomTrigger
 };

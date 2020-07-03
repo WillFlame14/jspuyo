@@ -3,7 +3,7 @@
 const panelDropdowns = {
 	'queuePanel': ['freeForAll', 'ranked'],
 	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
-	'singleplayerPanel': ['sprint', 'timeChallenge', 'cpu'],
+	'singleplayerPanel': ['sprint', 'timeChallenge'],
 	'profilePanel': ['settings', 'gallery']
 };
 

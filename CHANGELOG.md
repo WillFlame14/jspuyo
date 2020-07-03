@@ -2,6 +2,28 @@
 
 ## v0.7 - Better rooms, Spectate feature
 
+### v0.7.3 (July 3, 2020)
+[`Separate rooms from games #45`](https://github.com/WillFlame14/jspuyo/pull/45)
+
+**New features:**
+- Instead of creating a game waiting to be played once, a room is created that allows games to be played multiple times
+- Options for room management
+  - Add/Change/Remove CPUs from the room (jspuyo now supports games with mixed CPUs and players!)
+  - Change room settings (the room size cannot be changed, however)
+  - Show the join link again
+  - Start Room when enough players have joined, or if you wish to play against CPUs
+  - Spectate the room
+- Only the host can manage the room settings, other players can only view them
+  - When the host leaves the room, the player that had joined the room the earliest will become the host
+
+**Other changes:**
+- Removed the "Play Against CPU" option in Singleplayer, as it is now contained within Create Room
+- CPU games are now hosted on the server instead of in the background of a client
+  - This means they are now treated almost exactly the same as player games (they send hashes instead of directly drawing)
+- Some changes to BoardDrawer.js to allow hashes to be drawn irrespective of the board size
+- Minor UI improvements
+- Standardized using tabs instead of spaces for JS files
+
 ### v0.7.2 (May 22, 2020)
 [`Minor CSS improvements #44`](https://github.com/WillFlame14/jspuyo/pull/44)
 

@@ -64,7 +64,7 @@
         </div>
         <div class="modal-content" id="giveJoinId">
             <div class="close">&times;</div>
-            <div>A room has been created with the following link:</div>
+            <div>Use the following link to join the room:</div>
             <form autocomplete="off">
                 <input type="text" id="joinIdLink">
                 <input type="button" id="copyJoinId" value="&#x1F4CB">
@@ -98,12 +98,17 @@
         </div>
         <div class="modal-content" id="cpuOptionsModal">
             <div class="close">&times;</div>
-            <div class="back" id="cpu-back">&lt;</div>
             <div class="modal-title">CPU Options</div>
+            <div class="errorMsg" id="cpuOptionsError"></div>
+            <div id="cpuOptionsEmpty">No CPUs in room</div>
             <div class="cpu-container" id="cpuOptions">
                 <!-- Inserted by javascript -->
             </div>
-            <button id="cpuOptionsSubmit">Start Game</button>
+            <div id="cpuOptionsButtons">
+                <button id="cpuOptionsAdd">Add CPU</button>
+                <button id="cpuOptionsSubmit">Save CPU Selections</button>
+                <button id="cpuOptionsRemove">Remove CPU</button>
+            </div>
         </div>
         <div class="modal-content" id="settingsModal">
             <div class="close">&times;</div>
@@ -182,13 +187,9 @@
         </div>
     </div>
     <div class="modal" id="modal-background-disable">
-        <div class="modal-content dialog" id="forceStopPenalty">
-            <div>You have disconnected from the previous game. That match will be counted as a loss.</div>
-            <input type="submit" id="forceStopAccept" value="OK">
-        </div>
-        <div class="modal-content dialog" id="timeoutInfo">
-            <div>You have been disconnected from the game due to connection timeout.</div>
-            <input type="submit" id="timeoutAccept" value="OK">
+        <div class="modal-content dialog" id="dialogBox">
+            <div id="dialogText"></div>
+            <input type="submit" id="dialogAccept" value="OK">
         </div>
     </div>
     <main>
@@ -217,7 +218,6 @@
                 <div class="dropdown">
                     <a id="sprint">Sprint</a>
                     <a id="timeChallenge">Time Challenge</a>
-                    <a id="cpu">Play Against CPU</a>
                 </div>
             </span>
             <span class="navPanel" id="profilePanel">
@@ -235,6 +235,28 @@
                 <!-- Inserted by javascript -->
             </table>
             <div class="status" id="statusArea">
+                <ul class="justify-flexbox vertical" id="roomManage">
+                    <li id="manageCpus">
+                        <img class="roomManageIcon" src="images/mainpage/cpu.png">
+                        <span>Manage CPUs</span>
+                    </li>
+                    <li id="manageSettings">
+                        <img class="roomManageIcon" src="images/mainpage/settings.png">
+                        <span>Settings</span>
+                    </li>
+                    <li id="manageJoinLink">
+                        <img class="roomManageIcon" src="images/mainpage/link.png">
+                        <span>Show Join Link</span>
+                    </li>
+                    <li id="manageStartRoom">
+                        <img class="roomManageIcon" src="images/mainpage/start.png">
+                        <span>Start Room</span>
+                    </li>
+                    <li id="manageSpectate">
+                        <img class="roomManageIcon" src="images/mainpage/spectate.png">
+                        <span>Spectate</span>
+                    </li>
+                </ul>
                 <div id="statusMsg"></div>
                 <div id="statusGamemode"></div>
                 <div id="statusSettings"></div>

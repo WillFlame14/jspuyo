@@ -3,9 +3,10 @@
 const { showDialog } = require('./webpage/dialog.js');
 
 class Session {
-	constructor(playerGame, cpuGames, roomId) {
-		this.playerGame = playerGame;
-		this.cpuGames = cpuGames;
+	constructor(gameId, game, socket, roomId) {
+		this.gameId = gameId;
+		this.game = game;
+		this.socket = socket;
 		this.stopped = false;
 		this.roomId = roomId;
 	}
@@ -20,37 +21,16 @@ class Session {
 				return;
 			}
 
-			// Step for all games
-			this.playerGame.game.step();
-			this.cpuGames.forEach(cpuGame => cpuGame.game.step());
+			this.game.step();
 
 			// Check end results
-			const endResult = this.playerGame.game.end();
+			const endResult = this.game.end();
 			if(endResult !== null) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish(endResult);
 				this.stopped = true;
 				return;
 			}
-			this.cpuGames.forEach(cpuGame => {
-				const cpuEndResult = cpuGame.game.end();
-				if(cpuEndResult !== null) {
-					switch(cpuEndResult) {
-						case 'Win':
-							cpuGame.socket.emit('gameEnd', this.roomId);
-							break;
-						case 'Loss':
-							cpuGame.socket.emit('gameOver', cpuGame.gameId);
-							break;
-						case 'OppDisconnect':
-							// finalMessage = 'Your opponent has disconnected. This match will be counted as a win.';
-							break;
-					}
-					// Set the game to be removed
-					cpuGame.remove = true;
-				}
-			});
-			this.cpuGames = this.cpuGames.filter(cpuGame => !cpuGame.remove);
 		};
 		main();
 	}
@@ -59,21 +39,21 @@ class Session {
 		switch(endResult) {
 			case 'Win':
 				console.log('You win!');
-				this.playerGame.socket.emit('gameEnd', this.roomId);
+				this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Loss':
 				console.log('You lose...');
-				this.playerGame.socket.emit('gameOver', this.playerGame.gameId);
+				this.socket.emit('gameOver', this.gameId);
 				break;
 			case 'OppDisconnect':
 				console.log('Your opponent has disconnected. This match will be counted as a win.');
-				this.playerGame.socket.emit('gameEnd', this.roomId);
+				this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Disconnect':
-				this.playerGame.socket.emit('forceDisconnect', this.playerGame.gameId, this.roomId);
+				this.socket.emit('forceDisconnect', this.gameId, this.roomId);
 				break;
 			case 'Timeout':
-				showDialog.timeout();
+				showDialog('You have been disconnected from the game due to connection timeout.');
 				break;
 		}
 	}

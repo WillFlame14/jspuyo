@@ -43,8 +43,9 @@
 	display: none; 	// Hidden by default, appears after an error occurs.
 	margin: 5px 0px;
 
-	color: #882222;
-	font: 22px base.$font-title;
+	color: base.$error-colour;
+	font: 0.75rem base.$font-title;
+	text-align: center;
 	text-shadow: 1px 1px 2px base.$dark-gray;
 }
 
@@ -207,6 +208,12 @@
 		background: #38761d;	// light green
 		border: 3px solid white;
 		box-shadow: base.$box-drop-shadow;
+	}
+
+	&.disabled {
+		color: #bbbbbb;
+
+		background: #464646;
 	}
 }
 
@@ -458,9 +465,40 @@ input.numPlayerButton {
 	grid-column: 3;
 }
 
+// Visual indicator that appears when there are no CPUs in the room
+#cpuOptionsEmpty {
+	width: 85%;
+	margin: 0 auto;
+	padding: 5%;
+
+	color: white;
+	font: base.$larger base.$font-title;
+
+	text-align: center;
+
+	background: #554444;
+}
+
+// Buttons to add/remove/set CPUs
+#cpuOptionsButtons {
+	display: grid;
+	grid-template-columns: auto auto auto;
+
+	button {
+		@extend %submit-button;
+	}
+}
+
+#cpuOptionsAdd {
+	background: #68569d;
+}
+
 #cpuOptionsSubmit {
-	@extend %submit-button;
 	background: #38761d;
+}
+
+#cpuOptionsRemove {
+	background: #88244d;
 }
 
 /* ---------- User Settings Modal Box ---------- */

@@ -1,5 +1,5 @@
 'use strict';
-
+/* eslint-disable indent */
 const COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
 const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Green': 'rgba(20, 200, 20, 0.9)',
@@ -8,10 +8,11 @@ const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
 						'Yellow': 'rgba(150, 150, 20, 0.9)',
 						'Gray': 'rgba(100, 100, 100, 0.9)' };
 const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
+/* eslint-enable indent */
 
 class Settings {
 	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
-				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {
+				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
 		this.rows = rows;					// Number of rows in the game board
@@ -210,54 +211,58 @@ const audioFilenames = {
 const characterNames = ['akari'];
 
 class AudioPlayer {
-	constructor(gameId, socket, sfxVolume, musicVolume) {
+	constructor(gameId, socket, sfxVolume, musicVolume, disable) {
 		this.gameId = gameId;
 		this.socket = socket;
 		this.sfxVolume = sfxVolume;
 		this.musicVolume = musicVolume;
 		this.cancel = false;
+		this.disabled = disable === 'disable';
 
 		this.sfx = {};
 
-		Object.keys(audioFilenames).forEach(name => {
-			const audioInfo = audioFilenames[name];
+		// Load sound clips
+		if(!this.disabled) {
+			Object.keys(audioFilenames).forEach(name => {
+				const audioInfo = audioFilenames[name];
 
-			if(audioInfo.numClips === 1) {
-				const audio = new Audio(`../sounds/${name}.wav`);
-				audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
-				this.sfx[name] = [audio];
-			}
-			else {
-				const start = audioInfo.start || 0;
-				const audioFiles = Array(start).fill(null);		// Fill array with null until start
-
-				for(let i = 0; i < audioInfo.numClips; i++) {
-					const audio = new Audio(`../sounds/${name}_${i + 1}.wav`);
-					audio.volume = this.sfxVolume;
-					audioFiles.push([audio]);
+				if(audioInfo.numClips === 1) {
+					const audio = new Audio(`../sounds/${name}.wav`);
+					audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
+					this.sfx[name] = [audio];
 				}
-				this.sfx[name] = audioFiles;
-			}
-		});
+				else {
+					const start = audioInfo.start || 0;
+					const audioFiles = Array(start).fill(null);		// Fill array with null until start
 
-		this.voices = {};
+					for(let i = 0; i < audioInfo.numClips; i++) {
+						const audio = new Audio(`../sounds/${name}_${i + 1}.wav`);
+						audio.volume = this.sfxVolume;
+						audioFiles.push([audio]);
+					}
+					this.sfx[name] = audioFiles;
+				}
+			});
 
-		characterNames.forEach(name => {
-			const chainAudio = [null];
-			for(let i = 0; i < 13; i++) {
-				const audio = new Audio(`../sounds/voices/${name}/chain_${i + 1}.ogg`);
-				audio.volume = 0.3;
-				chainAudio.push([audio]);
-			}
+			this.voices = {};
 
-			const spellAudio = [null];
-			for(let i = 0; i < 5; i++) {
-				const audio = new Audio(`../sounds/voices/${name}/spell_${i + 1}.ogg`);
-				audio.volume = 0.3;
-				spellAudio.push([audio]);
-			}
-			this.voices[name] = { chain: chainAudio, spell: spellAudio };
-		});
+			characterNames.forEach(name => {
+				const chainAudio = [null];
+				for(let i = 0; i < 13; i++) {
+					const audio = new Audio(`../sounds/voices/${name}/chain_${i + 1}.ogg`);
+					audio.volume = 0.3;
+					chainAudio.push([audio]);
+				}
+
+				const spellAudio = [null];
+				for(let i = 0; i < 5; i++) {
+					const audio = new Audio(`../sounds/voices/${name}/spell_${i + 1}.ogg`);
+					audio.volume = 0.3;
+					spellAudio.push([audio]);
+				}
+				this.voices[name] = { chain: chainAudio, spell: spellAudio };
+			});
+		}
 	}
 
 	/**
@@ -279,7 +284,7 @@ class AudioPlayer {
 	}
 
 	playSfx(sfx_name, index = null) {
-		if(this.cancel) {
+		if(this.disabled) {
 			return;
 		}
 		const audio = (index === null) ? this.sfx[sfx_name] : this.sfx[sfx_name][index];
@@ -287,7 +292,7 @@ class AudioPlayer {
 	}
 
 	playVoice(character, audio_name, index = null) {
-		if(this.cancel) {
+		if(this.disabled) {
 			return;
 		}
 		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
@@ -310,10 +315,6 @@ class AudioPlayer {
 	playAndEmitVoice(character, audio_name, index = null) {
 		this.playVoice(character, audio_name, index);
 		this.socket.emit('sendVoice', this.gameId, character, audio_name, index);
-	}
-
-	disable() {
-		this.cancel = true;
 	}
 }
 

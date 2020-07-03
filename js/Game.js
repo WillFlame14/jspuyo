@@ -3,10 +3,10 @@
 const { Board } = require('./Board.js');
 const { BoardDrawer } = require('./BoardDrawer.js');
 const { DropGenerator } = require('./Drop.js');
-const { Utils, AudioPlayer } = require('./Utils.js');
+const { Utils } = require('./Utils.js');
 
 class Game {
-	constructor(gameId, opponentIds, socket, boardDrawerId, settings, userSettings) {
+	constructor(gameId, opponentIds, socket, settings, userSettings, boardDrawerId = null) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
@@ -37,9 +37,7 @@ class Game {
 		this.boardDrawerId = boardDrawerId;
 		this.boardDrawer = new BoardDrawer(this.settings, this.userSettings.appearance, this.boardDrawerId);
 		this.lastBoardHash = null;
-
 		this.socket = socket;
-		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
 		this.socket.off('sendNuisance');
 		this.socket.on('sendNuisance', (oppId, nuisance) => {
@@ -120,6 +118,7 @@ class Game {
 			&& this.resolvingChains.length === 0
 			&& this.nuisanceDroppingFrame == null
 			&& this.endResult === null) {
+			// eslint-disable-next-line indent
 				this.endResult = 'Loss';
 		}
 		if(this.endResult !== null) {
@@ -215,14 +214,7 @@ class Game {
 			}
 
 			const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
-			// Update the board for player (CPUs if enough frames have passed)
-			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-				currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
-				this.currentFrame = this.userSettings.skipFrames;
-			}
-			else {
-				this.currentFrame--;
-			}
+			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 			this.updateScore();
 		}
 
@@ -230,6 +222,8 @@ class Game {
 		if(currentBoardHash !== null) {
 			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
 		}
+
+		return currentBoardHash;
 	}
 
 	/**
@@ -387,16 +381,16 @@ class Game {
 				if(lowestUnstablePos[puyo.col] === undefined || lowestUnstablePos[puyo.col] > puyo.row) {
 					lowestUnstablePos[puyo.col] = puyo.row;
 				}
-            });
+			});
 
 			const unstablePuyos = [];
 			const stableBoardAfterPop = new Board(this.settings, this.board.boardState);
-            stableBoardAfterPop.boardState.forEach((column, colIndex) => {
-                if(lowestUnstablePos[colIndex] === undefined) {
-                    return;
-                }
-                // Move all unstable puyos
-                const removed_puyo_colours = column.splice(lowestUnstablePos[colIndex]);
+			stableBoardAfterPop.boardState.forEach((column, colIndex) => {
+				if(lowestUnstablePos[colIndex] === undefined) {
+					return;
+				}
+				// Move all unstable puyos
+				const removed_puyo_colours = column.splice(lowestUnstablePos[colIndex]);
 				let nonPoppedPuyos = 0;
 				removed_puyo_colours.forEach((colour, index) => {
 					const row = index + lowestUnstablePos[colIndex];
@@ -404,8 +398,8 @@ class Game {
 						unstablePuyos.push({ col: colIndex, row, colour, above: lowestUnstablePos[colIndex] + nonPoppedPuyos });
 						nonPoppedPuyos++;
 					}
-                });
-            });
+				});
+			});
 
 			this.resolvingState = {
 				chain: this.resolvingState.chain,
@@ -624,7 +618,14 @@ class Game {
 	}
 
 	/**
-	 * Updates the displayed score and sends nuisance to opponents.
+	 * Updates the score displayed on the screen.
+	 */
+	updateVisibleScore() {
+		// Overridden by the subclass.
+	}
+
+	/**
+	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
 	updateScore() {
 		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;
@@ -633,14 +634,14 @@ class Game {
 			// Score from soft dropping (will not send nuisance)
 			if(this.softDrops > 5) {
 				this.currentScore += Math.floor(this.softDrops / 5);
-				document.getElementById(pointsDisplayName).innerHTML = `${this.currentScore}`.padStart(8, '0');
+				this.updateVisibleScore(pointsDisplayName, this.currentScore);
 				this.softDrops %= 5;
 			}
 			return;
 		}
 
 		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
-		document.getElementById(pointsDisplayName).innerHTML = `${this.currentScore}`.padStart(8, '0');
+		this.updateVisibleScore(pointsDisplayName, this.currentScore);
 
 		// Update target points if margin time is in effect
 		this.settings.checkMarginTime();
@@ -699,7 +700,7 @@ class Game {
 	 * Puyos may not move into the wall or into the stack.
 	 */
 	move(direction) {
-    // Do not move while rotating 180
+	// Do not move while rotating 180
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
 		}

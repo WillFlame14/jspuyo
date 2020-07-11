@@ -14,14 +14,16 @@ const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 let gameCounter = 1;		// The running number of games (used for assigning ids)
 let cpuCounter = 1;
 
+const idToDisplayName = new Map();
 const socketIdToId = new Map();
 const cpuInfos = new Map();
 
 app.use(express.static('./'));
 
 io.on('connection', function(socket) {
-	socket.on('register', () => {
+	socket.on('register', displayName => {
 		socket.emit('getGameId', gameCounter);
+		idToDisplayName.set(gameCounter, displayName);
 		socketIdToId.set(socket.id, gameCounter);
 		console.log(`Assigned gameId ${gameCounter}`);
 		gameCounter++;
@@ -93,7 +95,7 @@ io.on('connection', function(socket) {
 		const { gameId, settingsString, roomSize } = gameInfo;
 		Room.leaveRoom(gameId);
 
-		const members = new Map().set(gameId, { socket, frames: 0 });
+		const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
@@ -138,7 +140,7 @@ io.on('connection', function(socket) {
 
 		// No pending ranked game
 		if(Room.rankedRoomId === null) {
-			const members = new Map().set(gameId, { socket, frames: 0 });
+			const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for ranked games
 
@@ -165,7 +167,7 @@ io.on('connection', function(socket) {
 		}
 
 		if(Room.defaultQueueRoomId === null) {
-			const members = new Map().set(gameId, { socket, frames: 0 });
+			const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for FFA games
 

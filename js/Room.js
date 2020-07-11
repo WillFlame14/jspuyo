@@ -46,7 +46,7 @@ class Room {
 			player.socket.emit(
 				'roomUpdate',
 				this.roomId,
-				Array.from(this.members.keys()),
+				Array.from(this.members.values()).map(member => member.displayName),
 				this.roomSize,
 				this.settingsString,
 				this.roomType,
@@ -96,11 +96,14 @@ class Room {
 		}
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
+		// Get all the display names of the members and CPUs
+		const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+
 		this.members.forEach((player, id) => {
 			player.socket.emit(
 				'roomUpdate',
 				this.roomId,
-				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				playersInRoom,
 				this.roomSize,
 				this.settingsString,
 				this.roomType,
@@ -113,7 +116,7 @@ class Room {
 			spectatorSocket.emit(
 				'roomUpdate',
 				this.roomId,
-				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				playersInRoom,
 				this.roomSize,
 				this.settingsString,
 				this.roomType,
@@ -141,7 +144,7 @@ class Room {
 		socket.emit(
 			'roomUpdate',
 			this.roomId,
-			Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+			Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu)),
 			this.roomSize,
 			this.settingsString,
 			this.roomType,
@@ -292,11 +295,14 @@ class Room {
 		}
 		else {
 			if(notify) {
+				// Get all display names of members and CPUs
+				const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+
 				this.members.forEach((player, id) => {
 					player.socket.emit(
 						'roomUpdate',
 						this.roomId,
-						Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+						playersInRoom,
 						this.roomSize,
 						this.settingsString,
 						this.roomType,
@@ -309,7 +315,7 @@ class Room {
 					spectatorSocket.emit(
 						'roomUpdate',
 						this.roomId,
-						Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+						playersInRoom,
 						this.roomSize,
 						this.settingsString,
 						this.roomType,
@@ -362,11 +368,14 @@ class Room {
 
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
+			// Get all display names of members and CPUs
+			const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+
 			this.members.forEach((player, id) => {
 				player.socket.emit(
 					'roomUpdate',
 					this.roomId,
-					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+					playersInRoom,
 					this.roomSize,
 					this.settingsString,
 					this.roomType,
@@ -379,7 +388,7 @@ class Room {
 				socket.emit(
 					'roomUpdate',
 					this.roomId,
-					Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+					playersInRoom,
 					this.roomSize,
 					this.settingsString,
 					this.roomType,

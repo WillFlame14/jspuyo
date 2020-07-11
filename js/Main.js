@@ -4,20 +4,22 @@ const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
 const { Utils, Settings, UserSettings } = require('./Utils.js');
 
+const { dialogInit, showDialog } = require('./webpage/dialog.js');
+const { initApp } = require('./webpage/firebase.js');
+const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
-const { dialogInit, showDialog } = require('./webpage/dialog.js');
-const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
 
 const io = require('socket.io-client');
 
 class PlayerInfo {
-	constructor() {
+	constructor(user) {
 		this.socket = io();
 		this.gameId = null;
+		this.user = user;
 
 		// Send a registration request to the server to receive a gameId
-		this.socket.emit('register');
+		this.socket.emit('register', user.displayName);
 		this.socket.on('getGameId', id => {
 			this.gameId = id;
 		});
@@ -36,28 +38,36 @@ class PlayerInfo {
 		};
 		return new Promise(waitUntilReady);
 	}
+
+	assignUser(user) {
+		this.user = user;
+	}
 }
 
 // Initialize session. This function is only run once.
-(async function () {
-	const playerInfo = new PlayerInfo();
-	await playerInfo.ready();
+(function() {
+	const callback = async (user) => {
+		const playerInfo = new PlayerInfo(user);
+		await playerInfo.ready();
 
-	// Set up behaviour
-	await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit(), mainpageInit(playerInfo)]);
+		// Set up behaviour
+		await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit(), mainpageInit(playerInfo)]);
 
-	// Check if a joinRoom link was used
-	const urlParams = new URLSearchParams(window.location.search);
-	const joinId = urlParams.get('joinRoom');				// Id of room to join
+		// Check if a joinRoom link was used
+		const urlParams = new URLSearchParams(window.location.search);
+		const joinId = urlParams.get('joinRoom');				// Id of room to join
 
-	if(joinId !== null) {
-		playerInfo.socket.emit('joinRoom', { gameId: playerInfo.gameId, joinId, spectate: false });
-		console.log('Joining a room...');
-	}
-	else {
-		playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId }, 'suppress');
-		document.getElementById('statusGamemode').innerHTML = 'Free For All';
-	}
+		if(joinId !== null) {
+			playerInfo.socket.emit('joinRoom', { gameId: playerInfo.gameId, joinId, spectate: false });
+			console.log('Joining a room...');
+		}
+		else {
+			playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId }, 'suppress');
+			document.getElementById('statusGamemode').innerHTML = 'Free For All';
+		}
+	};
+
+	initApp(callback);
 })();
 
 /*----------------------------------------------------------*/

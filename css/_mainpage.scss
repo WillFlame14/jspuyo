@@ -77,6 +77,7 @@
 // The icon for the room management option
 .roomManageIcon {
 	height: 80%;
+	max-height: 60px;
 	margin: auto;
 
 	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);

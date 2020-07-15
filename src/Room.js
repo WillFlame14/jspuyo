@@ -98,6 +98,8 @@ class Room {
 
 		// Get all the display names of the members and CPUs
 		const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+		console.log(playersInRoom);
+		console.log(Array.from(this.members.values()));
 
 		this.members.forEach((player, id) => {
 			player.socket.emit(
@@ -186,7 +188,7 @@ class Room {
 					switch(cpuEndResult) {
 						case 'Win':
 							// TODO: Win animation
-							game.socket.emit('gameEnd', cpuId);
+							game.socket.emit('gameEnd', this.roomId);
 							break;
 						case 'Loss':
 							game.socket.emit('gameOver', cpuId);
@@ -525,6 +527,12 @@ class Room {
 
 	static endRoom(roomId) {
 		const room = roomIdToRoom.get(roomId);
+
+		if(room === undefined) {
+			console.log(`Tried to end room ${roomId}, but it did not exist.`);
+			return;
+		}
+
 		room.end();
 		return room;
 	}

@@ -131,6 +131,7 @@ async function init(playerInfo) {
 			statusMsg.innerHTML = 'You are currently spectating this room.';
 		}
 
+		console.log(allIds);
 		updatePlayers(allIds);
 	});
 

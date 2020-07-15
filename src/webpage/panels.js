@@ -509,6 +509,13 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		// Modal is not auto-cleared since a game does not start as a result
 		clearModal();
 	};
+
+	// User Panel - Settings
+	document.getElementById('about').onclick = function() {
+		stopCurrentSession();
+
+		window.location.assign(window.location + '/about');
+	};
 	return new Promise(resolve => resolve());
 }
 

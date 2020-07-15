@@ -32,6 +32,11 @@
 	margin: 70px auto 0px;
 }
 
+// Firebase UI incompatibilities
+#ui-sign-in-email-input {
+	margin-left: 10px;
+}
+
 /* ---------- Status Column (Room Management/Status Information) ---------- */
 
 .status {

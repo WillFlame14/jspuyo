@@ -2,6 +2,7 @@
 
 const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
+const { pageInit } = require('./pages.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -12,6 +13,8 @@ let currentlyHost = false;
 
 function mainpageInit(playerInfo) {
 	const { socket, gameId } = playerInfo;
+
+	pageInit();
 
 	const sendMessageField = document.getElementById('sendMessage');
 	const messageField = document.getElementById('messageField');

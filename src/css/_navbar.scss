@@ -28,6 +28,8 @@
 	color: white;
 	font: 18px base.$font-title;
 	text-align: right;
+
+	cursor: pointer;
 }
 
 // Panel containing icon, title and dropdown menu. Default state is "minimized", which only contains the icon.

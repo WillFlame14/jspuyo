@@ -210,6 +210,8 @@ const audioFilenames = {
 };
 const characterNames = ['akari'];
 
+const SOUNDS_DIRECTORY = './sounds/';
+
 class AudioPlayer {
 	constructor(gameId, socket, sfxVolume, musicVolume, disable) {
 		this.gameId = gameId;
@@ -227,7 +229,7 @@ class AudioPlayer {
 				const audioInfo = audioFilenames[name];
 
 				if(audioInfo.numClips === 1) {
-					const audio = new Audio(`../sounds/${name}.wav`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.wav`);
 					audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
 					this.sfx[name] = [audio];
 				}
@@ -236,7 +238,7 @@ class AudioPlayer {
 					const audioFiles = Array(start).fill(null);		// Fill array with null until start
 
 					for(let i = 0; i < audioInfo.numClips; i++) {
-						const audio = new Audio(`../sounds/${name}_${i + 1}.wav`);
+						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.wav`);
 						audio.volume = this.sfxVolume;
 						audioFiles.push([audio]);
 					}
@@ -249,14 +251,14 @@ class AudioPlayer {
 			characterNames.forEach(name => {
 				const chainAudio = [null];
 				for(let i = 0; i < 13; i++) {
-					const audio = new Audio(`../sounds/voices/${name}/chain_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.ogg`);
 					audio.volume = 0.3;
 					chainAudio.push([audio]);
 				}
 
 				const spellAudio = [null];
 				for(let i = 0; i < 5; i++) {
-					const audio = new Audio(`../sounds/voices/${name}/spell_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.ogg`);
 					audio.volume = 0.3;
 					spellAudio.push([audio]);
 				}

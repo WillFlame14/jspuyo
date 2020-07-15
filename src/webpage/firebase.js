@@ -28,10 +28,8 @@ const uiConfig = {
 	signInOptions: [
 		firebase.auth.EmailAuthProvider.PROVIDER_ID
 	],
-	// Terms of service url.
-	tosUrl: '<your-tos-url>',
-	// Privacy policy url.
-	privacyPolicyUrl: '<your-privacy-policy-url>'
+	tosUrl: '/terms',
+	privacyPolicyUrl: '/privacy'
 };
 
 function initApp(callback) {

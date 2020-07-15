@@ -4,15 +4,16 @@
   "description": "Puyo Puyo for your browser.",
   "main": "Main.js",
   "scripts": {
-    "autoprefix": "postcss temp.css --use autoprefixer -o style.css --watch",
-    "bundle": "watchify js/Main.js -o bundle.js --debug",
-    "eslint": "eslint js/ --fix",
-    "node": "node js/server.js",
-    "sass": "sass --watch css/style.scss temp.css --no-source-map",
-    "start": "npm-run-all --parallel bundle node sass autoprefix",
-    "stylelint": "stylelint \"css/*.scss\" --fix",
-    "test": "eslint js/ && stylelint \"css/*.scss\" && mocha",
-    "uglify": "browserify -t uglifyify js/Main.js > bundle.js"
+    "autoprefix": "postcss temp.css --use autoprefixer -o public/style.css --watch",
+    "bundle": "watchify src/Main.js -o public/bundle.js --debug",
+    "bundle2": "watchify src/webpage/pages.js -o public/limited.js",
+    "eslint": "eslint src/ --fix",
+    "node": "node server.js",
+    "sass": "sass --watch src/css/style.scss temp.css --no-source-map",
+    "start": "npm-run-all --parallel bundle bundle2 node sass autoprefix",
+    "stylelint": "stylelint \"src/css/*.scss\" --fix",
+    "test": "eslint src/ --fix && stylelint \"src/css/*.scss\" --fix && mocha",
+    "uglify": "browserify -t uglifyify src/Main.js > public/bundle.js"
   },
   "repository": {
     "type": "git",

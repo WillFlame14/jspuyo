@@ -1,5 +1,6 @@
 node_modules
 bundle.js
+limited.js
 style.css
 temp.css
 config.js

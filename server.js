@@ -7,7 +7,7 @@ const io = require('socket.io')(http, { perMessageDeflate: false });
 const io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
-const { Room } = require('./Room.js');
+const { Room } = require('./src/Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
@@ -18,7 +18,7 @@ const idToDisplayName = new Map();
 const socketIdToId = new Map();
 const cpuInfos = new Map();
 
-app.use(express.static('./'));
+app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
 	socket.on('register', displayName => {

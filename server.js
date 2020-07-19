@@ -11,10 +11,8 @@ const { Room } = require('./src/Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
-let gameCounter = 1;		// The running number of games (used for assigning ids)
 let cpuCounter = 1;
 
-const idToDisplayName = new Map();
 const socketIdToId = new Map();
 const cpuInfos = new Map();
 
@@ -22,11 +20,13 @@ app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
 	socket.on('register', displayName => {
-		socket.emit('getGameId', gameCounter);
-		idToDisplayName.set(gameCounter, displayName);
-		socketIdToId.set(socket.id, gameCounter);
-		console.log(`Assigned gameId ${gameCounter}`);
-		gameCounter++;
+		console.log(Array.from(socketIdToId.values()));
+		if(Array.from(socketIdToId.values()).includes(displayName)) {
+			console.log('duplicate register???');
+		}
+		socketIdToId.set(socket.id, displayName);
+		console.log(`User ${displayName} has logged in.`);
+		socket.emit('registered');
 	});
 
 	socket.on('addCpu', gameId => {
@@ -55,7 +55,7 @@ io.on('connection', function(socket) {
 		// Assign each cpu a negative id
 		cpus.forEach(cpu => {
 			const cpuSocket = io_client.connect('http://localhost:3000');
-			const cpuId = -cpuCounter;
+			const cpuId = 'CPU-' + cpuCounter;
 			cpuCounter++;
 
 			cpuInfos.get(gameId).set(cpuId, { client_socket: cpuSocket });
@@ -95,7 +95,7 @@ io.on('connection', function(socket) {
 		const { gameId, settingsString, roomSize } = gameInfo;
 		Room.leaveRoom(gameId);
 
-		const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
+		const members = new Map().set(gameId, { socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
@@ -140,7 +140,7 @@ io.on('connection', function(socket) {
 
 		// No pending ranked game
 		if(Room.rankedRoomId === null) {
-			const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
+			const members = new Map().set(gameId, { socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for ranked games
 
@@ -167,12 +167,13 @@ io.on('connection', function(socket) {
 		}
 
 		if(Room.defaultQueueRoomId === null) {
-			const members = new Map().set(gameId, { displayName: idToDisplayName.get(gameId), socket, frames: 0 });
+			const members = new Map().set(gameId, { socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for FFA games
 
 			// Fixed settings for FFA rooms
 			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
+			console.log('room created');
 		}
 		else {
 			try {
@@ -244,11 +245,11 @@ io.on('connection', function(socket) {
 		const gameId = socketIdToId.get(socket.id);
 
 		// CPU sockets get disconnected by the server - they have already been removed from the room
-		if(gameId > 0) {
+		if(gameId && !gameId.includes('CPU')) {
 			Room.leaveRoom(gameId);
 		}
 		socketIdToId.delete(socket.id);
-		console.log(`Disconnected id ${gameId}`);
+		console.log(`Disconnected ${gameId}`);
 	});
 });
 

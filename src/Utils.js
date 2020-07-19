@@ -11,7 +11,7 @@ const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 /* eslint-enable indent */
 
 class Settings {
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
+	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.29, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -25,10 +25,10 @@ class Settings {
 		this.seed = seed;					// Seed for generating drops
 
 		// Constants that cannot be modified
-		this.lockDelay = 200;				// Milliseconds of time before a drop locks into place
+		this.lockDelay = 530;				// Milliseconds of time before a drop locks into place
 		this.frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
-		this.squishFrames = 8;				// Number of frames used for squishing a drop into the stack
+		this.squishFrames = 16;				// Number of frames used for squishing a drop into the stack
 		this.dropFrames = 10;				// Number of frames used for all the puyo to drop
 		this.popFrames = 65;				// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 3.25;	// Number of frames used for an isolated puyo to fall one row

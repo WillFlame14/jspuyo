@@ -53,7 +53,7 @@ class Game {
 		this.socket.off('gameOver');
 		this.socket.on('gameOver', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId > 0) {
+			if(this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has topped out.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -65,7 +65,7 @@ class Game {
 		this.socket.off('playerDisconnect');
 		this.socket.on('playerDisconnect', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId > 0) {
+			if(this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has disconnected.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -92,7 +92,7 @@ class Game {
 		this.socket.off('timeoutDisconnect');
 		this.socket.on('timeoutDisconnect', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId > 0) {
+			if(this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has timed out.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -106,7 +106,7 @@ class Game {
 		});
 
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
-		this.forceLockDelay = 0;
+		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
 	}
 
@@ -181,8 +181,8 @@ class Game {
 			this.getInputs();
 
 			if(this.checkLock()) {
-				// Lock delay is over, lock puyo in place
-				if(this.locking !== 'not' && Date.now() - this.locking >= this.settings.lockDelay - this.forceLockDelay) {
+				// Lock puyo in place if frames are up or lock is forced
+				if(this.locking !== 'not' && (Date.now() - this.locking >= this.settings.lockDelay) || this.forceLock) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 
@@ -191,7 +191,7 @@ class Game {
 						this.squishState.currentFrame = 0;
 					}
 					this.locking = 'not';
-					this.forceLockDelay = 0;
+					this.forceLock = false;
 				}
 				else {
 					// Start lock delay
@@ -745,8 +745,8 @@ class Game {
 				this.softDrops += 1;
 			}
 			else {
-				// Force lock delay to come earlier while soft drop is being held
-				this.forceLockDelay += 15;
+				// Force lock delay if soft drop is being held
+				this.forceLock = true;
 			}
 			const new_schezo = Utils.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {

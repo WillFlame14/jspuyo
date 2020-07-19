@@ -15,13 +15,14 @@ const io = require('socket.io-client');
 class PlayerInfo {
 	constructor(user) {
 		this.socket = io();
-		this.gameId = null;
+		this.gameId = user.displayName;
 		this.user = user;
+		this.registered = false;
 
-		// Send a registration request to the server to receive a gameId
+		// Send a registration request to the server
 		this.socket.emit('register', user.displayName);
-		this.socket.on('getGameId', id => {
-			this.gameId = id;
+		this.socket.on('registered', () => {
+			this.registered = true;
 		});
 
 		this.userSettings = new UserSettings();
@@ -29,7 +30,7 @@ class PlayerInfo {
 
 	ready() {
 		const waitUntilReady = resolve => {
-			if(this.gameId === null) {
+			if(!this.registered) {
 				setTimeout(() => waitUntilReady(resolve), 20);
 			}
 			else {
@@ -67,6 +68,7 @@ class PlayerInfo {
 		}
 	};
 
+	// Ask for authentication. Callback is called when authenticated successfully.
 	initApp(callback);
 })();
 

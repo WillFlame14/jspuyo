@@ -46,7 +46,7 @@ class Room {
 			player.socket.emit(
 				'roomUpdate',
 				this.roomId,
-				Array.from(this.members.values()).map(member => member.displayName),
+				Array.from(this.members.keys()),
 				this.roomSize,
 				this.settingsString,
 				this.roomType,
@@ -96,10 +96,8 @@ class Room {
 		}
 		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
 
-		// Get all the display names of the members and CPUs
-		const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
-		console.log(playersInRoom);
-		console.log(Array.from(this.members.values()));
+		// Get all the members and CPUs
+		const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 		this.members.forEach((player, id) => {
 			player.socket.emit(
@@ -146,7 +144,7 @@ class Room {
 		socket.emit(
 			'roomUpdate',
 			this.roomId,
-			Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu)),
+			Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 			this.roomSize,
 			this.settingsString,
 			this.roomType,
@@ -255,7 +253,7 @@ class Room {
 		}
 
 		// Select the correct map to remove the player from
-		const playerList = (gameId > 0) ? this.members : this.cpus;
+		const playerList = (gameId.includes('CPU')) ? this.cpus : this.members;
 
 		const socket = playerList.get(gameId).socket;
 		if(!spectate) {
@@ -277,7 +275,7 @@ class Room {
 		console.log(`Removed ${gameId} from room ${this.roomId}`);
 
 		// Disconnect the CPU socket, since they cannot exist outside of the room
-		if(gameId < 0) {
+		if(gameId.includes('CPU')) {
 			if(this.games.has(gameId)) {
 				clearTimeout(this.games.timeout);
 				this.games.delete(gameId);
@@ -298,7 +296,7 @@ class Room {
 		else {
 			if(notify) {
 				// Get all display names of members and CPUs
-				const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+				const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 				this.members.forEach((player, id) => {
 					player.socket.emit(
@@ -371,7 +369,7 @@ class Room {
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
 			// Get all display names of members and CPUs
-			const playersInRoom = Array.from(this.members.values()).map(member => member.displayName).concat(Array.from(this.cpus.keys()).map(cpu => 'CPU' + cpu));
+			const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 			this.members.forEach((player, id) => {
 				player.socket.emit(

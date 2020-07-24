@@ -2,6 +2,7 @@
 
 const { Cpu } = require('../Cpu.js');
 const { Utils, SettingsBuilder } = require('../Utils.js');
+const { signOut } = require('./firebase.js');
 
 const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
@@ -510,11 +511,9 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		clearModal();
 	};
 
-	// User Panel - Settings
-	document.getElementById('about').onclick = function() {
-		stopCurrentSession();
-
-		window.location.assign(window.location + '/about');
+	// User Panel - Log Out
+	document.getElementById('logout').onclick = function() {
+		signOut();
 	};
 	return new Promise(resolve => resolve());
 }

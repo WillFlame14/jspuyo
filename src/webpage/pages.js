@@ -15,7 +15,7 @@ function pageInit() {
 	document.documentElement.style.backgroundImage = 'url("' + address + '")';
 
 	document.getElementById('logo').onclick = function() {
-		window.location.assign('/');
+		window.location.assign('/about');
 	};
 }
 

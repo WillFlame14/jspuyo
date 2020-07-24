@@ -32,9 +32,13 @@
 	margin: 70px auto 0px;
 }
 
-// Firebase UI incompatibilities
-#ui-sign-in-email-input {
-	margin-left: 10px;
+#welcomeMessage {
+
+	margin-bottom: 20px;
+
+	font-size: 2rem;
+	text-align: center;
+	text-shadow: base.$text-drop-shadow;
 }
 
 /* ---------- Status Column (Room Management/Status Information) ---------- */
@@ -60,8 +64,6 @@
 	padding-left: 0px;
 
 	font: 1.7rem base.$font-title;
-
-	list-style: none;
 
 	// An individual management option
 	li {
@@ -158,8 +160,6 @@
 
 	color: white;
 	font: 24px base.$font-title;
-
-	list-style: none;
 }
 
 // An entry in the player list
@@ -208,8 +208,6 @@
 
 	color: white;
 	font: 20px base.$font-title;
-
-	list-style: none;
 }
 
 // An individual message

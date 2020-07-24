@@ -7,6 +7,16 @@
 </head>
 <body>
     <div class="modal" id="modal-login">
+        <div class="modal-content" id="usernamePicker">
+            <form id="usernamePickerForm" autocomplete="off">
+                <label for="usernamePicker">Enter your preferred display name below.</label><br>
+                <div class="errorMsg" id="usernamePickerError"></div>
+                <div id="usernamePickerInput">
+                    <input type="text" id="usernamePickerText" maxlength="15">
+                </div>
+                <input type="submit" id="usernamePickerSubmit" value="Confirm">
+            </form>
+        </div>
         <div class="modal-content" id="firebaseui-auth-container"></div>
         <div id="loader">Loading...</div>
     </div>
@@ -220,17 +230,17 @@
                 <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
                 <span class="panelName">Singleplayer</span>
                 <div class="dropdown">
-                    <a id="sprint">Sprint</a>
-                    <a id="timeChallenge">Time Challenge</a>
+                    <a id="sprint">Sprint [WIP]</a>
+                    <a id="timeChallenge">Time Challenge [WIP]</a>
                 </div>
             </span>
             <span class="navPanel" id="profilePanel">
                 <img src="images/navbar/ProfileIcon.png" class="navIcon">
                 <span class="panelName">Profile</span>
                 <div class="dropdown">
-                    <a id="gallery">Gallery</a>
+                    <a id="gallery">Gallery [WIP]</a>
                     <a id="settings">Settings</a>
-                    <a id="about">About</a>
+                    <a id="logout">Log Out</a>
                 </div>
             </span>
             <span id="logo">jspuyo</span>

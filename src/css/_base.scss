@@ -42,6 +42,12 @@ canvas {
 	border: 4px solid white;
 }
 
+ul {
+	padding-left: 0px;
+
+	list-style: none;
+}
+
 form {
 	margin-bottom: 10px;
 
@@ -173,6 +179,11 @@ datalist {
 
 	background: $dark-gray;
 	box-shadow: $box-drop-shadow;
+}
+
+footer {
+	color: white;
+	text-align: center;
 }
 
 // Justified flexbox.

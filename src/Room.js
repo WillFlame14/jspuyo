@@ -635,7 +635,9 @@ class Room {
 	static beenDefeated(gameId, roomId) {
 		const room = roomIdToRoom.get(roomId);
 
-		room.defeated.push(gameId);
+		if(room !== undefined) {
+			room.defeated.push(gameId);
+		}
 	}
 
 	/**

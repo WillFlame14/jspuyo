@@ -11,6 +11,7 @@ const { Room } = require('./src/Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
+let guestCounter = 1;
 let cpuCounter = 1;
 
 const socketIdToId = new Map();
@@ -19,14 +20,17 @@ const cpuInfos = new Map();
 app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
-	socket.on('register', displayName => {
-		console.log(Array.from(socketIdToId.values()));
+	socket.on('register', (displayName, isAnonymous) => {
+		if(isAnonymous) {
+			displayName = 'Guest-' + guestCounter;
+			guestCounter++;
+		}
 		if(Array.from(socketIdToId.values()).includes(displayName)) {
-			console.log('duplicate register???');
+			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
 		socketIdToId.set(socket.id, displayName);
 		console.log(`User ${displayName} has logged in.`);
-		socket.emit('registered');
+		socket.emit('registered', displayName);
 	});
 
 	socket.on('addCpu', gameId => {
@@ -173,7 +177,6 @@ io.on('connection', function(socket) {
 
 			// Fixed settings for FFA rooms
 			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
-			console.log('room created');
 		}
 		else {
 			try {

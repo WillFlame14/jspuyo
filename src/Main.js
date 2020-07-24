@@ -13,15 +13,19 @@ const { panelsInit, clearModal } = require('./webpage/panels.js');
 const io = require('socket.io-client');
 
 class PlayerInfo {
-	constructor(user) {
+	constructor(user, isAnonymous) {
 		this.socket = io();
-		this.gameId = user.displayName;
+		this.gameId = user.displayName;		// will be null if anonymous
 		this.user = user;
 		this.registered = false;
 
 		// Send a registration request to the server
-		this.socket.emit('register', user.displayName);
-		this.socket.on('registered', () => {
+		this.socket.emit('register', user.displayName, isAnonymous);
+		this.socket.on('registered', guestId => {
+			// Assign the guest ID given by the server if anonymous
+			if(isAnonymous) {
+				this.gameId = guestId;
+			}
 			this.registered = true;
 		});
 
@@ -47,8 +51,8 @@ class PlayerInfo {
 
 // Initialize session. This function is only run once.
 (function() {
-	const callback = async (user) => {
-		const playerInfo = new PlayerInfo(user);
+	const callback = async (user, isAnonymous) => {
+		const playerInfo = new PlayerInfo(user, isAnonymous);
 		await playerInfo.ready();
 
 		// Set up behaviour
@@ -133,7 +137,6 @@ async function init(playerInfo) {
 			statusMsg.innerHTML = 'You are currently spectating this room.';
 		}
 
-		console.log(allIds);
 		updatePlayers(allIds);
 	});
 

@@ -1,0 +1,83 @@
+@use "base";
+
+/**
+ * These are (hopefully) temporary fixes since the CSS of FirebaseUI doesn't turn out nicely.
+ * Eventually the entire login UI element should be done from scratch.
+ */
+
+#firebaseui-auth-container {
+	width: 45%;
+
+	color: white;
+}
+
+.firebaseui-tos-list {
+	margin-bottom: 0px;
+}
+
+.firebaseui-label {
+	min-width: 5em;
+}
+
+.firebaseui-idp-icon {
+	float: left;
+	width: 1rem;
+	margin-top: 7px;
+	margin-left: 3px;
+}
+
+.firebaseui-idp-button {
+	min-width: 14.5rem;
+
+	text-align: left;
+}
+
+.firebaseui-idp-text {
+	margin-left: 15px;
+}
+
+.firebaseui-idp-google {
+	.firebaseui-idp-text {
+		color: base.$dark-gray;
+	}
+}
+
+.firebaseui-list-item {
+	margin-top: 15px;
+}
+
+.firebaseui-textfield {
+	margin-bottom: 5px;
+
+	input {
+		margin-left: 10px;
+	}
+}
+
+.firebaseui-card-actions {
+	margin-top: 10px;
+}
+
+.firebaseui-form-links {
+	margin-bottom: 20px;
+}
+
+.firebaseui-button {
+	margin: 0px 15px;
+}
+
+.firebaseui-error {
+	margin: 10px 0px;
+}
+
+.firebaseui-idp-text-short {
+	display: none;
+}
+
+.firebaseui-card-header {
+	display: none;
+}
+
+.firebaseui-card-footer {
+	text-shadow: base.$text-drop-shadow;
+}

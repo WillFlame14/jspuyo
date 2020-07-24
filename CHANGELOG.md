@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.8 - Personalization
+
+### v0.8.0 (July 23, 2020)
+[`Add user authentication`](https://github.com/WillFlame14/jspuyo/pull/47)
+**New features:**
+- User authentication added to facilitate future storage of user data
+  - Sign-in options are currently limited to email/password and Google sign-in
+  - Playing as a Guest is also an option, though data will not be saved
+  - The chat and player list now use your display name
+  - You can log out under the Profile panel
+- Pages for About, Privacy Policy, and Terms of Service (tbd)
+- 3 new backgrounds!
+- Support for 'FlatColour' skin
+
+**Other changes:**
+- Organized entire filesystem based on production files vs. development files.
+- Very small tuning improvements
+
 ## v0.7 - Better rooms, Spectate feature
 
 ### v0.7.3 (July 3, 2020)

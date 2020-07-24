@@ -4,7 +4,7 @@ const panelDropdowns = {
 	'queuePanel': ['freeForAll', 'ranked'],
 	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
 	'singleplayerPanel': ['sprint', 'timeChallenge'],
-	'profilePanel': ['settings', 'gallery', 'about']
+	'profilePanel': ['settings', 'gallery', 'logout']
 };
 
 let currentlyExpandedPanel = null;

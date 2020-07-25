@@ -20,17 +20,17 @@ const cpuInfos = new Map();
 app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
-	socket.on('register', (displayName, isAnonymous) => {
+	socket.on('register', (gameId, isAnonymous) => {
 		if(isAnonymous) {
-			displayName = 'Guest-' + guestCounter;
+			gameId = 'Guest-' + guestCounter;
 			guestCounter++;
 		}
-		if(Array.from(socketIdToId.values()).includes(displayName)) {
+		if(Array.from(socketIdToId.values()).includes(gameId)) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
-		socketIdToId.set(socket.id, displayName);
-		console.log(`User ${displayName} has logged in.`);
-		socket.emit('registered', displayName);
+		socketIdToId.set(socket.id, gameId);
+		console.log(`User ${gameId} has logged in.`);
+		socket.emit('registered', gameId);
 	});
 
 	socket.on('addCpu', gameId => {
@@ -242,6 +242,11 @@ io.on('connection', function(socket) {
 
 	socket.on('forceDisconnect', (gameId, roomId) => {
 		Room.leaveRoom(gameId, roomId);
+	});
+
+	// Called when logging out, since the same socket is used but with a different user
+	socket.on('unlinkUser', () => {
+		socketIdToId.delete(socket.id);
 	});
 
 	socket.on('disconnect', () => {

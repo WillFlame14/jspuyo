@@ -2,79 +2,78 @@
 
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Utils, Settings, UserSettings } = require('./Utils.js');
+const { Settings } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
-const { initApp } = require('./webpage/firebase.js');
+const { PlayerInfo, initApp, updateUser } = require('./webpage/firebase.js');
 const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal } = require('./webpage/panels.js');
 
 const io = require('socket.io-client');
+const globalSocket = io();
 
-class PlayerInfo {
-	constructor(user, isAnonymous) {
-		this.socket = io();
-		this.gameId = user.displayName;		// will be null if anonymous
-		this.user = user;
-		this.registered = false;
+let currentUID;
+let initialized;
 
-		// Send a registration request to the server
-		this.socket.emit('register', user.displayName, isAnonymous);
-		this.socket.on('registered', guestId => {
-			// Assign the guest ID given by the server if anonymous
-			if(isAnonymous) {
-				this.gameId = guestId;
-			}
-			this.registered = true;
-		});
-
-		this.userSettings = new UserSettings();
-	}
-
-	ready() {
-		const waitUntilReady = resolve => {
-			if(!this.registered) {
-				setTimeout(() => waitUntilReady(resolve), 20);
-			}
-			else {
-				resolve();
-			}
-		};
-		return new Promise(waitUntilReady);
-	}
-
-	assignUser(user) {
-		this.user = user;
-	}
-}
-
-// Initialize session. This function is only run once.
+// This is the "main" function, which starts up the entire app.
 (function() {
-	const callback = async (user, isAnonymous) => {
-		const playerInfo = new PlayerInfo(user, isAnonymous);
-		await playerInfo.ready();
+	// Start login process
+	initApp(loginSuccess);
 
-		// Set up behaviour
-		await Promise.all([init(playerInfo), navbarInit(), panelsInit(playerInfo, stopCurrentSession), dialogInit(), mainpageInit(playerInfo)]);
+	// Set up behaviour
+	initialized = new Promise((resolve) => {
+		Promise.all([
+			init(globalSocket, getCurrentUID),
+			navbarInit(),
+			panelsInit(globalSocket, getCurrentUID, stopCurrentSession),
+			dialogInit(),
+			mainpageInit(globalSocket, getCurrentUID)
+		]).then(() => {
+			resolve();
+		});
+	});
+})();
+
+/**
+ * Called after successfully logging in.
+ * Links the current user to the socket and registers with the game server.
+ */
+async function loginSuccess(user) {
+	// Make sure initialization is finished
+	await initialized;
+
+	globalSocket.emit('register', user.uid, user.isAnonymous);
+
+	globalSocket.off('registered');
+	globalSocket.on('registered', guestId => {
+		// Assign the guest ID given by the server if anonymous
+		if(user.isAnonymous) {
+			updateUser(user.uid, 'displayName', guestId);
+		}
+		currentUID = user.uid;
 
 		// Check if a joinRoom link was used
 		const urlParams = new URLSearchParams(window.location.search);
 		const joinId = urlParams.get('joinRoom');				// Id of room to join
 
 		if(joinId !== null) {
-			playerInfo.socket.emit('joinRoom', { gameId: playerInfo.gameId, joinId, spectate: false });
+			globalSocket.emit('joinRoom', { gameId: currentUID, joinId, spectate: false });
 			console.log('Joining a room...');
 		}
 		else {
-			playerInfo.socket.emit('freeForAll', { gameId: playerInfo.gameId }, 'suppress');
+			globalSocket.emit('freeForAll', { gameId: currentUID }, 'suppress');
 			document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		}
-	};
+	});
+}
 
-	// Ask for authentication. Callback is called when authenticated successfully.
-	initApp(callback);
-})();
+/**
+ * Retrieves the current UID, as logging out and logging in as a different user will change this value.
+ */
+function getCurrentUID() {
+	return currentUID;
+}
 
 /*----------------------------------------------------------*/
 
@@ -87,9 +86,7 @@ const mainContent = document.getElementById('main-content');
 const sidebar = document.getElementById('sidebar');
 
 // Set up all the event listeners
-async function init(playerInfo) {
-	const { socket, gameId, userSettings } = playerInfo;
-
+async function init(socket) {
 	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType, host, spectating) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
@@ -140,25 +137,25 @@ async function init(playerInfo) {
 		updatePlayers(allIds);
 	});
 
-	socket.on('start', (roomId, opponentIds, settingsString) => {
+	socket.on('start', async (roomId, opponentIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettingsCopy = Utils.objectCopy(userSettings);
+		const userSettings = JSON.parse(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
 
 		// Add default skipFrames
-		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[opponentIds.length + 1];
+		userSettings.skipFrames += defaultSkipFrames[opponentIds.length + 1];
 
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(opponentIds.length + 1);
 
 		// Set up the player's game
-		const game = new PlayerGame(gameId, opponentIds, socket, settings, userSettingsCopy);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings);
 
 		// Create the session
-		currentSession = new Session(gameId, game, socket, roomId);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId);
 		currentSession.run();
 	});
 
@@ -167,19 +164,19 @@ async function init(playerInfo) {
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettingsCopy = Utils.objectCopy(userSettings);
+		const userSettings = JSON.parse(PlayerInfo.getUserProperty(currentUID, 'userSettings'));
 
 		// Add default skipFrames
-		userSettingsCopy.skipFrames = userSettingsCopy.skipFrames + defaultSkipFrames[allIds.length];
+		userSettings.skipFrames += defaultSkipFrames[allIds.length];
 
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(allIds.length);
 
-		const game = new SpectateGame(gameId, allIds, socket, settings, userSettingsCopy);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings);
 
 		// Create the session
-		currentSession = new Session(gameId, game, socket, roomId);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId);
 		currentSession.spectate = true;
 		currentSession.run();
 	});

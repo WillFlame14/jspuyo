@@ -1,5 +1,36 @@
 @use "base";
 
+#welcomeMessage {
+	margin-bottom: 10px;
+
+	font-size: 2rem;
+	text-align: center;
+	text-shadow: base.$text-drop-shadow;
+}
+
+#onlineUsers {
+	margin-bottom: 20px;
+
+	color: #002040;
+
+	font-size: 0.85rem;
+	text-align: center;
+	text-shadow: 1px 1px 2px base.$dark-gray;
+}
+
+#guestMessage {
+	margin: 15px 0px 5px;
+	padding-left: 15px;
+
+	color: white;
+	font-size: 0.65rem;
+	text-shadow: base.$text-drop-shadow;
+}
+
+#usernamePickerError {
+	margin-bottom: 15px;
+}
+
 /**
  * These are (hopefully) temporary fixes since the CSS of FirebaseUI doesn't turn out nicely.
  * Eventually the entire login UI element should be done from scratch.
@@ -26,6 +57,10 @@
 	margin-left: 3px;
 }
 
+.firebaseui-idp-list {
+	margin: 0px;
+}
+
 .firebaseui-idp-button {
 	min-width: 14.5rem;
 
@@ -44,6 +79,10 @@
 
 .firebaseui-list-item {
 	margin-top: 15px;
+
+	&:first-child {
+		margin-top: 0px;
+	}
 }
 
 .firebaseui-textfield {

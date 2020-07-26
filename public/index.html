@@ -9,13 +9,14 @@
     <div class="modal" id="modal-login">
         <div class="modal-content" id="usernamePicker">
             <form id="usernamePickerForm" autocomplete="off">
-                <label for="usernamePicker">Enter your preferred display name below.</label><br>
-                <div class="errorMsg" id="usernamePickerError">This username is already in use.</div>
+                <label for="usernamePicker">Enter your preferred display name below.</label>
+                <div class="errorMsg" id="usernamePickerError"></div>
                 <div id="usernamePickerInput">
                     <input type="text" id="usernamePickerText" maxlength="15">
                 </div>
                 <input type="submit" id="usernamePickerSubmit" value="Confirm">
             </form>
+            <div id="guestMessage">As a guest, your progress will only be saved within your browser cookies, and will be deleted when you log out (under the Profile tab). Creating an account lets you carry your save data between sessions.</div>
         </div>
         <div class="modal-content" id="firebaseui-auth-container"></div>
         <div id="loader">Loading...</div>
@@ -179,11 +180,11 @@
                     <div class="justify-flexbox ghostHighlightOptions">
                         <form class="block-form" autocomplete="off">
                             <label for="ghost">Ghost Drop</label>
-                            <input type="button" class="on" id="ghost" value="ON"><br>
+                            <input type="button" class="off" id="ghost" value="OFF" disabled><br>
                         </form>
                         <form class="block-form" autocomplete="off">
                             <label for="highlightChains">Highlight Chains</label>
-                            <input type="button" class="on" id="highlightChains" value="ON">
+                            <input type="button" class="off" id="highlightChains" value="OFF" disabled>
                         </form>
                     </div>
                     <div class="option-title">Appearance</div>

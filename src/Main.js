@@ -5,10 +5,10 @@ const { Session } = require('./Session.js');
 const { Settings } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
-const { PlayerInfo, initApp, updateUser } = require('./webpage/firebase.js');
+const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
 const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
 const navbarInit = require('./webpage/navbar.js');
-const { panelsInit, clearModal } = require('./webpage/panels.js');
+const { panelsInit, clearModal, updateUserSettings } = require('./webpage/panels.js');
 
 const io = require('socket.io-client');
 const globalSocket = io();
@@ -19,7 +19,7 @@ let initialized;
 // This is the "main" function, which starts up the entire app.
 (function() {
 	// Start login process
-	initApp(loginSuccess);
+	initApp(globalSocket, loginSuccess);
 
 	// Set up behaviour
 	initialized = new Promise((resolve) => {
@@ -43,15 +43,22 @@ async function loginSuccess(user) {
 	// Make sure initialization is finished
 	await initialized;
 
-	globalSocket.emit('register', user.uid, user.isAnonymous);
+	globalSocket.emit('register', user.uid);
 
 	globalSocket.off('registered');
-	globalSocket.on('registered', guestId => {
-		// Assign the guest ID given by the server if anonymous
-		if(user.isAnonymous) {
-			updateUser(user.uid, 'displayName', guestId);
-		}
+	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
+		let userData;
+		try {
+			userData = await PlayerInfo.loadUserData(currentUID);
+		}
+		catch(error) {
+			console.log(error);
+			console.log('Your account was not correctly set up. You will now be logged out.');
+			signOut();
+			return;
+		}
+		updateUserSettings(userData.userSettings);
 
 		// Check if a joinRoom link was used
 		const urlParams = new URLSearchParams(window.location.search);
@@ -142,7 +149,7 @@ async function init(socket) {
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettings = JSON.parse(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings');
 
 		// Add default skipFrames
 		userSettings.skipFrames += defaultSkipFrames[opponentIds.length + 1];
@@ -159,12 +166,12 @@ async function init(socket) {
 		currentSession.run();
 	});
 
-	socket.on('spectate', (roomId, allIds, settingsString) => {
+	socket.on('spectate', async (roomId, allIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettings = JSON.parse(PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings');
 
 		// Add default skipFrames
 		userSettings.skipFrames += defaultSkipFrames[allIds.length];

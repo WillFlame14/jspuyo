@@ -13,7 +13,8 @@ let newUser = false;
 let currentUser = null;
 let fallbackName = '';		// Display name that is used if empty string is provided (aka the original name)
 
-let ui;			// firebaseui object
+let ui;				// Firebaseui object
+let socket;	// Socket associated with the browser tab
 
 const uiConfig = {
 	callbacks: {
@@ -43,12 +44,13 @@ const uiConfig = {
 /**
  * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
  */
-function initApp(loginSuccess) {
+function initApp(globalSocket, loginSuccess) {
 	// Initialize Firebase
 	firebase.initializeApp(firebaseConfig);
 	ui = new firebaseui.auth.AuthUI(firebase.auth());
 	ui.start('#firebaseui-auth-container', uiConfig);
 
+	socket = globalSocket;
 	initializeUI(loginSuccess);
 
 	firebase.auth().onAuthStateChanged(async function(user) {
@@ -60,7 +62,7 @@ function initApp(loginSuccess) {
 			if(newUser) {
 				// Set their current name as default
 				document.getElementById('usernamePickerText').value = user.displayName;
-				document.getElementById('usernamePickerText').placeholder = user.displayName;
+				document.getElementById('usernamePickerText').placeholder = user.displayName || '';
 				fallbackName = user.displayName;
 
 				document.getElementById('usernamePicker').style.display = 'block';
@@ -71,15 +73,6 @@ function initApp(loginSuccess) {
 			else {
 				document.getElementById('modal-login').style.display = 'none';
 				document.getElementById('main-content').style.display = 'grid';
-
-				if(user.isAnonymous) {
-					// If anonymous, clear session once the tab is closed
-					await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
-				}
-				else {
-					// If registered, maintain session until manually logged out
-					await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-				}
 
 				// Start the actual game logic
 				loginSuccess(user);
@@ -100,11 +93,21 @@ function initApp(loginSuccess) {
 }
 
 function initializeUI(loginSuccess) {
-	// Hackily add the welcome message into the FirebaseUI login screen
+	// Hackily add some messages into the FirebaseUI login screen
+	const onlineUsersMessage = document.createElement('div');
+	onlineUsersMessage.id = 'onlineUsers';
+	document.getElementById('firebaseui-auth-container').prepend(onlineUsersMessage);
+
 	const welcomeMessage = document.createElement('div');
 	welcomeMessage.id = 'welcomeMessage';
 	welcomeMessage.innerHTML = 'Welcome to jspuyo!';
 	document.getElementById('firebaseui-auth-container').prepend(welcomeMessage);
+
+	// Send request for number of online users
+	socket.emit('getOnlineUsers');
+	socket.on('onlineUsersCount', (numUsers) => {
+		onlineUsersMessage.innerHTML = `Online users: ${numUsers}`;
+	});
 
 	// Upon submission of the display name change
 	document.getElementById('usernamePickerForm').onsubmit = function(event) {
@@ -114,7 +117,7 @@ function initializeUI(loginSuccess) {
 		// Use fallback name if there is no name in the input field
 		let username = document.getElementById('usernamePickerText').value || fallbackName;
 
-		usernameAvailable(username).then(() => {
+		validateUsername(username).then(() => {
 			// Update with new username
 			currentUser.updateProfile({ displayName: username }).then(function() {
 				PlayerInfo.addUser(currentUser.uid, currentUser.displayName);
@@ -130,8 +133,9 @@ function initializeUI(loginSuccess) {
 				console.log(error);
 			});
 		}
-		).catch(() => {
-			// Promise was rejected - username already taken
+		).catch((error) => {
+			// Promise was rejected - username not valid
+			document.getElementById('usernamePickerError').innerHTML = error;
 			document.getElementById('usernamePickerError').style.display = 'block';
 			username = document.getElementById('usernamePickerText').value || fallbackName;
 		});
@@ -141,17 +145,38 @@ function initializeUI(loginSuccess) {
 /**
  * Signs out the current user and opens the login screen again.
  * Used in other modules where Firebase is not accessible.
+ * If the user was an anonymous user, their account is deleted to save space.
  */
 function signOut() {
+	// Update the online users counter
+	socket.emit('getOnlineUsers');
+
+	if(firebase.auth().currentUser && firebase.auth().currentUser.isAnonymous) {
+		PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
+	}
 	firebase.auth().signOut();
+	document.getElementById('guestMessage').style.display = 'block';
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
 
 /**
- * Checks if a username is already in use.
+ * Checks if a username is valid.
  */
-function usernameAvailable(username) {
+function validateUsername(username) {
 	return new Promise((resolve, reject) => {
+		if(!username || username.trim().length === 0) {
+			reject('Please enter a username.');
+		}
+
+		if(username.length > 15) {
+			reject('Your username must be under 15 characters.');
+		}
+
+		if(username.trim().length !== username.length) {
+			reject('Your username may not contain leading or trailing spaces.');
+		}
+
+		// Check for duplicate username
 		firebase.database().ref(`username`).once('value').then(data => {
 			if(!data.exists()) {
 				resolve();
@@ -159,7 +184,7 @@ function usernameAvailable(username) {
 			else {
 				const takenUsernames = Object.values(data.val()).map(pair => pair.username);
 				if(takenUsernames.includes(username)) {
-					reject();
+					reject('This username is already in use.');
 				}
 				else {
 					resolve();
@@ -173,34 +198,72 @@ function usernameAvailable(username) {
 const userProperties = ['username', 'email'];
 
 class PlayerInfo {
+	/**
+	 * Initializes all the user data with default values.
+	 */
 	static addUser(uid, username) {
 		firebase.database().ref(`username/${uid}`).set({ username });
-		firebase.database().ref(`userSettings/${uid}`).set({ userSettings: JSON.stringify(new UserSettings()) });
+		firebase.database().ref(`userSettings/${uid}`).set({ userSettings: JSON.parse(JSON.stringify(new UserSettings())) });
 		firebase.database().ref(`rating/${uid}`).set({ rating: 1000 });
 	}
 
+	/**
+	 * Updates a specific property of the user data.
+	 * Since the data has been flattened, we can simply overwrite instead of updating the data.
+	 */
 	static updateUser(uid, property, value) {
 		// Update the firebase auth User object if it is one of their properties
 		if(userProperties.includes(property)) {
 			if(property === 'username') {
-				property = 'displayName';
+				firebase.auth().currentUser.updateProfile({ displayName: value });
 			}
-			firebase.auth().currentUser.updateProfile({ [property]: value });
+			else {
+				firebase.auth().currentUser.updateProfile({ [property]: value });
+			}
 		}
 
 		// Update the database property
-		firebase.database().ref(`${property}/${uid}`).set({ value });
+		firebase.database().ref(`${property}/${uid}`).set({ [property]: value });
+	}
+
+	/**
+	 * Deletes all user information stored in the database.
+	 * Only called when an anonymous user logs out.
+	 */
+	static deleteUser(uid) {
+		firebase.database().ref(`username/${uid}`).remove();
+		firebase.database().ref(`userSettings/${uid}`).remove();
+		firebase.database().ref(`rating/${uid}`).remove();
 	}
 
 	static getUserProperty(uid, property) {
 		return new Promise((resolve, reject) => {
 			firebase.database().ref(`${property}/${uid}`).once('value').then(data => {
 				if(!data.exists()) {
-					reject(`No ${property} found for user ${uid}`);
+					reject(`No ${property} found for user ${uid}.`);
 				}
 				else {
 					resolve(data.val()[property]);
 				}
+			});
+		});
+	}
+
+	static loadUserData(uid) {
+		return new Promise((resolve, reject) => {
+			const userData = {};
+			const userDataProperties = ['userSettings', 'rating'];
+
+			const promises = userDataProperties.map(property => PlayerInfo.getUserProperty(uid, property));
+
+			Promise.all(promises).then(data => {
+				data.forEach((value, index) => {
+					userData[userDataProperties[index]] = value;
+				});
+				resolve(userData);
+			}
+			).catch(error => {
+				reject(`Failed to load user data. ${error}`);
 			});
 		});
 	}

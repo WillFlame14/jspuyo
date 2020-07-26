@@ -11,7 +11,6 @@ const { Room } = require('./src/Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
-let guestCounter = 1;
 let cpuCounter = 1;
 
 const socketIdToId = new Map();
@@ -20,17 +19,17 @@ const cpuInfos = new Map();
 app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
-	socket.on('register', (gameId, isAnonymous) => {
-		if(isAnonymous) {
-			gameId = 'Guest-' + guestCounter;
-			guestCounter++;
-		}
+	socket.on('register', gameId => {
 		if(Array.from(socketIdToId.values()).includes(gameId)) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
 		socketIdToId.set(socket.id, gameId);
 		console.log(`User ${gameId} has logged in.`);
-		socket.emit('registered', gameId);
+		socket.emit('registered');
+	});
+
+	socket.on('getOnlineUsers', () => {
+		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
 	});
 
 	socket.on('addCpu', gameId => {
@@ -252,12 +251,17 @@ io.on('connection', function(socket) {
 	socket.on('disconnect', () => {
 		const gameId = socketIdToId.get(socket.id);
 
-		// CPU sockets get disconnected by the server - they have already been removed from the room
-		if(gameId && !gameId.includes('CPU')) {
-			Room.leaveRoom(gameId);
+		// gameId will be undefined if the user has not logged in yet
+		if(gameId){
+			// CPU sockets get disconnected by the server - they have already been removed from the room
+			if(!gameId.includes('CPU')) {
+				Room.leaveRoom(gameId);
+			}
+			else {
+				socketIdToId.delete(socket.id);
+				console.log(`Disconnected ${gameId}`);
+			}
 		}
-		socketIdToId.delete(socket.id);
-		console.log(`Disconnected ${gameId}`);
 	});
 });
 

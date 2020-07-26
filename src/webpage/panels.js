@@ -16,7 +16,7 @@ const createRoomOptionsState = {
 
 let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
-const keyBindings = {
+let keyBindings = {
 	moveLeft: 'ArrowLeft',
 	moveRight: 'ArrowRight',
 	rotateCCW: 'KeyZ',
@@ -473,8 +473,8 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		};
 	});
 
-	document.getElementById('settingsSubmit').onclick = function() {
-		const userSettings = JSON.parse(PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings'));
+	document.getElementById('settingsSubmit').onclick = async function() {
+		const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
 
 		const das = Number(document.getElementById('das').value);
 		if(!Number.isNaN(das) && das >= 0) {
@@ -546,13 +546,46 @@ function clearModal() {
 	});
 }
 
+/**
+ * Updates the user settings panel with information from the database.
+ * Only called once on login, since any changes within a session will be saved by the browser.
+ */
+function updateUserSettings(userSettings) {
+	// These settings can be easily updated since they only contain a numeric value.
+	const numericProperties = ['das', 'arr'];
+	numericProperties.forEach(property => {
+		document.getElementById(property).value = userSettings[property];
+	});
+
+	// Intermediate Frames Shown is inverted
+	document.getElementById('skipFrames').value = 50 - userSettings.skipFrames;
+
+	// Volume controls are non-linear
+	document.getElementById('sfxVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+	document.getElementById('musicVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+
+	// Update the key bindings
+	Object.keys(userSettings.keyBindings).forEach(key => {
+		document.getElementById(`${key}Binding`).value = keyBindings[key];
+	});
+	keyBindings = userSettings.keyBindings;
+
+	// Update the selected appearance
+	document.getElementById(selectedAppearance).classList.remove('selected');
+	document.getElementById(userSettings.appearance).classList.add('selected');
+	selectedAppearance = userSettings.appearance;
+}
+
 function setCreateRoomTrigger(trigger) {
 	createRoomTrigger = trigger;
 }
+
+
 
 module.exports = {
 	puyoImgs,
 	panelsInit,
 	clearModal,
+	updateUserSettings,
 	setCreateRoomTrigger
 };

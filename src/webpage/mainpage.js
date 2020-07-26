@@ -157,7 +157,7 @@ function mainpageInit(socket, getCurrentUID) {
 /**
  * Adds a message to the chat box.
  */
-function addMessage(sender, message) {
+async function addMessage(sender, message) {
 	if(lastSender === sender) {
 		const element = document.getElementById('message' + (messageId - 1)).querySelector('.message');
 		element.innerHTML += '<br>' + message;
@@ -169,7 +169,7 @@ function addMessage(sender, message) {
 		messageId++;
 
 		const senderElement = document.createElement('span');
-		senderElement.innerHTML = sender;
+		senderElement.innerHTML = await PlayerInfo.getUserProperty(sender, 'username');
 		lastSender = sender;
 		senderElement.classList.add('senderName');
 		element.appendChild(senderElement);
@@ -196,7 +196,7 @@ function clearMessages() {
 /**
  * Adds a player to the list of players.
  */
-function addPlayer(name, rating = 1000) {
+function addPlayer(name, rating) {
 	const newPlayer = document.createElement('li');
 	newPlayer.classList.add('playerIndividual');
 	newPlayer.id = 'player' + name;
@@ -235,9 +235,15 @@ function updatePlayers(players) {
 	const promises = [];
 
 	// Fetch usernames from the database using the ids
-	players.forEach(async id => {
-		promises.push(PlayerInfo.getUserProperty(id, 'username'));
-		promises.push(PlayerInfo.getUserProperty(id, 'rating'));
+	players.forEach(id => {
+		if(id.includes('CPU-')) {
+			promises.push(id);
+			promises.push(1000);
+		}
+		else {
+			promises.push(PlayerInfo.getUserProperty(id, 'username'));
+			promises.push(PlayerInfo.getUserProperty(id, 'rating'));
+		}
 	});
 
 	// Wait for all promises to resolve to usernames, then add them to the player list

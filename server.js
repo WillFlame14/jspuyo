@@ -7,24 +7,29 @@ const io = require('socket.io')(http, { perMessageDeflate: false });
 const io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
-const { Room } = require('./Room.js');
+const { Room } = require('./src/Room.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
-let gameCounter = 1;		// The running number of games (used for assigning ids)
 let cpuCounter = 1;
 
 const socketIdToId = new Map();
 const cpuInfos = new Map();
 
-app.use(express.static('./'));
+app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
-	socket.on('register', () => {
-		socket.emit('getGameId', gameCounter);
-		socketIdToId.set(socket.id, gameCounter);
-		console.log(`Assigned gameId ${gameCounter}`);
-		gameCounter++;
+	socket.on('register', gameId => {
+		if(Array.from(socketIdToId.values()).includes(gameId)) {
+			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
+		}
+		socketIdToId.set(socket.id, gameId);
+		console.log(`User ${gameId} has logged in.`);
+		socket.emit('registered');
+	});
+
+	socket.on('getOnlineUsers', () => {
+		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
 	});
 
 	socket.on('addCpu', gameId => {
@@ -53,7 +58,7 @@ io.on('connection', function(socket) {
 		// Assign each cpu a negative id
 		cpus.forEach(cpu => {
 			const cpuSocket = io_client.connect('http://localhost:3000');
-			const cpuId = -cpuCounter;
+			const cpuId = 'CPU-' + cpuCounter;
 			cpuCounter++;
 
 			cpuInfos.get(gameId).set(cpuId, { client_socket: cpuSocket });
@@ -124,8 +129,8 @@ io.on('connection', function(socket) {
 		Room.spectateRoom(gameId, socket, roomId);
 	});
 
-	socket.on('getAllRooms', () => {
-		socket.emit('allRooms', Room.getAllRooms());
+	socket.on('getAllRooms', gameId => {
+		socket.emit('allRooms', Room.getAllRooms(gameId));
 	});
 
 	socket.on('getPlayers', roomId => {
@@ -147,20 +152,29 @@ io.on('connection', function(socket) {
 		// Pending ranked game
 		else {
 			try {
-				Room.joinRoom(gameId, Room.rankedRoomId, socket);
-				console.log(`${gameId} has joined the ranked queue.`);
+				const room = Room.joinRoom(gameId, Room.rankedRoomId, socket);
+				// Start game in 10s if there are 2 players
+				if(room.members.size === 2 && room.quickPlayTimer === null) {
+					room.quickPlayTimer = setTimeout(() => {
+						// Double-check that the room still contains 2 players
+						if(room.members.size === 2) {
+							Room.startRoom(room.roomId);
+						}
+					}, 10000);
+				}
 			}
 			catch(err) {
 				socket.emit('joinFailure', err.message);
 			}
 		}
+		console.log(`${gameId} has joined the ranked queue.`);
 	});
 
 	socket.on('freeForAll', (gameInfo, suppress) => {
 		const { gameId } = gameInfo;
 
 		// Suppress error from leaving non-existent room
-		if(!suppress === 'suppress') {
+		if(suppress !== 'suppress') {
 			Room.leaveRoom(gameId);
 		}
 
@@ -179,7 +193,10 @@ io.on('connection', function(socket) {
 				// Start game in 30s if there are at least 2 players
 				if(room.members.size >= 2 && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
-						Room.startRoom(room.roomId);
+						// Double-check that the room still contains at least 2 players
+						if(room.members.size >= 2) {
+							Room.startRoom(room.roomId);
+						}
 					}, 30000);
 				}
 			}
@@ -238,15 +255,25 @@ io.on('connection', function(socket) {
 		Room.leaveRoom(gameId, roomId);
 	});
 
+	// Called when logging out, since the same socket is used but with a different user
+	socket.on('unlinkUser', () => {
+		socketIdToId.delete(socket.id);
+	});
+
 	socket.on('disconnect', () => {
 		const gameId = socketIdToId.get(socket.id);
 
-		// CPU sockets get disconnected by the server - they have already been removed from the room
-		if(gameId > 0) {
-			Room.leaveRoom(gameId);
+		// gameId will be undefined if the user has not logged in yet
+		if(gameId){
+			// CPU sockets get disconnected by the server - they have already been removed from the room
+			if(!gameId.includes('CPU')) {
+				Room.leaveRoom(gameId);
+			}
+			else {
+				socketIdToId.delete(socket.id);
+				console.log(`Disconnected ${gameId}`);
+			}
 		}
-		socketIdToId.delete(socket.id);
-		console.log(`Disconnected id ${gameId}`);
 	});
 });
 

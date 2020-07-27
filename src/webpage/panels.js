@@ -2,6 +2,7 @@
 
 const { Cpu } = require('../Cpu.js');
 const { Utils, SettingsBuilder } = require('../Utils.js');
+const { PlayerInfo, signOut } = require('./firebase.js');
 
 const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
@@ -15,7 +16,7 @@ const createRoomOptionsState = {
 
 let selectedAppearance = 'TsuClassic';
 let keyBindingRegistration = null;
-const keyBindings = {
+let keyBindings = {
 	moveLeft: 'ArrowLeft',
 	moveRight: 'ArrowRight',
 	rotateCCW: 'KeyZ',
@@ -26,9 +27,7 @@ const keyBindings = {
 
 let createRoomTrigger;
 
-function panelsInit(playerInfo, stopCurrentSession) {
-	const { socket, gameId, userSettings } = playerInfo;
-
+function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
@@ -103,12 +102,12 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	document.getElementById('freeForAll').onclick = () => {
 		stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
-		socket.emit('freeForAll', { gameId });
+		socket.emit('freeForAll', { gameId: getCurrentUID() });
 	};
 	document.getElementById('ranked').onclick = () => {
 		stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
-		socket.emit('ranked', { gameId });
+		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
 
 	// Custom - Create Room
@@ -230,10 +229,10 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		switch(createRoomTrigger) {
 			case 'create':
 				stopCurrentSession();
-				socket.emit('createRoom', { gameId, settingsString, roomSize });
+				socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
 				break;
 			case 'set':
-				socket.emit('changeSettings', gameId, settingsString, roomSize);
+				socket.emit('changeSettings', getCurrentUID(), settingsString, roomSize);
 
 				// Close the CPU options menu
 				document.getElementById('createRoomModal').style.display = 'none';
@@ -283,7 +282,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 
 		stopCurrentSession();
 
-		socket.emit('joinRoom', { gameId, joinId });
+		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId });
 	};
 
 	// Received when room cannot be joined
@@ -301,7 +300,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
 		stopCurrentSession();
-		socket.emit('getAllRooms');
+		socket.emit('getAllRooms', getCurrentUID());
 
 		modal.style.display = 'block';
 		document.getElementById('spectateRoomModal').style.display = 'block';
@@ -365,8 +364,12 @@ function panelsInit(playerInfo, stopCurrentSession) {
 			roomPlayers.style.display = 'none';
 		}
 		else {
-			roomPlayers.style.display = 'block';
-			roomPlayers.innerHTML = `Players: ${JSON.stringify(players)}`;
+			const promises = players.map(playerId => PlayerInfo.getUserProperty(playerId, 'username'));
+
+			Promise.all(promises).then(playerNames => {
+				roomPlayers.style.display = 'block';
+				roomPlayers.innerHTML = `Players: ${JSON.stringify(playerNames)}`;
+			});
 		}
 	});
 
@@ -374,7 +377,7 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		// Do not refresh the page on submit
 		event.preventDefault();
 
-		socket.emit('spectate', gameId, roomList.value);
+		socket.emit('spectate', getCurrentUID(), roomList.value);
 	};
 
 	// Received when attempting to spectate an invalid room
@@ -474,40 +477,52 @@ function panelsInit(playerInfo, stopCurrentSession) {
 		};
 	});
 
-	document.getElementById('settingsSubmit').onclick = function() {
+	document.getElementById('settingsSubmit').onclick = async function() {
+		const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
+
 		const das = Number(document.getElementById('das').value);
 		if(!Number.isNaN(das) && das >= 0) {
-			userSettings.set('das', das);
+			userSettings['das'] = das;
 		}
 
 		const arr = Number(document.getElementById('arr').value);
 		if(!Number.isNaN(arr) && arr >= 0) {
-			userSettings.set('arr', arr);
+			userSettings['arr'] = arr;
 		}
 
 		// Ranges from 0 to 50, default 50 - map to 50 to 0
 		const skipFrames = Number(document.getElementById('skipFrames').value);
 		if(!Number.isNaN(skipFrames)) {
-			userSettings.set('skipFrames', 50 - Math.floor(skipFrames));
+			userSettings['skipFrames'] = 50 - Math.floor(skipFrames);
 		}
 
 		// Ranges from 0 to 100, default 50
 		const sfxVolume = Number(document.getElementById('sfxVolume').value);
 		if(!Number.isNaN(sfxVolume)) {
-			userSettings.set('sfxVolume', (sfxVolume / 100)**2 * 0.4);
+			userSettings['sfxVolume'] = (sfxVolume / 100)**2 * 0.4;
 		}
 
 		// Ranges from 0 to 100, default 50
 		const musicVolume = Number(document.getElementById('musicVolume').value);
 		if(!Number.isNaN(musicVolume)) {
-			userSettings.set('musicVolume', (musicVolume / 100)**2 * 0.4);
+			userSettings['musicVolume'] = (musicVolume / 100)**2 * 0.4;
 		}
 
-		userSettings.set('keyBindings', keyBindings);
-		userSettings.set('appearance', selectedAppearance);
+		userSettings['keyBindings'] = keyBindings;
+		userSettings['appearance'] = selectedAppearance;
+
+		// Update the values
+		PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
 
 		// Modal is not auto-cleared since a game does not start as a result
 		clearModal();
+	};
+
+	// User Panel - Log Out
+	document.getElementById('logout').onclick = function() {
+		socket.emit('forceDisconnect', getCurrentUID());
+		socket.emit('unlinkUser');
+		signOut();
 	};
 	return new Promise(resolve => resolve());
 }
@@ -535,13 +550,46 @@ function clearModal() {
 	});
 }
 
+/**
+ * Updates the user settings panel with information from the database.
+ * Only called once on login, since any changes within a session will be saved by the browser.
+ */
+function updateUserSettings(userSettings) {
+	// These settings can be easily updated since they only contain a numeric value.
+	const numericProperties = ['das', 'arr'];
+	numericProperties.forEach(property => {
+		document.getElementById(property).value = userSettings[property];
+	});
+
+	// Intermediate Frames Shown is inverted
+	document.getElementById('skipFrames').value = 50 - userSettings.skipFrames;
+
+	// Volume controls are non-linear
+	document.getElementById('sfxVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+	document.getElementById('musicVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+
+	// Update the key bindings
+	Object.keys(userSettings.keyBindings).forEach(key => {
+		document.getElementById(`${key}Binding`).value = keyBindings[key];
+	});
+	keyBindings = userSettings.keyBindings;
+
+	// Update the selected appearance
+	document.getElementById(selectedAppearance).classList.remove('selected');
+	document.getElementById(userSettings.appearance).classList.add('selected');
+	selectedAppearance = userSettings.appearance;
+}
+
 function setCreateRoomTrigger(trigger) {
 	createRoomTrigger = trigger;
 }
+
+
 
 module.exports = {
 	puyoImgs,
 	panelsInit,
 	clearModal,
+	updateUserSettings,
 	setCreateRoomTrigger
 };

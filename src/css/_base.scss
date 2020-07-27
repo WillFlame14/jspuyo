@@ -1,6 +1,6 @@
 $font-title: "Chelsea Market", sans-serif;
 $dark-gray: #343434;
-$error-colour: #882222;
+$error-colour: #550000;
 $text-drop-shadow: 2px 2px 5px $dark-gray;
 $box-drop-shadow: 3px 3px 5px 1px $dark-gray;
 $larger: 1.2rem;
@@ -17,7 +17,8 @@ html {
 
 	font-size: 1.6vw;
 
-	background-image: url("images/backgrounds/Forest 04.jpg");
+	font-family: "Chelsea Market", sans-serif;
+
 	background-position: center;
 	background-size: cover;
 }
@@ -39,6 +40,12 @@ canvas {
 
 	background: rgba(40, 40, 40, 0.8);
 	border: 4px solid white;
+}
+
+ul {
+	padding-left: 0px;
+
+	list-style: none;
 }
 
 form {
@@ -172,6 +179,11 @@ datalist {
 
 	background: $dark-gray;
 	box-shadow: $box-drop-shadow;
+}
+
+footer {
+	color: white;
+	text-align: center;
 }
 
 // Justified flexbox.

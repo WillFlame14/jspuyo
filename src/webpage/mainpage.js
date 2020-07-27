@@ -2,6 +2,8 @@
 
 const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
+const { pageInit } = require('./pages.js');
+const { PlayerInfo } = require('./firebase.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -10,8 +12,8 @@ let lastSender = null;
 
 let currentlyHost = false;
 
-function mainpageInit(playerInfo) {
-	const { socket, gameId } = playerInfo;
+function mainpageInit(socket, getCurrentUID) {
+	pageInit();
 
 	const sendMessageField = document.getElementById('sendMessage');
 	const messageField = document.getElementById('messageField');
@@ -19,10 +21,9 @@ function mainpageInit(playerInfo) {
 		event.preventDefault();		// Do not refresh the page
 
 		// Send message and clear the input field
-		socket.emit('sendMessage', gameId, messageField.value);
+		socket.emit('sendMessage', getCurrentUID(), messageField.value);
 		messageField.value = '';
 	});
-
 	socket.on('sendMessage', (sender, message) => {
 		addMessage(sender, message);
 	});
@@ -37,7 +38,7 @@ function mainpageInit(playerInfo) {
 		modal.style.display = 'block';
 		cpuOptionsError.style.display = 'none';
 		document.getElementById('cpuOptionsModal').style.display = 'block';
-		socket.emit('requestCpus', gameId);
+		socket.emit('requestCpus', getCurrentUID());
 	};
 
 	socket.on('requestCpusReply', cpus => {
@@ -59,7 +60,7 @@ function mainpageInit(playerInfo) {
 
 	document.getElementById('cpuOptionsAdd').onclick = function() {
 		// Send request to server to add CPU (can only add only up to roomsize)
-		socket.emit('addCpu', gameId);
+		socket.emit('addCpu', getCurrentUID());
 	};
 
 	socket.on('addCpuReply', index => {
@@ -80,7 +81,7 @@ function mainpageInit(playerInfo) {
 
 	document.getElementById('cpuOptionsRemove').onclick = function() {
 		// Send request to server to remove CPU (can only remove if there are any CPUs)
-		socket.emit('removeCpu', gameId);
+		socket.emit('removeCpu', getCurrentUID());
 	};
 
 	socket.on('removeCpuReply', index => {
@@ -116,7 +117,7 @@ function mainpageInit(playerInfo) {
 				cpus[index].speed = (10 - slider.value) * 500;
 			}
 		});
-		socket.emit('setCpus', { gameId, cpus });
+		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
 
 		// Close the CPU options menu
 		document.getElementById('cpuOptionsModal').style.display = 'none';
@@ -141,22 +142,22 @@ function mainpageInit(playerInfo) {
 	};
 
 	document.getElementById('manageStartRoom').onclick = function() {
-		socket.emit('startRoom', gameId);
+		socket.emit('startRoom', getCurrentUID());
 	};
 
 	document.getElementById('manageJoinLink').onclick = function() {
-		socket.emit('requestJoinLink', gameId);
+		socket.emit('requestJoinLink', getCurrentUID());
 	};
 
 	document.getElementById('manageSpectate').onclick = function() {
-		socket.emit('spectate', gameId);
+		socket.emit('spectate', getCurrentUID());
 	};
 }
 
 /**
  * Adds a message to the chat box.
  */
-function addMessage(sender, message) {
+async function addMessage(sender, message) {
 	if(lastSender === sender) {
 		const element = document.getElementById('message' + (messageId - 1)).querySelector('.message');
 		element.innerHTML += '<br>' + message;
@@ -168,7 +169,7 @@ function addMessage(sender, message) {
 		messageId++;
 
 		const senderElement = document.createElement('span');
-		senderElement.innerHTML = sender;
+		senderElement.innerHTML = await PlayerInfo.getUserProperty(sender, 'username');
 		lastSender = sender;
 		senderElement.classList.add('senderName');
 		element.appendChild(senderElement);
@@ -190,12 +191,16 @@ function clearMessages() {
 	while(messageList.firstChild) {
 		messageList.firstChild.remove();
 	}
+
+	// Reset the message states.
+	messageId = 0;
+	lastSender = null;
 }
 
 /**
  * Adds a player to the list of players.
  */
-function addPlayer(name, rating = 1000) {
+function addPlayer(name, rating) {
 	const newPlayer = document.createElement('li');
 	newPlayer.classList.add('playerIndividual');
 	newPlayer.id = 'player' + name;
@@ -228,10 +233,27 @@ function clearPlayers() {
  * Updates the playerList to the current array.
  */
 function updatePlayers(players) {
-	clearPlayers();
 	document.getElementById('playersDisplay').style.display = 'block';
+
+	const promises = [];
+	// Fetch usernames from the database using the ids
 	players.forEach(id => {
-		addPlayer(id);
+		if(id.includes('CPU-')) {
+			promises.push(id);
+			promises.push(1000);
+		}
+		else {
+			promises.push(PlayerInfo.getUserProperty(id, 'username'));
+			promises.push(PlayerInfo.getUserProperty(id, 'rating'));
+		}
+	});
+
+	// Wait for all promises to resolve to usernames, then add them to the player list
+	Promise.all(promises).then(playerInfos => {
+		clearPlayers();
+		for(let i = 0; i < playerInfos.length; i += 2) {
+			addPlayer(playerInfos[i], Number(playerInfos[i + 1]));
+		}
 	});
 }
 

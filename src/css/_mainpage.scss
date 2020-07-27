@@ -56,8 +56,6 @@
 
 	font: 1.7rem base.$font-title;
 
-	list-style: none;
-
 	// An individual management option
 	li {
 		display: grid;
@@ -77,6 +75,7 @@
 // The icon for the room management option
 .roomManageIcon {
 	height: 80%;
+	max-height: 60px;
 	margin: auto;
 
 	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
@@ -152,8 +151,6 @@
 
 	color: white;
 	font: 24px base.$font-title;
-
-	list-style: none;
 }
 
 // An entry in the player list
@@ -202,8 +199,6 @@
 
 	color: white;
 	font: 20px base.$font-title;
-
-	list-style: none;
 }
 
 // An individual message

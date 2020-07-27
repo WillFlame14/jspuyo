@@ -11,7 +11,7 @@ const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
 /* eslint-enable indent */
 
 class Settings {
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.27, numColours = 4,
+	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.29, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -25,10 +25,10 @@ class Settings {
 		this.seed = seed;					// Seed for generating drops
 
 		// Constants that cannot be modified
-		this.lockDelay = 200;				// Milliseconds of time before a drop locks into place
+		this.lockDelay = 530;				// Milliseconds of time before a drop locks into place
 		this.frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation
 		this.rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
-		this.squishFrames = 8;				// Number of frames used for squishing a drop into the stack
+		this.squishFrames = 16;				// Number of frames used for squishing a drop into the stack
 		this.dropFrames = 10;				// Number of frames used for all the puyo to drop
 		this.popFrames = 65;				// Number of frames used to pop any amount of puyos
 		this.isoCascadeFramesPerRow	= 3.25;	// Number of frames used for an isolated puyo to fall one row
@@ -62,6 +62,12 @@ class Settings {
 		const gamemode = parts.splice(0, 1)[0];
 		const parsedParts = parts.map(part => Number(part));
 		return new Settings(gamemode, ...parsedParts);
+	}
+
+	static seedString(str) {
+		const settings = this.fromString(str);
+		settings.seed = Math.random();
+		return settings.toString();
 	}
 
 	/**
@@ -210,6 +216,8 @@ const audioFilenames = {
 };
 const characterNames = ['akari'];
 
+const SOUNDS_DIRECTORY = './sounds/';
+
 class AudioPlayer {
 	constructor(gameId, socket, sfxVolume, musicVolume, disable) {
 		this.gameId = gameId;
@@ -227,7 +235,7 @@ class AudioPlayer {
 				const audioInfo = audioFilenames[name];
 
 				if(audioInfo.numClips === 1) {
-					const audio = new Audio(`../sounds/${name}.wav`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.wav`);
 					audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
 					this.sfx[name] = [audio];
 				}
@@ -236,7 +244,7 @@ class AudioPlayer {
 					const audioFiles = Array(start).fill(null);		// Fill array with null until start
 
 					for(let i = 0; i < audioInfo.numClips; i++) {
-						const audio = new Audio(`../sounds/${name}_${i + 1}.wav`);
+						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.wav`);
 						audio.volume = this.sfxVolume;
 						audioFiles.push([audio]);
 					}
@@ -249,14 +257,14 @@ class AudioPlayer {
 			characterNames.forEach(name => {
 				const chainAudio = [null];
 				for(let i = 0; i < 13; i++) {
-					const audio = new Audio(`../sounds/voices/${name}/chain_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.ogg`);
 					audio.volume = 0.3;
 					chainAudio.push([audio]);
 				}
 
 				const spellAudio = [null];
 				for(let i = 0; i < 5; i++) {
-					const audio = new Audio(`../sounds/voices/${name}/spell_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.ogg`);
 					audio.volume = 0.3;
 					spellAudio.push([audio]);
 				}

@@ -113,6 +113,32 @@
 	}
 }
 
+#modal-login {
+	display: block;
+
+	background-color: rgba(0, 0, 0, 0.8);
+}
+
+#usernamePicker {
+	display: none;
+	width: 30%;
+}
+
+#usernamePickerInput {
+	margin-top: 15px;
+}
+
+#usernamePickerText {
+	font-size: 1.25rem;
+}
+
+#usernamePickerSubmit {
+	margin-top: 15px;
+	padding: 2px 10px;
+
+	background-color: #496082;
+}
+
 /* ---------- Create Room Modal Box ---------- */
 
 // Left half of the Room Options menu.

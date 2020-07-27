@@ -64,6 +64,12 @@ class Settings {
 		return new Settings(gamemode, ...parsedParts);
 	}
 
+	static seedString(str) {
+		const settings = this.fromString(str);
+		settings.seed = Math.random();
+		return settings.toString();
+	}
+
 	/**
 	 * Updates the target points due to margin time.
 	 */

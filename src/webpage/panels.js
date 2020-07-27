@@ -300,7 +300,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
 		stopCurrentSession();
-		socket.emit('getAllRooms');
+		socket.emit('getAllRooms', getCurrentUID());
 
 		modal.style.display = 'block';
 		document.getElementById('spectateRoomModal').style.display = 'block';
@@ -364,8 +364,12 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 			roomPlayers.style.display = 'none';
 		}
 		else {
-			roomPlayers.style.display = 'block';
-			roomPlayers.innerHTML = `Players: ${JSON.stringify(players)}`;
+			const promises = players.map(playerId => PlayerInfo.getUserProperty(playerId, 'username'));
+
+			Promise.all(promises).then(playerNames => {
+				roomPlayers.style.display = 'block';
+				roomPlayers.innerHTML = `Players: ${JSON.stringify(playerNames)}`;
+			});
 		}
 	});
 

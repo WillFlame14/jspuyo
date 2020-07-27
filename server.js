@@ -129,8 +129,8 @@ io.on('connection', function(socket) {
 		Room.spectateRoom(gameId, socket, roomId);
 	});
 
-	socket.on('getAllRooms', () => {
-		socket.emit('allRooms', Room.getAllRooms());
+	socket.on('getAllRooms', gameId => {
+		socket.emit('allRooms', Room.getAllRooms(gameId));
 	});
 
 	socket.on('getPlayers', roomId => {
@@ -152,20 +152,29 @@ io.on('connection', function(socket) {
 		// Pending ranked game
 		else {
 			try {
-				Room.joinRoom(gameId, Room.rankedRoomId, socket);
-				console.log(`${gameId} has joined the ranked queue.`);
+				const room = Room.joinRoom(gameId, Room.rankedRoomId, socket);
+				// Start game in 10s if there are 2 players
+				if(room.members.size === 2 && room.quickPlayTimer === null) {
+					room.quickPlayTimer = setTimeout(() => {
+						// Double-check that the room still contains 2 players
+						if(room.members.size === 2) {
+							Room.startRoom(room.roomId);
+						}
+					}, 10000);
+				}
 			}
 			catch(err) {
 				socket.emit('joinFailure', err.message);
 			}
 		}
+		console.log(`${gameId} has joined the ranked queue.`);
 	});
 
 	socket.on('freeForAll', (gameInfo, suppress) => {
 		const { gameId } = gameInfo;
 
 		// Suppress error from leaving non-existent room
-		if(!suppress === 'suppress') {
+		if(suppress !== 'suppress') {
 			Room.leaveRoom(gameId);
 		}
 
@@ -184,7 +193,10 @@ io.on('connection', function(socket) {
 				// Start game in 30s if there are at least 2 players
 				if(room.members.size >= 2 && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
-						Room.startRoom(room.roomId);
+						// Double-check that the room still contains at least 2 players
+						if(room.members.size >= 2) {
+							Room.startRoom(room.roomId);
+						}
 					}, 30000);
 				}
 			}

@@ -208,11 +208,6 @@ function stopCurrentSession() {
 			clearMessages();
 		}
 	}
-	document.getElementById('statusMsg').innerHTML = 'You\'re not curently in any game.';
-	document.getElementById('statusGamemode').innerHTML = '';
-	document.getElementById('statusSettings').innerHTML = '';
-	sidebar.style.display = 'none';
-	updatePlayers([]);
 }
 
 /**

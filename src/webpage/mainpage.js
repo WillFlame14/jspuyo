@@ -191,6 +191,10 @@ function clearMessages() {
 	while(messageList.firstChild) {
 		messageList.firstChild.remove();
 	}
+
+	// Reset the message states.
+	messageId = 0;
+	lastSender = null;
 }
 
 /**
@@ -229,11 +233,9 @@ function clearPlayers() {
  * Updates the playerList to the current array.
  */
 function updatePlayers(players) {
-	clearPlayers();
 	document.getElementById('playersDisplay').style.display = 'block';
 
 	const promises = [];
-
 	// Fetch usernames from the database using the ids
 	players.forEach(id => {
 		if(id.includes('CPU-')) {
@@ -248,6 +250,7 @@ function updatePlayers(players) {
 
 	// Wait for all promises to resolve to usernames, then add them to the player list
 	Promise.all(promises).then(playerInfos => {
+		clearPlayers();
 		for(let i = 0; i < playerInfos.length; i += 2) {
 			addPlayer(playerInfos[i], Number(playerInfos[i + 1]));
 		}

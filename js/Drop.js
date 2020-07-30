@@ -226,8 +226,8 @@ class DropGenerator {
 			// Filter out colours that have been completely used up
 			const tempColourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
 			const colours = [
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)],
-				tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]
+				Number(tempColourList[Math.floor(this.randomNumber() * tempColourList.length)]),
+				Number(tempColourList[Math.floor(this.randomNumber() * tempColourList.length)])
 			];
 			this.colourBuckets[colours[0]]--;
 			this.colourBuckets[colours[1]]--;
@@ -253,8 +253,8 @@ class DropGenerator {
 				// Filter out colours that have been completely used up
 				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
 				const colours = [
-					colourList[Math.floor(this.randomNumber() * colourList.length)],
-					colourList[Math.floor(this.randomNumber() * colourList.length)]
+					Number(colourList[Math.floor(this.randomNumber() * colourList.length)]),
+					Number(colourList[Math.floor(this.randomNumber() * colourList.length)])
 				];
 				this.colourBuckets[colours[0]]--;
 				this.colourBuckets[colours[1]]--;

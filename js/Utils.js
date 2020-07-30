@@ -1,7 +1,7 @@
 'use strict';
 const DIMENSIONS = {	BOARD : { W: 270, H: 540 },
 						QUEUE : { W: 72, H: 540 },
-						NUISANCE_QUEUE : { W: 45, H: 540 },
+						NUISANCE_QUEUE : { W: 270, H: 45 },
 						MARGIN: 10,
 						MIN_SCALE: 0.5};
 

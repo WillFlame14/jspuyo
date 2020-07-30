@@ -186,7 +186,9 @@ class GameArea extends CanvasLayer {
         const stateObject = JSON.parse(hash);
         this.boardLayer.drawFromStateObject(stateObject.boardObject);
         this.nuisanceLayer.drawFromStateObject(stateObject.nuisanceObject);
-        this.queueObject.drawFromStateObject(stateObject.queueObject);
+        if (!this.simplified) {
+            this.queueLayer.drawFromStateObject(stateObject.queueObject);
+        }
         this.update();
     }
     updateBoard(currentBoardState) {

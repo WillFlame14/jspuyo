@@ -1,9 +1,70 @@
 # Changelog
 
+## v0.8 - Personalization
+
+### v0.8.0 (July 27, 2020)
+[`Add user authentication`](https://github.com/WillFlame14/jspuyo/pull/47)
+**New features:**
+- User authentication added to facilitate future storage of user data
+  - Sign-in options are currently limited to email/password and Google sign-in
+  - Playing as a Guest is also an option, though data will not be saved between browsers
+  - All locations should now use your username
+  - You can log out under the Profile panel
+- Pages for About, Privacy Policy, and Terms of Service (tbd)
+- 3 new backgrounds!
+- Support for 'FlatColour' skin
+
+**Other changes:**
+- Organized entire filesystem based on production files vs. development files.
+- Very small tuning improvements
+- Fixed a ton of room-related bugs
+
 ## v0.7 - Better rooms, Spectate feature
 
-###v0.7.0 (May 16, 2020)
+### v0.7.3 (July 3, 2020)
+[`Separate rooms from games #45`](https://github.com/WillFlame14/jspuyo/pull/45)
+
+**New features:**
+- Instead of creating a game waiting to be played once, a room is created that allows games to be played multiple times
+- Options for room management
+  - Add/Change/Remove CPUs from the room (jspuyo now supports games with mixed CPUs and players!)
+  - Change room settings (the room size cannot be changed, however)
+  - Show the join link again
+  - Start Room when enough players have joined, or if you wish to play against CPUs
+  - Spectate the room
+- Only the host can manage the room settings, other players can only view them
+  - When the host leaves the room, the player that had joined the room the earliest will become the host
+
+**Other changes:**
+- Removed the "Play Against CPU" option in Singleplayer, as it is now contained within Create Room
+- CPU games are now hosted on the server instead of in the background of a client
+  - This means they are now treated almost exactly the same as player games (they send hashes instead of directly drawing)
+- Some changes to BoardDrawer.js to allow hashes to be drawn irrespective of the board size
+- Minor UI improvements
+- Standardized using tabs instead of spaces for JS files
+
+### v0.7.2 (May 22, 2020)
+[`Minor CSS improvements #44`](https://github.com/WillFlame14/jspuyo/pull/44)
+
+**New features:**
+- Modal boxes (and their content) now automatically resize to fit the window. (Mainpage later...)
+- Autoprefixer now handles CSS vendor prefixes, so support for browsers other than Chrome (not including IE) should be improved
+
+### v0.7.1 (May 19, 2020)
+[`Add Spectate feature #43`](https://github.com/WillFlame14/jspuyo/pull/43)
+
+**New features:**
+- Can now spectate rooms that have started
+  - Spectators can come and go regardless of room size
+  - Can view a list of players in the room before deciding to spectate
+
+**Other changes:**
+- Fixed [`#33`](https://github.com/WillFlame14/jspuyo/issues/33).
+- CPUs are now slightly less deterministic.
+
+### v0.7.0 (May 16, 2020)
 [`Room overhaul, add chat #42`](https://github.com/WillFlame14/jspuyo/pull/42)
+
 **New features:**
 - New sidebar containing a dynamic list of players in the room, as well as the room chat
   - Player list will eventually show usernames and rankings, but have placeholder values for now
@@ -12,16 +73,16 @@
   - Also an option to copy link to clipboard
 
 **Other changes:**
-- Fixed https://github.com/WillFlame14/jspuyo/issues/38, https://github.com/WillFlame14/jspuyo/issues/39.
+- Fixed [`#38`](https://github.com/WillFlame14/jspuyo/issues/38), [`#39`](https://github.com/WillFlame14/jspuyo/issues/39).
 - Sockets receive *significantly* less traffic and no longer perform leftover actions repeatedly
 - CPU sockets are now correctly disconnected, reducing the number of total connections
 - Further reduced amount of console logging due to new UI features
-
 
 ## v0.6 - Improved UI and Navigation Bar
 
 ### v0.6.3 (May 10, 2020)
 [`Minor improvements #36`](https://github.com/WillFlame14/jspuyo/pull/36)
+
 **New features:**
 - Game buffering if one player falls too far behind
   - Followed by timeout if socket is unresponsive
@@ -34,6 +95,7 @@
 
 ### v0.6.2 (May 6, 2020)
 [`Sprite loading #35`](https://github.com/WillFlame14/jspuyo/pull/35)
+
 **New features:**
 - Sprite drawing has replaced the old ImprovedHouseAndMoon style
   - supports Aqua, Chalk, TsuClassic and some custom skins (mostly broken)
@@ -47,6 +109,7 @@
 
 ### v0.6.1 (May 6, 2020)
 [`Add interactive boxes to navigation panels #34`](https://github.com/WillFlame14/jspuyo/pull/34)
+
 **New features:**
 - Switching between modes no longer requires URL manipulation or page refreshes!
 - User-friendly modal boxes for Create Room, Join Room, Play Against CPU and Settings pages
@@ -55,13 +118,14 @@
   - Settings page allows you to customize user settings like DAS/ARR or key bindings
 
 **Other changes:**
-- Fixed https://github.com/WillFlame14/jspuyo/issues/32.
+- Fixed [`#32`](https://github.com/WillFlame14/jspuyo/issues/32).
 - Started using Sass and stylelint for better CSS organization
 - Started using npm-run-all for ease of development
 - Split up Main.js to create a Session class, and merged webpage.js into an init() function in Main.js
 
 ### v0.6.0 (Apr 27, 2020)
 [`Add navigation bar, more CSS #31`](https://github.com/WillFlame14/jspuyo/pull/31)
+
 **New features:**
 - Navigation bar to move between features instead of needing to modify the URL.
   - Currently only works for FFA, Ranked, Sprint/Timed and CPU
@@ -75,6 +139,7 @@
 
 ### v0.5.3 (Apr 24, 2020)
 [`More settings #30`](https://github.com/WillFlame14/jspuyo/pull/30)
+
 **New features:**
 - Margin time option
 - Minimum chain length option
@@ -89,6 +154,7 @@
 
 ### v0.5.2 (Apr 18, 2020)
 [`Support more players #29`](https://github.com/WillFlame14/jspuyo/pull/29)
+
 **New features:**
 - Room size can now be customized by appending `?size=<number>` into the URL.
 - Animation frames can be skipped (to improve performance) by appending `?skipFrames=<number>` to the URL. 

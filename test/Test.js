@@ -1,16 +1,17 @@
 'use strict';
 
+/*eslint-env mocha */
+
 const deepEqualInAnyOrder = require('deep-equal-in-any-order');
 const chaiExclude = require('chai-exclude');
 const { expect } = require('chai').use(deepEqualInAnyOrder).use(chaiExclude);
-const { Board } = require('../js/Board.js');
-const { Drop } = require('../js/Drop.js');
-const { Utils, Settings } = require('../js/Utils.js');
+const { Board } = require('../src/Board.js');
+const { Drop } = require('../src/Drop.js');
+const { Utils, Settings } = require('../src/Utils.js');
 
 const red = 1;
 const grn = 2;
 const blu = 3;
-const prp = 4;
 const nui = 0;
 
 const settings = new Settings();
@@ -42,7 +43,7 @@ describe('Board.js', function() {
 					{ col: 0, row: 0, colour: red, connections: ['Up'] },
 					{ col: 0, row: 1, colour: red, connections: ['Down'] }
 				]
-			]
+			];
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
 		});
 
@@ -84,7 +85,7 @@ describe('Board.js', function() {
 				[
 					{ col: 2, row: 3, colour: grn, connections: [] }
 				]
-			]
+			];
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
 		});
 
@@ -113,7 +114,7 @@ describe('Board.js', function() {
 					{ col: 3, row: 1, colour: grn, connections: ['Left', 'Down'] },
 					{ col: 3, row: 0, colour: grn, connections: ['Up'] }
 				]
-			]
+			];
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
 		});
 
@@ -138,7 +139,7 @@ describe('Board.js', function() {
 					{ col: 1, row: 1, colour: red, connections: ['Left', 'Down'] },
 					{ col: 2, row: 0, colour: red, connections: ['Left'] }
 				]
-			]
+			];
 			expect(chain_puyos).to.deep.equalInAnyOrder(expectedResult);
 		});
 	});
@@ -212,7 +213,7 @@ describe('Board.js', function() {
 					{ col: 2, row: 1, colour: red, connections: ['Down'] },
 					{ col: 0, row: 1, colour: grn, connections: ['Right', 'Up'] },
 					{ col: 0, row: 2, colour: grn, connections: ['Up', 'Down'] },
-					{ col: 0, row: 3, colour: grn, connections: ['Down'] },
+					{ col: 0, row: 3, colour: grn, connections: ['Down', 'Right'] },
 					{ col: 1, row: 1, colour: grn, connections: ['Left'] },
 					{ col: 1, row: 3, colour: grn, connections: ['Left'] }
 				],
@@ -223,6 +224,8 @@ describe('Board.js', function() {
 					{ col: 4, row: 0, colour: blu, connections: ['Left'] },
 				]
 			];
+
+			expect(puyos_chained).to.deep.equalInAnyOrder(expectedResult);
 		});
 
 		it('can resolve chains with nuisance', function() {
@@ -286,10 +289,10 @@ describe('Board.js', function() {
 
 			const board = new Board(new Settings(), boardState);
 			const current_chain_puyos = [
-					{ col: 2, row: 1, colour: red },
-					{ col: 2, row: 2, colour: red },
-					{ col: 2, row: 3, colour: red },
-					{ col: 2, row: 4, colour: red }
+				{ col: 2, row: 1, colour: red },
+				{ col: 2, row: 2, colour: red },
+				{ col: 2, row: 3, colour: red },
+				{ col: 2, row: 4, colour: red }
 			];
 			const nuisancePopped = board.findNuisancePopped(current_chain_puyos);
 
@@ -366,56 +369,56 @@ describe('Utils.js', function() {
 		});
 
 		it('checkMarginTime - should not change target points before margin time', function() {
-			const settings = new Settings();
-			const startTime = settings.timer;
-			const targetPoints = settings.targetPoints;
+			const settings2 = new Settings();
+			const startTime = settings2.timer;
+			const targetPoints = settings2.targetPoints;
 
-			settings.checkMarginTime(startTime + 32000);
+			settings2.checkMarginTime(startTime + 32000);
 
-			expect(settings.targetPoints).to.equal(targetPoints);
-			expect(settings.timer).to.equal(startTime);
+			expect(settings2.targetPoints).to.equal(targetPoints);
+			expect(settings2.timer).to.equal(startTime);
 		});
 
 		it('checkMarginTime - should update target points correctly jumping into margin time', function() {
-			const settings = new Settings();
-			const startTime = settings.timer;
-			const targetPoints = settings.targetPoints;
+			const settings2 = new Settings();
+			const startTime = settings2.timer;
+			const targetPoints = settings2.targetPoints;
 
 			// Start margin time and incrment twice
-			settings.checkMarginTime(startTime + (96001 + 32000));
+			settings2.checkMarginTime(startTime + (96001 + 32000));
 			const expectedResult = Math.floor(Math.floor(Math.floor(targetPoints * 0.75) / 2) / 2);
 
-			expect(settings.targetPoints).to.equal(expectedResult);
-			expect(settings.timer).to.equal(startTime + (96000 + 32000));
+			expect(settings2.targetPoints).to.equal(expectedResult);
+			expect(settings2.timer).to.equal(startTime + (96000 + 32000));
 		});
 
 		it('checkMarginTime - should update target points correctly incrementing margin time', function() {
-			const settings = new Settings();
-			const startTime = settings.timer;
-			const targetPoints = settings.targetPoints;
+			const settings2 = new Settings();
+			const startTime = settings2.timer;
+			const targetPoints = settings2.targetPoints;
 
 			// Start margin time
 			const midTime1 = startTime + 96001;
-			settings.checkMarginTime(midTime1);
+			settings2.checkMarginTime(midTime1);
 			const expectedResultMid = Math.floor(targetPoints * 0.75);
 
-			expect(settings.targetPoints).to.equal(expectedResultMid);
-			expect(settings.timer).to.equal(midTime1 - 1);
+			expect(settings2.targetPoints).to.equal(expectedResultMid);
+			expect(settings2.timer).to.equal(midTime1 - 1);
 
 			// Margin time has started, but not yet re-incremented
 			const midTime2 = midTime1 + 9000;
-			settings.checkMarginTime(midTime2);
+			settings2.checkMarginTime(midTime2);
 
-			expect(settings.targetPoints).to.equal(expectedResultMid);
-			expect(settings.timer).to.equal(midTime1 - 1);
+			expect(settings2.targetPoints).to.equal(expectedResultMid);
+			expect(settings2.timer).to.equal(midTime1 - 1);
 
 			// Margin time has started and incremented once
 			const finalTime = midTime2 + 8001;
-			settings.checkMarginTime(finalTime);
+			settings2.checkMarginTime(finalTime);
 			const expectedResultFinal = Math.floor(expectedResultMid / 2);
 
-			expect(settings.targetPoints).to.equal(expectedResultFinal);
-			expect(settings.timer).to.equal(midTime1 + 16000 - 1);
+			expect(settings2.targetPoints).to.equal(expectedResultFinal);
+			expect(settings2.timer).to.equal(midTime1 + 16000 - 1);
 		});
 	});
 

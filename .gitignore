@@ -1,4 +1,6 @@
 node_modules
 bundle.js
+limited.js
 style.css
-style.css.map
+temp.css
+config.js

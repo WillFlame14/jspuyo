@@ -1,0 +1,238 @@
+@use "base";
+
+#main-content {
+	display: grid;
+	flex: 1 0 auto;
+	grid-gap: 1vw;
+	grid-template-rows: auto;
+	grid-template-columns: minmax(385px, 30%) minmax(auto, 47%) minmax(236px, 23%);
+
+	&.ingame {
+		grid-template-columns: 100% 0px 0px;
+	}
+}
+
+.nuisanceQueue {
+	margin: 0px;
+
+	background: rgba(240, 240, 240, 0.2);
+	border: 0;
+}
+
+.pointsDisplay {
+	display: table;
+	width: 73%;
+
+	color: white;
+	font: 52px base.$font-title;
+	text-align: center;
+}
+
+#playArea {
+	margin: 70px auto 0px;
+}
+
+/* ---------- Status Column (Room Management/Status Information) ---------- */
+
+.status {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	width: 75%;
+	margin: 0 auto;
+
+	color: white;
+	font: 1.9rem base.$font-title;
+	text-align: center;
+
+	text-shadow: base.$text-drop-shadow;
+}
+
+// Container for the room management options
+#roomManage {
+	display: none;
+	margin-top: 0px;
+	padding-left: 0px;
+
+	font: 1.7rem base.$font-title;
+
+	// An individual management option
+	li {
+		display: grid;
+		grid-template-columns: 20% 80%;
+		margin: 25px 0px;
+		padding: 10px 0px;
+
+		text-align: left;
+
+		text-shadow: base.$text-drop-shadow;
+
+		box-shadow: base.$box-drop-shadow;
+		cursor: pointer;
+	}
+}
+
+// The icon for the room management option
+.roomManageIcon {
+	height: 80%;
+	max-height: 60px;
+	margin: auto;
+
+	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
+}
+
+// The background colours for each option
+#manageCpus {
+	background: #351c75;
+}
+
+#manageSettings {
+	background: #0b5394;
+}
+
+#manageJoinLink {
+	background: #134f5c;
+}
+
+#manageStartRoom {
+	background: #245631;
+}
+
+#manageSpectate {
+	background: #555555;
+
+	// This icon is already gray/white, so do not need to invert
+	.roomManageIcon {
+		filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
+// General message describing the status of the room
+#statusMsg {
+	display: none;
+}
+
+// Indicates the room's gamemode
+#statusGamemode {
+	display: none;
+
+	font: 2.4rem "Rock Salt", sans-serif;
+}
+
+/* ---------- Sidebar (Player List and Chat) ---------- */
+
+#sidebar {
+	display: flex;
+	flex-direction: column;
+}
+
+// Division containing the "Players" title and the player list
+.playersDisplay {
+	flex: 0 0 40%;
+
+	background-color: #2a2a2a;
+}
+
+#playersTitle {
+	padding: 10px 0px;
+
+	color: white;
+	font: 42px base.$font-title;
+	text-align: center;
+	text-shadow: 2px 2px 5px base.$dark-gray;
+
+	background-color: #232323;		// Slightly darker than dark-gray
+}
+
+.playerList {
+	margin: 0px;
+	padding: 0px;
+	overflow-y: auto;		// Add a scroll bar only when necessary
+
+	color: white;
+	font: 24px base.$font-title;
+}
+
+// An entry in the player list
+.playerIndividual {
+	display: grid;
+	grid-template-columns: 15% 65% 20%;
+	padding: 8px 5px;
+
+	// The icon next to each player's name
+	img {
+		width: 30px;
+		margin: auto 30% auto 10%;
+	}
+
+	// Alternate background colours for each player in the list
+	&:nth-child(even) {
+		background: base.$dark-gray;
+	}
+
+	&:nth-child(odd) {
+		background: #565656;
+	}
+
+	// Shadow on the first child from the "Players" title
+	&:first-child {
+		box-shadow: 0px 3px 5px -3px base.$dark-gray inset;
+	}
+}
+
+// Flexbox containing chat messages and the input field
+.chat {
+	display: flex;
+	flex: 1 0 50%;
+	flex-direction: column;
+	min-height: 0px;
+
+	background: rgba(34, 34, 34, 0.8);
+}
+
+// List of chat messages
+.chatMessages {
+	flex: 0 1 476px;
+	margin: 0px;
+	padding: 0px;
+	overflow-y: auto;		// Add a scroll bar when needed
+
+	color: white;
+	font: 20px base.$font-title;
+}
+
+// An individual message
+.chatMsg {
+	display: grid;
+
+	grid-gap: 10px;
+
+	grid-template-rows: auto;
+	grid-template-columns: auto minmax(0, 1fr);
+	padding: 5px 0px 5px 10px;
+
+	.senderName {
+		color: white;		// Name in white
+		text-align: center;
+	}
+
+	.message {
+		color: #bcbcbc;		// Message in light gray
+	}
+}
+
+// The form for sending messages
+#sendMessage {
+	flex: 0 0 auto;
+	width: 100%;
+	margin: 0px;
+}
+
+// The input field for sending messages
+#messageField {
+	width: 100%;
+	padding: 3px 3px 3px 7px;
+
+	font-size: 20px;
+	text-align: left;
+}

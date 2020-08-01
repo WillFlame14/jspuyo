@@ -1,0 +1,16 @@
+@use "base";
+
+#dialogBox {
+	display: none;
+	width: 30%;
+
+	color: white;
+
+	font: 1rem base.$font-title;
+	text-align: center;
+
+	input {
+		display: block;
+		margin: 3px auto;
+	}
+}

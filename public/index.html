@@ -1,0 +1,301 @@
+<html>
+<head>
+    <title>jspuyo</title>
+    <meta charset="utf-8" />
+    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Rock+Salt&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+    <div class="modal" id="modal-login">
+        <div class="modal-content" id="usernamePicker">
+            <form id="usernamePickerForm" autocomplete="off">
+                <label for="usernamePicker">Enter your preferred display name below.</label>
+                <div class="errorMsg" id="usernamePickerError"></div>
+                <div id="usernamePickerInput">
+                    <input type="text" id="usernamePickerText" maxlength="15">
+                </div>
+                <input type="submit" id="usernamePickerSubmit" value="Confirm">
+            </form>
+            <div id="guestMessage">As a guest, your progress will only be saved within your browser cookies, and will be deleted when you log out (under the Profile tab). Creating an account lets you carry your save data between sessions.</div>
+        </div>
+        <div class="modal-content" id="firebaseui-auth-container"></div>
+        <div id="loader">Loading...</div>
+    </div>
+    <div class="modal" id="modal-background">
+        <div class="modal-content" id="createRoomModal">
+            <div class="close">&times;</div>
+            <div class="modal-title">Room Options</div>
+            <div class="left-right-container" id="createRoomOptions">
+                <div id="createRoomOptionsLeft">
+                    <div id="modeSelector">
+                        <div class="option-title">Mode</div>
+                        <img src="images/modal_boxes/Tsu_icon.png" id="modeIcon">
+                    </div>
+                    <form id="boardSizeSelector" autocomplete="off">
+                        <label for="numRows">Rows</label>
+                        <input type="number" id="numRows" value="12" min="6" max="100">
+                        <label for="numCols">Columns</label>
+                        <input type="number" id="numCols" value="6" min="3" max="50">
+                    </form>
+                    <div id="roomSizeSelector">
+                        <div class="option-title">Players</div>
+                        <form id="playerButtons" autocomplete="off">
+                            <span class="numPlayerButton" id="2player">2</span>
+                            <span class="numPlayerButton" id="3player">3</span>
+                            <span class="numPlayerButton selected" id="4player">4</span>
+                            <input class="numPlayerButton" type="text" id="5player" value="5"></input>
+                        </form>
+                    </div>
+                    <form id="coloursSelector" autocomplete="off">
+                        <label id="coloursSelectorTitle" for="numColours">Colours</label><br>
+                        <input type="number" id="numColours" value="4" min="0" max="5">
+                        <span id="coloursSelected">
+                            <img src="images/modal_boxes/puyo_red.png">
+                            <img src="images/modal_boxes/puyo_blue.png">
+                            <img src="images/modal_boxes/puyo_green.png">
+                            <img src="images/modal_boxes/puyo_yellow.png">
+                        </span>
+                    </form>
+                </div>
+                <div class="divider vertical" id="createRoomDivider"></div>
+                <form id="createRoomOptionsAdvanced" autocomplete="off">
+                    <label for="marginTime" class="roomOptionLabel">Margin Time</label>
+                    <input type="number" class="roomOptionInput" id="marginTime" value="96" min="0" max="1000">
+                    <label for="targetPoints" class="roomOptionLabel">Target Points</label>
+                    <input type="number" class="roomOptionInput" id="targetPoints" value="70" min="0" max="100000">
+                    <label for="minChainLength" class="roomOptionLabel">Min Chain Length</label>
+                    <input type="number" class="roomOptionInput" id="minChainLength" value="0" min="0" max="16">
+                    <label for="gravity" class="roomOptionLabel">Gravity</label>
+                    <input type="number" class="roomOptionInput" id="gravity" value="0.036" min="0" max="0.2">
+                    <label for="softDrop" class="roomOptionLabel">Soft Drop</label>
+                    <input type="number" class="roomOptionInput" id="softDrop" value="0.27" min="0" max="1">
+                    <label for="hardDrop" class="roomOptionLabel">Hard Drop</label>
+                    <input type="button" class="roomOptionInput off" id="hardDrop" value="OFF">
+                    <label for="winCondition" class="roomOptionLabel">Win Condition</label>
+                    <input type="button" class="roomOptionInput" id="winCondition" value="FT 3">
+                    <input type="submit" id="createRoomSubmit" value="Create Room">
+                </form>
+            </div>
+        </div>
+        <div class="modal-content" id="giveJoinId">
+            <div class="close">&times;</div>
+            <div>Use the following link to join the room:</div>
+            <form autocomplete="off">
+                <input type="text" id="joinIdLink">
+                <input type="button" id="copyJoinId" value="&#x1F4CB">
+            </form>
+            <div id="joinIdCopied">Copied to clipboard!</div>
+        </div>
+        <div class="modal-content" id="joinRoomModal">
+            <div class="close">&times;</div>
+            <form id="joinIdForm" autocomplete="off">
+                <label for="joinId">Enter the code for the room you wish to join.</label><br>
+                <div class="errorMsg" id="joinIdFormError"></div>
+                <div id="joinIdInput">
+                    <input type="text" id="joinRoomFiller" value="?joinRoom=" disabled>
+                    <input type="text" id="joinId" placeholder="######" maxlength="6">
+                </div>
+                <input type="submit" id="joinRoomSubmit" value="Join Room">
+            </form>
+        </div>
+        <div class="modal-content" id="spectateRoomModal">
+            <div class="close">&times;</div>
+            <form id="spectateForm" autocomplete="off">
+                <label for="roomList">Select a room you wish to spectate.</label><br>
+                <div class="errorMsg" id="spectateFormError"></div>
+                <input list="roomIds" id="roomList" name="roomList">
+                <datalist id="roomIds">
+                    <!-- Inserted by javascript -->
+                </datalist>
+                <div id="roomPlayers"></div>
+                <input type="submit" id="spectateSubmit" value="Spectate Room">
+            </form>
+        </div>
+        <div class="modal-content" id="cpuOptionsModal">
+            <div class="close">&times;</div>
+            <div class="modal-title">CPU Options</div>
+            <div class="errorMsg" id="cpuOptionsError"></div>
+            <div id="cpuOptionsEmpty">No CPUs in room</div>
+            <div class="cpu-container" id="cpuOptions">
+                <!-- Inserted by javascript -->
+            </div>
+            <div id="cpuOptionsButtons">
+                <button id="cpuOptionsAdd">Add CPU</button>
+                <button id="cpuOptionsSubmit">Save CPU Selections</button>
+                <button id="cpuOptionsRemove">Remove CPU</button>
+            </div>
+        </div>
+        <div class="modal-content" id="settingsModal">
+            <div class="close">&times;</div>
+            <div class="modal-title">User Settings</div>
+            <div class="left-right-container" id="userSettingsOptions">
+                <div>
+                    <div class="justify-flexbox">
+                        <form class="block-form" autocomplete="off">
+                            <label for="das">DAS</label>
+                            <input type="number" class="dasArrInput" id="das" value="200" min="0" max="999"><br>
+                        </form>
+                        <form class="block-form" autocomplete="off">
+                            <label for="arr">ARR</label>
+                            <input type="number" class="dasArrInput" id="arr" value="20" min="0" max="99">
+                        </form>
+                    </div>
+                    <form class="block-form" id="settingsSliders" autocomplete="off">
+                        <label for="sfxVolume">SFX Volume</label>
+                        <input type="range" id="sfxVolume" value="50" min="0" max="100">
+                        <label for="musicVolume">Music Volume</label>
+                        <input type="range" id="musicVolume" value="50" min="0" max="100">
+                        <label for="skipFrames" id="skipFramesLabel">Intermediate Frames Shown</label>
+                        <input type="range" id="skipFrames" value="50" min="0" max="50">
+                    </form>
+                </div>
+                <div class="divider vertical" id="settingsDivider"></div>
+                <div>
+                    <div class="keyBindings">
+                        <form autocomplete="off">
+                            <label for="moveLeftBinding">Move Left</label>
+                            <input type="button" class="keyBinding" id="moveLeftBinding">
+                        </form>
+                        <form autocomplete="off">
+                            <label for="moveRightBinding">Move Right</label>
+                            <input type="button" class="keyBinding" id="moveRightBinding">
+                        </form>
+                        <form autocomplete="off">
+                            <label for="rotateCCWBinding">Rotate CCW</label>
+                            <input type="button" class="keyBinding" id="rotateCCWBinding">
+                        </form>
+                        <form autocomplete="off">
+                            <label for="rotateCWBinding">Rotate CW</label>
+                            <input type="button" class="keyBinding" id="rotateCWBinding">
+                        </form>
+                        <form autocomplete="off">
+                            <label for="softDropBinding">Soft Drop</label>
+                            <input type="button" class="keyBinding" id="softDropBinding">
+                        </form>
+                        <form autocomplete="off">
+                            <label for="hardDropBinding">Hard Drop</label>
+                            <input type="button" class="keyBinding" id="hardDropBinding">
+                        </form>
+                    </div>
+                    <div class="justify-flexbox ghostHighlightOptions">
+                        <form class="block-form" autocomplete="off">
+                            <label for="ghost">Ghost Drop</label>
+                            <input type="button" class="off" id="ghost" value="OFF" disabled><br>
+                        </form>
+                        <form class="block-form" autocomplete="off">
+                            <label for="highlightChains">Highlight Chains</label>
+                            <input type="button" class="off" id="highlightChains" value="OFF" disabled>
+                        </form>
+                    </div>
+                    <div class="option-title">Appearance</div>
+                    <div class="justify-flexbox">
+                        <img class="appearanceIcon" id="Aqua" src="images/modal_boxes/puyo_aqua.png">
+                        <img class="appearanceIcon" id="Chalk" src="images/modal_boxes/puyo_chalk.png">
+                        <img class="appearanceIcon selected" id="TsuClassic" src="images/modal_boxes/puyo_tsu.png">
+                        <img class="appearanceIcon" id="Custom" src="images/modal_boxes/puyo_custom.png">
+                        <img class="appearanceIcon" id="FlatColour" src="images/modal_boxes/puyo_flat.png">
+                        <img class="appearanceIcon" id="Test" src="images/modal_boxes/puyo_teal.png">
+                    </div>
+                    <button id="settingsSubmit">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="modal-background-disable">
+        <div class="modal-content dialog" id="dialogBox">
+            <div id="dialogText"></div>
+            <input type="submit" id="dialogAccept" value="OK">
+        </div>
+    </div>
+    <main>
+        <div id="navbar">
+            <span id="navbarSpacer"></span>
+            <span class="navPanel" id="queuePanel">
+                <img src="images/navbar/QueueIcon.png" class="navIcon">
+                <span class="panelName">Queue</span>
+                <div class="dropdown">
+                    <a id="freeForAll">Free for all</a>
+                    <a id="ranked">Ranked</a>
+                </div>
+            </span>
+            <span class="navPanel" id="customPanel">
+                <img src="images/navbar/CustomIcon.png" class="navIcon">
+                <span class="panelName">Custom</span>
+                <div class="dropdown">
+                    <a id="createRoom">Create Room</a>
+                    <a id="joinRoom">Join Room</a>
+                    <a id="spectate">Spectate</a>
+                </div>
+            </span>
+            <span class="navPanel" id="singleplayerPanel">
+                <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
+                <span class="panelName">Singleplayer</span>
+                <div class="dropdown">
+                    <a id="sprint">Sprint [WIP]</a>
+                    <a id="timeChallenge">Time Challenge [WIP]</a>
+                </div>
+            </span>
+            <span class="navPanel" id="profilePanel">
+                <img src="images/navbar/ProfileIcon.png" class="navIcon">
+                <span class="panelName">Profile</span>
+                <div class="dropdown">
+                    <a id="gallery">Gallery [WIP]</a>
+                    <a id="settings">Settings</a>
+                    <a id="logout">Log Out</a>
+                </div>
+            </span>
+            <span id="logo">jspuyo</span>
+        </div>
+        <div id="main-content">
+            <table id="playArea">
+                <!-- Inserted by javascript -->
+            </table>
+            <div class="status" id="statusArea">
+                <ul class="justify-flexbox vertical" id="roomManage">
+                    <li id="manageCpus">
+                        <img class="roomManageIcon" src="images/mainpage/cpu.png">
+                        <span>Manage CPUs</span>
+                    </li>
+                    <li id="manageSettings">
+                        <img class="roomManageIcon" src="images/mainpage/settings.png">
+                        <span>Settings</span>
+                    </li>
+                    <li id="manageJoinLink">
+                        <img class="roomManageIcon" src="images/mainpage/link.png">
+                        <span>Show Join Link</span>
+                    </li>
+                    <li id="manageStartRoom">
+                        <img class="roomManageIcon" src="images/mainpage/start.png">
+                        <span>Start Room</span>
+                    </li>
+                    <li id="manageSpectate">
+                        <img class="roomManageIcon" src="images/mainpage/spectate.png">
+                        <span>Spectate</span>
+                    </li>
+                </ul>
+                <div id="statusMsg"></div>
+                <div id="statusGamemode"></div>
+                <div id="statusSettings"></div>
+            </div>
+            <div id="sidebar">
+                <div class="playersDisplay" id="playersDisplay">
+                    <div id="playersTitle">Players</div>
+                    <ul class="playerList" id="playerList">
+                        <!-- Inserted by javascript -->
+                    </ul>
+                </div>
+                <div class="divider horizontal"></div>
+                <div class="chat">
+                    <ul class="chatMessages" id="chatMessages">
+                        <!-- Inserted by javascript -->
+                    </ul>
+                    <form autocomplete="off" id="sendMessage">
+                        <input type="text" id="messageField">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script src="bundle.js"></script>
+    </main>
+</body>
+</html>

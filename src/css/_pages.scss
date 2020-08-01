@@ -1,0 +1,25 @@
+@use "base";
+
+a {
+	color: rgb(150, 150, 240);
+}
+
+// Titles for other pages
+#pageTitle {
+
+	padding: 10px 0px 10px 40px;
+
+	color: white;
+	font: 40px base.$font-title;
+}
+
+#text-content {
+	margin: 3%;
+	padding: 1em;
+
+	color: white;
+	font: 20px base.$font-title;
+
+	background: rgba(40, 40, 40, 0.8);
+	border: 2px solid white;
+}

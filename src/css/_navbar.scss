@@ -1,0 +1,164 @@
+@use "base";
+
+// Horizontal flexbox, contains the panels and is used as the basis for the dropdown menus.
+#navbar {
+	position: relative;
+
+	display: flex;
+	flex: 0 0 70px;
+
+	background-image: linear-gradient(#212121, black);
+	box-shadow: 0px 0px 10px 2px black;
+}
+
+// Spacer used to indent the left-most panel (just so it doesn't touch the edge of the screen).
+#navbarSpacer {
+	z-index: 999;
+
+	flex: 0 0 30px;
+
+	box-shadow: 5px 0px 5px -5px;
+}
+
+// jspuyo logo
+#logo {
+	flex: 1 1 1100px;
+	padding: 5px 15px 0px 0px;
+
+	color: white;
+	font: 18px base.$font-title;
+	text-align: right;
+
+	cursor: pointer;
+}
+
+// Panel containing icon, title and dropdown menu. Default state is "minimized", which only contains the icon.
+.navPanel {
+	position: relative;
+	z-index: 2;
+
+	display: flex;
+	flex: 0 0 80px;
+
+	// Hide the text so that it transitions intead of jumping.
+	overflow: hidden;
+
+	font: 28px base.$font-title;
+
+	box-shadow: 10px 0px 10px -5px, -10px 0px 10px -5px;
+	cursor: pointer;
+
+	transition: all 200ms ease-in-out;
+
+	// Expanded panel to show the panel title.
+	&.expanded {
+		flex: 0 0 250px;
+	}
+}
+
+// Background gradients for the panels.
+#queuePanel {
+	z-index: 5;
+
+	background-image: linear-gradient(#254620, #052a00);
+}
+
+#customPanel {
+	z-index: 4;
+
+	background-image: linear-gradient(#453421, #2a1600);
+}
+
+#singleplayerPanel {
+	z-index: 3;
+
+	background-image: linear-gradient(#273245, #001e2a);
+
+	// Requires more space due to having a longer title.
+	&.expanded {
+		flex: 0 0 320px;
+	}
+}
+
+#profilePanel {
+	background-image: linear-gradient(#381d3c, #24002a);
+}
+
+// Icon of the panel. Always displayed.
+.navIcon {
+	flex: 0 0 60px;
+	height: 60px;
+	margin: 5px 10px;
+}
+
+// Title of the panel.
+.panelName {
+	display: block;
+	padding: 5px 20px 5px 10px;
+
+	color: white;
+
+	// Special sizing for the first letter of the title.
+	&::first-letter {
+		font-size: 46px;
+	}
+}
+
+// Vertical flexbox containing links.
+.dropdown {
+	position: fixed;	// Float the dropdown menu so it doesn't take up space
+
+	display: flex;
+	flex: 1 0 0px;
+	flex-direction: column;
+	width: 70px;
+
+	// Set initial dimensions for the transition.
+	height: 0px;
+	margin-top: 70px;	// Move it below the panels
+	overflow: hidden;
+
+	background: #434343;
+	box-shadow: none;
+	cursor: pointer;
+
+	transition: all 200ms ease-in-out;
+
+	// Dropdown links, hidden before the navigation panel is expanded.
+	a {
+		display: none;
+		flex: 0 0 0px;
+		padding: 5px 0px 5px 15px;
+
+		color: white;
+		font-size: 20px;
+		text-decoration: none;
+	}
+
+	// The first dropdown item requires some extra margin due to the shadow taking up space.
+	a:first-child {
+		padding: 7px 0px 5px 15px;
+	}
+
+	// Darken the background of a link on hover.
+	a:hover {
+		background: #212121;
+	}
+}
+
+// Expand the dropdown menu when the navigation panel is expanded. The heights are modified in Javascript.
+.navPanel.expanded > .dropdown {
+	width: 250px;
+
+	box-shadow: 0px 2px 15px 2px, 0px 7px 5px -5px black inset;
+}
+
+#singleplayerPanel.expanded > .dropdown {
+	width: 320px;
+}
+
+// Display the links when the navigation panel is expanded.
+.navPanel.expanded > .dropdown a {
+	display: block;
+	flex: 0 0 30px;
+}

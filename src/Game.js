@@ -1,7 +1,7 @@
 'use strict';
 
 const { Board } = require('./Board.js');
-const { GameArea } = require('./BoardDrawer.js');
+const { GameArea } = require('./GameDrawer.js');
 const { DropGenerator } = require('./Drop.js');
 const { Utils } = require('./Utils.js');
 

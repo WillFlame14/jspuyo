@@ -20,11 +20,11 @@ const MODE = {
 const NUISANCE = 0;
 
 class CanvasLayer {
-	constructor(width, height, className, onNode = false) {
+	constructor(width, height, onNode = false, className) {
 		this.onNode = onNode;
 		this.width = width;
 		this.height = height;
-		if (!onNode) {
+		if (!this.onNode) {
 			this.canvas = document.createElement('canvas');
 			this.canvas.width = width;
 			this.canvas.height = height;
@@ -42,8 +42,8 @@ class CanvasLayer {
 }
 
 class DrawingLayer extends CanvasLayer {
-	constructor(width, height, unit, className, onNode) {
-		super(width, height, className, onNode);
+	constructor(width, height, unit, onNode, className) {
+		super(width, height, onNode, className);
 		this.unit = unit;
 		this.objectsDrawn = [];
 		this.drawingState = 0;
@@ -75,20 +75,17 @@ class DrawingLayer extends CanvasLayer {
 			this.drawingState = state.drawingState;
 		}
 	}
-	setState() {
-		this.drawingState++;
-		this.drawingState %= NUM_DRAWING_STATES;
-	}
 	resetState() {
 		this.objectsDrawn = [];
 		this.clear();
-		this.setState();
+		this.drawingState++;
+		this.drawingState %= NUM_DRAWING_STATES;
 	}
 }
 
 class PuyoDrawingLayer extends DrawingLayer {
-	constructor(width, height, unit, appearance, className, onNode) {
-		super(width, height, unit, className, onNode);
+	constructor(width, height, unit, appearance, onNode, className) {
+		super(width, height, unit, onNode, className);
 		this.defaultArgs.appearance = appearance;
 		this.defaultArgs.size = 1;
 		this.defaultArgs.sWidth = 1;
@@ -134,7 +131,7 @@ class PuyoDrawingLayer extends DrawingLayer {
 		}
 	}
 	drawDrop(drop, dX, dY) {
-		if("IhLHO".includes(drop.shape)) {
+		if("I".includes(drop.shape)) {
 			this["draw_" + drop.shape](drop, dX, dY);
 		}
 	}
@@ -151,14 +148,13 @@ class GameArea extends CanvasLayer {
 		super(
 			DIMENSIONS.BOARD.W * scaleFactor + ((scaleFactor > DIMENSIONS.MIN_SCALE) ? (DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor) : 0),
 			DIMENSIONS.BOARD.H * scaleFactor + DIMENSIONS.MARGIN + DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor,
-			"game-area",
 			onNode
 		);
 		this.settings = settings;
 		this.appearance = appearance;
 		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
-		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, 0, appearance, null, onNode);
-		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, 0, appearance, null, onNode);
+		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, 0, appearance, onNode);
+		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, 0, appearance, onNode);
 		this.simplified = scaleFactor <= DIMENSIONS.MIN_SCALE;
 	}
 	update() {
@@ -213,13 +209,13 @@ class GameArea extends CanvasLayer {
 class BoardLayer extends CanvasLayer {
 	constructor(settings, appearance, scaleFactor = 1, onNode) {
 		super(
-			DIMENSIONS.BOARD.W * scaleFactor, DIMENSIONS.BOARD.H * scaleFactor, null, onNode
+			DIMENSIONS.BOARD.W * scaleFactor, DIMENSIONS.BOARD.H * scaleFactor, onNode
 		);
 		this.unit = this.width / settings.cols;
 		this.settings = settings;
 		this.appearance = appearance;
-		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, null, onNode);
-		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, null, onNode);
+		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
+		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
 		this.nuisanceCascadeFPR = [];
 		this.mode = null;
 	}
@@ -351,9 +347,11 @@ class BoardLayer extends CanvasLayer {
 }
 
 class NuisanceLayer extends PuyoDrawingLayer {
+	// TODO: Implement nuisance queue
 }
 
 class QueueLayer extends PuyoDrawingLayer {
+	// TODO: Implement queue
 }
 
 module.exports = { GameArea };

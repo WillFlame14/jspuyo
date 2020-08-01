@@ -1,9 +1,9 @@
 'use strict';
 
-const { GameArea } = require('./BoardDrawer.js');
+const { GameArea } = require('./GameDrawer.js');
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings } = require('./Utils.js');
+const { Settings, UserSettings } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
 const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
@@ -102,8 +102,8 @@ async function init(socket) {
 		}
 		currentRoomId = roomId;
 		clearModal();
-		clearBoards();
-		generateBoards(1, Settings.fromString(settingsString));
+		clearCells();
+		generateCells(1, Settings.fromString(settingsString));
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
@@ -156,8 +156,8 @@ async function init(socket) {
 		userSettings.skipFrames += defaultSkipFrames[opponentIds.length + 1];
 
 		// Adjust the number of boards drawn
-		clearBoards();
-		const gameAreas = generateBoards(opponentIds.length + 1, settings, userSettings.appearance);
+		clearCells();
+		const gameAreas = generateCells(opponentIds.length + 1, settings, userSettings.appearance);
 
 		// Set up the player's game
 		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas);
@@ -178,8 +178,8 @@ async function init(socket) {
 		userSettings.skipFrames += defaultSkipFrames[allIds.length];
 
 		// Adjust the number of boards drawn
-		clearBoards();
-		const gameAreas = generateBoards(allIds.length, settings, userSettings.appearance);
+		clearCells();
+		const gameAreas = generateCells(allIds.length, settings, userSettings.appearance);
 
 		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas);
 
@@ -228,7 +228,7 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateBoards(numBoards, settings, appearance = new Settings().appearance) {
+function generateCells(numCells, settings, appearance = new UserSettings().appearance) {
 	const playArea = document.getElementById('playArea');
 	playArea.style.display = 'table';
 
@@ -266,30 +266,30 @@ function generateBoards(numBoards, settings, appearance = new Settings().appeara
 	runningId++;
 
 	// Set up the number of boards displayed
-	if(numBoards < 5) {
-		for(let i = 0; i < numBoards - 1; i++) {
+	if(numCells < 5) {
+		for(let i = 0; i < numCells - 1; i++) {
 			createGameCanvas(runningId, firstRow, 1);
 			runningId++;
 		}
 	}
-	else if (numBoards < 10) {
+	else if (numCells < 10) {
 		playerCell.setAttribute('rowspan', '2');
 		// Create a larger top row
-		for(let i = 0; i < Math.ceil((numBoards - 1) / 2); i++) {
+		for(let i = 0; i < Math.ceil((numCells - 1) / 2); i++) {
 			createGameCanvas(runningId, firstRow, 0.5);
 			runningId++;
 		}
 		// And a smaller bottom row
 		const secondRow = playArea.insertRow(-1);
-		for(let i = 0; i < Math.floor((numBoards - 1) / 2); i++) {
+		for(let i = 0; i < Math.floor((numCells - 1) / 2); i++) {
 			createGameCanvas(runningId, secondRow, 0.5);
 			runningId++;
 		}
 	}
 	else {
 		playerCell.setAttribute('rowspan', '3');
-		const minPerRow = Math.floor((numBoards - 1) / 3);
-		let extras = numBoards - 1 - minPerRow * 3;
+		const minPerRow = Math.floor((numCells - 1) / 3);
+		let extras = numCells - 1 - minPerRow * 3;
 		// Spread rows over the first two rows
 		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
 			createGameCanvas(runningId, firstRow, 0.33);
@@ -314,7 +314,7 @@ function generateBoards(numBoards, settings, appearance = new Settings().appeara
 /**
  * Removes all boards on screen.
  */
-function clearBoards() {
+function clearCells() {
 	const playArea = document.getElementById('playArea');
 	while(playArea.firstChild) {
 		playArea.firstChild.remove();

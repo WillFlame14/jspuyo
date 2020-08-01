@@ -39,7 +39,7 @@
 - Removed the "Play Against CPU" option in Singleplayer, as it is now contained within Create Room
 - CPU games are now hosted on the server instead of in the background of a client
   - This means they are now treated almost exactly the same as player games (they send hashes instead of directly drawing)
-- Some changes to BoardDrawer.js to allow hashes to be drawn irrespective of the board size
+- Some changes to GameDrawer.js to allow hashes to be drawn irrespective of the board size
 - Minor UI improvements
 - Standardized using tabs instead of spaces for JS files
 

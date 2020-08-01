@@ -1,9 +1,12 @@
 'use strict';
-const DIMENSIONS = {	BOARD : { W: 270, H: 540 },
-						QUEUE : { W: 72, H: 540 },	// eslint-disable-line indent
-						NUISANCE_QUEUE : { W: 270, H: 45 },	// eslint-disable-line indent
-						MARGIN: 10,	// eslint-disable-line indent
-						MIN_SCALE: 0.5};	// eslint-disable-line indent
+
+const DIMENSIONS = {
+	BOARD : { W: 270, H: 540 },
+	QUEUE : { W: 72, H: 540 },
+	NUISANCE_QUEUE : { W: 270, H: 45 },
+	MARGIN: 10,
+	MIN_SCALE: 0.5
+};
 
 class Settings {
 	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.29, numColours = 4,

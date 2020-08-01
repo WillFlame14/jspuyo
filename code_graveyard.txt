@@ -36,3 +36,78 @@ const getTotalFrames = function getTotalFrames(puyoLocs, boardState, settings) {
 	}
 	return maxPoppingUnder * settings.cascadeFramesPerRow + settings.popFrames;
 };
+
+--------------------------
+
+Draws all the other drop shapes, but will need tweaking before used
+
+
+draw_h(drop, size) {
+    let ctx = this.ctx;
+    ctx.save();
+    this.drawPuyo(drop.colours[0], size);
+    ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
+    this.drawPuyo(drop.colours[1], size);
+    ctx.restore();
+}
+
+draw_L(drop, size) {
+    let ctx = this.ctx;
+    ctx.save();
+    this.drawPuyo(drop.colours[0], size);
+    ctx.translate(size * Math.cos(drop.standardAngle + Math.PI / 2), - size * Math.sin(drop.standardAngle + Math.PI / 2));
+    this.drawPuyo(drop.colours[1], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(size * Math.cos(drop.standardAngle), - size * Math.sin(drop.standardAngle));
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+}
+
+draw_H(drop, size) {
+    let ctx = this.ctx;
+    ctx.save();
+    let xChange = size / Math.sqrt(2) * Math.cos(- drop.standardAngle + Math.PI / 4);
+    let yChange = size / Math.sqrt(2) * Math.sin(- drop.standardAngle + Math.PI / 4);
+    ctx.translate(- xChange, - yChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(- yChange, xChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(xChange, yChange);
+    this.drawPuyo(drop.colours[1], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(yChange, - xChange);
+    this.drawPuyo(drop.colours[1], size);
+    ctx.restore();
+}
+
+draw_O(drop, size) {
+    let ctx = this.ctx;
+    ctx.save();
+    let xChange = size / 2;
+    let yChange = size / 2;
+    ctx.translate(- xChange, - yChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(- yChange, xChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(xChange, yChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(yChange, - xChange);
+    this.drawPuyo(drop.colours[0], size);
+    ctx.restore();
+}

@@ -32,11 +32,10 @@ class SpriteDrawer {
 	static drawSprite(ctx, spriteSheet, size, sX, sY, dX = 0, dY = 0, sWidth = 1, sHeight = 1, merge = true) {
 		const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
 		if (SpriteDrawer.loadSprite(spriteSheet, sourceSize) === true) {
-			const canvasName = 'c' + sourceSize.toString();
 			const spriteWidth = sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT;
 			const spriteHeight = sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT;
 			ctx.drawImage(
-				SpriteDrawer[spriteSheet][canvasName],
+				SpriteDrawer[spriteSheet][sourceSize],
 				(sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
 				(sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
 				spriteWidth, spriteHeight,
@@ -52,17 +51,16 @@ class SpriteDrawer {
 		if(SpriteDrawer[spriteSheet].image.loaded === false) {
 			return false;
 		} else {
-			const canvasName = 'c' + size.toString();
-			// SpriteDrawer[spriteSheet][canvasName] is an html canvas object
-			// e.g. SpriteDrawer['Aqua']['c50'] or SpriteDrawer.Aqua.c50 is a canvas that has Aqua.png drawn with unit size 50
-			if(SpriteDrawer[spriteSheet][canvasName] == null) {
-				SpriteDrawer[spriteSheet][canvasName] = document.createElement('canvas');
-				SpriteDrawer[spriteSheet][canvasName].width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
-				SpriteDrawer[spriteSheet][canvasName].height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
-				SpriteDrawer[spriteSheet][canvasName].getContext('2d').drawImage(
+			// SpriteDrawer[spriteSheet][size] is an html canvas object
+			// e.g. SpriteDrawer['Aqua'][50] is a canvas that has Aqua.png drawn with unit size 50
+			if(SpriteDrawer[spriteSheet][size] == null) {
+				SpriteDrawer[spriteSheet][size] = document.createElement('canvas');
+				SpriteDrawer[spriteSheet][size].width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
+				SpriteDrawer[spriteSheet][size].height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
+				SpriteDrawer[spriteSheet][size].getContext('2d').drawImage(
 					SpriteDrawer[spriteSheet].image,
 					0, 0,
-					SpriteDrawer[spriteSheet][canvasName].width, SpriteDrawer[spriteSheet][canvasName].height
+					SpriteDrawer[spriteSheet][size].width, SpriteDrawer[spriteSheet][size].height
 				);
 			}
 			return true;

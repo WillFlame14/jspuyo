@@ -1,5 +1,6 @@
 'use strict';
 
+const { GameArea } = require('./BoardDrawer.js');
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
 const { Settings } = require('./Utils.js');
@@ -156,10 +157,10 @@ async function init(socket) {
 
 		// Adjust the number of boards drawn
 		clearBoards();
-		generateBoards(opponentIds.length + 1);
+		const gameAreas = generateBoards(opponentIds.length + 1);
 
 		// Set up the player's game
-		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -178,9 +179,9 @@ async function init(socket) {
 
 		// Adjust the number of boards drawn
 		clearBoards();
-		generateBoards(allIds.length);
+		const gameAreas = generateBoards(allIds.length);
 
-		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -227,53 +228,29 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateBoards (numBoards) {
+function generateBoards(numBoards, appearance, settings) {
 	const playArea = document.getElementById('playArea');
 	playArea.style.display = 'table';
 
 	const firstRow = playArea.insertRow(-1);
 	let runningId = 1;
+	const gameAreas = {};
 
 	const createGameCanvas = function(id, row, size) {
-		const board = row.insertCell(-1);
-		const gameArea = document.createElement('div');
-		gameArea.id = 'gameArea' + id;
-		board.appendChild(gameArea);
+		gameAreas[id] = new GameArea(settings, appearance, size);
 
-		const nuisanceQueueArea = document.createElement('div');
-		nuisanceQueueArea.id = 'nuisanceQueueArea' + id;
-		gameArea.appendChild(nuisanceQueueArea);
+		const cell = row.insertCell(-1);
 
-		const nuisanceQueueCanvas = document.createElement('canvas');
-		nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
-		nuisanceQueueCanvas.height = 45 * size;
-		nuisanceQueueCanvas.width = 270 * size;
-		nuisanceQueueCanvas.className = 'nuisanceQueue';
-		nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
+		const playerArea = document.createElement('div');
+		cell.appendChild(playerArea);
 
-		const centralArea = document.createElement('div');
-		centralArea.id = 'centralArea' + id;
-		gameArea.appendChild(centralArea);
-
-		const boardCanvas = document.createElement('canvas');
-		boardCanvas.id = 'board' + id;
-		boardCanvas.height = 540 * size;
-		boardCanvas.width = 270 * size;
-		centralArea.appendChild(boardCanvas);
-
-		// Only draw queue if size is at least 50%
-		if(size > 0.5) {
-			const queueCanvas = document.createElement('canvas');
-			queueCanvas.id = 'queue' + id;
-			queueCanvas.height = 540 * size;
-			queueCanvas.width = 72 * size;
-			centralArea.appendChild(queueCanvas);
-		}
+		const canvasArea = document.createElement('div');
+		playerArea.appendChild(canvasArea);
+		canvasArea.appendChild(gameAreas[id].canvas);
 
 		const pointsArea = document.createElement('div');
-		pointsArea.id = 'pointsArea' + id;
 		pointsArea.className = 'pointsArea';
-		gameArea.appendChild(pointsArea);
+		playerArea.appendChild(pointsArea);
 
 		const pointsDisplay = document.createElement('span');
 		pointsDisplay.id = 'pointsDisplay' + id;
@@ -282,7 +259,7 @@ function generateBoards (numBoards) {
 		pointsDisplay.style.fontSize = 52 * size;
 		pointsArea.appendChild(pointsDisplay);
 
-		return board;
+		return cell;
 	};
 
 	const playerBoard = createGameCanvas(runningId, firstRow, 1);
@@ -331,6 +308,7 @@ function generateBoards (numBoards) {
 			runningId++;
 		}
 	}
+	return gameAreas;
 }
 
 /**

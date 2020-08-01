@@ -1,13 +1,12 @@
 'use strict';
 
-const { BoardDrawer } = require('./BoardDrawer');
 const { Game } = require('./Game.js');
 const { InputManager } = require('./InputManager.js');
 const { AudioPlayer } = require('./Utils.js');
 
 class PlayerGame extends Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings) {
-		super(gameId, opponentIds, socket, settings, userSettings, 1);
+	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas) {
+		super(gameId, opponentIds, socket, settings, userSettings, 1, gameAreas[1]);
 
 		let frame = 0;
 
@@ -15,14 +14,14 @@ class PlayerGame extends Game {
 		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
-		this.opponentBoardDrawers = {};
-		this.opponentIdToBoardDrawer = {};
+		this.opponentGameAreas = {};
+		this.opponentIdToCellId = {};
 
-		// Add a BoardDrawer for each opponent. CPU boards will draw themselves
+		// Associate a GameArea to each opponent
 		let opponentCounter = 2;
 		this.opponentIds.forEach(id => {
-			this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
-			this.opponentIdToBoardDrawer[id] = opponentCounter;
+			this.opponentGameAreas[id] = gameAreas[opponentCounter];
+			this.opponentIdToCellId[id] = opponentCounter;
 			opponentCounter++;
 		});
 
@@ -36,7 +35,7 @@ class PlayerGame extends Game {
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
-				this.opponentBoardDrawers[oppId].drawFromHash(boardHash);
+				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
 			else{
@@ -69,7 +68,7 @@ class PlayerGame extends Game {
 	step() {
 		const currentBoardHash = super.step();
 		if(currentBoardHash) {
-			this.boardDrawer.drawFromHash(currentBoardHash);
+			this.gameArea.drawFromHash(currentBoardHash);
 		}
 	}
 
@@ -85,7 +84,7 @@ class PlayerGame extends Game {
 	 * Updates the score displayed on screen for opponents.
 	 */
 	updateOpponentScore(oppId, score) {
-		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[oppId];
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToCellId[oppId];
 		const pointsDisplay = document.getElementById(pointsDisplayName);
 
 		// Make sure element exists
@@ -99,18 +98,18 @@ class PlayerGame extends Game {
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
 class SpectateGame extends Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings) {
+	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas) {
 		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;
-		this.opponentBoardDrawers = {};
-		this.opponentIdToBoardDrawer = {};
+		this.opponentGameAreas = {};
+		this.opponentIdToCellId = {};
 
-		// Add a BoardDrawer for each opponent.
+		// Associate a GameArea to each opponent
 		let opponentCounter = 1;
 		this.opponentIds.forEach(id => {
-			this.opponentBoardDrawers[id] = new BoardDrawer(this.settings, this.userSettings.appearance, opponentCounter);
-			this.opponentIdToBoardDrawer[id] = opponentCounter;
+			this.opponentGameAreas[id] = gameAreas[opponentCounter];
+			this.opponentIdToCellId[id] = opponentCounter;
 			opponentCounter++;
 		});
 
@@ -122,7 +121,7 @@ class SpectateGame extends Game {
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
-				this.opponentBoardDrawers[oppId].drawFromHash(boardHash);
+				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
 			else{
@@ -152,7 +151,7 @@ class SpectateGame extends Game {
 	 * Updates the score for opponents.
 	 */
 	updateOpponentScore(oppId, score) {
-		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToBoardDrawer[oppId];
+		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToCellId[oppId];
 		const pointsDisplay = document.getElementById(pointsDisplayName);
 
 		// Make sure element exists

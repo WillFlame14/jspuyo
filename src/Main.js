@@ -103,7 +103,7 @@ async function init(socket) {
 		currentRoomId = roomId;
 		clearModal();
 		clearBoards();
-		generateBoards(1);
+		generateBoards(1, Settings.fromString(settingsString));
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
@@ -157,7 +157,7 @@ async function init(socket) {
 
 		// Adjust the number of boards drawn
 		clearBoards();
-		const gameAreas = generateBoards(opponentIds.length + 1);
+		const gameAreas = generateBoards(opponentIds.length + 1, settings, userSettings.appearance);
 
 		// Set up the player's game
 		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas);
@@ -179,7 +179,7 @@ async function init(socket) {
 
 		// Adjust the number of boards drawn
 		clearBoards();
-		const gameAreas = generateBoards(allIds.length);
+		const gameAreas = generateBoards(allIds.length, settings, userSettings.appearance);
 
 		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas);
 
@@ -228,7 +228,7 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateBoards(numBoards, appearance, settings) {
+function generateBoards(numBoards, settings, appearance = new Settings().appearance) {
 	const playArea = document.getElementById('playArea');
 	playArea.style.display = 'table';
 
@@ -262,7 +262,7 @@ function generateBoards(numBoards, appearance, settings) {
 		return cell;
 	};
 
-	const playerBoard = createGameCanvas(runningId, firstRow, 1);
+	const playerCell = createGameCanvas(runningId, firstRow, 1);
 	runningId++;
 
 	// Set up the number of boards displayed
@@ -273,7 +273,7 @@ function generateBoards(numBoards, appearance, settings) {
 		}
 	}
 	else if (numBoards < 10) {
-		playerBoard.setAttribute('rowspan', '2');
+		playerCell.setAttribute('rowspan', '2');
 		// Create a larger top row
 		for(let i = 0; i < Math.ceil((numBoards - 1) / 2); i++) {
 			createGameCanvas(runningId, firstRow, 0.5);
@@ -287,7 +287,7 @@ function generateBoards(numBoards, appearance, settings) {
 		}
 	}
 	else {
-		playerBoard.setAttribute('rowspan', '3');
+		playerCell.setAttribute('rowspan', '3');
 		const minPerRow = Math.floor((numBoards - 1) / 3);
 		let extras = numBoards - 1 - minPerRow * 3;
 		// Spread rows over the first two rows

@@ -1,6 +1,7 @@
 'use strict';
 
 const { Board } = require('./Board.js');
+const { GameArea } = require('./BoardDrawer.js');
 const { DropGenerator } = require('./Drop.js');
 const { Utils } = require('./Utils.js');
 
@@ -34,7 +35,12 @@ class Game {
 		this.currentFrame = 0;
 
 		this.cellId = cellId;
-		this.gameArea = gameArea;
+		if (gameArea) {
+			this.gameArea = gameArea;
+		}
+		else {
+			this.gameArea = new GameArea(settings, userSettings.appearance, 1, true);
+		}
 		this.lastBoardHash = null;
 		this.socket = socket;
 
@@ -483,7 +489,7 @@ class Game {
 
 		// Insert squishing puyos drawing here
 		const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
-		const currentBoardHash = this.gameArea.updateBoard(currentBoardState);
+		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started

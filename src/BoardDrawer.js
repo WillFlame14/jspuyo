@@ -3,7 +3,10 @@
 const { Board } = require('./Board.js');
 const { SpriteDrawer } = require('./Draw.js');
 const { DIMENSIONS } = require('./Utils.js');
-const { POSITIONS } = require('../images/sprite-positions.json');
+const POSITIONS = {
+	NUISANCE: { X: 6, Y: 12},
+	PUYO_START: { X: 0, Y: 0}
+};
 const NUM_DRAWING_STATES = 5;
 const MODE = {
 	PUYO_DROPPING: 0,
@@ -17,38 +20,44 @@ const MODE = {
 const NUISANCE = 0;
 
 class CanvasLayer {
-	constructor(width, height, className) {
-		this.canvas = document.createElement('canvas');
-		this.canvas.width = width;
-		this.canvas.height = height;
-		if (className) {
-			this.canvas.className = className;
+	constructor(width, height, className, onNode = false) {
+		this.onNode = onNode;
+		this.width = width;
+		this.height = height;
+		if (!onNode) {
+			this.canvas = document.createElement('canvas');
+			this.canvas.width = width;
+			this.canvas.height = height;
+			if (className) {
+				this.canvas.className = className;
+			}
+			this.ctx = this.canvas.getContext('2d');
 		}
-		this.ctx = this.canvas.getContext('2d');
 	}
 	clear() {
-		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		if (!this.onNode) {
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		}
 	}
 }
 
 class DrawingLayer extends CanvasLayer {
-	constructor(width, height, unit, className) {
-		super(width, height, className);
+	constructor(width, height, unit, className, onNode) {
+		super(width, height, className, onNode);
 		this.unit = unit;
 		this.objectsDrawn = [];
 		this.drawingState = 0;
 		this.defaultArgs = {};
 	}
-	drawHere(args) {
-		SpriteDrawer.drawSprite(
-			this.ctx, args.appearance,
-			args.size * this.unit, args.sX, args.sY,
-			args.dX * this.unit, args.dY * this.unit, args.sWidth, args.sHeight, args.merge
-		);
-	}
-	drawFromArgs(drawingArgs) {
-		Object.assign(drawingArgs, this.defaultArgs);
-		this.drawHere(drawingArgs);
+	drawFromArgs(args) {
+		if (!this.onNode) {
+			Object.assign(args, this.defaultArgs);
+			SpriteDrawer.drawSprite(
+				this.ctx, args.appearance,
+				args.size * this.unit, args.sX, args.sY,
+				args.dX * this.unit, args.dY * this.unit, args.sWidth, args.sHeight, args.merge
+			);
+		}
 	}
 	draw(drawingArgs) {
 		this.objectsDrawn.push(drawingArgs);
@@ -59,6 +68,7 @@ class DrawingLayer extends CanvasLayer {
 	}
 	drawFromStateObject(state) {
 		if (state.drawingState !== this.drawingState) {
+			this.clear();
 			state.objectsDrawn.forEach((drawingArgs) => {
 				this.drawFromArgs(drawingArgs);
 			});
@@ -77,8 +87,8 @@ class DrawingLayer extends CanvasLayer {
 }
 
 class PuyoDrawingLayer extends DrawingLayer {
-	constructor(width, height, unit, appearance, className) {
-		super(width, height, unit, className);
+	constructor(width, height, unit, appearance, className, onNode) {
+		super(width, height, unit, className, onNode);
 		this.defaultArgs.appearance = appearance;
 		this.defaultArgs.size = 1;
 		this.defaultArgs.sWidth = 1;
@@ -127,37 +137,38 @@ class PuyoDrawingLayer extends DrawingLayer {
 		if("IhLHO".includes(drop.shape)) {
 			this["draw_" + drop.shape](drop, dX, dY);
 		}
-		else {
-			console.log('lol that\'s not a valid drop shape what kind of shape is ' + drop.shape);
-		}
 	}
 	draw_I(drop, dX, dY) {
 		this.drawPuyo(drop.colours[0], dX, dY, []);
-		dX += this.unit * Math.cos(drop.standardAngle + Math.PI / 2);
-		dY -= this.unit * Math.sin(drop.standardAngle + Math.PI / 2);
+		dX += Math.cos(drop.standardAngle + Math.PI / 2);
+		dY -= Math.sin(drop.standardAngle + Math.PI / 2);
 		this.drawPuyo(drop.colours[1], dX, dY, []);
 	}
 }
 
 class GameArea extends CanvasLayer {
-	constructor(settings, appearance, scaleFactor = 1) {
+	constructor(settings, appearance, scaleFactor = 1, onNode) {
 		super(
-			DIMENSIONS.BOARD.W * scaleFactor + (scaleFactor > DIMENSIONS.MIN_SCALE) ? (DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor) : 0,
-			DIMENSIONS.BOARD.H * scaleFactor + DIMENSIONS.MARGIN + DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor
+			DIMENSIONS.BOARD.W * scaleFactor + ((scaleFactor > DIMENSIONS.MIN_SCALE) ? (DIMENSIONS.MARGIN + DIMENSIONS.QUEUE.W * scaleFactor) : 0),
+			DIMENSIONS.BOARD.H * scaleFactor + DIMENSIONS.MARGIN + DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor,
+			"game-area",
+			onNode
 		);
 		this.settings = settings;
 		this.appearance = appearance;
-		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor);
-		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor);
-		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor);
+		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
+		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, 0, appearance, null, onNode);
+		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, 0, appearance, null, onNode);
 		this.simplified = scaleFactor <= DIMENSIONS.MIN_SCALE;
 	}
 	update() {
-		this.clear();
-		this.ctx.drawImage(this.nuisanceLayer.canvas, 0, 0);
-		this.ctx.drawImage(this.boardLayer.canvas, 0, this.nuisanceLayer.canvas.height + DIMENSIONS.MARGIN);
-		if (!this.simplified) {
-			this.ctx.drawImage(this.queueLayer.canvas, this.boardLayer.canvas.width + DIMENSIONS.MARGIN);
+		if (!this.onNode) {
+			this.clear();
+			this.ctx.drawImage(this.nuisanceLayer.canvas, 0, 0);
+			this.ctx.drawImage(this.boardLayer.canvas, 0, this.nuisanceLayer.canvas.height + DIMENSIONS.MARGIN);
+			if (!this.simplified) {
+				this.ctx.drawImage(this.queueLayer.canvas, this.boardLayer.canvas.width + DIMENSIONS.MARGIN, 0);
+			}
 		}
 	}
 	getHash() {
@@ -174,6 +185,11 @@ class GameArea extends CanvasLayer {
 	}
 	updateBoard(currentBoardState) {
 		this.boardLayer.updateBoard(currentBoardState);
+		this.update();
+		return this.getHash();
+	}
+	squishPuyos(currentBoardState) {
+		this.boardLayer.squishPuyos(currentBoardState);
 		this.update();
 		return this.getHash();
 	}
@@ -195,22 +211,24 @@ class GameArea extends CanvasLayer {
 }
 
 class BoardLayer extends CanvasLayer {
-	constructor(settings, appearance, scaleFactor = 1) {
+	constructor(settings, appearance, scaleFactor = 1, onNode) {
 		super(
-			DIMENSIONS.BOARD.W * scaleFactor, DIMENSIONS.BOARD.H * scaleFactor
+			DIMENSIONS.BOARD.W * scaleFactor, DIMENSIONS.BOARD.H * scaleFactor, null, onNode
 		);
-		this.unit = this.canvas.width / settings.cols;
+		this.unit = this.width / settings.cols;
 		this.settings = settings;
 		this.appearance = appearance;
-		this.stackLayer = new PuyoDrawingLayer(this.canvas.width, this.canvas.height, this.unit, appearance);
-		this.dynamicLayer = new PuyoDrawingLayer(this.canvas.width, this.canvas.height, this.unit, appearance);
+		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, null, onNode);
+		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, null, onNode);
 		this.nuisanceCascadeFPR = [];
 		this.mode = null;
 	}
 	update() {
-		this.clear();
-		this.ctx.drawImage(this.stackLayer, 0, 0);
-		this.ctx.drawImage(this.dynamicLayer, 0, 0);
+		if (!this.onNode) {
+			this.clear();
+			this.ctx.drawImage(this.stackLayer.canvas, 0, 0);
+			this.ctx.drawImage(this.dynamicLayer.canvas, 0, 0);
+		}
 	}
 	getStateObject() {
 		return {stackObject: this.stackLayer.getStateObject(), dynamicObject: this.dynamicLayer.getStateObject()};
@@ -240,7 +258,6 @@ class BoardLayer extends CanvasLayer {
 			}
 			this.dynamicLayer.resetState();
 			this.dynamicLayer.drawDrop(currentDrop, 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
-
 		}
 		else {
 			if (this.hasStackChanged(MODE.PUYO_DROPPING_SPLIT)) {
@@ -254,6 +271,19 @@ class BoardLayer extends CanvasLayer {
 			this.dynamicLayer.resetState();
 			this.dynamicLayer.drawPuyo(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
 			this.dynamicLayer.drawPuyo(currentDrop.colours[1], 0.5 + currentDrop.schezo.x, this.settings.rows - 0.5 - currentDrop.schezo.y);
+		}
+		this.update();
+	}
+	squishPuyos(currentBoardState) {
+		const { connections } = currentBoardState;
+		if (this.hasStackChanged(MODE.PUYO_SQUISHING)) {
+			this.stackLayer.resetState();
+			connections.forEach(group => {
+				group.forEach(puyo => {
+					this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+				});
+			});
+			this.dynamicLayer.resetState();
 		}
 		this.update();
 	}
@@ -313,7 +343,7 @@ class BoardLayer extends CanvasLayer {
 			const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
 			const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
 			for (let j = 0; j < nuisanceArray[i].length; j++) {
-				this.dynamicLayer.drawPuyo(NUISANCE, i, this.settings.rows - 0.5 - this.settings.nuisanceSpawnRow + rowsDropped - j);
+				this.dynamicLayer.drawPuyo(NUISANCE, 0.5 + i, this.settings.rows - 0.5 - this.settings.nuisanceSpawnRow + rowsDropped - j);
 			}
 		}
 		this.update();

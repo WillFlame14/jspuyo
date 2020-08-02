@@ -219,6 +219,12 @@ class BoardLayer extends CanvasLayer {
 		this.unit = this.width / settings.cols;
 		this.settings = settings;
 		this.appearance = appearance;
+		this.backgroundLayer = new DrawingLayer(this.width, this.height, this.unit, onNode);
+		if (!this.onNode) {
+			this.backgroundLayer.ctx.fillStyle = 'black';
+			this.backgroundLayer.ctx.globalAlpha = 0.2;
+			this.backgroundLayer.ctx.fillRect(0, 0, this.width, this.height);
+		}
 		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
 		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
 		this.nuisanceCascadeFPR = [];
@@ -227,6 +233,7 @@ class BoardLayer extends CanvasLayer {
 	update() {
 		if (!this.onNode) {
 			this.clear();
+			this.ctx.drawImage(this.backgroundLayer.canvas, 0, 0);
 			this.ctx.drawImage(this.stackLayer.canvas, 0, 0);
 			this.ctx.drawImage(this.dynamicLayer.canvas, 0, 0);
 		}

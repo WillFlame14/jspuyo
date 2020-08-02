@@ -154,7 +154,7 @@ class GameArea extends CanvasLayer {
 		this.appearance = appearance;
 		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
 		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, 0, appearance, onNode);
-		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, 0, appearance, onNode);
+		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode);
 		this.simplified = scaleFactor <= DIMENSIONS.MIN_SCALE;
 	}
 	update() {
@@ -201,6 +201,11 @@ class GameArea extends CanvasLayer {
 	}
 	dropNuisance(boardState, nuisanceState) {
 		this.boardLayer.dropNuisance(boardState, nuisanceState);
+		this.update();
+		return this.getHash();
+	}
+	updateQueue(queueState) {
+		this.queueLayer.updateQueue(queueState);
 		this.update();
 		return this.getHash();
 	}
@@ -351,7 +356,13 @@ class NuisanceLayer extends PuyoDrawingLayer {
 }
 
 class QueueLayer extends PuyoDrawingLayer {
-	// TODO: Implement queue
+	updateQueue(queueState) {
+		const { dropArray } = queueState;
+		this.resetState();
+		for (let i = 0; i < dropArray.length; i++) {
+			this.drawDrop(dropArray[i], 1, 2 + 3 * i);
+		}
+	}
 }
 
 module.exports = { GameArea };

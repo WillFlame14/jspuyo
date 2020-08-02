@@ -181,6 +181,7 @@ class Game {
 					this.dropQueueIndex++;
 				}
 				this.currentDrop = this.dropQueue.shift();
+				this.currentBoardHash = this.gameArea.updateQueue({dropArray: this.dropQueue.slice(0, 2)});
 			}
 
 			this.getInputs();

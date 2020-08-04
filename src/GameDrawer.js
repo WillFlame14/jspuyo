@@ -12,7 +12,8 @@ const DIMENSIONS = {
 const PUYO_COORDINATES = {
 	NUISANCE: { X: 6, Y: 12 },
 	PUYO_START: { X: 0, Y: 0 },
-	GHOST_START: { X: 0, Y: 9 },
+	HIGHLIGHT_START: { X: 0, Y: 9 },
+	GHOST_START: { X: 5, Y: 11, SCALE: 0.7 },
 	INCOMING: {
 		SMALL: { X: 14, Y: 12, SCALE: 1 },
 		LARGE: { X: 13, Y: 12, SCALE: 1 },
@@ -74,9 +75,9 @@ class DrawingLayer extends CanvasLayer {
 		this.drawingState = 0;
 		this.defaultArgs = {};
 	}
-	drawFromArgs(args) {
+	drawFromArgs(drawingArgs) {
 		if (!this.onNode) {
-			Object.assign(args, this.defaultArgs);
+			const args = Object.assign({}, this.defaultArgs, drawingArgs);
 			SpriteDrawer.drawSprite(
 				this.ctx, args.appearance,
 				args.size * this.unit, args.sX, args.sY,
@@ -156,20 +157,36 @@ class PuyoDrawingLayer extends DrawingLayer {
 		}
 	}
 	drawDrop(drop, dX, dY) {
-		if("I".includes(drop.shape)) {
-			this["draw" + drop.shape](drop, dX, dY);
+		if('I'.includes(drop.shape)) {
+			this['draw' + drop.shape](drop, dX, dY, false);
 		}
 	}
-	drawI(drop, dX, dY) {
-		this.drawPuyo(drop.colours[0], dX, dY, []);
+	drawHighlightedDrop(drop, dX, dY) {
+		if('I'.includes(drop.shape)) {
+			this['draw' + drop.shape](drop, dX, dY, true);
+		}
+	}
+	drawI(drop, dX, dY, highlighted = false) {
+		if (highlighted) {
+			this.drawHighlighted(drop.colours[0], dX, dY, []);
+		}
+		else {
+			this.drawPuyo(drop.colours[0], dX, dY, []);
+		}
 		dX += Math.cos(drop.standardAngle + Math.PI / 2);
 		dY -= Math.sin(drop.standardAngle + Math.PI / 2);
 		this.drawPuyo(drop.colours[1], dX, dY, []);
 	}
+	drawHighlighted(colour, dX, dY) {
+		const sX = PUYO_COORDINATES.HIGHLIGHT_START.X + colour - 1;
+		const sY = PUYO_COORDINATES.HIGHLIGHT_START.Y;
+		this.draw({ sX, sY, dX, dY });
+	}
 	drawGhost(colour, dX, dY) {
 		const sX = PUYO_COORDINATES.GHOST_START.X + colour - 1;
 		const sY = PUYO_COORDINATES.GHOST_START.Y;
-		this.draw({ sX, sY, dX, dY });
+		const scale = PUYO_COORDINATES.GHOST_START.SCALE;
+		this.draw({ sX, sY, dX, dY, sWidth: scale, sHeight: scale });
 	}
 }
 
@@ -305,23 +322,28 @@ class BoardLayer extends CanvasLayer {
 				});
 			}
 			this.dynamicLayer.resetState();
+			console.log(currentDrop.standardAngle);
 			if (currentDrop.standardAngle > Math.PI / 4 && currentDrop.standardAngle <= 3 * Math.PI / 4) {
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				this.dynamicLayer.drawGhost(currentDrop.colours[1], -0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x - 1]);
+				if (this.columnHeights[currentDrop.arle.x - 1] <= this.columnHeights[currentDrop.arle.x]) {
+					this.dynamicLayer.drawGhost(currentDrop.colours[1], -0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x - 1]);
+				}
 			}
-			else if (currentDrop.standardAngle <= 5 * Math.PI / 4) {
+			else if (currentDrop.standardAngle > 3 * Math.PI / 4 && currentDrop.standardAngle <= 5 * Math.PI / 4) {
 				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
 			}
-			else if (currentDrop.standardAngle <= 7 * Math.PI / 4) {
+			else if (currentDrop.standardAngle > 5 * Math.PI / 4 && currentDrop.standardAngle <= 7 * Math.PI / 4) {
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				this.dynamicLayer.drawGhost(currentDrop.colours[1], 1.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x + 1]);
+				if (this.columnHeights[currentDrop.arle.x + 1] <= this.columnHeights[currentDrop.arle.x]) {
+					this.dynamicLayer.drawGhost(currentDrop.colours[1], 1.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x + 1]);
+				}
 			}
 			else {
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
 				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
 			}
-			this.dynamicLayer.drawDrop(currentDrop, 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
+			this.dynamicLayer.drawHighlightedDrop(currentDrop, 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
 		}
 		else {
 			if (this.hasStackChanged(MODE.PUYO_DROPPING_SPLIT)) {

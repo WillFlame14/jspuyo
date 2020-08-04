@@ -2,11 +2,36 @@
 
 const { Board } = require('./Board.js');
 const { SpriteDrawer } = require('./Draw.js');
-const { DIMENSIONS } = require('./Utils.js');
-const POSITIONS = {
-	NUISANCE: { X: 6, Y: 12},
-	PUYO_START: { X: 0, Y: 0}
+const DIMENSIONS = {
+	BOARD : { W: 270, H: 540 },
+	QUEUE : { W: 72, H: 540 },
+	NUISANCE_QUEUE : { W: 270, H: 90 },
+	MARGIN: 10,
+	MIN_SCALE: 0.5
 };
+const PUYO_COORDINATES = {
+	NUISANCE: { X: 6, Y: 12 },
+	PUYO_START: { X: 0, Y: 0 },
+	GHOST_START: { X: 0, Y: 9 },
+	INCOMING: {
+		SMALL: { X: 14, Y: 12, SCALE: 1 },
+		LARGE: { X: 13, Y: 12, SCALE: 1 },
+		ROCK: { X: 12, Y: 12, SCALE: 1 },
+		STAR: { X: 12, Y: 11, SCALE: 1 },
+		MOON: { X: 11, Y: 11, SCALE: 1 },
+		CROWN: { X: 10, Y: 11, SCALE: 1 },
+		COMET: { X: 12, Y: 7, SCALE: 1.5 }
+	}
+};
+const INCOMING_SYMBOLS = [
+	{ SYMBOL: 'SMALL', VALUE: 1 },
+	{ SYMBOL: 'LARGE', VALUE: 6 },
+	{ SYMBOL: 'ROCK', VALUE: 30 },
+	{ SYMBOL: 'STAR', VALUE: 180 },
+	{ SYMBOL: 'MOON', VALUE: 360 },
+	{ SYMBOL: 'CROWN', VALUE: 720 },
+	{ SYMBOL: 'COMET', VALUE: 1440 }
+];
 const NUM_DRAWING_STATES = 5;
 const MODE = {
 	PUYO_DROPPING: 0,
@@ -64,7 +89,7 @@ class DrawingLayer extends CanvasLayer {
 		this.drawFromArgs(drawingArgs);
 	}
 	getStateObject() {
-		return {drawingState: this.drawingState, objectsDrawn: this.objectsDrawn};
+		return { drawingState: this.drawingState, objectsDrawn: this.objectsDrawn };
 	}
 	drawFromStateObject(state) {
 		if (state.drawingState !== this.drawingState) {
@@ -95,12 +120,12 @@ class PuyoDrawingLayer extends DrawingLayer {
 	drawPuyo(colour, dX, dY, directions = []) {
 		let sX, sY;
 		if(colour === 0) {
-			sX = POSITIONS.NUISANCE.X;
-			sY = POSITIONS.NUISANCE.Y;
+			sX = PUYO_COORDINATES.NUISANCE.X;
+			sY = PUYO_COORDINATES.NUISANCE.Y;
 		}
 		else {
-			sX = POSITIONS.PUYO_START.X;
-			sY = POSITIONS.PUYO_START.Y + colour - 1;
+			sX = PUYO_COORDINATES.PUYO_START.X;
+			sY = PUYO_COORDINATES.PUYO_START.Y + colour - 1;
 			if(directions.includes('Down')) {
 				sX += 1;
 			}
@@ -114,32 +139,37 @@ class PuyoDrawingLayer extends DrawingLayer {
 				sX += 8;
 			}
 		}
-		this.draw({sX, sY, dX, dY});
+		this.draw({ sX, sY, dX, dY });
 	}
 	drawPoppingPuyo(colour, dX, dY, drawPhaseTwo) {
 		if(colour === 0) {
 			if(!drawPhaseTwo) {
-				const sX = POSITIONS.NUISANCE.X;
-				const sY = POSITIONS.NUISANCE.Y;
-				this.draw({sX, sY, dX, dY});
+				const sX = PUYO_COORDINATES.NUISANCE.X;
+				const sY = PUYO_COORDINATES.NUISANCE.Y;
+				this.draw({ sX, sY, dX, dY });
 			}
 		}
 		else {
 			const sX = (colour - 1) * 2 + (drawPhaseTwo ? 7 : 6);
 			const sY = 10;
-			this.draw({sX, sY, dX, dY});
+			this.draw({ sX, sY, dX, dY });
 		}
 	}
 	drawDrop(drop, dX, dY) {
 		if("I".includes(drop.shape)) {
-			this["draw_" + drop.shape](drop, dX, dY);
+			this["draw" + drop.shape](drop, dX, dY);
 		}
 	}
-	draw_I(drop, dX, dY) {
+	drawI(drop, dX, dY) {
 		this.drawPuyo(drop.colours[0], dX, dY, []);
 		dX += Math.cos(drop.standardAngle + Math.PI / 2);
 		dY -= Math.sin(drop.standardAngle + Math.PI / 2);
 		this.drawPuyo(drop.colours[1], dX, dY, []);
+	}
+	drawGhost(colour, dX, dY) {
+		const sX = PUYO_COORDINATES.GHOST_START.X + colour - 1;
+		const sY = PUYO_COORDINATES.GHOST_START.Y;
+		this.draw({ sX, sY, dX, dY });
 	}
 }
 
@@ -153,7 +183,7 @@ class GameArea extends CanvasLayer {
 		this.settings = settings;
 		this.appearance = appearance;
 		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
-		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, 0, appearance, onNode);
+		this.nuisanceLayer = new NuisanceLayer(DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, appearance, onNode);
 		this.queueLayer = new QueueLayer(DIMENSIONS.QUEUE.W * scaleFactor, DIMENSIONS.QUEUE.H * scaleFactor, DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode);
 		this.simplified = scaleFactor <= DIMENSIONS.MIN_SCALE;
 	}
@@ -168,7 +198,7 @@ class GameArea extends CanvasLayer {
 		}
 	}
 	getHash() {
-		return JSON.stringify({boardObject: this.boardLayer.getStateObject(), nuisanceObject: this.nuisanceLayer.getStateObject(), queueObject: this.queueLayer.getStateObject()});
+		return JSON.stringify({ boardObject: this.boardLayer.getStateObject(), nuisanceObject: this.nuisanceLayer.getStateObject(), queueObject: this.queueLayer.getStateObject() });
 	}
 	drawFromHash(hash) {
 		const stateObject = JSON.parse(hash);
@@ -209,6 +239,11 @@ class GameArea extends CanvasLayer {
 		this.update();
 		return this.getHash();
 	}
+	updateNuisance(nuisance) {
+		this.nuisanceLayer.updateNuisance(nuisance);
+		this.update();
+		return this.getHash();
+	}
 }
 
 class BoardLayer extends CanvasLayer {
@@ -227,6 +262,7 @@ class BoardLayer extends CanvasLayer {
 		}
 		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
 		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
+		this.columnHeights = [];
 		this.nuisanceCascadeFPR = [];
 		this.mode = null;
 	}
@@ -239,7 +275,7 @@ class BoardLayer extends CanvasLayer {
 		}
 	}
 	getStateObject() {
-		return {stackObject: this.stackLayer.getStateObject(), dynamicObject: this.dynamicLayer.getStateObject()};
+		return { stackObject: this.stackLayer.getStateObject(), dynamicObject: this.dynamicLayer.getStateObject() };
 	}
 	drawFromStateObject(stateObject) {
 		this.stackLayer.drawFromStateObject(stateObject.stackObject);
@@ -254,17 +290,37 @@ class BoardLayer extends CanvasLayer {
 		return false;
 	}
 	updateBoard(currentBoardState) {
-		const {connections, currentDrop} = currentBoardState;
+		const { connections, currentDrop } = currentBoardState;
 		if (currentDrop.schezo.y == null) {
 			if (this.hasStackChanged(MODE.PUYO_DROPPING)) {
+				this.columnHeights = new Array(this.settings.cols).fill(0);
 				this.stackLayer.resetState();
 				connections.forEach(group => {
 					group.forEach(puyo => {
 						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+						if (this.columnHeights[puyo.col] < puyo.row + 1) {
+							this.columnHeights[puyo.col] = puyo.row + 1;
+						}
 					});
 				});
 			}
 			this.dynamicLayer.resetState();
+			if (currentDrop.standardAngle > Math.PI / 4 && currentDrop.standardAngle <= 3 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
+				this.dynamicLayer.drawGhost(currentDrop.colours[1], -0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x - 1]);
+			}
+			else if (currentDrop.standardAngle <= 5 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
+				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
+			}
+			else if (currentDrop.standardAngle <= 7 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
+				this.dynamicLayer.drawGhost(currentDrop.colours[1], 1.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x + 1]);
+			}
+			else {
+				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
+				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
+			}
 			this.dynamicLayer.drawDrop(currentDrop, 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
 		}
 		else {
@@ -296,7 +352,7 @@ class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 	resolveChains(resolvingState) {
-		const {connections, poppedLocs, connectionsAfterPop, unstablePuyos} = resolvingState;
+		const { connections, poppedLocs, connectionsAfterPop, unstablePuyos } = resolvingState;
 		if (resolvingState.currentFrame <= this.settings.popFrames) {
 			if (this.hasStackChanged(MODE.CHAIN_POPPING)) {
 				this.stackLayer.resetState();
@@ -336,7 +392,7 @@ class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 	dropNuisance(boardState, nuisanceState) {
-		const {nuisanceArray, currentFrame} = nuisanceState;
+		const { nuisanceArray, currentFrame } = nuisanceState;
 		if (this.hasStackChanged(MODE.NUISANCE_DROPPING)) {
 			this.stackLayer.resetState();
 			const connections = new Board(this.settings, boardState).getConnections();
@@ -358,8 +414,36 @@ class BoardLayer extends CanvasLayer {
 	}
 }
 
-class NuisanceLayer extends PuyoDrawingLayer {
-	// TODO: Implement nuisance queue
+class NuisanceLayer extends DrawingLayer {
+	constructor(width, height, appearance, onNode) {
+		super(width, height, height / 2, onNode);
+		this.nuisance = null;
+		this.defaultArgs.appearance = appearance;
+		this.defaultArgs.size = 1;
+		this.defaultArgs.merge = false;
+	}
+	drawIncomingSymbol(symbol, dX, dY) {
+		const sX = PUYO_COORDINATES.INCOMING[symbol].X;
+		const sY = PUYO_COORDINATES.INCOMING[symbol].Y;
+		const scale = PUYO_COORDINATES.INCOMING[symbol].SCALE;
+		this.draw({ sX, sY, dX, dY, sWidth: scale, sHeight: scale });
+	}
+	updateNuisance(nuisance) {
+		if (this.nuisance !== nuisance) {
+			this.nuisance = nuisance;
+			this.resetState();
+			let runningX = 0;
+			for (let i = INCOMING_SYMBOLS.length - 1; i >= 0; i--) {
+				for (let j = 0; j < Math.floor(nuisance / INCOMING_SYMBOLS[i].VALUE); j++) {
+					const dimension = PUYO_COORDINATES.INCOMING[INCOMING_SYMBOLS[i].SYMBOL].SCALE;
+					runningX += dimension / 2;
+					this.drawIncomingSymbol(INCOMING_SYMBOLS[i].SYMBOL, runningX, 1);
+					runningX += dimension / 2;
+				}
+				nuisance %= INCOMING_SYMBOLS[i].VALUE;
+			}
+		}
+	}
 }
 
 class QueueLayer extends PuyoDrawingLayer {

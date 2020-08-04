@@ -1,13 +1,5 @@
 'use strict';
 
-const DIMENSIONS = {
-	BOARD : { W: 270, H: 540 },
-	QUEUE : { W: 72, H: 540 },
-	NUISANCE_QUEUE : { W: 270, H: 45 },
-	MARGIN: 10,
-	MIN_SCALE: 0.5
-};
-
 class Settings {
 	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.29, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
@@ -437,7 +429,6 @@ const Utils = {
 };
 
 module.exports = {
-	DIMENSIONS,
 	Settings,
 	SettingsBuilder,
 	UserSettings,

@@ -113,7 +113,7 @@ class Game {
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
-		this.currentBoardHash = this.gameArea.updateQueue({dropArray: this.dropQueue.slice(0, 2)});
+		this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 	}
 
 	/**
@@ -156,6 +156,7 @@ class Game {
 		}
 
 		let currentBoardHash = null;
+		this.gameArea.updateNuisance(this.activeNuisance);
 
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {
@@ -182,7 +183,7 @@ class Game {
 					this.dropQueueIndex++;
 				}
 				this.currentDrop = this.dropQueue.shift();
-				this.currentBoardHash = this.gameArea.updateQueue({dropArray: this.dropQueue.slice(0, 2)});
+				this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 			}
 
 			this.getInputs();

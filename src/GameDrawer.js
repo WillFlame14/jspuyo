@@ -21,7 +21,13 @@ const PUYO_COORDINATES = {
 		5: { 1: { X: 4, Y: 12}, 2: { X: 5, Y: 12 } }
 	},
 	HIGHLIGHT_START: { X: 0, Y: 9 },
-	GHOST_START: { X: 5, Y: 11, SCALE: 0.7 },
+	GHOST_START: {
+		1: { X: 14.5, Y: 7, SCALE: 0.5 },
+		2: { X: 14.5, Y: 7.5, SCALE: 0.5 },
+		3: { X: 14.5, Y: 8, SCALE: 0.5 },
+		4: { X: 14, Y: 7, SCALE: 0.5 },
+		5: { X: 14, Y: 7.5, SCALE: 0.5 }
+	},
 	INCOMING: {
 		SMALL: { X: 14, Y: 12, SCALE: 1 },
 		LARGE: { X: 13, Y: 12, SCALE: 1 },
@@ -183,9 +189,9 @@ class PuyoDrawingLayer extends DrawingLayer {
 		this.draw({ sX, sY, dX, dY });
 	}
 	drawGhost(colour, dX, dY) {
-		const sX = PUYO_COORDINATES.GHOST_START.X + colour - 1;
-		const sY = PUYO_COORDINATES.GHOST_START.Y;
-		const scale = PUYO_COORDINATES.GHOST_START.SCALE;
+		const sX = PUYO_COORDINATES.GHOST_START[colour].X;
+		const sY = PUYO_COORDINATES.GHOST_START[colour].Y;
+		const scale = PUYO_COORDINATES.GHOST_START[colour].SCALE;
 		this.draw({ sX, sY, dX, dY, sWidth: scale, sHeight: scale });
 	}
 }
@@ -272,10 +278,12 @@ class BoardLayer extends CanvasLayer {
 		this.settings = settings;
 		this.appearance = appearance;
 		this.backgroundLayer = new DrawingLayer(this.width, this.height, this.unit, onNode);
+		this.backgroundLayer.resetState();
 		if (!this.onNode) {
 			this.backgroundLayer.ctx.fillStyle = 'black';
 			this.backgroundLayer.ctx.globalAlpha = 0.2;
 			this.backgroundLayer.ctx.fillRect(0, 0, this.width, this.height);
+			this.backgroundLayer.draw({ appearance, size: 1, sX: PUYO_COORDINATES.CROSS.X, sY: PUYO_COORDINATES.CROSS.Y, dX: 2.5, dY: 0.5, sWidth: 1, sHeight: 1, merge: false });
 		}
 		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
 		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
@@ -292,9 +300,10 @@ class BoardLayer extends CanvasLayer {
 		}
 	}
 	getStateObject() {
-		return { stackObject: this.stackLayer.getStateObject(), dynamicObject: this.dynamicLayer.getStateObject() };
+		return { /* backgroundObject: this.backgroundLayer.getStateObject(), */stackObject: this.stackLayer.getStateObject(), dynamicObject: this.dynamicLayer.getStateObject() };
 	}
 	drawFromStateObject(stateObject) {
+		/*this.backgroundLayer.drawFromStateObject(stateObject.backgroundObject);*/
 		this.stackLayer.drawFromStateObject(stateObject.stackObject);
 		this.dynamicLayer.drawFromStateObject(stateObject.dynamicObject);
 		this.update();

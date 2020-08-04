@@ -156,7 +156,7 @@ class Game {
 		}
 
 		let currentBoardHash = null;
-		this.gameArea.updateNuisance(this.activeNuisance);
+		this.gameArea.updateNuisance(this.getTotalNuisance());
 
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {

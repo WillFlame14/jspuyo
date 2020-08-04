@@ -12,6 +12,14 @@ const DIMENSIONS = {
 const PUYO_COORDINATES = {
 	NUISANCE: { X: 6, Y: 12 },
 	PUYO_START: { X: 0, Y: 0 },
+	POPPING: {
+		0: { 1: { X: 6, Y: 12}, 2: { X: 9, Y: 15 } },
+		1: { 1: { X: 0, Y: 12}, 2: { X: 1, Y: 12 } },
+		2: { 1: { X: 0, Y: 13}, 2: { X: 1, Y: 13 } },
+		3: { 1: { X: 2, Y: 12}, 2: { X: 3, Y: 12 } },
+		4: { 1: { X: 2, Y: 13}, 2: { X: 3, Y: 13 } },
+		5: { 1: { X: 4, Y: 12}, 2: { X: 5, Y: 12 } }
+	},
 	HIGHLIGHT_START: { X: 0, Y: 9 },
 	GHOST_START: { X: 5, Y: 11, SCALE: 0.7 },
 	INCOMING: {
@@ -22,7 +30,8 @@ const PUYO_COORDINATES = {
 		MOON: { X: 11, Y: 11, SCALE: 1 },
 		CROWN: { X: 10, Y: 11, SCALE: 1 },
 		COMET: { X: 12, Y: 7, SCALE: 1.5 }
-	}
+	},
+	CROSS: { X: 7, Y: 12 }
 };
 const INCOMING_SYMBOLS = [
 	{ SYMBOL: 'SMALL', VALUE: 1 },
@@ -33,7 +42,7 @@ const INCOMING_SYMBOLS = [
 	{ SYMBOL: 'CROWN', VALUE: 720 },
 	{ SYMBOL: 'COMET', VALUE: 1440 }
 ];
-const NUM_DRAWING_STATES = 5;
+const NUM_DRAWING_STATES = 128;
 const MODE = {
 	PUYO_DROPPING: 0,
 	PUYO_DROPPING_SPLIT: 1,
@@ -143,18 +152,9 @@ class PuyoDrawingLayer extends DrawingLayer {
 		this.draw({ sX, sY, dX, dY });
 	}
 	drawPoppingPuyo(colour, dX, dY, drawPhaseTwo) {
-		if(colour === 0) {
-			if(!drawPhaseTwo) {
-				const sX = PUYO_COORDINATES.NUISANCE.X;
-				const sY = PUYO_COORDINATES.NUISANCE.Y;
-				this.draw({ sX, sY, dX, dY });
-			}
-		}
-		else {
-			const sX = (colour - 1) * 2 + (drawPhaseTwo ? 7 : 6);
-			const sY = 10;
-			this.draw({ sX, sY, dX, dY });
-		}
+		const sX = PUYO_COORDINATES.POPPING[colour][drawPhaseTwo ? 2 : 1].X;
+		const sY = PUYO_COORDINATES.POPPING[colour][drawPhaseTwo ? 2 : 1].Y;
+		this.draw({ sX, sY, dX, dY });
 	}
 	drawDrop(drop, dX, dY) {
 		if('I'.includes(drop.shape)) {
@@ -322,10 +322,9 @@ class BoardLayer extends CanvasLayer {
 				});
 			}
 			this.dynamicLayer.resetState();
-			console.log(currentDrop.standardAngle);
 			if (currentDrop.standardAngle > Math.PI / 4 && currentDrop.standardAngle <= 3 * Math.PI / 4) {
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				if (this.columnHeights[currentDrop.arle.x - 1] <= this.columnHeights[currentDrop.arle.x]) {
+				if (this.columnHeights[currentDrop.arle.x - 1] <= this.columnHeights[currentDrop.arle.x] || this.columnHeights[currentDrop.arle.x - 1] <= currentDrop.arle.y) {
 					this.dynamicLayer.drawGhost(currentDrop.colours[1], -0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x - 1]);
 				}
 			}
@@ -335,7 +334,7 @@ class BoardLayer extends CanvasLayer {
 			}
 			else if (currentDrop.standardAngle > 5 * Math.PI / 4 && currentDrop.standardAngle <= 7 * Math.PI / 4) {
 				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				if (this.columnHeights[currentDrop.arle.x + 1] <= this.columnHeights[currentDrop.arle.x]) {
+				if (this.columnHeights[currentDrop.arle.x + 1] <= this.columnHeights[currentDrop.arle.x] || this.columnHeights[currentDrop.arle.x + 1] <= currentDrop.arle.y) {
 					this.dynamicLayer.drawGhost(currentDrop.colours[1], 1.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x + 1]);
 				}
 			}

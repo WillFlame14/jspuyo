@@ -76,10 +76,6 @@ io.on('connection', function(socket) {
 		cpuInfos.delete(gameId);
 	});
 
-	socket.on('startRoom', async gameId => {
-		Room.startRoom(null, gameId, socket);
-	});
-
 	socket.on('cpuAssign', (gameId, cpuId, cpu, callback) => {
 		const { speed, ai } = cpu;
 
@@ -92,6 +88,14 @@ io.on('connection', function(socket) {
 
 		// Resolve the promise to indicate that a socket has been created
 		callback();
+	});
+
+	socket.on('setRoomPassword', (gameId, password) => {
+		Room.setRoomPassword(gameId, password);
+	});
+
+	socket.on('startRoom', async gameId => {
+		Room.startRoom(null, gameId, socket);
 	});
 
 	socket.on('createRoom', gameInfo => {
@@ -116,9 +120,8 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('joinRoom', gameInfo => {
-		const { gameId, joinId } = gameInfo;
-		Room.leaveRoom(gameId);
-		Room.joinRoom(gameId, joinId, socket);
+		const { gameId, joinId, roomPassword } = gameInfo;
+		Room.joinRoom(gameId, joinId, socket, roomPassword);
 	});
 
 	socket.on('spectate', (gameId, roomId = null) => {
@@ -191,16 +194,18 @@ io.on('connection', function(socket) {
 				const room = Room.joinRoom(gameId, Room.defaultQueueRoomId, socket);
 
 				// Start game in 30s if there are at least 2 players
-				if(room.members.size >= 2 && room.quickPlayTimer === null) {
+				if(room.members.size >= 2 && !room.ingame && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
 						// Double-check that the room still contains at least 2 players
 						if(room.members.size >= 2) {
 							Room.startRoom(room.roomId);
 						}
 					}, 30000);
+					room.quickPlayStartTime = Date.now() + 30000;
 				}
 			}
 			catch(err) {
+				console.log(err);
 				socket.emit('joinFailure', err.message);
 			}
 		}
@@ -253,6 +258,10 @@ io.on('connection', function(socket) {
 
 	socket.on('forceDisconnect', (gameId, roomId) => {
 		Room.leaveRoom(gameId, roomId);
+	});
+
+	socket.on('focus', (gameId, focused) => {
+		Room.setFocus(gameId, focused);
 	});
 
 	// Called when logging out, since the same socket is used but with a different user

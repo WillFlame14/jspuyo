@@ -200,6 +200,28 @@
                 </div>
             </div>
         </div>
+        <div class="modal-content" id="roomPasswordModal">
+            <div class="close">&times;</div>
+            <form id="roomPasswordForm" autocomplete="off">
+                <label for="roomPassword">Enter the password for the room. An empty password will be treated as no password.</label><br>
+                <div id="roomPasswordInput">
+                    <input type="text" id="roomPassword" placeholder="<no password>" maxlength="20">
+                </div>
+                <input type="submit" id="roomPasswordSubmit" value="Save Password">
+            </form>
+        </div>
+        <div class="modal-content" id="joinRoomPasswordModal">
+            <div class="close">&times;</div>
+            <form id="joinRoomPasswordForm" autocomplete="off">
+                <label for="joinRoomPassword">Enter the password for the room.</label><br>
+                <div class="hiddenInfo" id="joinRoomId"></div>
+                <div class="errorMsg" id="joinRoomPasswordFormError"></div>
+                <div id="joinRoomPasswordInput">
+                    <input type="text" id="joinRoomPassword" maxlength="20">
+                </div>
+                <input type="submit" id="joinRoomPasswordSubmit" value="Join Room">
+            </form>
+        </div>
     </div>
     <div class="modal" id="modal-background-disable">
         <div class="modal-content dialog" id="dialogBox">
@@ -259,6 +281,10 @@
                     <li id="manageSettings">
                         <img class="roomManageIcon" src="images/mainpage/settings.png">
                         <span>Settings</span>
+                    </li>
+                    <li id="manageRoomPassword">
+                        <img class="roomManageIcon" src="images/mainpage/settings.png">
+                        <span>Set Room Password</span>
                     </li>
                     <li id="manageJoinLink">
                         <img class="roomManageIcon" src="images/mainpage/link.png">

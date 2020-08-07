@@ -8,11 +8,14 @@ const roomIds = new Set();		// Set of roomIds currently in use
 const roomIdToRoom = new Map();
 const idToRoomId = new Map();
 
+const undefinedSendState = new Map();		// Map of gameId --> time of last undefined sendState
+
 const MAX_FRAME_DIFFERENCE = 20;
 
 class Room {
 	constructor(members, host, roomSize, settingsString, roomType = 'default') {
 		this.roomId = generateRoomId(6);
+		this.password = null;
 		this.members = members;
 		this.cpus = new Map();
 		this.numCpus = 0;
@@ -21,11 +24,13 @@ class Room {
 		this.roomSize = roomSize;
 		this.settingsString = settingsString;
 		this.roomType = roomType;
-		this.quickPlayTimer = null;		// Only used if roomType is 'ffa'
+		this.quickPlayTimer = null;		// This, and the below variable are only used if roomType is 'ffa'
+		this.quickPlayStartTime = null;
 
 		this.ingame = false;
 		this.host = host;
 		this.paused = [];
+		this.unfocused = [];
 		this.spectating = new Map();
 		this.defeated = [];
 		this.timeout = null;
@@ -114,18 +119,30 @@ class Room {
 		}
 
 		idToRoomId.set(gameId, this.roomId);
-
 		this.spectating.set(gameId, socket);
-		socket.emit(
-			'roomUpdate',
-			this.roomId,
-			Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-			this.roomSize,
-			this.settingsString,
-			this.roomType,
-			false,		// Not host
-			true 		// Spectating
-		);
+
+		// Send start if ingame, otherwise
+		if(this.ingame) {
+			socket.emit(
+				'spectate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.settingsString
+			);
+		}
+		else {
+			socket.emit(
+				'roomUpdate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.roomSize,
+				this.settingsString,
+				this.roomType,
+				false,		// Not host
+				true 		// Spectating
+			);
+		}
+
 		console.log(`Added gameId ${gameId} to room ${this.roomId} as a spectator`);
 	}
 
@@ -136,8 +153,8 @@ class Room {
 		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 		// Generate a random seed and use it in the settings for this game
-		const seededSettingsString = Settings.seedString(this.settingsString);
-		const settings = Settings.fromString(seededSettingsString);
+		this.settingsString = Settings.seedString(this.settingsString);
+		const settings = Settings.fromString(this.settingsString);
 
 		// Generate the CPU games
 		this.cpus.forEach((cpu, cpuId) => {
@@ -191,7 +208,7 @@ class Room {
 		this.members.forEach((player, gameId) => {
 			const opponentIds = allIds.filter(id => id !== gameId);
 			this.games.set(gameId, { frames: 0, socket: player.socket });
-			player.socket.emit('start', this.roomId, opponentIds, seededSettingsString);
+			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
 		});
 
 		// Send start to the spectators
@@ -200,14 +217,13 @@ class Room {
 				'spectate',
 				this.roomId,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-				seededSettingsString
+				this.settingsString
 			);
 		});
 
 		switch(this.roomType) {
 			case 'ffa':
 				this.quickPlayTimer = null;
-				Room.defaultQueueRoomId = null;
 				break;
 			case 'ranked':
 				Room.rankedRoomId = null;
@@ -280,6 +296,7 @@ class Room {
 			if((this.roomType === 'ffa' || this.roomType === 'ranked') && this.members.size < 2 && this.quickPlayTimer !== null) {
 				clearTimeout(this.quickPlayTimer);
 				this.quickPlayTimer = null;
+				this.quickPlayStartTime = null;
 				console.log('Cancelled start. Not enough players.');
 			}
 		}
@@ -341,7 +358,8 @@ class Room {
 		let minFrames = Infinity, minId = null;
 
 		this.games.forEach((player, id) => {
-			if(!this.defeated.includes(id)) {		// Exclude defeated players
+			// Exclude defeated players
+			if(!this.defeated.includes(id)) {
 				const frames = player.frames;
 				if(frames < minFrames) {
 					minFrames = frames;
@@ -371,7 +389,7 @@ class Room {
 						}
 					});
 					this.leave(minId);
-				}, 30000);
+				}, (this.unfocused.includes(minId) ? 3000 : 15000));
 			}
 		}
 		// Catching up
@@ -403,6 +421,15 @@ class Room {
 		// Get all display names of members and CPUs
 		const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
+		// In case timer has not been set yet due to race condition
+		let tempTimer = null;
+
+		if(this.roomType === 'ffa') {
+			if(this.quickPlayStartTime === null || Date.now() > this.quickPlayStartTime + 1000) {
+				tempTimer = Date.now() + 30000;
+			}
+		}
+
 		this.members.forEach((player, id) => {
 			player.socket.emit(
 				'roomUpdate',
@@ -412,7 +439,8 @@ class Room {
 				this.settingsString,
 				this.roomType,
 				id === this.host,
-				false		// Not spectating
+				false,		// Not spectating,
+				this.quickPlayStartTime || tempTimer
 			);
 		});
 
@@ -445,15 +473,33 @@ class Room {
 		return room;
 	}
 
-	static joinRoom(gameId, roomId, socket, cpuInfo) {
+	static joinRoom(gameId, roomId, socket, roomPassword = null) {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
 			socket.emit('joinFailure', `The room you are trying to join ${roomId ? `(id ${roomId}) `:''}does not exist.`);
 			return;
 		}
+		else if(Array.from(room.members.keys()).includes(gameId)) {
+			socket.emit('joinFailure', `You are already in this room.`);
+			return;
+		}
+		else if(room.password !== null) {
+			if(roomPassword === null) {
+				socket.emit('requireRoomPassword', roomId);
+				return;
+			}
+			else if(roomPassword !== room.password) {
+				socket.emit('joinRoomPasswordFailure', 'This is not the correct password for the room.');
+				return;
+			}
+		}
+		else if(idToRoomId.has(gameId)) {
+			// Leave old room first
+			roomIdToRoom.get(idToRoomId.get(gameId)).leave(gameId);
+		}
 
-		room.join(gameId, socket, cpuInfo);
+		room.join(gameId, socket);
 		return room;
 	}
 
@@ -472,6 +518,12 @@ class Room {
 
 		room.spectate(gameId, socket);
 		return room;
+	}
+
+	static setRoomPassword(gameId, password) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+		room.password = password;
+		console.log('changed password to ' + password);
 	}
 
 	static startRoom(roomId = null, gameId, socket) {
@@ -593,11 +645,42 @@ class Room {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		if(room === undefined) {
-			console.log(`Received sendState from gameId ${gameId}, but they were not in a room.`);
+			if(!undefinedSendState.has(gameId) || Date.now() - undefinedSendState.get(gameId) > 5000) {
+				console.log(`Received sendState from gameId ${gameId}, but they were not in a room.`);
+				undefinedSendState.set(gameId, Date.now());
+			}
 			return;
 		}
 
 		room.advance(gameId);
+	}
+
+	static setFocus(gameId, focused) {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+
+		if(room !== undefined) {
+			if(focused && room.unfocused.includes(gameId)) {
+				// Remove from unfocused list
+				room.unfocused.splice(room.unfocused.indexOf(gameId), 1);
+
+				// Set their frame counter to the highest frame amount of the players
+				if(this.ingame) {
+					let maxFrames = 0;
+					this.games.forEach(player => {
+						const frames = player.frames;
+						if(frames > maxFrames) {
+							maxFrames = frames;
+						}
+					});
+
+					this.games.get(gameId).frames = maxFrames;
+				}
+			}
+			// Now unfocused
+			else if(!focused && !room.unfocused.includes(gameId)) {
+				room.unfocused.push(gameId);
+			}
+		}
 	}
 
 	static beenDefeated(gameId, roomId) {

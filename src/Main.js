@@ -31,6 +31,8 @@ let initialized;
 			mainpageInit(globalSocket, getCurrentUID)
 		]).then(() => {
 			resolve();
+		}).catch(err => {
+			console.log(err);
 		});
 	});
 })();
@@ -92,9 +94,11 @@ const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25
 const mainContent = document.getElementById('main-content');
 const sidebar = document.getElementById('sidebar');
 
+let quickPlayTimer = null;
+
 // Set up all the event listeners
 async function init(socket) {
-	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType, host, spectating) => {
+	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType, host, spectating, quickPlayStartTime) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
 			clearMessages();
@@ -115,15 +119,28 @@ async function init(socket) {
 		const statusSettings = document.getElementById('statusSettings');
 		const roomManageOptions = document.getElementById('roomManage');
 
+		if(roomType === 'ffa' && quickPlayTimer === null && quickPlayStartTime) {
+			quickPlayTimer = setInterval(() => {
+				const timeLeft = Math.round((quickPlayStartTime - Date.now()) / 1000);		// in seconds
+				if(timeLeft < 0) {
+					clearInterval(quickPlayTimer);
+					quickPlayTimer = null;
+				}
+				else {
+					statusMsg.innerHTML = `Game starting in ${timeLeft}...`;
+				}
+			}, 1000);
+		}
+
+		// Set up visual layout
 		if(roomType === 'ffa' || roomType === 'ranked') {
 			statusMsg.style.display = 'block';
 			statusGamemode.style.display = 'block';
 			roomManageOptions.style.display = 'none';
 			if (allIds.length === 1) {
 				statusMsg.innerHTML = 'Waiting for more players to start...';
-			}
-			else {
-				statusMsg.innerHTML = 'Game starting soon!';
+				clearInterval(quickPlayTimer);
+				quickPlayTimer = null;
 			}
 			statusSettings.innerHTML = 'Settings: ' + settingsString;
 		}
@@ -158,6 +175,10 @@ async function init(socket) {
 		clearBoards();
 		generateBoards(opponentIds.length + 1);
 
+		// Stop and reset the quick play timer if not already done
+		clearInterval(quickPlayTimer);
+		quickPlayTimer = null;
+
 		// Set up the player's game
 		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings);
 
@@ -191,6 +212,17 @@ async function init(socket) {
 	socket.on('showDialog', message => {
 		showDialog(message);
 	});
+
+	// Alert the server whenever the browser tab goes into or out of focus
+	document.addEventListener('visibilitychange', () => {
+		if(document.hidden) {
+			socket.emit('focus', getCurrentUID(), false);
+		}
+		else {
+			socket.emit('focus', getCurrentUID(), true);
+		}
+	});
+
 
 	// Return a promise that instantly resolves
 	return new Promise(resolve => resolve());

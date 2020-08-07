@@ -141,6 +141,22 @@ function mainpageInit(socket, getCurrentUID) {
 		setCreateRoomTrigger('set');
 	};
 
+	document.getElementById('manageRoomPassword').onclick = function() {
+		modal.style.display = 'block';
+		document.getElementById('roomPasswordModal').style.display = 'block';
+	};
+
+	document.getElementById('roomPasswordForm').onsubmit = function (event) {
+		// Prevent submit button from refreshing the page
+		event.preventDefault();
+
+		const password = document.getElementById('roomPassword').value || null;
+
+		socket.emit('setRoomPassword', getCurrentUID(), password);
+		document.getElementById('roomPasswordModal').style.display = 'none';
+		modal.style.display = 'none';
+	};
+
 	document.getElementById('manageStartRoom').onclick = function() {
 		socket.emit('startRoom', getCurrentUID());
 	};
@@ -289,6 +305,7 @@ function toggleHost(host) {
 	document.getElementById('createRoomSubmit').style.display = host ? 'block' : 'none';
 
 	document.getElementById('manageStartRoom').style.display = host ? 'grid' : 'none';
+	document.getElementById('manageRoomPassword').style.display = host ? 'grid' : 'none';
 }
 
 module.exports = {

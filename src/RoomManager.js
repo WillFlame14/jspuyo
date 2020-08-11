@@ -258,6 +258,11 @@ class RoomManager {
 
 		if(room !== undefined) {
 			room.defeated.push(gameId);
+
+			// If the remaining players lose at the same time
+			if(room.defeated.length === room.roomSize) {
+				room.end();
+			}
 		}
 	}
 

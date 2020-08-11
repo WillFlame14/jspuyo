@@ -321,12 +321,14 @@ class Room {
 
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
-			this.sendRoomUpdate();
 			// Set a new timer if this is the FFA/Ranked room
 			if(this.roomType !== 'default' && this.members.size >= 2) {
 				const timer = (this.roomType === 'ffa' ? 30000 : 10000);
 				this.quickPlayTimer = setTimeout(() => this.start(), timer);
+				this.quickPlayStartTime = Date.now() + timer;
 			}
+
+			this.sendRoomUpdate();
 		}, 5000);
 	}
 

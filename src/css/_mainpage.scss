@@ -28,6 +28,17 @@
 	text-align: center;
 }
 
+#spectateNotice {
+	display: none;
+	margin-top: 1rem;
+
+	color: white;
+	font: 1rem base.$font-title;
+	text-align: center;
+
+	text-shadow: base.$text-drop-shadow;
+}
+
 #playArea {
 	margin: 70px auto 0px;
 }

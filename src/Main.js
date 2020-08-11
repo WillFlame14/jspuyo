@@ -111,12 +111,13 @@ async function init(socket) {
 			mainContent.classList.remove('ingame');
 		}
 
+		document.getElementById('spectateNotice').style.display = 'none';
 		document.getElementById('statusArea').style.display = 'flex';
 		sidebar.style.display = 'flex';
 
 		const statusMsg = document.getElementById('statusMsg');
 		const statusGamemode = document.getElementById('statusGamemode');
-		const statusSettings = document.getElementById('statusSettings');
+		const statusExtra = document.getElementById('statusExtra');
 		const roomManageOptions = document.getElementById('roomManage');
 
 		if(roomType !== 'default' && quickPlayTimer === null && quickPlayStartTime) {
@@ -137,27 +138,36 @@ async function init(socket) {
 		if(roomType === 'ffa' || roomType === 'ranked') {
 			statusMsg.style.display = 'block';
 			statusGamemode.style.display = 'block';
+			statusExtra.style.display = 'block';
 			roomManageOptions.style.display = 'none';
+
 			if (allIds.length === 1) {
 				statusMsg.innerHTML = 'Waiting for more players to start...';
 				clearInterval(quickPlayTimer);
 				quickPlayTimer = null;
 			}
-			statusSettings.innerHTML = 'Settings: ' + settingsString;
+
+			if(spectating) {
+				toggleSpectate();
+				roomManageOptions.style.display = 'block';
+				statusExtra.innerHTML = 'You are currently spectating this room.';
+			}
+			else {
+				statusExtra.innerHTML = 'Good luck!';
+			}
 		}
-		else if (!spectating) {
-			toggleHost(host);
-			roomManageOptions.style.display = 'block';
+		// Custom room
+		else {
+			if(spectating) {
+				toggleSpectate();
+			}
+			else {
+				toggleHost(host);
+			}
 			statusMsg.style.display = 'none';
 			statusGamemode.style.display = 'none';
-		}
-		else {		// Spectating
-			toggleSpectate();
+			statusExtra.style.display = 'none';
 			roomManageOptions.style.display = 'block';
-			statusMsg.style.display = 'block';
-			statusGamemode.style.display = 'none';
-
-			statusMsg.innerHTML = 'You are currently spectating this room.';
 		}
 
 		updatePlayers(allIds);
@@ -198,6 +208,8 @@ async function init(socket) {
 
 		// Add default skipFrames
 		userSettings.skipFrames += defaultSkipFrames[allIds.length];
+
+		document.getElementById('spectateNotice').style.display = 'block';
 
 		// Adjust the number of boards drawn
 		clearBoards();

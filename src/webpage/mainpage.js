@@ -168,6 +168,10 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('manageSpectate').onclick = function() {
 		socket.emit('spectate', getCurrentUID());
 	};
+
+	document.getElementById('managePlay').onclick = function() {
+		socket.emit('joinRoom', { gameId: getCurrentUID() });
+	};
 }
 
 /**
@@ -304,8 +308,21 @@ function toggleHost(host) {
 	// The submit button for Room Options
 	document.getElementById('createRoomSubmit').style.display = host ? 'block' : 'none';
 
+	// Turn on all the typical room manage options
+	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
+		element.style.display = 'block';
+	});
+
 	document.getElementById('manageStartRoom').style.display = host ? 'grid' : 'none';
 	document.getElementById('manageRoomPassword').style.display = host ? 'grid' : 'none';
+	document.getElementById('managePlay').style.display = 'none';
+}
+
+function toggleSpectate() {
+	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
+		element.style.display = 'none';
+	});
+	document.getElementById('managePlay').style.display = 'block';
 }
 
 module.exports = {
@@ -314,5 +331,6 @@ module.exports = {
 	clearMessages,
 	updatePlayers,
 	hidePlayers,
-	toggleHost
+	toggleHost,
+	toggleSpectate
 };

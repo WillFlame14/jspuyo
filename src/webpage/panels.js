@@ -310,7 +310,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
 		const roomPassword = document.getElementById('joinRoomPassword').value;
-		const joinId = document.getElementById('joinRoomId').innerHTML;
+		const joinId = document.getElementById('joinRoomId').innerHTML || null;
 
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId, roomPassword });
 	};

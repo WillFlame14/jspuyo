@@ -111,6 +111,15 @@
 	}
 }
 
+#managePlay {
+	background: #444444;
+
+	// This icon is already gray/white, so do not need to invert
+	.roomManageIcon {
+		filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
 // General message describing the status of the room
 #statusMsg {
 	display: none;

@@ -6,7 +6,7 @@ const { Settings } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
 const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
-const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost } = require('./webpage/mainpage.js');
+const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, toggleSpectate } = require('./webpage/mainpage.js');
 const navbarInit = require('./webpage/navbar.js');
 const { panelsInit, clearModal, updateUserSettings } = require('./webpage/panels.js');
 
@@ -71,7 +71,7 @@ async function loginSuccess(user) {
 			console.log('Joining a room...');
 		}
 		else {
-			globalSocket.emit('freeForAll', { gameId: currentUID }, 'suppress');
+			globalSocket.emit('freeForAll', { gameId: currentUID });
 			document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		}
 	});
@@ -119,12 +119,13 @@ async function init(socket) {
 		const statusSettings = document.getElementById('statusSettings');
 		const roomManageOptions = document.getElementById('roomManage');
 
-		if(roomType === 'ffa' && quickPlayTimer === null && quickPlayStartTime) {
+		if(roomType !== 'default' && quickPlayTimer === null && quickPlayStartTime) {
 			quickPlayTimer = setInterval(() => {
 				const timeLeft = Math.round((quickPlayStartTime - Date.now()) / 1000);		// in seconds
-				if(timeLeft < 0) {
+				if(timeLeft <= 0) {
 					clearInterval(quickPlayTimer);
 					quickPlayTimer = null;
+					statusMsg.innerHTML = `Game starting soon!`;
 				}
 				else {
 					statusMsg.innerHTML = `Game starting in ${timeLeft}...`;
@@ -151,7 +152,8 @@ async function init(socket) {
 			statusGamemode.style.display = 'none';
 		}
 		else {		// Spectating
-			roomManageOptions.style.display = 'none';
+			toggleSpectate();
+			roomManageOptions.style.display = 'block';
 			statusMsg.style.display = 'block';
 			statusGamemode.style.display = 'none';
 

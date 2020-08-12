@@ -160,13 +160,16 @@ async function init(socket) {
 		else {
 			if(spectating) {
 				toggleSpectate();
+				statusExtra.innerHTML = 'You are currently spectating this room.';
+				statusExtra.style.display = 'block';
 			}
 			else {
 				toggleHost(host);
+				statusExtra.innerHTML = '';
+				statusExtra.style.display = 'none';
 			}
 			statusMsg.style.display = 'none';
 			statusGamemode.style.display = 'none';
-			statusExtra.style.display = 'none';
 			roomManageOptions.style.display = 'block';
 		}
 

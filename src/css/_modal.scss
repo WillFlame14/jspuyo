@@ -527,6 +527,38 @@ input.numPlayerButton {
 	background: #88244d;
 }
 
+/* ---------- Room Password Modal Box (setting) ---------- */
+
+#roomPasswordModal {
+	width: 40%;
+}
+
+#roomPassword {
+	margin: 0.5rem 0px;
+}
+
+#roomPasswordSubmit {
+	padding: 2px 5px;
+
+	background: #38661d;
+}
+
+/* ---------- Join Room Password Modal Box (joining) ---------- */
+
+#joinRoomPasswordModal {
+	width: 40%;
+}
+
+#joinRoomPassword {
+	margin: 0.5rem 0px;
+}
+
+#joinRoomPasswordSubmit {
+	padding: 2px 5px;
+
+	background: #48368d;
+}
+
 /* ---------- User Settings Modal Box ---------- */
 
 // Input boxes for DAS and ARR. Since they are alone, they can be larger.

@@ -83,7 +83,7 @@ class RoomManager {
 			return;
 		}
 
-		if(room.members.size === 1) {
+		if(room.members.size === 1 && room.members.has(gameId)) {
 			socket.emit('showDialog', 'You cannot spectate a room if you are the only player.');
 			return;
 		}

@@ -310,7 +310,7 @@ function toggleHost(host) {
 
 	// Turn on all the typical room manage options
 	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
-		element.style.display = 'block';
+		element.style.display = 'grid';
 	});
 
 	document.getElementById('manageStartRoom').style.display = host ? 'grid' : 'none';
@@ -322,7 +322,7 @@ function toggleSpectate() {
 	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
 		element.style.display = 'none';
 	});
-	document.getElementById('managePlay').style.display = 'block';
+	document.getElementById('managePlay').style.display = 'grid';
 }
 
 module.exports = {

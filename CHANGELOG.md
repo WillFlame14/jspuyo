@@ -2,6 +2,11 @@
 
 ## v0.8 - Personalization
 
+### v0.8.1a (August 12, 2020)
+
+Hotfix for CPU games being frozen upon start.
+Also changed games to use a global AudioPlayer to reduce the number of Audio objects generated.
+
 ### v0.8.1 (August 12, 2020)
 [`Added password-protected rooms, improved spectator experience #50`](https://github.com/WillFlame14/jspuyo/pull/50)
 

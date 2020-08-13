@@ -218,6 +218,7 @@ class RoomManager {
 
 		room.cpus.forEach((cpu, cpuId) => {
 			room.join(cpuId, cpu.socket, cpu, false);		// Don't notify for each CPU join
+			idToRoomId.set(cpuId, room.roomId);
 		});
 
 		// Notify once every CPU has joined

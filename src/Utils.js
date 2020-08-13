@@ -219,11 +219,8 @@ const characterNames = ['akari'];
 const SOUNDS_DIRECTORY = './sounds/';
 
 class AudioPlayer {
-	constructor(gameId, socket, sfxVolume, musicVolume, disable) {
-		this.gameId = gameId;
+	constructor(socket, disable) {
 		this.socket = socket;
-		this.sfxVolume = sfxVolume;
-		this.musicVolume = musicVolume;
 		this.cancel = false;
 		this.disabled = disable === 'disable';
 
@@ -236,7 +233,6 @@ class AudioPlayer {
 
 				if(audioInfo.numClips === 1) {
 					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.wav`);
-					audio.volume = this.sfxVolume * ((name === 'win' || name === 'lose') ? 0.6 : 1);
 					this.sfx[name] = [audio];
 				}
 				else {
@@ -245,7 +241,6 @@ class AudioPlayer {
 
 					for(let i = 0; i < audioInfo.numClips; i++) {
 						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.wav`);
-						audio.volume = this.sfxVolume;
 						audioFiles.push([audio]);
 					}
 					this.sfx[name] = audioFiles;
@@ -258,14 +253,12 @@ class AudioPlayer {
 				const chainAudio = [null];
 				for(let i = 0; i < 13; i++) {
 					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.ogg`);
-					audio.volume = 0.3;
 					chainAudio.push([audio]);
 				}
 
 				const spellAudio = [null];
 				for(let i = 0; i < 5; i++) {
 					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.ogg`);
-					audio.volume = 0.3;
 					spellAudio.push([audio]);
 				}
 				this.voices[name] = { chain: chainAudio, spell: spellAudio };
@@ -273,10 +266,16 @@ class AudioPlayer {
 		}
 	}
 
+	configure(gameId, sfxVolume, musicVolume) {
+		this.gameId = gameId;
+		this.sfxVolume = sfxVolume;
+		this.musicVolume = musicVolume;
+	}
+
 	/**
 	 * Plays an audio clip. An 1-based index parameter is provided for more detailed selection.
 	 */
-	playAudio(audio) {
+	playAudio(audio, volume) {
 		let channel = 0;
 		while(channel < audio.length && !audio[channel].paused) {
 			channel++;
@@ -285,9 +284,10 @@ class AudioPlayer {
 		// Generate a new audio object
 		if(channel === audio.length) {
 			const newsfx = audio[channel - 1].cloneNode();
-			newsfx.volume = audio[channel - 1].volume;
 			audio.push(newsfx);
 		}
+
+		audio[channel].volume = volume;
 		audio[channel].play();
 	}
 
@@ -296,7 +296,8 @@ class AudioPlayer {
 			return;
 		}
 		const audio = (index === null) ? this.sfx[sfx_name] : this.sfx[sfx_name][index];
-		this.playAudio(audio);
+		const volume = this.sfxVolume * ((sfx_name === 'win' || sfx_name === 'lose') ? 0.6 : 1);
+		this.playAudio(audio, volume);
 	}
 
 	playVoice(character, audio_name, index = null) {
@@ -304,7 +305,8 @@ class AudioPlayer {
 			return;
 		}
 		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
-		this.playAudio(audio);
+		const volume = 0.3;
+		this.playAudio(audio, volume);
 	}
 
 	/**

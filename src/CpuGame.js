@@ -20,7 +20,8 @@ class CpuGame extends Game {
 		this.movementTimer = Date.now();		// Timer to measure milliseconds before movement
 
 		// Disable certain classes
-		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume, 'disable');
+		this.audioPlayer = new AudioPlayer(socket, 'disable');
+		this.audioPlayer.configure(gameId, this.userSettings.sfxVolume, this.userSettings.musicVolume);
 	}
 
 	/**

@@ -2,7 +2,7 @@
 
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings } = require('./Utils.js');
+const { Settings, AudioPlayer } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
 const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
@@ -12,6 +12,8 @@ const { panelsInit, clearModal, updateUserSettings } = require('./webpage/panels
 
 const io = require('socket.io-client');
 const globalSocket = io();
+
+const globalAudioPlayer = new AudioPlayer(globalSocket);
 
 let currentUID;
 let initialized;
@@ -195,7 +197,7 @@ async function init(socket) {
 		quickPlayTimer = null;
 
 		// Set up the player's game
-		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -218,7 +220,7 @@ async function init(socket) {
 		clearBoards();
 		generateBoards(allIds.length);
 
-		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);

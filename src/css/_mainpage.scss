@@ -28,6 +28,17 @@
 	text-align: center;
 }
 
+#spectateNotice {
+	display: none;
+	margin-top: 1rem;
+
+	color: white;
+	font: 1rem base.$font-title;
+	text-align: center;
+
+	text-shadow: base.$text-drop-shadow;
+}
+
 #playArea {
 	margin: 70px auto 0px;
 }
@@ -54,28 +65,34 @@
 	margin-top: 0px;
 	padding-left: 0px;
 
-	font: 1.7rem base.$font-title;
+	font: 1.6rem base.$font-title;
+}
 
-	// An individual management option
-	li {
-		display: grid;
-		grid-template-columns: 20% 80%;
-		margin: 25px 0px;
-		padding: 10px 0px;
+// An individual management option
+.roomManageOption {
+	display: grid;
+	grid-template-columns: 20% 80%;
+	margin: 25px 0px;
+	padding: 10px 0px;
 
-		text-align: left;
+	white-space: nowrap;
 
-		text-shadow: base.$text-drop-shadow;
+	text-align: left;
 
-		box-shadow: base.$box-drop-shadow;
-		cursor: pointer;
+	text-shadow: base.$text-drop-shadow;
+
+	box-shadow: base.$box-drop-shadow;
+	cursor: pointer;
+
+	span {
+		margin: auto 0px;
 	}
 }
 
 // The icon for the room management option
 .roomManageIcon {
 	height: 80%;
-	max-height: 60px;
+	max-height: 1.5em;
 	margin: auto;
 
 	filter: invert(1) drop-shadow(0px 0px 15px base.$dark-gray);
@@ -90,6 +107,10 @@
 	background: #0b5394;
 }
 
+#manageRoomPassword {
+	background: #0b3374;
+}
+
 #manageJoinLink {
 	background: #134f5c;
 }
@@ -100,6 +121,15 @@
 
 #manageSpectate {
 	background: #555555;
+
+	// This icon is already gray/white, so do not need to invert
+	.roomManageIcon {
+		filter: drop-shadow(0px 0px 15px base.$dark-gray);
+	}
+}
+
+#managePlay {
+	background: #444444;
 
 	// This icon is already gray/white, so do not need to invert
 	.roomManageIcon {

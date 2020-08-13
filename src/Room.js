@@ -4,15 +4,12 @@ const { Cpu } = require('./Cpu.js');
 const { CpuGame } = require('./CpuGame.js');
 const { Settings } = require('./Utils.js');
 
-const roomIds = new Set();		// Set of roomIds currently in use
-const roomIdToRoom = new Map();
-const idToRoomId = new Map();
-
 const MAX_FRAME_DIFFERENCE = 20;
 
 class Room {
-	constructor(members, host, roomSize, settingsString, roomType = 'default') {
-		this.roomId = generateRoomId(6);
+	constructor(roomId, members, host, roomSize, settingsString, roomType = 'default') {
+		this.roomId = roomId;
+		this.password = null;
 		this.members = members;
 		this.cpus = new Map();
 		this.numCpus = 0;
@@ -21,27 +18,18 @@ class Room {
 		this.roomSize = roomSize;
 		this.settingsString = settingsString;
 		this.roomType = roomType;
-		this.quickPlayTimer = null;		// Only used if roomType is 'ffa'
+		this.quickPlayTimer = null;		// This, and the below variable are only used if roomType is 'ffa'
+		this.quickPlayStartTime = null;
 
 		this.ingame = false;
 		this.host = host;
 		this.paused = [];
+		this.unfocused = [];
 		this.spectating = new Map();
 		this.defeated = [];
 		this.timeout = null;
 
-		switch(this.roomType) {
-			case 'ffa':
-				Room.defaultQueueRoomId = this.roomId;
-				break;
-			case 'ranked':
-				Room.rankedRoomId = this.roomId;
-				break;
-		}
-
 		this.members.forEach((player, gameId) => {
-			idToRoomId.set(gameId, this.roomId);
-
 			// Send update to all players
 			player.socket.emit(
 				'roomUpdate',
@@ -84,7 +72,6 @@ class Room {
 		}
 		else {
 			socket.join(this.roomId);
-			idToRoomId.set(gameId, this.roomId);
 		}
 
 		// Determine if adding a CPU or player
@@ -113,19 +100,30 @@ class Room {
 			socket.join(this.roomId);
 		}
 
-		idToRoomId.set(gameId, this.roomId);
-
 		this.spectating.set(gameId, socket);
-		socket.emit(
-			'roomUpdate',
-			this.roomId,
-			Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-			this.roomSize,
-			this.settingsString,
-			this.roomType,
-			false,		// Not host
-			true 		// Spectating
-		);
+
+		// Send start if ingame, otherwise
+		if(this.ingame) {
+			socket.emit(
+				'spectate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.settingsString
+			);
+		}
+		else {
+			socket.emit(
+				'roomUpdate',
+				this.roomId,
+				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.roomSize,
+				this.settingsString,
+				this.roomType,
+				false,		// Not host
+				true 		// Spectating
+			);
+		}
+
 		console.log(`Added gameId ${gameId} to room ${this.roomId} as a spectator`);
 	}
 
@@ -136,8 +134,11 @@ class Room {
 		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 		// Generate a random seed and use it in the settings for this game
-		const seededSettingsString = Settings.seedString(this.settingsString);
-		const settings = Settings.fromString(seededSettingsString);
+		this.settingsString = Settings.seedString(this.settingsString);
+		const settings = Settings.fromString(this.settingsString);
+
+		// Reset the defeated array
+		this.defeated = [];
 
 		// Generate the CPU games
 		this.cpus.forEach((cpu, cpuId) => {
@@ -191,7 +192,7 @@ class Room {
 		this.members.forEach((player, gameId) => {
 			const opponentIds = allIds.filter(id => id !== gameId);
 			this.games.set(gameId, { frames: 0, socket: player.socket });
-			player.socket.emit('start', this.roomId, opponentIds, seededSettingsString);
+			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
 		});
 
 		// Send start to the spectators
@@ -200,17 +201,17 @@ class Room {
 				'spectate',
 				this.roomId,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
-				seededSettingsString
+				this.settingsString
 			);
 		});
 
 		switch(this.roomType) {
 			case 'ffa':
 				this.quickPlayTimer = null;
-				Room.defaultQueueRoomId = null;
 				break;
 			case 'ranked':
 				Room.rankedRoomId = null;
+				this.quickPlayTimer = null;
 				break;
 		}
 
@@ -220,18 +221,23 @@ class Room {
 
 	/**
 	 * Removes a player from a room (if possible).
+	 * Returns true if the room is now empty, and false if it is not.
 	 */
 	leave(gameId, notify = true, spectate = false) {
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
 			socket.leave(this.roomId);
-			idToRoomId.delete(gameId);
 			console.log(`Removed spectator ${gameId} from room ${this.roomId}`);
 			return;
 		}
 
 		// Select the correct map to remove the player from
 		const playerList = (gameId.includes('CPU')) ? this.cpus : this.members;
+
+		if(playerList.get(gameId) === undefined) {
+			console.log(`Attempted to remove ${gameId}, but they were not in the room.`);
+			return;
+		}
 
 		const socket = playerList.get(gameId).socket;
 		if(!spectate) {
@@ -243,7 +249,6 @@ class Room {
 		if(this.paused.includes(gameId)) {
 			this.paused.splice(this.paused.indexOf(gameId), 1);
 		}
-		idToRoomId.delete(gameId);
 
 		// Transfer host privileges to next oldest member in room
 		if(gameId === this.host) {
@@ -280,6 +285,7 @@ class Room {
 			if((this.roomType === 'ffa' || this.roomType === 'ranked') && this.members.size < 2 && this.quickPlayTimer !== null) {
 				clearTimeout(this.quickPlayTimer);
 				this.quickPlayTimer = null;
+				this.quickPlayStartTime = null;
 				console.log('Cancelled start. Not enough players.');
 			}
 		}
@@ -290,17 +296,13 @@ class Room {
 				this.leave(cpuId, false);
 			});
 
-			// eslint-disable-next-line no-unused-vars
 			this.spectating.forEach((spectatorSocket, id) => {
 				this.leave(id, false);
 				// TODO: Kick to main menu?
 			});
-
-			// Clear room entry
-			roomIdToRoom.delete(this.roomId);
-			roomIds.delete(this.roomId);
-			console.log(`Closed room ${this.roomId}`);
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -319,11 +321,14 @@ class Room {
 
 		// Bring back to room info screen in 5 seconds.
 		setTimeout(() => {
-			this.sendRoomUpdate();
-			// Set a new timer if this is the FFA room
-			if(this.roomType === 'ffa' && this.members.size >= 2) {
-				this.quickPlayTimer = setTimeout(() => this.start(), 30000);
+			// Set a new timer if this is the FFA/Ranked room
+			if(this.roomType !== 'default' && this.members.size >= 2) {
+				const timer = (this.roomType === 'ffa' ? 30000 : 10000);
+				this.quickPlayTimer = setTimeout(() => this.start(), timer);
+				this.quickPlayStartTime = Date.now() + timer;
 			}
+
+			this.sendRoomUpdate();
 		}, 5000);
 	}
 
@@ -341,7 +346,8 @@ class Room {
 		let minFrames = Infinity, minId = null;
 
 		this.games.forEach((player, id) => {
-			if(!this.defeated.includes(id)) {		// Exclude defeated players
+			// Exclude defeated players
+			if(!this.defeated.includes(id)) {
 				const frames = player.frames;
 				if(frames < minFrames) {
 					minFrames = frames;
@@ -371,7 +377,7 @@ class Room {
 						}
 					});
 					this.leave(minId);
-				}, 30000);
+				}, (this.unfocused.includes(minId) ? 3000 : 15000));
 			}
 		}
 		// Catching up
@@ -403,6 +409,17 @@ class Room {
 		// Get all display names of members and CPUs
 		const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
+		// Temporary timer if it has not been updated yet
+		let tempTimer = null;
+
+		if(this.roomType !== 'default') {
+			const delay = (this.roomType === 'ffa') ? 30000 : 10000;
+
+			if(this.quickPlayStartTime === null || Date.now() - this.quickPlayStartTime > 1000) {
+				tempTimer = Date.now() + delay;
+			}
+		}
+
 		this.members.forEach((player, id) => {
 			player.socket.emit(
 				'roomUpdate',
@@ -412,7 +429,8 @@ class Room {
 				this.settingsString,
 				this.roomType,
 				id === this.host,
-				false		// Not spectating
+				false,		// Not spectating,
+				tempTimer || this.quickPlayStartTime
 			);
 		});
 
@@ -429,229 +447,6 @@ class Room {
 			);
 		});
 	}
-
-	/* ------------------------------ Helper Methods (RoomManager) ------------------------------*/
-
-	static createRoom(gameId, members, host, roomSize, settingsString, roomType = 'default') {
-		const room = new Room(members, host, roomSize, settingsString, roomType);
-		roomIdToRoom.set(room.roomId, room);
-		return room;
-	}
-
-	static changeSettings(gameId, settingsString, roomSize) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		room.changeSettings(settingsString, roomSize);
-		return room;
-	}
-
-	static joinRoom(gameId, roomId, socket, cpuInfo) {
-		const room = roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			socket.emit('joinFailure', `The room you are trying to join ${roomId ? `(id ${roomId}) `:''}does not exist.`);
-			return;
-		}
-
-		room.join(gameId, socket, cpuInfo);
-		return room;
-	}
-
-	static spectateRoom(gameId, socket, roomId = null) {
-		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			socket.emit('spectateFailure', 'The room you are trying to join does not exist or has ended.');
-			return;
-		}
-
-		if(room.members.size === 1) {
-			socket.emit('showDialog', 'You cannot spectate a room if you are the only player.');
-			return;
-		}
-
-		room.spectate(gameId, socket);
-		return room;
-	}
-
-	static startRoom(roomId = null, gameId, socket) {
-		const room = roomId === null ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
-		if(room.members.size + room.cpus.size > 1) {
-			room.start();
-		}
-		else if(socket) {
-			socket.emit('showDialog', 'There are not enough players in the room to start.');
-		}
-		else {
-			console.log('Attempted to start a room automatically, but there weren\'t enough players.');
-		}
-		return room;
-	}
-
-	static endRoom(roomId) {
-		const room = roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			console.log(`Tried to end room ${roomId}, but it did not exist.`);
-			return;
-		}
-
-		room.end();
-		return room;
-	}
-
-	static leaveRoom(gameId, roomId = null, notify = false) {
-		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
-		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			if(notify) {
-				console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
-			}
-			return;
-		}
-		room.leave(gameId);
-		return room;
-	}
-
-	/**
-	 * Visually adds a CPU to the 'Manage CPUs' modal box (does not actually add a CPU until confirmed.)
-	 * Returns the index of the CPU that should be turned on (0-indexed), or -1 if the room is full.
-	 */
-	static addCpu(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		if(room.members.size + room.numCpus === room.roomSize) {
-			return -1;
-		}
-		else {
-			room.numCpus++;
-			return room.numCpus - 1;
-		}
-	}
-
-	/**
-	 * Visually removes a CPU to the 'Manage CPUs' modal box (does not actually remove a CPU until confirmed.)
-	 * Returns the index of the CPU that should be turned off (0-indexed), or -1 if there are no CPUs.
-	 */
-	static removeCpu(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		if(room.numCpus === 0) {
-			return -1;
-		}
-		else {
-			room.numCpus--;
-			return room.numCpus;
-		}
-	}
-
-	/**
-	 * Returns the current list of CPUs in the room, or an empty array if there are none.
-	 */
-	static requestCpus(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		if(room.numCpus === 0) {
-			return [];
-		}
-		else {
-			const cpuInfos = Array.from(room.cpus.values());
-			const cpus = [];		// The cpuInfo object has too much data. Only send the speed and AI of each CPU.
-
-			cpuInfos.forEach(cpuInfo => {
-				const { ai, speed } = cpuInfo;
-				// Undo the speed conversion
-				cpus.push({ ai, speed: 10 - (speed / 500) });
-			});
-
-			return cpus;
-		}
-	}
-
-	static setCpus(gameId, cpuInfos) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		// Disconnect previous cpus
-		room.cpus.forEach((cpu, cpuId) => {
-			room.leave(cpuId);
-		});
-
-		// Set new cpus and update the size
-		room.cpus = cpuInfos;
-		room.numCpus = room.cpus.size;
-
-		room.cpus.forEach((cpu, cpuId) => {
-			room.join(cpuId, cpu.socket, cpu, false);		// Don't notify for each CPU join
-		});
-
-		// Notify once every CPU has joined
-		room.sendRoomUpdate();
-	}
-
-	static advanceFrame(gameId) {
-		const room = roomIdToRoom.get(idToRoomId.get(gameId));
-
-		if(room === undefined) {
-			console.log(`Received sendState from gameId ${gameId}, but they were not in a room.`);
-			return;
-		}
-
-		room.advance(gameId);
-	}
-
-	static beenDefeated(gameId, roomId) {
-		const room = roomIdToRoom.get(roomId);
-
-		if(room !== undefined) {
-			room.defeated.push(gameId);
-		}
-	}
-
-	/**
-	 * Returns a list of room ids excluding the one the player is already part of.
-	 */
-	static getAllRooms(gameId) {
-		return Array.from(roomIds).filter(id => {
-			const room = roomIdToRoom.get(id);
-			return !room.members.has(gameId) && room.roomType === 'default';
-		});
-	}
-
-	/**
-	 * Returns a list of the players in the room, if the room is valid.
-	 */
-	static getPlayers(roomId) {
-		const room = roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			return [];
-		}
-		return Array.from(room.members.keys());
-	}
-
-	static getRoomIdFromId(gameId) {
-		return idToRoomId.get(gameId);
-	}
 }
-
-const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-function generateRoomId(length = 6) {
-	let result;
-	do {
-		result = '';
-		for (let i = 0; i < length; i++) {
-			result += validChars.charAt(Math.floor(Math.random() * validChars.length));
-		}
-	}
-	while(roomIds.has(result));
-
-	roomIds.add(result);
-	return result;
-}
-
-Room.defaultQueueRoomId = null;
-Room.rankedRoomId = null;
 
 module.exports = { Room };

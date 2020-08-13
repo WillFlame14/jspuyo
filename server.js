@@ -7,7 +7,7 @@ const io = require('socket.io')(http, { perMessageDeflate: false });
 const io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
-const { Room } = require('./src/Room.js');
+const { RoomManager } = require('./src/RoomManager.js');
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
@@ -33,17 +33,17 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('addCpu', gameId => {
-		const index = Room.addCpu(gameId);
+		const index = RoomManager.addCpu(gameId);
 		socket.emit('addCpuReply', index);
 	});
 
 	socket.on('removeCpu', gameId => {
-		const index = Room.removeCpu(gameId);
+		const index = RoomManager.removeCpu(gameId);
 		socket.emit('removeCpuReply', index);
 	});
 
 	socket.on('requestCpus', gameId => {
-		const cpus = Room.requestCpus(gameId);
+		const cpus = RoomManager.requestCpus(gameId);
 		socket.emit('requestCpusReply', cpus);
 	});
 
@@ -70,14 +70,10 @@ io.on('connection', function(socket) {
 		});
 		await Promise.all(promises);
 
-		Room.setCpus(gameId, cpuInfos.get(gameId));
+		RoomManager.setCpus(gameId, cpuInfos.get(gameId));
 
 		// Delete the temporarily stored info
 		cpuInfos.delete(gameId);
-	});
-
-	socket.on('startRoom', async gameId => {
-		Room.startRoom(null, gameId, socket);
 	});
 
 	socket.on('cpuAssign', (gameId, cpuId, cpu, callback) => {
@@ -94,113 +90,123 @@ io.on('connection', function(socket) {
 		callback();
 	});
 
+	socket.on('setRoomPassword', (gameId, password) => {
+		RoomManager.setRoomPassword(gameId, password);
+	});
+
+	socket.on('startRoom', async gameId => {
+		RoomManager.startRoom(null, gameId, socket);
+	});
+
 	socket.on('createRoom', gameInfo => {
 		const { gameId, settingsString, roomSize } = gameInfo;
-		Room.leaveRoom(gameId);
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
-		const roomId = Room.createRoom(gameId, members, host, roomSize, settingsString).roomId;
+		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 
 	socket.on('requestJoinLink', gameId => {
-		const roomId = Room.getRoomIdFromId(gameId);
+		const roomId = RoomManager.getRoomIdFromId(gameId);
 		socket.emit('giveRoomId', roomId);
 	});
 
 	socket.on('changeSettings', (gameId, settingsString, roomSize) => {
-		Room.changeSettings(gameId, settingsString, roomSize);
+		RoomManager.changeSettings(gameId, settingsString, roomSize);
 	});
 
 	socket.on('joinRoom', gameInfo => {
-		const { gameId, joinId } = gameInfo;
-		Room.leaveRoom(gameId);
-		Room.joinRoom(gameId, joinId, socket);
+		const { gameId, joinId, roomPassword } = gameInfo;
+		try {
+			RoomManager.joinRoom(gameId, joinId, socket, roomPassword);
+		}
+		catch(err) {
+			console.log(err);
+			socket.emit('joinFailure', err.message);
+		}
 	});
 
 	socket.on('spectate', (gameId, roomId = null) => {
 		// RoomId is null if the user wishes to spectate their own room
 		if(roomId !== null) {
-			Room.leaveRoom(gameId);
+			RoomManager.leaveRoom(gameId);
 		}
-		Room.spectateRoom(gameId, socket, roomId);
+		RoomManager.spectateRoom(gameId, socket, roomId);
 	});
 
 	socket.on('getAllRooms', gameId => {
-		socket.emit('allRooms', Room.getAllRooms(gameId));
+		socket.emit('allRooms', RoomManager.getAllRooms(gameId));
 	});
 
 	socket.on('getPlayers', roomId => {
-		socket.emit('givePlayers', Room.getPlayers(roomId));
+		socket.emit('givePlayers', RoomManager.getPlayers(roomId));
 	});
 
 	socket.on('ranked', gameInfo => {
 		const { gameId } = gameInfo;
-		Room.leaveRoom(gameId);
 
 		// No pending ranked game
-		if(Room.rankedRoomId === null) {
+		if(RoomManager.rankedRoomId === null) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for ranked games
 
-			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ranked');
+			RoomManager.createRoom(gameId, members, roomSize, host, defaultSettings, 'ranked');
 		}
 		// Pending ranked game
 		else {
 			try {
-				const room = Room.joinRoom(gameId, Room.rankedRoomId, socket);
+				const room = RoomManager.joinRoom(gameId, RoomManager.rankedRoomId, socket);
 				// Start game in 10s if there are 2 players
 				if(room.members.size === 2 && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
 						// Double-check that the room still contains 2 players
 						if(room.members.size === 2) {
-							Room.startRoom(room.roomId);
+							RoomManager.startRoom(room.roomId);
 						}
 					}, 10000);
+					room.quickPlayStartTime = Date.now() + 10000;
 				}
 			}
 			catch(err) {
+				console.log(err);
 				socket.emit('joinFailure', err.message);
 			}
 		}
 		console.log(`${gameId} has joined the ranked queue.`);
 	});
 
-	socket.on('freeForAll', (gameInfo, suppress) => {
+	socket.on('freeForAll', gameInfo => {
 		const { gameId } = gameInfo;
 
-		// Suppress error from leaving non-existent room
-		if(suppress !== 'suppress') {
-			Room.leaveRoom(gameId);
-		}
-
-		if(Room.defaultQueueRoomId === null) {
+		if(RoomManager.defaultQueueRoomId === null) {
 			const members = new Map().set(gameId, { socket, frames: 0 });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for FFA games
 
 			// Fixed settings for FFA rooms
-			Room.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
+			RoomManager.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
 		}
 		else {
 			try {
-				const room = Room.joinRoom(gameId, Room.defaultQueueRoomId, socket);
+				const room = RoomManager.joinRoom(gameId, RoomManager.defaultQueueRoomId, socket);
 
 				// Start game in 30s if there are at least 2 players
-				if(room.members.size >= 2 && room.quickPlayTimer === null) {
+				if(room.members.size >= 2 && !room.ingame && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
 						// Double-check that the room still contains at least 2 players
 						if(room.members.size >= 2) {
-							Room.startRoom(room.roomId);
+							RoomManager.startRoom(room.roomId);
 						}
 					}, 30000);
+					room.quickPlayStartTime = Date.now() + 30000;
 				}
 			}
 			catch(err) {
+				console.log(err);
 				socket.emit('joinFailure', err.message);
 			}
 		}
@@ -209,50 +215,54 @@ io.on('connection', function(socket) {
 
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
 	socket.on('sendState', (gameId, boardHash, currentScore, totalNuisance) => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('sendState', gameId, boardHash, currentScore, totalNuisance);
-		Room.advanceFrame(gameId);
+		socket.to(RoomManager.getRoomIdFromId(gameId)).emit('sendState', gameId, boardHash, currentScore, totalNuisance);
+		RoomManager.advanceFrame(gameId);
 	});
 
 	// Player sent a chat message
 	socket.on('sendMessage', (gameId, message) => {
 		// Send to everyone in the room, including sender
-		io.in(Room.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
+		io.in(RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
 	});
 
 	// Player emitted a sound
 	socket.on('sendSound', (gameId, sfx_name, index) => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('sendSound', gameId, sfx_name, index);
+		socket.to(RoomManager.getRoomIdFromId(gameId)).emit('sendSound', gameId, sfx_name, index);
 	});
 
 	// Player emitted a voiced clip
 	socket.on('sendVoice', (gameId, character, audio_name, index) => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('sendVoice', gameId, character, audio_name, index);
+		socket.to(RoomManager.getRoomIdFromId(gameId)).emit('sendVoice', gameId, character, audio_name, index);
 	});
 
 	// Player started sending nuisance
 	socket.on('sendNuisance', (gameId, nuisance) => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('sendNuisance', gameId, nuisance);
+		socket.to(RoomManager.getRoomIdFromId(gameId)).emit('sendNuisance', gameId, nuisance);
 	});
 
 	// Player finished a chain
 	socket.on('activateNuisance', gameId => {
-		socket.to(Room.getRoomIdFromId(gameId)).emit('activateNuisance', gameId);
+		socket.to(RoomManager.getRoomIdFromId(gameId)).emit('activateNuisance', gameId);
 	});
 
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
-		const roomId = Room.getRoomIdFromId(gameId);
+		const roomId = RoomManager.getRoomIdFromId(gameId);
 		socket.to(roomId).emit('gameOver', gameId);
-		Room.beenDefeated(gameId, roomId);
+		RoomManager.beenDefeated(gameId, roomId);
 	});
 
 	// Game is over for all players
 	socket.on('gameEnd', roomId => {
-		Room.endRoom(roomId);
+		RoomManager.endRoom(roomId);
 	});
 
 	socket.on('forceDisconnect', (gameId, roomId) => {
-		Room.leaveRoom(gameId, roomId);
+		RoomManager.leaveRoom(gameId, roomId);
+	});
+
+	socket.on('focus', (gameId, focused) => {
+		RoomManager.setFocus(gameId, focused);
 	});
 
 	// Called when logging out, since the same socket is used but with a different user
@@ -267,7 +277,7 @@ io.on('connection', function(socket) {
 		if(gameId){
 			// CPU sockets get disconnected by the server - they have already been removed from the room
 			if(!gameId.includes('CPU')) {
-				Room.leaveRoom(gameId);
+				RoomManager.leaveRoom(gameId);
 			}
 			else {
 				socketIdToId.delete(socket.id);

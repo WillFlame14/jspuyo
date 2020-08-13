@@ -114,6 +114,8 @@ class SpectateGame extends Game {
 			opponentCounter++;
 		});
 
+		this.audioPlayer = new AudioPlayer(this.gameId, socket, this.userSettings.sfxVolume, this.userSettings.musicVolume);
+
 		// Reset the event listeners
 		this.socket.off('sendState');
 		this.socket.off('sendSound');

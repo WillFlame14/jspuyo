@@ -184,6 +184,8 @@ datalist {
 footer {
 	color: white;
 	text-align: center;
+
+	text-shadow: $text-drop-shadow;
 }
 
 // Justified flexbox.
@@ -229,4 +231,9 @@ footer {
 	label {
 		display: block;
 	}
+}
+
+// Used for storing hidden information in HTML.
+.hiddenInfo {
+	display: none;
 }

@@ -2,8 +2,29 @@
 
 ## v0.8 - Personalization
 
+### v0.8.1 (August 12, 2020)
+[`Added password-protected rooms, improved spectator experience #50`](https://github.com/WillFlame14/jspuyo/pull/50)
+
+**New features:**
+- Rooms can now require a password to join (not required to spectate)
+- A timer displaying the remaining time to game start is now shown for FFA and Ranked rooms
+- The screen now indicates if you are spectating a game.
+- Spectators can join the room directly through a new "Play" option.
+
+**Other changes:**
+- Spectators now have audio. (oops)
+- Game will now force end much earlier if a player attempts to stall intentionally.
+- Players can no longer join rooms they are already in. (Fixed https://github.com/WillFlame14/jspuyo/issues/49)
+- Ranked games now continue to start after a game has finished.
+- FFA room should no longer close itself.
+- You can now spectate a room with only one player in it.
+- Repurposed the settings div since it was completely unintelligible anyways.
+- Multiple players losing at the same time should (hopefully) no longer stall the game infinitely.
+- Split RoomManager into its own file.
+
 ### v0.8.0 (July 27, 2020)
-[`Add user authentication`](https://github.com/WillFlame14/jspuyo/pull/47)
+[`Add user authentication #47`](https://github.com/WillFlame14/jspuyo/pull/47)
+
 **New features:**
 - User authentication added to facilitate future storage of user data
   - Sign-in options are currently limited to email/password and Google sign-in

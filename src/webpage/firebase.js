@@ -4,6 +4,7 @@ const firebase = require('firebase/app');
 const firebaseui = require('firebaseui');
 const { firebaseConfig } = require('../../config.js');
 const { UserSettings } = require('../Utils.js');
+const { StatTracker } = require('../StatTracker.js');
 
 // Add the Firebase products that you want to use
 require("firebase/auth");
@@ -57,6 +58,13 @@ function initApp(globalSocket, loginSuccess) {
 		// Just logged in
 		if (user) {
 			document.getElementById('firebaseui-auth-container').style.display = 'none';
+
+			if(user.isAnonymous) {
+				document.getElementById('guestMessage').style.display = 'block';
+			}
+			else {
+				document.getElementById('guestMessage').style.display = 'none';
+			}
 
 			// Open username change screen if new user
 			if(newUser) {
@@ -155,7 +163,6 @@ function signOut() {
 		PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
 	}
 	firebase.auth().signOut();
-	document.getElementById('guestMessage').style.display = 'block';
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
 
@@ -205,6 +212,7 @@ class PlayerInfo {
 		firebase.database().ref(`username/${uid}`).set({ username });
 		firebase.database().ref(`userSettings/${uid}`).set({ userSettings: JSON.parse(JSON.stringify(new UserSettings())) });
 		firebase.database().ref(`rating/${uid}`).set({ rating: 1000 });
+		firebase.database().ref(`stats/${uid}`).set({ stats: JSON.parse(JSON.stringify(new StatTracker())) });
 	}
 
 	/**
@@ -234,6 +242,7 @@ class PlayerInfo {
 		firebase.database().ref(`username/${uid}`).remove();
 		firebase.database().ref(`userSettings/${uid}`).remove();
 		firebase.database().ref(`rating/${uid}`).remove();
+		firebase.database().ref(`stats/${uid}`).remove();
 	}
 
 	static getUserProperty(uid, property) {
@@ -252,7 +261,7 @@ class PlayerInfo {
 	static loadUserData(uid) {
 		return new Promise((resolve, reject) => {
 			const userData = {};
-			const userDataProperties = ['userSettings', 'rating'];
+			const userDataProperties = ['userSettings', 'rating', 'stats'];
 
 			const promises = userDataProperties.map(property => PlayerInfo.getUserProperty(uid, property));
 

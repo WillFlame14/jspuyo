@@ -2,6 +2,7 @@
 
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
+const { StatTracker } = require('./StatTracker.js');
 const { Settings, AudioPlayer } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
@@ -16,6 +17,7 @@ const globalSocket = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
 let currentUID;
+let currentStatTracker;
 let initialized;
 
 // This is the "main" function, which starts up the entire app.
@@ -62,6 +64,8 @@ async function loginSuccess(user) {
 			signOut();
 			return;
 		}
+
+		currentStatTracker = new StatTracker(JSON.stringify(userData.stats));
 		updateUserSettings(userData.userSettings);
 
 		// Check if a joinRoom link was used
@@ -197,10 +201,10 @@ async function init(socket) {
 		quickPlayTimer = null;
 
 		// Set up the player's game
-		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer, currentStatTracker);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId, currentStatTracker);
 		currentSession.run();
 	});
 
@@ -220,10 +224,10 @@ async function init(socket) {
 		clearBoards();
 		generateBoards(allIds.length);
 
-		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer, currentStatTracker);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId, currentStatTracker);
 		currentSession.spectate = true;
 		currentSession.run();
 	});

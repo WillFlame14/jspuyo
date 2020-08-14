@@ -5,8 +5,8 @@ const { Game } = require('./Game.js');
 const { InputManager } = require('./InputManager.js');
 
 class PlayerGame extends Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings, audioPlayer) {
-		super(gameId, opponentIds, socket, settings, userSettings, 1);
+	constructor(gameId, opponentIds, socket, settings, userSettings, audioPlayer, statTracker) {
+		super(gameId, opponentIds, socket, settings, userSettings, statTracker, 1);
 
 		let frame = 0;
 
@@ -99,8 +99,8 @@ class PlayerGame extends Game {
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
 class SpectateGame extends Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings, audioPlayer) {
-		super(gameId, opponentIds, socket, settings, userSettings);
+	constructor(gameId, opponentIds, socket, settings, userSettings, audioPlayer, statTracker) {
+		super(gameId, opponentIds, socket, settings, userSettings, statTracker);
 
 		let frame = 0;
 		this.opponentBoardDrawers = {};

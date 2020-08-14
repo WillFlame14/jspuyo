@@ -6,14 +6,18 @@ const { DropGenerator } = require('./Drop.js');
 const { Utils } = require('./Utils.js');
 
 class Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings, boardDrawerId = null) {
+	constructor(gameId, opponentIds, socket, settings, userSettings, statTracker, boardDrawerId = null) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
 		this.userSettings = userSettings;
+		this.statTracker = statTracker;
+		this.statTracker.incrementGame();
+
 		this.endResult = null;			// Final result of the game
 		this.softDrops = 0;				// Frames in which the soft drop button was held
+		this.dropNum = 0;
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
@@ -108,6 +112,7 @@ class Game {
 		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
 		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
+		this.dropNum++;
 	}
 
 	/**
@@ -125,10 +130,12 @@ class Game {
 			switch(this.endResult) {
 				case 'Win':
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
+					this.statTracker.addResult('win');
 					break;
 				case 'Loss':
 					this.audioPlayer.playAndEmitSfx('loss');
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
+					this.statTracker.addResult('loss');
 			}
 		}
 		return this.endResult;
@@ -176,6 +183,7 @@ class Game {
 					this.dropQueueIndex++;
 				}
 				this.currentDrop = this.dropQueue.shift();
+				this.dropNum++;
 			}
 
 			this.getInputs();
@@ -189,6 +197,7 @@ class Game {
 					// Only do not start squishing puyos if drop was split
 					if(this.currentDrop.schezo.y === null) {
 						this.squishState.currentFrame = 0;
+						this.statTracker.addDrop('nonsplit');
 					}
 					this.locking = 'not';
 					this.forceLock = false;
@@ -455,6 +464,7 @@ class Game {
 			if(this.resolvingState.chain === this.resolvingChains.length) {
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, connections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.statTracker.finishChain(this.resolvingState.chain);
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
@@ -603,6 +613,8 @@ class Game {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
 			}
 
+			this.statTracker.addDrop(this.dropNum, currentDrop.schezo.x, currentDrop.schezo.x);
+
 			// Remove any puyos that are too high
 			this.board.trim();
 
@@ -614,6 +626,13 @@ class Game {
 		else {			// horizontal orientation
 			currentDrop.arle.y = Math.max(boardState[currentDrop.arle.x].length, boardState[currentDrop.schezo.x].length);
 			currentDrop.schezo.y = currentDrop.arle.y;
+
+			this.statTracker.addDrop(
+				this.dropNum,
+				currentDrop.arle.x,
+				currentDrop.schezo.x,
+				boardState[currentDrop.arle.x].length !== boardState[currentDrop.schezo.x].length
+			);
 		}
 	}
 
@@ -640,7 +659,9 @@ class Game {
 			return;
 		}
 
-		this.currentScore += Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		const scoreForLink = Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);
+		this.statTracker.addScore(scoreForLink);
+		this.currentScore += scoreForLink;
 		this.updateVisibleScore(pointsDisplayName, this.currentScore);
 
 		// Update target points if margin time is in effect

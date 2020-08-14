@@ -2,12 +2,13 @@
 
 const { Game } = require('./Game.js');
 const { AudioPlayer, UserSettings } = require('./Utils.js');
+const { StatTracker } = require('./StatTracker.js');
 
 const defaultUserSettings = new UserSettings();
 
 class CpuGame extends Game {
 	constructor(gameId, opponentIds, socket, ai, speed, settings) {
-		super(gameId, opponentIds, socket, settings, defaultUserSettings, null);
+		super(gameId, opponentIds, socket, settings, defaultUserSettings, new StatTracker('{}'), null);
 
 		this.ai = ai;							// The algorithm used to determine the optimal move
 		this.softDropSpeed = speed;				// Number of milliseconds to wait before soft dropping

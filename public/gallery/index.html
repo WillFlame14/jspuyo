@@ -1,0 +1,53 @@
+<html>
+<head>
+    <title>jspuyo</title>
+    <meta charset="utf-8" />
+    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Rock+Salt&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./../style.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+</head>
+<body>
+	<main>
+        <div id="navbar">
+            <span id="navbarSpacer"></span>
+            <span id="pageTitle">Gallery</span>
+            <span id="logo">jspuyo</span>
+        </div>
+        <div id="chartsWrapper">
+            <div id="charts">
+                <div class="chart" id="splitChart">
+                    <div class="chart-title">Split Puyo Percentage</div>
+                    <p>The percentage of puyos that are split (i.e. across two columns, where one puyos falls to a lower level) as the game progresses.</p>
+                    <div style="padding-right: 20px">
+                        <div class="ct-chart ct-golden-section" id="splitData"></div>
+                    </div>
+                </div>
+                <div class="chart" id="buildOrderChart">
+                    <div class="chart-title">Build Order</div>
+                    <p>The columns in which puyos are placed as the game progresses.</p>
+                    <div class="ct-chart ct-golden-section" id="buildOrderData"></div>
+                </div>
+                <div class="chart" id="chainScoresChart">
+                    <div class="chart-title">Chain Scores</div>
+                    <p>Highest and average scores earned for full chains of each length.</p>
+                    <div style="padding-right: 20px">
+                        <div class="ct-chart ct-golden-section" id="chainScoresData"></div>
+                    </div>
+                </div>
+                <div class="chart" id="buildSpeedChart">
+                    <div class="chart-title">Build Speed</div>
+                    <p>Average amount of frames spent placing each drop.</p>
+                    <div style="padding-right: 20px">
+                        <div class="ct-chart ct-golden-section" id="buildSpeedData"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            Back to <a href="/">jspuyo</a>.
+        </footer>
+        <script src="../limited.js"></script>
+    </main>
+</body>
+</html>

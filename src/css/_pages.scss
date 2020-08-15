@@ -6,7 +6,6 @@ a {
 
 // Titles for other pages
 #pageTitle {
-
 	padding: 10px 0px 10px 40px;
 
 	color: white;
@@ -22,4 +21,47 @@ a {
 
 	background: rgba(40, 40, 40, 0.8);
 	border: 2px solid white;
+}
+
+// Gallery charts
+#chartsWrapper {
+	width: 85%;
+	margin: 2rem auto 1rem;
+}
+
+#charts {
+	display: grid;
+	grid-gap: 5%;
+	grid-template-rows: 47.5% 47.5%;
+	grid-template-columns: 47.5% 47.5%;
+	
+
+	.ct-label {
+		color: rgba(255, 255, 255, 0.8);
+	}
+
+	p {
+		min-height: 3.5em;
+
+		color: rgb(230, 230, 230);
+		font-size: 0.75rem;
+	}
+}
+
+.chart {
+	padding: 20px 0px 5px 20px;
+
+	background: rgba(50, 50, 50, 0.8);
+	border: 3px white solid;
+}
+
+.chart-title {
+	color: white;
+	font-size: 1.5rem;
+}
+
+#buildOrderData {
+	.ct-area {
+		fill-opacity: 100%;
+	}
 }

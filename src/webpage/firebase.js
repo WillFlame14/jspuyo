@@ -212,7 +212,7 @@ class PlayerInfo {
 		firebase.database().ref(`username/${uid}`).set({ username });
 		firebase.database().ref(`userSettings/${uid}`).set({ userSettings: JSON.parse(JSON.stringify(new UserSettings())) });
 		firebase.database().ref(`rating/${uid}`).set({ rating: 1000 });
-		firebase.database().ref(`stats/${uid}`).set({ stats: JSON.parse(JSON.stringify(new StatTracker())) });
+		firebase.database().ref(`stats/${uid}`).set({ stats: new StatTracker().toString() });
 	}
 
 	/**

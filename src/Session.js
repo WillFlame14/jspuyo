@@ -22,7 +22,7 @@ class Session {
 
 				// Save stats since the game was forcefully disconnected
 				this.game.statTracker.addResult('undecided');
-				PlayerInfo.updateUser(this.gameId, 'stats', JSON.parse(this.game.statTracker.toString()));
+				PlayerInfo.updateUser(this.gameId, 'stats', this.game.statTracker.toString());
 				return;
 			}
 
@@ -36,7 +36,7 @@ class Session {
 				this.stopped = true;
 
 				// Save stats
-				PlayerInfo.updateUser(this.gameId, 'stats', JSON.parse(this.game.statTracker.toString()));
+				PlayerInfo.updateUser(this.gameId, 'stats', this.game.statTracker.toString());
 				return;
 			}
 		};

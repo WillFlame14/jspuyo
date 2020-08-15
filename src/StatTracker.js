@@ -1,42 +1,44 @@
 'use strict';
 
-const firstDropsTracked = 40;
+const FIRST_DROPS_TRACKED = 50;
 
 class StatTracker {
 	constructor(statsString = '{}') {
 		const stats = JSON.parse(statsString);
 
 		this.gamesTracked = stats.gamesTracked || 0;
-		this.buildOrder = stats.buildOrder || [];
-		this.chainScores = stats.chainScores || [];
-		this.splitPuyos = stats.splitPuyos || { nonsplit: [], split: [] };
-		this.gameResults = stats.winLose || { win: 0, loss: 0, undecided: 0 };
+		this.buildOrder = stats.buildOrder || [...new Array(FIRST_DROPS_TRACKED)].map(() => new Array(6).fill(0));
+		this.buildSpeed = stats.buildSpeed || [...new Array(FIRST_DROPS_TRACKED)].map(() => []);
+		this.chainScores = stats.chainScores || [...new Array(19)].map(() => []);
+		this.splitPuyos = stats.splitPuyos || [...new Array(FIRST_DROPS_TRACKED)].map(() => {return { split: 0, nonsplit: 0 };});
+		this.gameResults = stats.gameResults || { win: 0, loss: 0, undecided: 0 };
 
 		this.runningScore = 0;
+		this.framesOfLastDrop = null;
 	}
 
-	incrementGame() {
-		this.gamesTracked++;
-	}
-
-	addDrop(dropNum, column1, column2, trueSplit) {
+	addDrop(dropNum, currentFrame, column1, column2, trueSplit) {
 		// Do not track future drops
-		if(dropNum > firstDropsTracked) {
+		if(dropNum >= FIRST_DROPS_TRACKED) {
 			return;
 		}
 
-		if(this.buildOrder[dropNum] === undefined) {
-			this.buildOrder[dropNum] = [];
-		}
-
-		this.buildOrder[dropNum][column1] = this.buildOrder[dropNum][column1] + 1 || 1;
-		this.buildOrder[dropNum][column2] = this.buildOrder[dropNum][column2] + 1 || 1;
-
-		if(column1 === column2 || !trueSplit) {
-			this.splitPuyos.nonsplit[dropNum] = this.splitPuyos.nonsplit[dropNum] + 2 || 2;
+		if(dropNum === 1) {
+			this.framesOfLastDrop = currentFrame;
 		}
 		else {
-			this.splitPuyos.split[dropNum] = this.splitPuyos.split[dropNum] + 2 || 2;
+			this.buildSpeed[dropNum].push(currentFrame - this.framesOfLastDrop);
+			this.framesOfLastDrop = currentFrame;
+		}
+
+		this.buildOrder[dropNum][column1]++;
+		this.buildOrder[dropNum][column2]++;
+
+		if(column1 === column2 || !trueSplit) {
+			this.splitPuyos[dropNum].nonsplit++;
+		}
+		else {
+			this.splitPuyos[dropNum].split++;
 		}
 	}
 
@@ -45,16 +47,13 @@ class StatTracker {
 	}
 
 	finishChain(finalChainLength) {
-		if(this.chainScores[finalChainLength] === undefined) {
-			this.chainScores[finalChainLength] = [];
-		}
-
 		this.chainScores[finalChainLength].push(this.runningScore);
 		this.runningScore = 0;
 	}
 
 	addResult(result) {
 		this.gameResults[result]++;
+		this.gamesTracked++;
 	}
 
 	toString() {

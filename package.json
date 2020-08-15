@@ -6,7 +6,7 @@
   "scripts": {
     "autoprefix": "postcss temp.css --use autoprefixer -o public/style.css --watch",
     "bundle": "watchify src/Main.js -o public/bundle.js --debug",
-    "bundle2": "watchify src/webpage/pages.js -o public/limited.js",
+    "bundle2": "watchify src/webpage/pages.js -o public/limited.js --debug",
     "eslint": "eslint src/ --fix",
     "node": "node server.js",
     "sass": "sass --watch src/css/style.scss temp.css --no-source-map",

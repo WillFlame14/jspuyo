@@ -469,6 +469,16 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
 	}
 
+	document.getElementById('gallery').onclick = async function() {
+		stopCurrentSession();
+		socket.emit('forceDisconnect');
+
+		const stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
+		window.localStorage.setItem('stats', stats);
+
+		window.location.assign('/gallery');
+	};
+
 	// Profile Panel - Settings
 	document.getElementById('settings').onclick = function() {
 		stopCurrentSession();

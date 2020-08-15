@@ -21,6 +21,7 @@ html {
 
 	background-position: center;
 	background-size: cover;
+	background-attachment: fixed;
 }
 
 body {
@@ -33,6 +34,8 @@ main {
 	display: flex;
 	flex-direction: column;
 	height: 100%;		// Take up entire height instead of fitting to size
+
+	overflow: auto;
 }
 
 canvas {

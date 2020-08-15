@@ -13,11 +13,10 @@ class Game {
 		this.settings = settings;
 		this.userSettings = userSettings;
 		this.statTracker = statTracker;
-		this.statTracker.incrementGame();
 
 		this.endResult = null;			// Final result of the game
 		this.softDrops = 0;				// Frames in which the soft drop button was held
-		this.dropNum = 0;
+		this.dropNum = 0;				// Current drop number
 		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
 		this.currentScore = 0;			// Current score (completely accurate)
 		this.allClear = false;
@@ -34,8 +33,9 @@ class Game {
 		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
 		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 		this.resolvingState = { chain: 0, connections: [], poppedConnections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
-		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
+		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
 		this.squishState = { currentFrame: -1 };
+		this.fallingVelocity = [];
 		this.currentFrame = 0;
 
 		this.boardDrawerId = boardDrawerId;
@@ -109,7 +109,7 @@ class Game {
 			this.visibleNuisance[id] = 0;
 		});
 
-		this.locking = 'not';			// State of lock delay: 'not', [time of lock start]
+		this.currentDropLockFrames = 0;			// Frames spent being locked
 		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
 		this.dropNum++;
@@ -190,31 +190,22 @@ class Game {
 
 			if(this.checkLock()) {
 				// Lock puyo in place if frames are up or lock is forced
-				if(this.locking !== 'not' && (Date.now() - this.locking >= this.settings.lockDelay) || this.forceLock) {
+				if(this.currentDropLockFrames > this.settings.lockDelayFrames || this.forceLock) {
 					this.currentDrop.finishRotation();
 					this.lockDrop();
 
 					// Only do not start squishing puyos if drop was split
 					if(this.currentDrop.schezo.y === null) {
 						this.squishState.currentFrame = 0;
-						this.statTracker.addDrop('nonsplit');
 					}
-					this.locking = 'not';
+					this.currentDropLockFrames = 0;
 					this.forceLock = false;
 				}
 				else {
 					// Start lock delay
-					if(this.locking === 'not') {
-						this.locking = Date.now();
-					}
-					// Continue lock delay
+					this.currentDropLockFrames++;
 					this.currentDrop.affectRotation();
 				}
-			}
-			// Was locking before, but not anymore so reset locking state
-			else if(this.locking !== 'not') {
-				this.locking = 'not';
-				this.currentDrop.affectRotation();
 			}
 			// Not locking
 			else {
@@ -232,6 +223,8 @@ class Game {
 			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
 		}
 
+		this.currentFrame++;
+
 		return currentBoardHash;
 	}
 
@@ -246,19 +239,44 @@ class Game {
 
 		let currentBoardHash = null;
 
+		// Slight hack to inject some code that runs only on the first frame of dropping
 		if(this.resolvingState.chain === 0) {
 			this.resolvingState = { chain: -1, puyoLocs: null, nuisanceLocs: null, currentFrame: 0, totalFrames: 0 };
+			if(!arleDropped) {
+				this.fallingVelocity[currentDrop.arle.x] = this.settings.splitPuyoInitialSpeed;
+			}
+			if(!schezoDropped) {
+				this.fallingVelocity[currentDrop.schezo.x] = this.settings.splitPuyoInitialSpeed;
+			}
 		}
 		else {
 			this.resolvingState.currentFrame++;
 			if (!arleDropped) {
-				currentDrop.arle.y -= 1 / this.settings.isoCascadeFramesPerRow;
+				// Affect gravity
+				currentDrop.arle.y -= this.fallingVelocity[currentDrop.arle.x];
+				if(this.fallingVelocity[currentDrop.arle.x] + this.settings.splitPuyoAcceleration <= this.settings.terminalVelocity) {
+					this.fallingVelocity[currentDrop.arle.x] += this.settings.splitPuyoAcceleration;
+				}
+				else {
+					this.fallingVelocity[currentDrop.arle.x] = this.settings.terminalVelocity;
+				}
+
+				// Do not allow the drop to go below the stack underneath
 				if (currentDrop.arle.y < boardState[currentDrop.arle.x].length) {
 					currentDrop.arle.y = boardState[currentDrop.arle.x].length;
 				}
 			}
 			if (!schezoDropped) {
-				currentDrop.schezo.y -= 1 / this.settings.isoCascadeFramesPerRow;
+				// Affect gravity
+				currentDrop.schezo.y -= this.fallingVelocity[currentDrop.schezo.x];
+				if(this.fallingVelocity[currentDrop.schezo.x] + this.settings.splitPuyoAcceleration <= this.settings.terminalVelocity) {
+					this.fallingVelocity[currentDrop.schezo.x] += this.settings.splitPuyoAcceleration;
+				}
+				else {
+					this.fallingVelocity[currentDrop.schezo.x] = this.settings.terminalVelocity;
+				}
+
+				// Do not allow the drop to go below the stack underneath
 				if (currentDrop.schezo.y < boardState[currentDrop.schezo.x].length) {
 					currentDrop.schezo.y = boardState[currentDrop.schezo.x].length;
 				}
@@ -266,15 +284,7 @@ class Game {
 		}
 
 		const currentBoardState = { connections: this.board.getConnections(), currentDrop };
-
-		// Update the board for player (CPUs if enough frames have passed)
-		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
-			this.currentFrame = this.userSettings.skipFrames;
-		}
-		else {
-			this.currentFrame--;
-		}
+		currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
 
 		if (schezoDropped && arleDropped) {
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
@@ -289,9 +299,11 @@ class Game {
 			// Pass control over to squishPuyos()
 			this.squishState.currentFrame = 0;
 
+			// Reset the temporary variables
 			currentDrop.schezo.x = null;
 			currentDrop.schezo.y = null;
 			currentDrop.shape = null;
+			this.fallingVelocity = [];
 		}
 		return currentBoardHash;
 	}
@@ -302,59 +314,58 @@ class Game {
 	dropNuisance() {
 		let hash = null;
 		// Initialize the nuisance state
-		if (this.nuisanceState.currentFrame === 0) {
-			this.nuisanceState.currentFrame = 1;
+		if (this.nuisanceState.positions.length === 0) {
+			this.nuisanceState.nuisanceArray.forEach((nuisance, index) => {
+				this.nuisanceState.velocities[index] = nuisance.length === 0 ? -1 : this.settings.nuisanceInitialSpeed;
+				this.nuisanceState.positions[index] = nuisance.length === 0 ? -1 : this.settings.nuisanceSpawnRow;
 
-			let maxFrames = 0;
-			const nuisanceCascadeFPR = [];
-
-			for (let i = 0; i < this.settings.cols; i++) {
-				// Generate a semi-random value for "frames per row"
-				nuisanceCascadeFPR.push(
-					this.settings.meanNuisanceCascadeFPR - this.settings.varNuisanceCascadeFPR +
-					Math.random() * this.settings.varNuisanceCascadeFPR * 2
-				);
-
-				// Calculate the number of frames required
-				const colMaxFrames = (this.settings.nuisanceSpawnRow - this.board.boardState[i].length) * nuisanceCascadeFPR[i];
-				if (colMaxFrames > maxFrames) {
-					maxFrames = colMaxFrames;
+				// Generate additional accelerations if the board is wider than normal
+				if(this.settings.nuisanceAcceleration[index] === undefined) {
+					this.settings.nuisanceAcceleration[index] = 0.015 + Math.random() * 0.005;
 				}
-			}
-			this.nuisanceState.totalFrames = Math.ceil(maxFrames + this.settings.nuisanceLandFrames);
-			this.boardDrawer.initNuisanceDrop(nuisanceCascadeFPR);
+			});
 		}
 		// Already initialized
 		else {
-			// Update the board for player (CPUs if enough frames have passed)
-			if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-				hash = this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
-				this.currentFrame = this.userSettings.skipFrames;
+			hash = this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
+
+			// Affect gravity
+			for(let i = 0; i < this.settings.cols; i++) {
+				if(this.nuisanceState.positions[i] !== -1) {
+					this.nuisanceState.positions[i] -= this.nuisanceState.velocities[i];
+
+					// Increase velocity, but not beyond the terminal velocity
+					if(this.nuisanceState.velocities[i] + this.settings.nuisanceAcceleration[i] <= this.nuisanceState.terminalVelocity) {
+						this.nuisanceState.velocities[i] += this.settings.nuisanceAcceleration[i];
+					}
+					else {
+						this.nuisanceState.velocities[i] = this.settings.terminalVelocity;
+					}
+				}
 			}
-			else {
-				this.currentFrame--;
-			}
-			this.nuisanceState.currentFrame++;
 		}
 
 		// Once done falling, play SFX
-		if(this.nuisanceState.currentFrame === this.nuisanceState.totalFrames - this.settings.nuisanceLandFrames) {
-			if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
-				this.audioPlayer.playAndEmitSfx('nuisance_fall', 1);
-			}
-			else {
-				if(this.nuisanceState.nuisanceAmount > this.settings.cols) {
-					this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
-					setTimeout(() => this.audioPlayer.playAndEmitSfx('nuisance_fall', 0), 300);
+		if(this.nuisanceState.allLanded) {
+			if(this.nuisanceState.landFrames === 0) {
+				if(this.nuisanceState.nuisanceAmount >= this.settings.cols * 2) {
+					this.audioPlayer.playAndEmitSfx('nuisance_fall', 1);
 				}
-				if(this.nuisanceState.nuisanceAmount > 0) {
-					this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
+				else {
+					if(this.nuisanceState.nuisanceAmount > this.settings.cols) {
+						this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
+						setTimeout(() => this.audioPlayer.playAndEmitSfx('nuisance_fall', 0), 300);
+					}
+					if(this.nuisanceState.nuisanceAmount > 0) {
+						this.audioPlayer.playAndEmitSfx('nuisance_fall', 0);
+					}
 				}
 			}
+			this.nuisanceState.landFrames++;
 		}
 
 		// Finished dropping nuisance
-		if (this.nuisanceState.currentFrame >= this.nuisanceState.totalFrames) {
+		if (this.nuisanceState.landFrames >= this.settings.nuisanceLandFrames) {
 			this.activeNuisance -= this.nuisanceState.nuisanceAmount;
 
 			// Add the nuisance to the stack
@@ -362,7 +373,7 @@ class Game {
 				this.board.boardState[i] = this.board.boardState[i].concat(this.nuisanceState.nuisanceArray[i]);
 			}
 			// Reset the nuisance state
-			this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, currentFrame: 0, totalFrames: 0 };
+			this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
 		}
 
 		return hash;
@@ -425,14 +436,7 @@ class Game {
 			this.resolvingState.currentFrame++;
 		}
 
-		// Update the board for player (CPUs if enough frames have passed)
-		if(this.boardDrawerId === 1 || this.currentFrame === 0) {
-			currentBoardHash = this.boardDrawer.resolveChains(this.resolvingState);
-			this.currentFrame = this.userSettings.skipFrames;
-		}
-		else {
-			this.currentFrame--;
-		}
+		currentBoardHash = this.boardDrawer.resolveChains(this.resolvingState);
 
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
@@ -462,9 +466,9 @@ class Game {
 
 			// Done resolving all chains
 			if(this.resolvingState.chain === this.resolvingChains.length) {
+				this.statTracker.finishChain(this.resolvingState.chain);
 				this.resolvingChains = [];
 				this.resolvingState = { chain: 0, connections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
-				this.statTracker.finishChain(this.resolvingState.chain);
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
@@ -613,7 +617,7 @@ class Game {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
 			}
 
-			this.statTracker.addDrop(this.dropNum, currentDrop.schezo.x, currentDrop.schezo.x);
+			this.statTracker.addDrop(this.dropNum, this.currentFrame, currentDrop.schezo.x, currentDrop.schezo.x);
 
 			// Remove any puyos that are too high
 			this.board.trim();
@@ -629,6 +633,7 @@ class Game {
 
 			this.statTracker.addDrop(
 				this.dropNum,
+				this.currentFrame,
 				currentDrop.arle.x,
 				currentDrop.schezo.x,
 				boardState[currentDrop.arle.x].length !== boardState[currentDrop.schezo.x].length

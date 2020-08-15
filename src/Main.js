@@ -65,7 +65,7 @@ async function loginSuccess(user) {
 			return;
 		}
 
-		currentStatTracker = new StatTracker(JSON.stringify(userData.stats));
+		currentStatTracker = new StatTracker(userData.stats);
 		updateUserSettings(userData.userSettings);
 
 		// Check if a joinRoom link was used

@@ -25,6 +25,8 @@ function pageInit() {
 	}
 }
 
+const charts = {};
+
 function createCharts() {
 	const statsString = window.localStorage.getItem('stats');
 	let stats;
@@ -64,7 +66,7 @@ function createCharts() {
 
 	const splitDataOptions = {
 		fullWidth: true,
-		chartPadding: { left: 35, top: 35, bottom: 0 },
+		chartPadding: { left: 35, top: 35, bottom: 170, right: 40 },
 		high: 100,
 		axisX: {
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
@@ -79,26 +81,21 @@ function createCharts() {
 				axisX: {
 					axisTitle: "Drop Number",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: 50
-					}
+					offset: { x: 0, y: 50 }
 				},
 				axisY: {
 					axisTitle: "Percentage (%)",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: -15
-					}
+					offset: { x: 0, y: -15 }
 				}
 			})
 		]
 	};
-	new Chartist.Line('#splitData', splitData, splitDataOptions);
+	const splitDataChart = new Chartist.Line('#splitData', splitData, splitDataOptions);
+	animateLine(splitDataChart, 500, 50);
+	charts['split'] = splitDataChart;
 
 	const buildOrderSeries = [[], [], [], [], [], []];
-	let buildOrderMax = -1;
 
 	buildOrder.map((dropNumData, index) => {
 		// First, get the total puyos dropped for a certain drop number
@@ -106,66 +103,54 @@ function createCharts() {
 
 		// Do not include values where there is no data
 		if(totalPuyos === 0 && index > 1) {
-			if(buildOrderMax === -1) {
-				buildOrderMax = index;
-			}
 			return;
 		}
 
-		// Generate the stacked line series
-		let runningPercentage = 0;
+		// Generate the stacked bars
 		dropNumData.forEach((puyos, column) => {
 			const percentage = 100 * puyos / totalPuyos;
-			buildOrderSeries[column].push(runningPercentage + percentage);
-			runningPercentage += percentage;
+			buildOrderSeries[column].push(percentage);
 		});
 	});
 
-	// Reverse the series so that the tallest series gets drawn first (gets covered by closer series)
-	buildOrderSeries.reverse();
-
 	const buildOrderData = {
-		labels: Array.from(new Array(buildOrderMax).keys()),
+		labels: Array.from(new Array(buildOrderSeries[0].length).keys()),
 		series: buildOrderSeries
 	};
 
 	const buildOrderOptions = {
-		showPoint: false,
-		showArea: true,
 		high: 100,
-		chartPadding: { left: 35, bottom: 5 },
+		low: 0,
+		stackBars: true,
+		horizontalBars: true,
+		seriesBarDistance: 35,
+		chartPadding: { left: 10, bottom: 190, right: 40 },
 		axisX: {
 			showGrid: false,
-			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
-			offset: 55
+			showLabel: false
 		},
 		axisY: {
 			showGrid: false,
-			labelInterpolationFnc: (value, index) => (index % 3 === 0 ? value : null),
+			labelInterpolationFnc: (value) => (value % 10 === 0 ? value : null),
 			offset: 70
 		},
 		plugins: [
 			Chartist.plugins.ctAxisTitle({
-				axisX: {
+				axisY: {
 					axisTitle: "Drop Number",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: 50
-					}
-				},
-				axisY: {
-					axisTitle: "Percentage (%)",
-					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: -15
-					}
+					offset: { x: 0, y: -15 }
 				}
+			}),
+			Chartist.plugins.legend({
+				legendNames: ['Col 1', 'Col 2', 'Col 3', 'Col 4', 'Col 5', 'Col 6'],
+				position: "bottom"
 			})
 		]
 	};
-	new Chartist.Line('#buildOrderData', buildOrderData, buildOrderOptions);
+	const buildOrderChart = new Chartist.Bar('#buildOrderData', buildOrderData, buildOrderOptions);
+	animateBar(buildOrderChart, 25);
+	charts['buildOrder'] = buildOrderChart;
 
 	const buildSpeedSeries = [];
 
@@ -187,10 +172,10 @@ function createCharts() {
 	const buildSpeedOptions = {
 		fullWidth: true,
 		low: 0,
-		chartPadding: { left: 35, bottom: 5 },
+		chartPadding: { left: 35, bottom: 165, right: 40 },
 		axisX: {
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
-			offset: 55
+			offset: 65
 		},
 		axisY: {
 			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
@@ -201,23 +186,19 @@ function createCharts() {
 				axisX: {
 					axisTitle: "Drop Number",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: 55
-					}
+					offset: { x: 0, y: 55 }
 				},
 				axisY: {
 					axisTitle: "Time (ms)",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: -15
-					}
+					offset: { x: 0, y: -15 }
 				}
 			})
 		]
 	};
-	new Chartist.Line('#buildSpeedData', buildSpeedData, buildSpeedOptions);
+	const buildSpeedChart = new Chartist.Line('#buildSpeedData', buildSpeedData, buildSpeedOptions);
+	animateLine(buildSpeedChart, 500, 50);
+	charts['buildSpeed'] = buildSpeedChart;
 
 	const chainScoresSeries = [[], []];
 
@@ -244,7 +225,7 @@ function createCharts() {
 
 	const chainScoresOptions = {
 		fullWidth: true,
-		chartPadding: { left: 35, bottom: 5 },
+		chartPadding: { left: 35, bottom: 165, right: 40 },
 		low: 0,
 		axisX: {
 			offset: 55
@@ -258,23 +239,19 @@ function createCharts() {
 				axisX: {
 					axisTitle: "Drop Number",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: 55
-					}
+					offset: { x: 0, y: 48 }
 				},
 				axisY: {
 					axisTitle: "Score (pts)",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: -15
-					}
+					offset: { x: 0, y: -15 }
 				}
 			})
 		]
 	};
-	new Chartist.Line('#chainScoresData', chainScoresData, chainScoresOptions);
+	const chainScoresChart = new Chartist.Line('#chainScoresData', chainScoresData, chainScoresOptions);
+	animateLine(chainScoresChart, 500, 50);
+	charts['chainScores'] = chainScoresChart;
 
 	const finesseDist = {};
 
@@ -297,15 +274,18 @@ function createCharts() {
 	const totalFaults = finesseFaultData.series.reduce((total, current) => total += current);
 
 	const finesseFaultOptions = {
-		// fullWidth: true,
-		chartPadding: 35,
-		labelOffset: 35,
+		fullWidth: true,
+		chartPadding: 110,
+		labelOffset: 0,
+		donut: true,
 		labelInterpolationFnc: (value, index) => {
 			return `${Math.round(100 * finesseFaultData.series[index].value / totalFaults)}%`;
 		},
 		plugins: [Chartist.plugins.legend()]
 	};
-	new Chartist.Pie('#finesseFaultData', finesseFaultData, finesseFaultOptions);
+	const finesseFaultChart = new Chartist.Pie('#finesseFaultData', finesseFaultData, finesseFaultOptions);
+	animatePie(finesseFaultChart, 500);
+	charts['finesseFault'] = finesseFaultChart;
 
 	const finesseSeries = [];
 	Object.keys(finesse).forEach(date => {
@@ -316,45 +296,185 @@ function createCharts() {
 			allFaults += faults[fault];
 		});
 
-		finesseSeries.push(allFaults);
+		finesseSeries.push({x: date, y: allFaults });
 	});
 
 	const finesseData = {
-		labels: Object.keys(finesse),
 		series: [finesseSeries]
 	};
 
 	const finesseOptions = {
 		showLine: false,
-		chartPadding: 35,
+		chartPadding: { left: 35, top: 20, bottom: 200, right: 40 },
 		axisX: {
+			type: Chartist.FixedScaleAxis,
+			divisor: 5,
 			labelInterpolationFnc: (value) => {
-				const date = new Date(Number(value));
-				return date.toLocaleDateString();
+				const date = new Date(Number(value)).toLocaleDateString();
+				return date.substring(0, date.length - 5);
 			}
+		},
+		axisY : {
+			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
 		},
 		plugins: [
 			Chartist.plugins.ctAxisTitle({
 				axisX: {
 					axisTitle: "Date",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: 55
-					}
+					offset: { x: 0, y: 50 }
 				},
 				axisY: {
 					axisTitle: "Finesse Faults",
 					axisClass: "ct-axis-title",
-					offset: {
-						x: 0,
-						y: -15
-					}
+					offset: { x: 0, y: -15 }
 				}
 			})
 		]
 	};
-	new Chartist.Line('#finesseData', finesseData, finesseOptions);
+	const finesseChart = new Chartist.Line('#finesseData', finesseData, finesseOptions);
+	animateLine(finesseChart, 500, 50);
+	charts['finesse'] = finesseChart;
+
+	document.querySelectorAll('.refresh').forEach(button => {
+		button.onclick = function() {
+			const id = button.parentNode.id;
+			const chart = charts[id.substring(0, id.length - 5)];
+			chart.update();
+		};
+	});
+}
+
+function animateLine(chart, duration, delay) {
+	let seq = 0;
+
+	chart.on('created', () => {seq = 0;});
+
+	chart.on('draw', (data) => {
+		seq++;
+
+		switch(data.type) {
+			case 'line':
+				// Fade-in
+				data.element.animate({
+					opacity: { begin: seq * delay + 500, dur: duration, from: 0, to: 1 }
+				});
+				break;
+			case 'label':
+				if(data.axis.units.pos === 'x') {
+					data.element.animate({
+						y: { begin: seq * delay, dur: duration, from: data.y + 50, to: data.y, easing: 'easeOutQuart' },
+						opacity: { begin: seq * delay, dur: duration, from: 0, to: 1, easing: 'easeOutQuart' }
+					});
+				}
+				else {
+					data.element.animate({
+						x: { begin: seq * delay, dur: duration, from: data.x - 50, to: data.x, easing: 'easeOutQuart' },
+						opacity: { begin: seq * delay, dur: duration, from: 0, to: 1, easing: 'easeOutQuart' }
+					});
+				}
+				break;
+			case 'point':
+				data.element.animate({
+					x1: { begin: seq * delay, dur: duration, from: data.x - 10, to: data.x, easing: 'easeOutQuart' },
+					x2: { begin: seq * delay, dur: duration, from: data.x - 10, to: data.x, easing: 'easeOutQuart' },
+					opacity: { begin: seq * delay, dur: duration, from: 0, to: 1, easing: 'easeOutQuart' }
+				});
+				break;
+			case 'grid': {
+				// Using data.axis we get x or y which we can use to construct our animation definition objects
+				const pos1Animation = {
+					begin: seq * delay,
+					dur: duration,
+					from: data[data.axis.units.pos + '1'] - 30,
+					to: data[data.axis.units.pos + '1'],
+					easing: 'easeOutQuart'
+				};
+
+				const pos2Animation = {
+					begin: seq * delay,
+					dur: duration,
+					from: data[data.axis.units.pos + '2'] - 100,
+					to: data[data.axis.units.pos + '2'],
+					easing: 'easeOutQuart'
+				};
+
+				const animations = {};
+				animations[data.axis.units.pos + '1'] = pos1Animation;
+				animations[data.axis.units.pos + '2'] = pos2Animation;
+				animations['opacity'] = { begin: seq * delay, dur: duration, from: 0, to: 1, easing: 'easeOutQuart' };
+
+				data.element.animate(animations);
+			}
+		}
+	});
+}
+
+function animateBar(chart, duration) {
+	chart.on('draw', (data) => {
+		if(data.type === 'bar') {
+			const distance = data.x2 - data.x1;
+			data.element.animate({
+				x2: {
+					begin: (8 * duration) * data.index + data.seriesIndex * duration,
+					dur: distance / 100 * duration,
+					from: data.x1,
+					to: data.x2
+				}
+			});
+		}
+	});
+}
+
+function animatePie(chart, duration) {
+	chart.on('draw', (data) => {
+
+		let pathLength, animationDefinition;
+
+		switch(data.type) {
+			case 'slice':
+				// Get the total path length in order to use for dash array animation
+				pathLength = data.element._node.getTotalLength();
+
+				// Set a dasharray that matches the path length as prerequisite to animate dashoffset
+				data.element.attr({
+					'stroke-dasharray': pathLength + 'px ' + pathLength + 'px'
+				});
+
+				// Create animation definition while also assigning an ID to the animation for later sync usage
+				animationDefinition = {
+					'stroke-dashoffset': {
+						id: 'anim' + data.index,
+						dur: duration,
+						from: -pathLength + 'px',
+						to:  '0px',
+						easing: Chartist.Svg.Easing.easeOutQuint,
+						// We need to use `fill: 'freeze'` otherwise our animation will fall back to initial (not visible)
+						fill: 'freeze'
+					}
+				};
+
+				// If this was not the first slice, we need to time the animation so that it uses the end sync event of the previous animation
+				if(data.index !== 0) {
+					animationDefinition['stroke-dashoffset'].begin = data.index * duration;
+				}
+
+				// We need to set an initial value before the animation starts as we are not in guided mode which would do that for us
+				data.element.attr({
+					'stroke-dashoffset': -pathLength + 'px'
+				});
+
+				// We can't use guided mode as the animations need to rely on setting begin manually
+				// See http://gionkunz.github.io/chartist-js/api-documentation.html#chartistsvg-function-animate
+				data.element.animate(animationDefinition, false);
+				break;
+			case 'label':
+				if(data.index !== 0) {
+					data.element.animate({ opacity: { begin: data.index * duration + 50, dur: duration, from: 0, to: 1 } });
+				}
+				break;
+		}
+	});
 }
 
 pageInit();

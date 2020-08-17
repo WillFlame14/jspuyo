@@ -1,4 +1,5 @@
 @use "base";
+@use "modal";
 
 a {
 	color: rgb(150, 150, 240);
@@ -36,6 +37,21 @@ a {
 	margin: 0px auto 1rem;
 }
 
+// The "Refresh" button
+.refresh {
+	@extend %modal-nav-button;
+	left: -0.65rem;
+
+	background: #00aa00;
+
+	&:hover,
+	&:focus {
+		color: white;
+
+		background: #00cc00;
+	}
+}
+
 #charts {
 	display: grid;
 	grid-gap: 1.5rem;
@@ -61,11 +77,20 @@ a {
 }
 
 .chart {
+
+	position: relative;
+
+	box-sizing: border-box;
+	height: 100%;
 	padding: 20px 0px 5px;
 
 	background: rgba(50, 50, 50, 0.8);
 	border: 3px white solid;
 	box-shadow: base.$box-drop-shadow;
+
+	.ct-chart > svg {
+		position: static;
+	}
 }
 
 .chart-title {
@@ -89,22 +114,32 @@ a {
 	}
 }
 
-$build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a];
+$build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a, #d29519];
 
 #buildOrderData {
 	.ct-area {
 		fill-opacity: 100%;
 	}
 
-	@for $i from 1 through 4 {
+	@for $i from 1 through 6 {
 		.ct-series-#{nth(base.$alphabet, $i)} {
-			.ct-line {
+			.ct-bar {
 				stroke: nth($build-order-colours, $i);
+				stroke-width: 11px;
 			}
+		}
+		.ct-series-#{$i - 1}::before {
+			background-color: nth($build-order-colours, $i);
+		}
+	}
 
-			.ct-area {
-				fill: nth($build-order-colours, $i);
-			}
+	.ct-legend {
+		display: flex;
+		margin: -195px 0px 0px 50px;
+
+		li {
+			display: inline;
+			flex: 0 1 100px;
 		}
 	}
 }
@@ -119,6 +154,7 @@ $build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a];
 $finesse-fault-colours: [#f46036, #2e294e, #1b998b, #e71d36, #b5986d];
 
 #finesseFaultData {
+	margin-top: -70px;
 	margin-left: -120px;
 
 	@for $i from 0 through 4 {
@@ -126,12 +162,14 @@ $finesse-fault-colours: [#f46036, #2e294e, #1b998b, #e71d36, #b5986d];
 			background-color: nth($finesse-fault-colours, $i + 1);
 		}
 
-		.ct-series-#{nth(base.$alphabet, $i + 1)} .ct-slice-pie {
-			fill: nth($finesse-fault-colours, $i + 1);
+		.ct-series-#{nth(base.$alphabet, $i + 1)} .ct-slice-donut {
+			stroke: nth($finesse-fault-colours, $i + 1);
 		}
 	}
 
 	.ct-label {
+		text-shadow: base.$text-drop-shadow;
+
 		fill: rgba(255, 255, 255, 0.9);
 	}
 }

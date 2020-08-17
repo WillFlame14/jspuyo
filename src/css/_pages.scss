@@ -23,45 +23,160 @@ a {
 	border: 2px solid white;
 }
 
+#gamesTracked {
+	margin: 2rem auto 1rem;
+
+	color: white;
+	text-shadow: base.$text-drop-shadow;
+}
+
 // Gallery charts
 #chartsWrapper {
 	width: 85%;
-	margin: 2rem auto 1rem;
+	margin: 0px auto 1rem;
 }
 
 #charts {
 	display: grid;
-	grid-gap: 5%;
-	grid-template-rows: 47.5% 47.5%;
+	grid-gap: 1.5rem;
+	grid-template-rows: 1fr 1fr 1fr;
 	grid-template-columns: 47.5% 47.5%;
 	
-
 	.ct-label {
 		color: rgba(255, 255, 255, 0.8);
 	}
 
 	p {
 		min-height: 3.5em;
+		margin-bottom: 0.25rem;
+		padding: 0px 20px;
 
 		color: rgb(230, 230, 230);
 		font-size: 0.75rem;
 	}
+
+	.ct-grid {
+		stroke: rgb(255, 255, 255, 0.25);
+	}
 }
 
 .chart {
-	padding: 20px 0px 5px 20px;
+	padding: 20px 0px 5px;
 
 	background: rgba(50, 50, 50, 0.8);
 	border: 3px white solid;
+	box-shadow: base.$box-drop-shadow;
 }
 
 .chart-title {
+	padding-left: 20px;
+
 	color: white;
 	font-size: 1.5rem;
+	text-shadow: base.$text-drop-shadow;
 }
+
+.ct-axis-title {
+	font-size: 0.6rem;
+
+	fill: rgba(255, 255, 255, 0.8);
+}
+
+#splitData {
+	.ct-line,
+	.ct-point {
+		stroke: #0197f6;
+	}
+}
+
+$build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a];
 
 #buildOrderData {
 	.ct-area {
 		fill-opacity: 100%;
+	}
+
+	@for $i from 1 through 4 {
+		.ct-series-#{nth(base.$alphabet, $i)} {
+			.ct-line {
+				stroke: nth($build-order-colours, $i);
+			}
+
+			.ct-area {
+				fill: nth($build-order-colours, $i);
+			}
+		}
+	}
+}
+
+#buildSpeedData {
+	.ct-line,
+	.ct-point {
+		stroke: #b99753;
+	}
+}
+
+$finesse-fault-colours: [#f46036, #2e294e, #1b998b, #e71d36, #b5986d];
+
+#finesseFaultData {
+	margin-left: -120px;
+
+	@for $i from 0 through 4 {
+		.ct-series-#{$i}::before {
+			background-color: nth($finesse-fault-colours, $i + 1);
+		}
+
+		.ct-series-#{nth(base.$alphabet, $i + 1)} .ct-slice-pie {
+			fill: nth($finesse-fault-colours, $i + 1);
+		}
+	}
+
+	.ct-label {
+		fill: rgba(255, 255, 255, 0.9);
+	}
+}
+
+#finesseData {
+	.ct-line,
+	.ct-point {
+		stroke: #cbdfbd;
+	}
+}
+
+.ct-legend {
+	position: relative;
+	z-index: 10;
+
+	li {
+		position: relative;
+
+		margin-bottom: 10px;
+		padding-left: 23px;
+
+		color: white;
+		font-size: 0.75rem;
+	}
+
+	li::before {
+		position: absolute;
+		left: 0;
+
+		width: 12px;
+		height: 12px;
+
+		border: 2px solid white;
+		border-radius: 2px;
+
+		content: "";
+	}
+
+	li.inactive::before {
+		background: transparent;
+	}
+
+	&.ct-legend-inside {
+		position: absolute;
+		top: 95;
+		right: -85;
 	}
 }

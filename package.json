@@ -26,7 +26,6 @@
   },
   "homepage": "https://github.com/WillFlame14/jspuyo#readme",
   "dependencies": {
-    "chartist": "^0.11.4",
     "express": "^4.17.1",
     "firebase": "^7.15.5",
     "firebaseui": "^4.5.1",

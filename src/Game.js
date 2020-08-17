@@ -113,6 +113,7 @@ class Game {
 		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
 		this.dropNum++;
+		this.currentMovements = [];
 	}
 
 	/**
@@ -617,7 +618,7 @@ class Game {
 				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
 			}
 
-			this.statTracker.addDrop(this.dropNum, this.currentFrame, currentDrop.schezo.x, currentDrop.schezo.x);
+			this.statTracker.addDrop(this.dropNum, this.currentFrame, this.currentMovements, currentDrop.schezo.x, currentDrop.schezo.x);
 
 			// Remove any puyos that are too high
 			this.board.trim();
@@ -634,11 +635,13 @@ class Game {
 			this.statTracker.addDrop(
 				this.dropNum,
 				this.currentFrame,
+				this.currentMovements,
 				currentDrop.arle.x,
 				currentDrop.schezo.x,
 				boardState[currentDrop.arle.x].length !== boardState[currentDrop.schezo.x].length
 			);
 		}
+		this.currentMovements = [];
 	}
 
 	/**
@@ -725,7 +728,7 @@ class Game {
 	 * Called when a move event is emitted, and validates the event before performing it.
 	 * Puyos may not move into the wall or into the stack.
 	 */
-	move(direction) {
+	move(direction, das) {
 	// Do not move while rotating 180
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
@@ -757,12 +760,14 @@ class Game {
 			if(leftest.x >= 1 && boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
 				this.currentDrop.shift('Left');
 				this.audioPlayer.playAndEmitSfx('move');
+				this.currentMovements.push(`Left${das ? 'DAS': ''}`);
 			}
 		}
 		else if(direction === 'Right') {
 			if(rightest.x <= this.settings.cols - 2 && boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
 				this.currentDrop.shift('Right');
 				this.audioPlayer.playAndEmitSfx('move');
+				this.currentMovements.push(`Right${das ? 'DAS': ''}`);
 			}
 		}
 		else if(direction === 'Down') {
@@ -802,6 +807,7 @@ class Game {
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CW');
 				this.audioPlayer.playAndEmitSfx('rotate');
+				this.currentMovements.push('CW');
 			}
 		}
 		else {
@@ -811,6 +817,7 @@ class Game {
 			if(this.checkKick(newDrop, direction)) {
 				this.currentDrop.rotate('CCW');
 				this.audioPlayer.playAndEmitSfx('rotate');
+				this.currentMovements.push('CCW');
 			}
 		}
 	}

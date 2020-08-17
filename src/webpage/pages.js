@@ -39,7 +39,9 @@ function createCharts() {
 		return;
 	}
 
-	const { buildOrder, buildSpeed, chainScores, splitPuyos } = stats;
+	const { gamesTracked, buildOrder, buildSpeed, chainScores, splitPuyos, finesse } = stats;
+
+	document.getElementById('gamesTracked').innerHTML = `Games tracked: ${gamesTracked}`;
 
 	let splitDataMax = -1;
 	let splitDataSeries = splitPuyos.map((dropNumData, index) => {
@@ -59,17 +61,39 @@ function createCharts() {
 		labels: Array.from(new Array(splitDataMax).keys()),
 		series: [splitDataSeries]
 	};
+
 	const splitDataOptions = {
 		fullWidth: true,
-		chartPadding: 20,
+		chartPadding: { left: 35, top: 35, bottom: 0 },
+		high: 100,
 		axisX: {
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
-			offset: 50
+			offset: 55
 		},
 		axisY: {
 			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
-			offset: 30
-		}
+			offset: 60
+		},
+		plugins: [
+			Chartist.plugins.ctAxisTitle({
+				axisX: {
+					axisTitle: "Drop Number",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: 50
+					}
+				},
+				axisY: {
+					axisTitle: "Percentage (%)",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: -15
+					}
+				}
+			})
+		]
 	};
 	new Chartist.Line('#splitData', splitData, splitDataOptions);
 
@@ -109,16 +133,37 @@ function createCharts() {
 		showPoint: false,
 		showArea: true,
 		high: 100,
-		chartPadding: 20,
+		chartPadding: { left: 35, bottom: 5 },
 		axisX: {
 			showGrid: false,
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
-			offset: 50
+			offset: 55
 		},
 		axisY: {
-			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
-			offset: 40
-		}
+			showGrid: false,
+			labelInterpolationFnc: (value, index) => (index % 3 === 0 ? value : null),
+			offset: 70
+		},
+		plugins: [
+			Chartist.plugins.ctAxisTitle({
+				axisX: {
+					axisTitle: "Drop Number",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: 50
+					}
+				},
+				axisY: {
+					axisTitle: "Percentage (%)",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: -15
+					}
+				}
+			})
+		]
 	};
 	new Chartist.Line('#buildOrderData', buildOrderData, buildOrderOptions);
 
@@ -131,7 +176,7 @@ function createCharts() {
 		}
 		const totalFrames = frames.reduce((total = 0, current = 0) => total += current);
 
-		buildSpeedSeries.push(totalFrames / frames.length);
+		buildSpeedSeries.push(totalFrames / frames.length / 60 * 1000);
 	});
 
 	const buildSpeedData = {
@@ -140,16 +185,37 @@ function createCharts() {
 	};
 
 	const buildSpeedOptions = {
+		fullWidth: true,
 		low: 0,
-		chartPadding: 20,
+		chartPadding: { left: 35, bottom: 5 },
 		axisX: {
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
-			offset: 50
+			offset: 55
 		},
 		axisY: {
 			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
-			offset: 40
-		}
+			offset: 75
+		},
+		plugins: [
+			Chartist.plugins.ctAxisTitle({
+				axisX: {
+					axisTitle: "Drop Number",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: 55
+					}
+				},
+				axisY: {
+					axisTitle: "Time (ms)",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: -15
+					}
+				}
+			})
+		]
 	};
 	new Chartist.Line('#buildSpeedData', buildSpeedData, buildSpeedOptions);
 
@@ -178,17 +244,117 @@ function createCharts() {
 
 	const chainScoresOptions = {
 		fullWidth: true,
-		chartPadding: 20,
+		chartPadding: { left: 35, bottom: 5 },
 		low: 0,
 		axisX: {
-			offset: 40
+			offset: 55
 		},
 		axisY: {
 			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
-			offset: 60
-		}
+			offset: 85
+		},
+		plugins: [
+			Chartist.plugins.ctAxisTitle({
+				axisX: {
+					axisTitle: "Drop Number",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: 55
+					}
+				},
+				axisY: {
+					axisTitle: "Score (pts)",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: -15
+					}
+				}
+			})
+		]
 	};
 	new Chartist.Line('#chainScoresData', chainScoresData, chainScoresOptions);
+
+	const finesseDist = {};
+
+	Object.keys(finesse).forEach(date => {
+		Object.keys(finesse[date]).forEach(fault => {
+			if(finesseDist[fault] === undefined) {
+				finesseDist[fault] = finesse[date][fault];
+			}
+			else {
+				finesseDist[fault] += finesse[date][fault];
+			}
+		});
+	});
+
+	const finesseFaultData = {
+		labels: Object.keys(finesseDist),
+		series: Object.keys(finesseDist).map(fault => finesseDist[fault])
+	};
+
+	const totalFaults = finesseFaultData.series.reduce((total, current) => total += current);
+
+	const finesseFaultOptions = {
+		// fullWidth: true,
+		chartPadding: 35,
+		labelOffset: 35,
+		labelInterpolationFnc: (value, index) => {
+			return `${Math.round(100 * finesseFaultData.series[index].value / totalFaults)}%`;
+		},
+		plugins: [Chartist.plugins.legend()]
+	};
+	new Chartist.Pie('#finesseFaultData', finesseFaultData, finesseFaultOptions);
+
+	const finesseSeries = [];
+	Object.keys(finesse).forEach(date => {
+		const faults = finesse[date];
+		let allFaults = 0;
+
+		Object.keys(faults).forEach(fault => {
+			allFaults += faults[fault];
+		});
+
+		finesseSeries.push(allFaults);
+	});
+
+	const finesseData = {
+		labels: Object.keys(finesse),
+		series: [finesseSeries]
+	};
+
+	const finesseOptions = {
+		showLine: false,
+		chartPadding: 35,
+		axisX: {
+			labelInterpolationFnc: (value) => {
+				const date = new Date(Number(value));
+				return date.toLocaleDateString();
+			}
+		},
+		plugins: [
+			Chartist.plugins.ctAxisTitle({
+				axisX: {
+					axisTitle: "Date",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: 55
+					}
+				},
+				axisY: {
+					axisTitle: "Finesse Faults",
+					axisClass: "ct-axis-title",
+					offset: {
+						x: 0,
+						y: -15
+					}
+				}
+			})
+		]
+	};
+	new Chartist.Line('#finesseData', finesseData, finesseOptions);
 }
 
 pageInit();

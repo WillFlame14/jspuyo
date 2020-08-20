@@ -3,16 +3,17 @@
 const { Board } = require('./Board.js');
 const { BoardDrawer } = require('./BoardDrawer.js');
 const { DropGenerator } = require('./Drop.js');
+const { StatTracker } = require('./StatTracker.js');
 const { Utils } = require('./Utils.js');
 
 class Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings, statTracker, boardDrawerId = null) {
+	constructor(gameId, opponentIds, socket, settings, userSettings, boardDrawerId = null) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.settings = settings;
 		this.userSettings = userSettings;
-		this.statTracker = statTracker;
+		this.statTracker = new StatTracker();
 
 		this.endResult = null;			// Final result of the game
 		this.softDrops = 0;				// Frames in which the soft drop button was held

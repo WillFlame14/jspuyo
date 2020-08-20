@@ -474,7 +474,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		socket.emit('forceDisconnect');
 
 		const stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
-		window.localStorage.setItem('stats', stats);
+		window.localStorage.setItem('stats', JSON.stringify(stats));
 
 		window.location.assign('/gallery');
 	};

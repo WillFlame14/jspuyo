@@ -2,7 +2,6 @@
 
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { StatTracker } = require('./StatTracker.js');
 const { Settings, AudioPlayer } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
@@ -17,7 +16,6 @@ const globalSocket = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
 let currentUID;
-let currentStatTracker;
 let initialized;
 
 // This is the "main" function, which starts up the entire app.
@@ -54,9 +52,8 @@ async function loginSuccess(user) {
 	globalSocket.off('registered');
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
-		let userData;
 		try {
-			userData = await PlayerInfo.loadUserData(currentUID);
+			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
 		}
 		catch(error) {
 			console.log(error);
@@ -64,9 +61,6 @@ async function loginSuccess(user) {
 			signOut();
 			return;
 		}
-
-		currentStatTracker = new StatTracker(userData.stats);
-		updateUserSettings(userData.userSettings);
 
 		// Check if a joinRoom link was used
 		const urlParams = new URLSearchParams(window.location.search);
@@ -201,10 +195,10 @@ async function init(socket) {
 		quickPlayTimer = null;
 
 		// Set up the player's game
-		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer, currentStatTracker);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId, currentStatTracker);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId);
 		currentSession.run();
 	});
 
@@ -224,10 +218,10 @@ async function init(socket) {
 		clearBoards();
 		generateBoards(allIds.length);
 
-		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer, currentStatTracker);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId, currentStatTracker);
+		currentSession = new Session(getCurrentUID(), game, socket, roomId);
 		currentSession.spectate = true;
 		currentSession.run();
 	});

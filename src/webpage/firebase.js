@@ -4,7 +4,6 @@ const firebase = require('firebase/app');
 const firebaseui = require('firebaseui');
 const { firebaseConfig } = require('../../config.js');
 const { UserSettings } = require('../Utils.js');
-const { StatTracker } = require('../StatTracker.js');
 
 // Add the Firebase products that you want to use
 require("firebase/auth");
@@ -209,17 +208,15 @@ class PlayerInfo {
 	 * Initializes all the user data with default values.
 	 */
 	static addUser(uid, username) {
-		firebase.database().ref(`username/${uid}`).set({ username });
-		firebase.database().ref(`userSettings/${uid}`).set({ userSettings: JSON.parse(JSON.stringify(new UserSettings())) });
-		firebase.database().ref(`rating/${uid}`).set({ rating: 1000 });
-		firebase.database().ref(`stats/${uid}`).set({ stats: new StatTracker().toString() });
+		firebase.database().ref(`username/${uid}`).set(username);
+		firebase.database().ref(`userSettings/${uid}`).set(new UserSettings());
+		firebase.database().ref(`rating/${uid}`).set(1000);
 	}
 
 	/**
 	 * Updates a specific property of the user data.
-	 * Since the data has been flattened, we can simply overwrite instead of updating the data.
 	 */
-	static updateUser(uid, property, value) {
+	static updateUser(uid, property, value, overwrite = true) {
 		// Update the firebase auth User object if it is one of their properties
 		if(userProperties.includes(property)) {
 			if(property === 'username') {
@@ -230,8 +227,13 @@ class PlayerInfo {
 			}
 		}
 
-		// Update the database property
-		firebase.database().ref(`${property}/${uid}`).set({ [property]: value });
+		// Overwrite/update the database property
+		if(overwrite) {
+			firebase.database().ref(`${property}/${uid}`).set(value);
+		}
+		else {
+			firebase.database().ref(`${property}/${uid}`).update(value);
+		}
 	}
 
 	/**
@@ -252,27 +254,8 @@ class PlayerInfo {
 					reject(`No ${property} found for user ${uid}.`);
 				}
 				else {
-					resolve(data.val()[property]);
+					resolve(data.val());
 				}
-			});
-		});
-	}
-
-	static loadUserData(uid) {
-		return new Promise((resolve, reject) => {
-			const userData = {};
-			const userDataProperties = ['userSettings', 'rating', 'stats'];
-
-			const promises = userDataProperties.map(property => PlayerInfo.getUserProperty(uid, property));
-
-			Promise.all(promises).then(data => {
-				data.forEach((value, index) => {
-					userData[userDataProperties[index]] = value;
-				});
-				resolve(userData);
-			}
-			).catch(error => {
-				reject(`Failed to load user data. ${error}`);
 			});
 		});
 	}

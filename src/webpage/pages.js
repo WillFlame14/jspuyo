@@ -10,6 +10,8 @@ const backgrounds = [
 	'wildlife.jpg'
 ];
 
+let selectedVariableGames = -1;
+
 function pageInit() {
 	const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
 	const address = path.join(__dirname, '..', '..', 'images', 'backgrounds', background);
@@ -19,17 +21,30 @@ function pageInit() {
 		window.location.assign('/about');
 	};
 
+	// Initialize event listeners for the variable game options
+	document.querySelectorAll('.variableGameOption').forEach(element => {
+		element.onclick = function() {
+			// Turn off the old selected option
+			document.getElementById(`${selectedVariableGames}games`).classList.remove('selected');
+
+			// All ids are in the form "##games"
+			selectedVariableGames = element.id.substring(0, element.id.length - 5);
+			createCharts(selectedVariableGames);
+			element.classList.add('selected');
+		};
+	});
+
 	// Create charts for gallery
 	if(window.location.pathname === '/gallery/') {
-		createCharts();
+		initCharts();
+		createCharts(-1);
 	}
 }
 
-const charts = {};
+let stats;
 
-function createCharts() {
+function initCharts() {
 	const statsString = window.localStorage.getItem('stats');
-	let stats;
 
 	try {
 		stats = JSON.parse(statsString);
@@ -41,26 +56,66 @@ function createCharts() {
 		return;
 	}
 
-	const { gamesTracked, buildOrder, buildSpeed, chainScores, splitPuyos, finesse } = stats;
+	document.getElementById('gamesTracked').innerHTML = `Games tracked: ${Object.keys(stats).length}`;
 
-	document.getElementById('gamesTracked').innerHTML = `Games tracked: ${gamesTracked}`;
+	if(Object.keys(stats).length < 5) {
+		document.getElementById('insufficientData').style.display = 'block';
+		document.getElementById('variableGames').style.display = 'none';
+		document.getElementById('chartsWrapper').style.display = 'none';
+		return;
+	}
 
-	let splitDataMax = -1;
-	let splitDataSeries = splitPuyos.map((dropNumData, index) => {
-		const totalDrops = dropNumData.split + dropNumData.nonsplit;
-		if(totalDrops === 0) {
-			if(splitDataMax === -1 && index > 0) {
-				splitDataMax = index;
+	document.getElementById('insufficientData').style.display = 'none';
+	document.getElementById('variableGames').style.display = 'flex';
+	document.getElementById('chartsWrapper').style.display = 'block';
+}
+
+const charts = {};
+
+/**
+ * Generates all the charts on screen based on the game range.
+ * @param  {Number} gameRange Number of previous games included. A value of -1 means all games will be included.
+ * @return {undefined}
+ */
+function createCharts(gameRange = -1) {
+	let includedGameKeys;
+
+	// All games
+	if(gameRange === -1) {
+		includedGameKeys = Object.keys(stats);
+	}
+	else {
+		includedGameKeys = Object.keys(stats).slice(stats.length - gameRange, stats.length);
+	}
+
+	const splitDataSeries = [];
+	const split = [], nonsplit = [];
+
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		game.splitPuyos.forEach((dropNumData, dropNum) => {
+			// Do not include data that has not yet been collected
+			if(dropNumData.split + dropNumData.nonsplit === 0) {
+				return;
 			}
-			return 0;
-		}
-		return 100 * dropNumData.split / totalDrops;
+
+			// Initialize count
+			if(split[dropNum] === undefined) {
+				split[dropNum] = 0;
+				nonsplit[dropNum] = 0;
+			}
+
+			split[dropNum] += dropNumData.split;
+			nonsplit[dropNum] += dropNumData.nonsplit;
+		});
 	});
 
-	splitDataSeries = splitDataSeries.slice(0, splitDataMax);
+	split.forEach((puyos, dropNum) => {
+		splitDataSeries[dropNum] = 100 * split[dropNum] / (split[dropNum] + nonsplit[dropNum]);
+	});
 
 	const splitData = {
-		labels: Array.from(new Array(splitDataMax).keys()),
+		labels: Array.from(new Array(splitDataSeries.length).keys()),
 		series: [splitDataSeries]
 	};
 
@@ -96,20 +151,38 @@ function createCharts() {
 	charts['split'] = splitDataChart;
 
 	const buildOrderSeries = [[], [], [], [], [], []];
+	const columns = [[], [], [], [], [], []];
+	const totals = [];
 
-	buildOrder.map((dropNumData, index) => {
-		// First, get the total puyos dropped for a certain drop number
-		const totalPuyos = dropNumData.reduce((total, currentValue) => total + currentValue);
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		game.buildOrder.forEach((dropNumData, dropNum) => {
+			// Consolidate the games
+			dropNumData.forEach((puyos, col) => {
+				if(columns[col][dropNum] === undefined) {
+					columns[col][dropNum] = 0;
+				}
+				columns[col][dropNum] += Number(puyos);
+			});
+		});
+	});
 
-		// Do not include values where there is no data
-		if(totalPuyos === 0 && index > 1) {
-			return;
-		}
+	columns.forEach((col, colNum) => {
+		col.forEach((puyos, dropNum) => {
+			if(totals[dropNum] === undefined) {
+				let total = 0;
+				columns.forEach(col2 => {
+					total += Number(col2[dropNum]);
+				});
+				totals[dropNum] = total;
+			}
 
-		// Generate the stacked bars
-		dropNumData.forEach((puyos, column) => {
-			const percentage = 100 * puyos / totalPuyos;
-			buildOrderSeries[column].push(percentage);
+			// Do not include data that has not yet been collected
+			if(totals[dropNum] === 0) {
+				return;
+			}
+
+			buildOrderSeries[colNum][dropNum] = 100 * puyos / totals[dropNum];
 		});
 	});
 
@@ -149,19 +222,29 @@ function createCharts() {
 		]
 	};
 	const buildOrderChart = new Chartist.Bar('#buildOrderData', buildOrderData, buildOrderOptions);
-	animateBar(buildOrderChart, 25);
+	animateBar(buildOrderChart, 20);
 	charts['buildOrder'] = buildOrderChart;
 
 	const buildSpeedSeries = [];
+	const speeds = [];
 
-	buildSpeed.forEach(frames => {
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		game.buildSpeed.forEach((frames, dropNum) => {
+			if(speeds[dropNum] === undefined) {
+				speeds[dropNum] = 0;
+			}
+			speeds[dropNum] += Number(frames);
+		});
+	});
+
+	speeds.forEach((frames, dropNum) => {
 		// Don't include drop numbers that have no data yet
-		if(frames.length === 0) {
+		if(frames === 0) {
 			return;
 		}
-		const totalFrames = frames.reduce((total = 0, current = 0) => total += current);
 
-		buildSpeedSeries.push(totalFrames / frames.length / 60 * 1000);
+		buildSpeedSeries[dropNum] = frames / includedGameKeys.length / 60 * 1000;
 	});
 
 	const buildSpeedData = {
@@ -172,7 +255,7 @@ function createCharts() {
 	const buildSpeedOptions = {
 		fullWidth: true,
 		low: 0,
-		chartPadding: { left: 35, bottom: 165, right: 40 },
+		chartPadding: { left: 35, top: 25, bottom: 165, right: 40 },
 		axisX: {
 			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
 			offset: 65
@@ -201,8 +284,19 @@ function createCharts() {
 	charts['buildSpeed'] = buildSpeedChart;
 
 	const chainScoresSeries = [[], []];
+	const allScores = [];
 
-	chainScores.forEach(scores => {
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		game.chainScores.forEach((scores, chainLength) => {
+			if(allScores[chainLength] === undefined) {
+				allScores[chainLength] = [];
+			}
+			allScores[chainLength] = allScores[chainLength].concat(scores);
+		});
+	});
+
+	allScores.forEach(scores => {
 		let totalScore = 0;
 		let maxScore = -1;
 		scores.forEach(score => {
@@ -214,7 +308,7 @@ function createCharts() {
 		if(totalScore === 0) {
 			return;
 		}
-		chainScoresSeries[0].push(totalScore / chainScores.length);		// Average score
+		chainScoresSeries[0].push(totalScore / allScores.length);		// Average score
 		chainScoresSeries[1].push(maxScore);								// Max score
 	});
 
@@ -225,7 +319,7 @@ function createCharts() {
 
 	const chainScoresOptions = {
 		fullWidth: true,
-		chartPadding: { left: 35, bottom: 165, right: 40 },
+		chartPadding: { left: 35, bottom: 165, right: 40, top: 20 },
 		low: 0,
 		axisX: {
 			offset: 55
@@ -255,13 +349,14 @@ function createCharts() {
 
 	const finesseDist = {};
 
-	Object.keys(finesse).forEach(date => {
-		Object.keys(finesse[date]).forEach(fault => {
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		Object.keys(game.finesse).forEach(fault => {
 			if(finesseDist[fault] === undefined) {
-				finesseDist[fault] = finesse[date][fault];
+				finesseDist[fault] = game.finesse[fault];
 			}
 			else {
-				finesseDist[fault] += finesse[date][fault];
+				finesseDist[fault] += game.finesse[fault];
 			}
 		});
 	});
@@ -275,7 +370,7 @@ function createCharts() {
 
 	const finesseFaultOptions = {
 		fullWidth: true,
-		chartPadding: 110,
+		chartPadding: 120,
 		labelOffset: 0,
 		donut: true,
 		labelInterpolationFnc: (value, index) => {
@@ -288,15 +383,11 @@ function createCharts() {
 	charts['finesseFault'] = finesseFaultChart;
 
 	const finesseSeries = [];
-	Object.keys(finesse).forEach(date => {
-		const faults = finesse[date];
-		let allFaults = 0;
+	includedGameKeys.forEach(timestamp => {
+		const game = JSON.parse(stats[timestamp]);
+		const faults = Object.keys(game.finesse).reduce((total = 0, fault) => total + game.finesse[fault], 0);
 
-		Object.keys(faults).forEach(fault => {
-			allFaults += faults[fault];
-		});
-
-		finesseSeries.push({x: date, y: allFaults });
+		finesseSeries.push({x: timestamp, y: faults});
 	});
 
 	const finesseData = {
@@ -306,6 +397,7 @@ function createCharts() {
 	const finesseOptions = {
 		showLine: false,
 		chartPadding: { left: 35, top: 20, bottom: 200, right: 40 },
+		low: 0,
 		axisX: {
 			type: Chartist.FixedScaleAxis,
 			divisor: 5,

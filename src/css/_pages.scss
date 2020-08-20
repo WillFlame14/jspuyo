@@ -130,7 +130,7 @@ a {
 	height: 100%;
 	padding: 20px 0px 5px;
 
-	background: rgba(50, 50, 50, 0.8);
+	background: rgba(40, 40, 40, 0.8);
 	border: 3px white solid;
 	box-shadow: base.$box-drop-shadow;
 
@@ -230,6 +230,36 @@ $finesse-fault-colours: [#f46036, #2e294e, #1b998b, #e71d36, #b5986d];
 	.ct-line,
 	.ct-point {
 		stroke: #cbdfbd;
+	}
+}
+
+$chain-scores-colours: [#abdf75, #60695c];
+
+#chainScoresData {
+	@for $i from 1 through 2 {
+		// Set bar colour
+		.ct-series-#{nth(base.$alphabet, $i)} {
+			.ct-line,
+			.ct-point {
+				stroke: nth($chain-scores-colours, $i);
+			}
+		}
+
+		// Set legend colour
+		.ct-series-#{$i - 1}::before {
+			background-color: nth($chain-scores-colours, $i);
+		}
+	}
+
+	.ct-legend {
+		display: flex;
+		justify-content: space-evenly;
+		margin: -195px 0px 0px 80px;
+
+		li {
+			display: inline-block;
+			flex: 0 1 100px;
+		}
 	}
 }
 

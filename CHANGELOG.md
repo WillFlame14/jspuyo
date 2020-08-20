@@ -2,6 +2,22 @@
 
 ## v0.8 - Personalization
 
+### v0.8.2 (August 21, 2020)
+[`Add StatTracker, display stats in Gallery #51`](https://github.com/WillFlame14/jspuyo/pull/51)
+
+**New features:**
+- Stats for each game are now tracked. (e.g. build speed, split puyo percentage, finesse)
+  - Charts based on these stats are displayed under the Profile --> Gallery tab.
+  - Charts can be generated based on only the most recent 50 or 10 games instead of all.
+  - Charts will only be displayed once at least 5 games have been played.
+  - Some nice animations for each chart. :)
+  - Stats are based off default games only. (i.e. considering board dimensions, soft drop speed, gravity)
+
+**Other changes:**
+- Tuned many game values to be more realistic.
+- Guest registration warning now only shows up when registering as a guest.
+- Flattened some data values in Firebase.
+
 ### v0.8.1a (August 12, 2020)
 
 - Hotfix for CPU games being frozen upon start.

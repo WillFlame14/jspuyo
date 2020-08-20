@@ -333,11 +333,12 @@ class Game {
 
 			// Affect gravity
 			for(let i = 0; i < this.settings.cols; i++) {
+				// Will be -1 if there is no nuisance puyos in this column, so continue
 				if(this.nuisanceState.positions[i] !== -1) {
 					this.nuisanceState.positions[i] -= this.nuisanceState.velocities[i];
 
 					// Increase velocity, but not beyond the terminal velocity
-					if(this.nuisanceState.velocities[i] + this.settings.nuisanceAcceleration[i] <= this.nuisanceState.terminalVelocity) {
+					if(this.nuisanceState.velocities[i] + this.settings.nuisanceAcceleration[i] <= this.settings.terminalVelocity) {
 						this.nuisanceState.velocities[i] += this.settings.nuisanceAcceleration[i];
 					}
 					else {

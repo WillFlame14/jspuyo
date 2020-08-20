@@ -37,9 +37,7 @@ class StatTracker {
 			if(this.finesse[finesseFault] === undefined) {
 				this.finesse[finesseFault] = 0;
 			}
-			else {
-				this.finesse[finesseFault]++;
-			}
+			this.finesse[finesseFault]++;
 		}
 
 		// Add to build order

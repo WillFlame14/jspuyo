@@ -7,12 +7,12 @@ const chaiExclude = require('chai-exclude');
 const { expect } = require('chai').use(deepEqualInAnyOrder).use(chaiExclude);
 const { Board } = require('../src/Board.js');
 const { Drop } = require('../src/Drop.js');
-const { Utils, Settings, PUYO_COLOURS } = require('../src/Utils.js');
+const { Utils, Settings } = require('../src/Utils.js');
 
-const red = PUYO_COLOURS['Red'];
-const grn = PUYO_COLOURS['Green'];
-const blu = PUYO_COLOURS['Blue'];
-const nui = PUYO_COLOURS['Gray'];
+const red = 1;
+const grn = 2;
+const blu = 3;
+const nui = 0;
 
 const settings = new Settings();
 

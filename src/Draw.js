@@ -14,72 +14,68 @@ const SUB_SCALE_FACTOR = 1.05;
  * Use drawSprite to draw a specific sprite at a specific size onto a desired canvas
  *
  */
+
 class SpriteDrawer {
 	/**
 	 * @param   {CanvasRenderingContext2D}  ctx         The context to draw on
 	 * @param   {String}                    spriteSheet The name of the sprite sheet to use, e.g. "TsuClassic" for TsuClassic.png
-	 * @param   {Number}                    sizeX       The size (width) of a single sprite unit on the destination, in pixels
-	 * @param   {Number}                    sizeY       The size (height) of a single sprite unit on the destination, in pixels
+	 * @param   {Number}                    size        The size of a single sprite unit on the destination, in pixels
 	 * @param   {Number}                    sX          The 0-indexed column number of the leftmost column of the sprite on the sheet
 	 * @param   {Number}                    sY          The 0-indexed row number of the topmost row of the sprite on the sheet
-	 * @param   {Number}                    cX          How many pixels right to draw the centre of the sprite relative to the current ctx origin
-	 * @param   {Number}                    cY          How many pixels down to draw the centre of the sprite relative to the current ctx origin
+	 * @param   {Number}                    dX          How many pixels right to draw the centre of the sprite relative to the current ctx origin
+	 * @param   {Number}                    dY          How many pixels down to draw the centre of the sprite relative to the current ctx origin
 	 * @param   {Number}                    sWidth      How many columns wide the sprite is on the sheet
 	 * @param   {Number}                    sHeight     How many rows tall the sprite is on the sheet
 	 * @param   {Boolean}                   merge       If the sprite should be scaled up slightly to ensure visual contiguity
 	 */
-	drawSprite(ctx, spriteSheet, sizeX, sizeY, sX, sY, cX, cY, sWidth = 1, sHeight = 1, merge = true) {
-		const sourceSizeX = merge ? sizeX * SUB_SCALE_FACTOR : sizeX;
-		const sourceSizeY = merge ? sizeY * SUB_SCALE_FACTOR : sizeY;
-		if (this.loadSprite(spriteSheet, sourceSizeX, sourceSizeY) === true) {
-			const canvasName = 'c' + sourceSizeX.toString() + sourceSizeY.toString();
+
+	static drawSprite(ctx, spriteSheet, size, sX, sY, dX = 0, dY = 0, sWidth = 1, sHeight = 1, merge = true) {
+		const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
+		if (SpriteDrawer.loadSprite(spriteSheet, sourceSize) === true) {
+			const spriteWidth = sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT;
+			const spriteHeight = sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT;
 			ctx.drawImage(
-				this[spriteSheet][canvasName],
-				(sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSizeX,
-				(sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSizeY,
-				sWidth * sourceSizeX + (sWidth - 1) * sourceSizeX / SHEET_USED_UNIT,
-				sHeight * sourceSizeY + (sHeight - 1) * sourceSizeY / SHEET_USED_UNIT,
-				cX - sWidth * sourceSizeX / 2, cY - sHeight * sourceSizeY / 2,
-				sWidth * sourceSizeX + (sWidth - 1) * sourceSizeY / SHEET_USED_UNIT,
-				sHeight * sourceSizeX + (sHeight - 1) * sourceSizeY / SHEET_USED_UNIT
+				SpriteDrawer[spriteSheet][sourceSize],
+				(sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
+				(sY * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
+				spriteWidth, spriteHeight,
+				dX - sWidth * sourceSize / 2, dY - sHeight * sourceSize / 2,
+				spriteWidth, spriteHeight
 			);
 		}
 	}
 	// Loads canvas with scaled sprite sheet if it hasn't been done yet
 	// Will return false if the original image hasn't been loaded and cannot be accessed to scale into a canvas
-	loadSprite(spriteSheet, sizeX, sizeY) {
-		this.loadImage(spriteSheet);
-		if(this[spriteSheet].image.loaded === false) {
+	static loadSprite(spriteSheet, size) {
+		SpriteDrawer.loadImage(spriteSheet);
+		if(SpriteDrawer[spriteSheet].image.loaded === false) {
 			return false;
 		} else {
-			const canvasName = 'c' + sizeX.toString() + sizeY.toString();
-			// this[spriteSheet][canvasName] is an html canvas object
-			// e.g. this['aqua']['c50'] or this.aqua.c50 is a canvas that has aqua.png drawn with unit size 50
-			if(this[spriteSheet][canvasName] == null) {
-				const spriteCanvas = document.createElement('canvas');
-				spriteCanvas.width = Math.ceil(SHEET_COLS * SHEET_UNIT * sizeX / SHEET_USED_UNIT);
-				spriteCanvas.height = Math.ceil(SHEET_ROWS * SHEET_UNIT * sizeY / SHEET_USED_UNIT);
-				spriteCanvas.getContext('2d').drawImage(
-					this[spriteSheet].image,
+			// SpriteDrawer[spriteSheet][size] is an html canvas object
+			// e.g. SpriteDrawer['Aqua'][50] is a canvas that has Aqua.png drawn with unit size 50
+			if(SpriteDrawer[spriteSheet][size] == null) {
+				SpriteDrawer[spriteSheet][size] = document.createElement('canvas');
+				SpriteDrawer[spriteSheet][size].width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
+				SpriteDrawer[spriteSheet][size].height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
+				SpriteDrawer[spriteSheet][size].getContext('2d').drawImage(
+					SpriteDrawer[spriteSheet].image,
 					0, 0,
-					spriteCanvas.width, spriteCanvas.height
+					SpriteDrawer[spriteSheet][size].width, SpriteDrawer[spriteSheet][size].height
 				);
-				this[spriteSheet][canvasName] = spriteCanvas;
 			}
 			return true;
 		}
 	}
 	// Loads sprite sheet image if it hasn't been done yet
-	loadImage(spriteSheet) {
-		if(this[spriteSheet] == null) {
-			const sheet = {};
-			sheet.image = new Image();
-			sheet.image.loaded = false;
-			sheet.image.addEventListener('load', function() {
+	static loadImage(spriteSheet) {
+		if(SpriteDrawer[spriteSheet] == null) {
+			SpriteDrawer[spriteSheet] = {};
+			SpriteDrawer[spriteSheet].image = new Image();
+			SpriteDrawer[spriteSheet].image.loaded = false;
+			SpriteDrawer[spriteSheet].image.addEventListener('load', function() {
 				this.loaded = true;
 			});
-			sheet.image.src = '../images/' + spriteSheet + ".png";
-			this[spriteSheet] = sheet;
+			SpriteDrawer[spriteSheet].image.src = '../images/' + spriteSheet + ".png";
 		}
 	}
 }

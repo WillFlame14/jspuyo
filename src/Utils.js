@@ -1,17 +1,7 @@
 'use strict';
-/* eslint-disable indent */
-const COLOUR_LIST = [ 'Red', 'Blue', 'Green', 'Purple', 'Yellow', 'Gray'];
-const PUYO_COLOURS = { 'Red': 'rgba(200, 20, 20, 0.9)',
-						'Green': 'rgba(20, 200, 20, 0.9)',
-						'Blue': 'rgba(20, 20, 200, 0.9)',
-						'Purple': 'rgba(150, 20, 150, 0.9)',
-						'Yellow': 'rgba(150, 150, 20, 0.9)',
-						'Gray': 'rgba(100, 100, 100, 0.9)' };
-const PUYO_EYES_COLOUR = 'rgba(255, 255, 255, 0.7)';
-/* eslint-enable indent */
 
 class Settings {
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.466, numColours = 4,
+	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.5, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -336,9 +326,7 @@ class AudioPlayer {
  * Returns a random puyo colour, given the size of the colour pool.
  */
 function getRandomColour (numColours) {
-	const colours = COLOUR_LIST.slice(0, numColours);
-
-	return PUYO_COLOURS[colours[Math.floor(Math.random() * numColours)]];
+	return Math.floor(Math.random() * numColours) + 1;
 }
 
 /**
@@ -447,9 +435,6 @@ const Utils = {
 };
 
 module.exports = {
-	COLOUR_LIST,
-	PUYO_COLOURS,
-	PUYO_EYES_COLOUR,
 	Settings,
 	SettingsBuilder,
 	UserSettings,

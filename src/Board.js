@@ -1,7 +1,5 @@
 'use strict';
 
-const { PUYO_COLOURS } = require('./Utils.js');
-
 class Board {
 	constructor(settings, boardState = null) {
 		this.settings = settings;
@@ -147,7 +145,7 @@ class Board {
 
 				if(notVisited(puyo)) {
 					let chain_puyos;
-					if(puyo.colour === PUYO_COLOURS['Gray']) {
+					if(puyo.colour === 0) {
 						// Force nuisance to only connect to itself
 						chain_puyos = [puyo];
 					}
@@ -209,8 +207,8 @@ class Board {
 					if(Math.abs(i) + Math.abs(j) !== 1 || !this.validLoc({ col: loc.col + i, row: loc.row + j })) {
 						continue;
 					}
-					if(this.boardState[loc.col + i][loc.row + j] === PUYO_COLOURS['Gray']) {
-						poppedNuisance.push({ col: loc.col + i, row: loc.row + j, colour: PUYO_COLOURS['Gray'] });
+					if(this.boardState[loc.col + i][loc.row + j] === 0) {
+						poppedNuisance.push({ col: loc.col + i, row: loc.row + j, colour: 0 });
 					}
 				}
 			}
@@ -234,7 +232,7 @@ class Board {
 		if(nuisance >= this.width * 5) {
 			nuisanceArray.forEach(col => {
 				for(let i = 0; i < 5; i++) {
-					col.push(PUYO_COLOURS['Gray']);
+					col.push(0);
 				}
 			});
 			nuisanceDropped = 5 * this.width;
@@ -247,7 +245,7 @@ class Board {
 			// Drop the full rows first
 			nuisanceArray.forEach(col => {
 				for(let i = 0; i < fullRows; i++) {
-					col.push(PUYO_COLOURS['Gray']);
+					col.push(0);
 				}
 			});
 
@@ -259,7 +257,7 @@ class Board {
 			// Randomly drop the remaining nuisance
 			for(let i = 0; i < remaining; i++) {
 				const column = unusedColumns[Math.floor(Math.random() * unusedColumns.length)];
-				nuisanceArray[column].push(PUYO_COLOURS['Gray']);
+				nuisanceArray[column].push(0);
 				unusedColumns.splice(unusedColumns.indexOf(column), 1);
 			}
 			nuisanceDropped = nuisance;

@@ -1,8 +1,9 @@
 'use strict';
 
+const { GameArea } = require('./GameDrawer.js');
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings, AudioPlayer } = require('./Utils.js');
+const { Settings, UserSettings, AudioPlayer } = require('./Utils.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
 const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
@@ -105,8 +106,8 @@ async function init(socket) {
 		}
 		currentRoomId = roomId;
 		clearModal();
-		clearBoards();
-		generateBoards(1);
+		clearCells();
+		generateCells(1, Settings.fromString(settingsString));
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
@@ -187,15 +188,15 @@ async function init(socket) {
 		userSettings.skipFrames += defaultSkipFrames[opponentIds.length + 1];
 
 		// Adjust the number of boards drawn
-		clearBoards();
-		generateBoards(opponentIds.length + 1);
+		clearCells();
+		const gameAreas = generateCells(opponentIds.length + 1, settings, userSettings.appearance);
 
 		// Stop and reset the quick play timer if not already done
 		clearInterval(quickPlayTimer);
 		quickPlayTimer = null;
 
 		// Set up the player's game
-		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, globalAudioPlayer);
+		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -215,10 +216,10 @@ async function init(socket) {
 		document.getElementById('spectateNotice').style.display = 'block';
 
 		// Adjust the number of boards drawn
-		clearBoards();
-		generateBoards(allIds.length);
+		clearCells();
+		const gameAreas = generateCells(allIds.length, settings, userSettings.appearance);
 
-		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, globalAudioPlayer);
+		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -276,53 +277,29 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateBoards (numBoards) {
+function generateCells(numCells, settings, appearance = new UserSettings().appearance) {
 	const playArea = document.getElementById('playArea');
 	playArea.style.display = 'table';
 
 	const firstRow = playArea.insertRow(-1);
 	let runningId = 1;
+	const gameAreas = {};
 
 	const createGameCanvas = function(id, row, size) {
-		const board = row.insertCell(-1);
-		const gameArea = document.createElement('div');
-		gameArea.id = 'gameArea' + id;
-		board.appendChild(gameArea);
+		gameAreas[id] = new GameArea(settings, appearance, size);
 
-		const nuisanceQueueArea = document.createElement('div');
-		nuisanceQueueArea.id = 'nuisanceQueueArea' + id;
-		gameArea.appendChild(nuisanceQueueArea);
+		const cell = row.insertCell(-1);
 
-		const nuisanceQueueCanvas = document.createElement('canvas');
-		nuisanceQueueCanvas.id = 'nuisanceQueue' + id;
-		nuisanceQueueCanvas.height = 45 * size;
-		nuisanceQueueCanvas.width = 270 * size;
-		nuisanceQueueCanvas.className = 'nuisanceQueue';
-		nuisanceQueueArea.appendChild(nuisanceQueueCanvas);
+		const playerArea = document.createElement('div');
+		cell.appendChild(playerArea);
 
-		const centralArea = document.createElement('div');
-		centralArea.id = 'centralArea' + id;
-		gameArea.appendChild(centralArea);
-
-		const boardCanvas = document.createElement('canvas');
-		boardCanvas.id = 'board' + id;
-		boardCanvas.height = 540 * size;
-		boardCanvas.width = 270 * size;
-		centralArea.appendChild(boardCanvas);
-
-		// Only draw queue if size is at least 50%
-		if(size > 0.5) {
-			const queueCanvas = document.createElement('canvas');
-			queueCanvas.id = 'queue' + id;
-			queueCanvas.height = 540 * size;
-			queueCanvas.width = 72 * size;
-			centralArea.appendChild(queueCanvas);
-		}
+		const canvasArea = document.createElement('div');
+		playerArea.appendChild(canvasArea);
+		canvasArea.appendChild(gameAreas[id].canvas);
 
 		const pointsArea = document.createElement('div');
-		pointsArea.id = 'pointsArea' + id;
 		pointsArea.className = 'pointsArea';
-		gameArea.appendChild(pointsArea);
+		playerArea.appendChild(pointsArea);
 
 		const pointsDisplay = document.createElement('span');
 		pointsDisplay.id = 'pointsDisplay' + id;
@@ -331,37 +308,37 @@ function generateBoards (numBoards) {
 		pointsDisplay.style.fontSize = 52 * size;
 		pointsArea.appendChild(pointsDisplay);
 
-		return board;
+		return cell;
 	};
 
-	const playerBoard = createGameCanvas(runningId, firstRow, 1);
+	const playerCell = createGameCanvas(runningId, firstRow, 1);
 	runningId++;
 
 	// Set up the number of boards displayed
-	if(numBoards < 5) {
-		for(let i = 0; i < numBoards - 1; i++) {
+	if(numCells < 5) {
+		for(let i = 0; i < numCells - 1; i++) {
 			createGameCanvas(runningId, firstRow, 1);
 			runningId++;
 		}
 	}
-	else if (numBoards < 10) {
-		playerBoard.setAttribute('rowspan', '2');
+	else if (numCells < 10) {
+		playerCell.setAttribute('rowspan', '2');
 		// Create a larger top row
-		for(let i = 0; i < Math.ceil((numBoards - 1) / 2); i++) {
+		for(let i = 0; i < Math.ceil((numCells - 1) / 2); i++) {
 			createGameCanvas(runningId, firstRow, 0.5);
 			runningId++;
 		}
 		// And a smaller bottom row
 		const secondRow = playArea.insertRow(-1);
-		for(let i = 0; i < Math.floor((numBoards - 1) / 2); i++) {
+		for(let i = 0; i < Math.floor((numCells - 1) / 2); i++) {
 			createGameCanvas(runningId, secondRow, 0.5);
 			runningId++;
 		}
 	}
 	else {
-		playerBoard.setAttribute('rowspan', '3');
-		const minPerRow = Math.floor((numBoards - 1) / 3);
-		let extras = numBoards - 1 - minPerRow * 3;
+		playerCell.setAttribute('rowspan', '3');
+		const minPerRow = Math.floor((numCells - 1) / 3);
+		let extras = numCells - 1 - minPerRow * 3;
 		// Spread rows over the first two rows
 		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
 			createGameCanvas(runningId, firstRow, 0.33);
@@ -380,12 +357,13 @@ function generateBoards (numBoards) {
 			runningId++;
 		}
 	}
+	return gameAreas;
 }
 
 /**
  * Removes all boards on screen.
  */
-function clearBoards() {
+function clearCells() {
 	const playArea = document.getElementById('playArea');
 	while(playArea.firstChild) {
 		playArea.firstChild.remove();

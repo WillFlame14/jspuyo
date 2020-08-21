@@ -1,13 +1,13 @@
 'use strict';
 
 const { Board } = require('./Board.js');
-const { BoardDrawer } = require('./BoardDrawer.js');
+const { GameArea } = require('./GameDrawer.js');
 const { DropGenerator } = require('./Drop.js');
 const { StatTracker } = require('./StatTracker.js');
 const { Utils } = require('./Utils.js');
 
 class Game {
-	constructor(gameId, opponentIds, socket, settings, userSettings, boardDrawerId = null) {
+	constructor(gameId, opponentIds, socket, settings, userSettings, cellId = null, gameArea = null) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
@@ -39,8 +39,13 @@ class Game {
 		this.fallingVelocity = [];
 		this.currentFrame = 0;
 
-		this.boardDrawerId = boardDrawerId;
-		this.boardDrawer = new BoardDrawer(this.settings, this.userSettings.appearance, this.boardDrawerId);
+		this.cellId = cellId;
+		if (gameArea) {
+			this.gameArea = gameArea;
+		}
+		else {
+			this.gameArea = new GameArea(settings, userSettings.appearance, 1, true);
+		}
 		this.lastBoardHash = null;
 		this.socket = socket;
 
@@ -115,20 +120,20 @@ class Game {
 		this.currentDrop = this.dropQueue.shift();
 		this.dropNum++;
 		this.currentMovements = [];
+
+		this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 	}
 
 	/**
 	 * Determines if the Game should be ended.
 	 */
 	end() {
-		if(this.board.checkGameOver(this.settings.gamemode)
-			&& this.resolvingChains.length === 0
-			&& this.nuisanceDroppingFrame == null
-			&& this.endResult === null) {
-			// eslint-disable-next-line indent
+		if(this.board.checkGameOver(this.settings.gamemode)) {
+			if(this.resolvingChains.length === 0 && this.endResult === null) {
 				this.endResult = 'Loss';
+			}
 		}
-		if(this.endResult !== null) {
+		if(this.endResult !== null && this.resolvingChains.length === 0 && this.nuisanceState.nuisanceAmount === 0) {
 			switch(this.endResult) {
 				case 'Win':
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
@@ -139,8 +144,9 @@ class Game {
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					this.statTracker.addResult('loss');
 			}
+			return this.endResult;
 		}
-		return this.endResult;
+		return null;
 	}
 
 	/**
@@ -159,6 +165,7 @@ class Game {
 		}
 
 		let currentBoardHash = null;
+		this.gameArea.updateNuisance(this.getTotalNuisance());
 
 		// Isolated puyo currently dropping
 		if (this.currentDrop.schezo.y != null) {
@@ -186,6 +193,8 @@ class Game {
 				}
 				this.currentDrop = this.dropQueue.shift();
 				this.dropNum++;
+
+				this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 			}
 
 			this.getInputs();
@@ -197,7 +206,7 @@ class Game {
 					this.lockDrop();
 
 					// Only do not start squishing puyos if drop was split
-					if(this.currentDrop.schezo.y === null) {
+					if(this.currentDrop.schezo.y == null) {
 						this.squishState.currentFrame = 0;
 					}
 					this.currentDropLockFrames = 0;
@@ -216,7 +225,7 @@ class Game {
 			}
 
 			const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
-			currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+			currentBoardHash = this.gameArea.updateBoard(currentBoardState);
 			this.updateScore();
 		}
 
@@ -286,7 +295,7 @@ class Game {
 		}
 
 		const currentBoardState = { connections: this.board.getConnections(), currentDrop };
-		currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+		currentBoardHash = this.gameArea.updateBoard(currentBoardState);
 
 		if (schezoDropped && arleDropped) {
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
@@ -329,7 +338,7 @@ class Game {
 		}
 		// Already initialized
 		else {
-			hash = this.boardDrawer.dropNuisance(this.board.boardState, this.nuisanceState);
+			hash = this.gameArea.dropNuisance(this.board.boardState, this.nuisanceState);
 
 			// Affect gravity
 			for(let i = 0; i < this.settings.cols; i++) {
@@ -439,7 +448,7 @@ class Game {
 			this.resolvingState.currentFrame++;
 		}
 
-		currentBoardHash = this.boardDrawer.resolveChains(this.resolvingState);
+		currentBoardHash = this.gameArea.resolveChains(this.resolvingState);
 
 		// Once done popping, play SFX
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
@@ -501,7 +510,7 @@ class Game {
 
 		// Insert squishing puyos drawing here
 		const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
-		const currentBoardHash = this.boardDrawer.updateBoard(currentBoardState);
+		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started
@@ -657,7 +666,7 @@ class Game {
 	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
 	updateScore() {
-		const pointsDisplayName = 'pointsDisplay' + this.boardDrawerId;
+		const pointsDisplayName = 'pointsDisplay' + this.cellId;
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)

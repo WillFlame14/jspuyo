@@ -51,38 +51,41 @@ class InputManager{
 					return;
 				}
 
+				let das = false;
+
+				// If took an action and DAS timer exists, that must mean entering ARR
+				if(this.dasTimer[key] !== undefined) {
+					this.arrTimer[key] = Date.now();
+					das = true;
+				}
+				// Otherwise, this is a new press and must undergo DAS
+				else {
+					this.dasTimer[key] = Date.now();
+				}
+
 				// Perform key action
 				switch(key) {
 					case this.keyBindings.moveLeft:
 						// Special case for holding both directions down
 						if(this.lastPressed !== this.keyBindings.moveRight) {
-							this.emit('Move', 'Left', true);
+							this.emit('Move', 'Left', das);
 						}
 						break;
 					case this.keyBindings.moveRight:
 						// Special case for holding both directions down
 						if(this.lastPressed !== this.keyBindings.moveLeft) {
-							this.emit('Move', 'Right', true);
+							this.emit('Move', 'Right', das);
 						}
 						break;
 					case this.keyBindings.softDrop:
-						this.emit('Move', 'Down', true);
+						this.emit('Move', 'Down');
 						break;
 					case this.keyBindings.rotateCCW:
-						this.emit('Rotate', 'CCW', true);
+						this.emit('Rotate', 'CCW');
 						break;
 					case this.keyBindings.rotateCW:
-						this.emit('Rotate', 'CW', true);
+						this.emit('Rotate', 'CW');
 						break;
-				}
-
-				// If took an action and DAS timer exists, that must mean entering ARR
-				if(this.dasTimer[key] !== undefined) {
-					this.arrTimer[key] = Date.now();
-				}
-				// Otherwise, this is a new press and must undergo DAS
-				else {
-					this.dasTimer[key] = Date.now();
 				}
 			}
 		});
@@ -104,9 +107,9 @@ class InputManager{
 	 * @param  {string} event  The name of the event that was fired
 	 * @param  {[type]} data   Any parameters that need to be passed to the callback
 	 */
-	emit(event, data, player) {
+	emit(event, data, das) {
 		const callback = this.events[event];
-		callback(data, player);
+		callback(data, das);
 	}
 }
 

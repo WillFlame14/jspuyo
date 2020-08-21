@@ -242,13 +242,8 @@ class BoardDrawer extends DrawerWithPuyo {
 		return JSON.stringify(objectsDrawn);
 	}
 
-	initNuisanceDrop(nuisanceCascadeFPR) {
-		this.nuisanceCascadeFPR = nuisanceCascadeFPR;
-	}
-
 	dropNuisance(boardState, nuisanceState) {
-		const {nuisanceArray, currentFrame} = nuisanceState;
-		const {cols} = this.settings;
+		const {nuisanceArray, positions} = nuisanceState;
 
 		// Clear list of drawn objects
 		const objectsDrawn = [];
@@ -260,13 +255,19 @@ class BoardDrawer extends DrawerWithPuyo {
 			});
 		});
 
-		for (let i = 0; i < cols; i++) {
-			const startingRowsAbove = this.settings.nuisanceSpawnRow - boardState[i].length;
-			const rowsDropped = Math.min(currentFrame / this.nuisanceCascadeFPR[i], startingRowsAbove);
-			for (let j = 0; j < nuisanceArray[i].length; j++) {
-				objectsDrawn.push(this.writePuyo(PUYO_COLOURS['Gray'], 1, 1, [], i, -(this.settings.nuisanceSpawnRow - rowsDropped + j)));
+		nuisanceState.allLanded = true;
+
+		positions.forEach((height, index) => {
+			if(height !== -1) {
+				const startRow = Math.max(height, boardState[index].length);
+				if(height > boardState[index].length) {
+					nuisanceState.allLanded = false;
+				}
+				for (let i = 0; i < nuisanceArray[index].length; i++) {
+					objectsDrawn.push(this.writePuyo(PUYO_COLOURS['Gray'], 1, 1, [], index, -(startRow + i)));
+				}
 			}
-		}
+		});
 
 		return JSON.stringify(objectsDrawn);
 	}

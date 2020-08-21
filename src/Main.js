@@ -52,9 +52,8 @@ async function loginSuccess(user) {
 	globalSocket.off('registered');
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
-		let userData;
 		try {
-			userData = await PlayerInfo.loadUserData(currentUID);
+			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
 		}
 		catch(error) {
 			console.log(error);
@@ -62,7 +61,6 @@ async function loginSuccess(user) {
 			signOut();
 			return;
 		}
-		updateUserSettings(userData.userSettings);
 
 		// Check if a joinRoom link was used
 		const urlParams = new URLSearchParams(window.location.search);

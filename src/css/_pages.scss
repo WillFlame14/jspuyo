@@ -1,4 +1,5 @@
 @use "base";
+@use "modal";
 
 a {
 	color: rgb(150, 150, 240);
@@ -6,7 +7,6 @@ a {
 
 // Titles for other pages
 #pageTitle {
-
 	padding: 10px 0px 10px 40px;
 
 	color: white;
@@ -22,4 +22,283 @@ a {
 
 	background: rgba(40, 40, 40, 0.8);
 	border: 2px solid white;
+}
+
+// Message indicating the number of games tracked. Always visible.
+#gamesTracked {
+	margin: 2rem auto 1rem;
+
+	color: white;
+	text-shadow: base.$text-drop-shadow;
+}
+
+// Message indicating charts cannot be drawn. Only visible when that condition is met.
+#insufficientData {
+	width: 70%;
+	margin: 0 auto 1rem;
+	padding: 1rem;
+
+	color: white;
+	text-align: center;
+
+	background: rgba(10, 10, 10, 0.6);
+	border: 3px solid white;
+}
+
+// Wrapper div containing options for the number of previous games to include when generating charts.
+#variableGames {
+	width: 80%;
+	margin: 0 auto 1.5rem;
+}
+
+// Each option for number of previous games to include
+.variableGameOption {
+	flex: 0 1 200px;
+	padding: 0.25rem 0.5rem;
+
+	color: rgb(200, 200, 200);
+	white-space: nowrap;
+	text-align: center;
+
+	background: #2e4756;
+	border: 2px solid white;
+	box-shadow: base.$box-drop-shadow;
+	cursor: pointer;
+
+	// The currently selected option (highlighted)
+	&.selected {
+		color: white;
+
+		background: #3c7a89;
+	}
+}
+
+// Gallery charts
+#chartsWrapper {
+	width: 85%;
+	margin: 0px auto 1rem;
+}
+
+// The "Refresh" button
+.refresh {
+	@extend %modal-nav-button;
+	left: -0.65rem;
+
+	background: #00aa00;
+
+	&:hover,
+	&:focus {
+		color: white;
+
+		background: #00cc00;
+	}
+}
+
+// Grid layout containing all the charts
+#charts {
+	display: grid;
+	grid-gap: 1.5rem;
+	grid-template-rows: 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
+	
+	// Axis labels
+	.ct-label {
+		color: rgba(255, 255, 255, 0.8);
+	}
+
+	// Chart descriptions
+	p {
+		min-height: 3em;
+		margin-bottom: 0.25rem;
+		padding: 0px 20px;
+
+		color: rgb(230, 230, 230);
+		font-size: 0.75rem;
+	}
+
+	// Gridlines
+	.ct-grid {
+		stroke: rgb(255, 255, 255, 0.25);
+	}
+}
+
+// One gridbox in the layout
+.chart {
+	position: relative;
+
+	box-sizing: border-box;
+	height: 100%;
+	padding: 20px 0px 5px;
+
+	background: rgba(40, 40, 40, 0.8);
+	border: 3px white solid;
+	box-shadow: base.$box-drop-shadow;
+
+	// The chart itself
+	.ct-chart > svg {
+		position: static;
+	}
+}
+
+.chart-title {
+	padding-left: 20px;
+
+	color: white;
+	font-size: 1.5rem;
+	text-shadow: base.$text-drop-shadow;
+}
+
+.ct-axis-title {
+	font-size: 0.6rem;
+
+	fill: rgba(255, 255, 255, 0.8);
+}
+
+#splitData {
+	.ct-line,
+	.ct-point {
+		stroke: #0197f6;
+	}
+}
+
+$build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a, #d29519];
+
+#buildOrderData {
+	.ct-area {
+		fill-opacity: 100%;
+	}
+
+	@for $i from 1 through 6 {
+		// Set bar colour
+		.ct-series-#{nth(base.$alphabet, $i)} {
+			.ct-bar {
+				stroke: nth($build-order-colours, $i);
+				stroke-width: 11px;
+			}
+		}
+
+		// Set legend colour
+		.ct-series-#{$i - 1}::before {
+			background-color: nth($build-order-colours, $i);
+		}
+	}
+
+	.ct-legend {
+		display: flex;
+		margin: -195px 0px 0px 50px;
+
+		li {
+			display: inline;
+			flex: 0 1 100px;
+		}
+	}
+}
+
+#buildSpeedData {
+	.ct-line,
+	.ct-point {
+		stroke: #b99753;
+	}
+}
+
+$finesse-fault-colours: [#f46036, #2e294e, #1b998b, #e71d36, #b5986d];
+
+#finesseFaultData {
+	margin-top: -70px;
+	margin-left: -120px;
+
+	@for $i from 0 through 4 {
+		// Set donut slice colour
+		.ct-series-#{nth(base.$alphabet, $i + 1)} .ct-slice-donut {
+			stroke: nth($finesse-fault-colours, $i + 1);
+		}
+
+		// Set legend colour
+		.ct-series-#{$i}::before {
+			background-color: nth($finesse-fault-colours, $i + 1);
+		}
+	}
+
+	.ct-label {
+		text-shadow: base.$text-drop-shadow;
+
+		fill: rgba(255, 255, 255, 0.9);
+	}
+}
+
+#finesseData {
+	.ct-line,
+	.ct-point {
+		stroke: #cbdfbd;
+	}
+}
+
+$chain-scores-colours: [#abdf75, #60695c];
+
+#chainScoresData {
+	@for $i from 1 through 2 {
+		// Set bar colour
+		.ct-series-#{nth(base.$alphabet, $i)} {
+			.ct-line,
+			.ct-point {
+				stroke: nth($chain-scores-colours, $i);
+			}
+		}
+
+		// Set legend colour
+		.ct-series-#{$i - 1}::before {
+			background-color: nth($chain-scores-colours, $i);
+		}
+	}
+
+	.ct-legend {
+		display: flex;
+		justify-content: space-evenly;
+		margin: -195px 0px 0px 80px;
+
+		li {
+			display: inline-block;
+			flex: 0 1 100px;
+		}
+	}
+}
+
+.ct-legend {
+	position: relative;
+	z-index: 10;
+
+	// Legend text label
+	li {
+		position: relative;
+
+		margin-bottom: 10px;
+		padding-left: 23px;
+
+		color: white;
+		font-size: 0.75rem;
+	}
+
+	// Legend colour icon
+	li::before {
+		position: absolute;
+		left: 0;
+
+		width: 12px;
+		height: 12px;
+
+		border: 2px solid white;
+		border-radius: 2px;
+
+		content: "";
+	}
+
+	li.inactive::before {
+		background: transparent;
+	}
+
+	&.ct-legend-inside {
+		position: absolute;
+		top: 95;
+		right: -85;
+	}
 }

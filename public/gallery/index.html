@@ -1,0 +1,72 @@
+<html>
+<head>
+    <title>jspuyo</title>
+    <meta charset="utf-8" />
+    <link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Rock+Salt&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./../style.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css">
+    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/chartist-plugin-axistitle@0.0.7/dist/chartist-plugin-axistitle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartist-plugin-legend/0.6.2/chartist-plugin-legend.min.js" integrity="sha512-J82gmCXFu+eMIvhK2cCa5dIiKYfjFY4AySzCCjG4EcnglcPQTST/nEtaf5X6egYs9vbbXpttR7W+wY3Uiy37UQ==" crossorigin="anonymous"></script>
+</head>
+<body>
+	<main>
+        <div id="navbar">
+            <span id="navbarSpacer"></span>
+            <span id="pageTitle">Gallery</span>
+            <span id="logo">jspuyo</span>
+        </div>
+        <div id="gamesTracked"></div>
+        <div id="insufficientData">You need to have played at least 5 games before any data can be analyzed.</div>
+        <div class="justify-flexbox" id="variableGames">
+            <span class="variableGameOption selected" id="-1games">All games</span>
+            <span class="variableGameOption" id="50games">Last 50 games</span>
+            <span class="variableGameOption" id="20games">Last 10 games</span>
+        </div>
+        <div id="chartsWrapper">
+            <div id="charts">
+                <div class="chart" id="splitChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Split Puyo Percentage</div>
+                    <p>The percentage of puyos that are split on uneven stacks as the game progresses.</p>
+                    <div class="ct-chart ct-golden-section" id="splitData"></div>
+                </div>
+                <div class="chart" id="buildSpeedChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Build Speed</div>
+                    <p>The average amount of milliseconds spent placing each drop as the game progresses.</p>
+                    <div class="ct-chart ct-golden-section" id="buildSpeedData"></div>
+                </div>
+                <div class="chart" id="finesseFaultChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Finesse Faults</div>
+                    <p>The types of finesse faults made, averaged across the last 50 games.</p>
+                    <div class="ct-chart ct-golden-section" id="finesseFaultData"></div>
+                </div>
+                <div class="chart" id="finesseChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Finesse</div>
+                    <p>The number of finesse faults made in a game.</p>
+                    <div class="ct-chart ct-golden-section" id="finesseData"></div>
+                </div>
+                <div class="chart" id="buildOrderChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Build Order</div>
+                    <p>The percentage of columns in which puyos are placed as the game progresses.</p>
+                    <div class="ct-chart ct-golden-section" id="buildOrderData"></div>
+                </div>
+                <div class="chart" id="chainScoresChart">
+                    <div class="refresh">&#10227;</div>
+                    <div class="chart-title">Chain Scores</div>
+                    <p>Highest and average scores earned for full chains of each length.</p>
+                    <div class="ct-chart ct-golden-section" id="chainScoresData"></div>
+                </div>
+            </div>
+        </div>
+        <footer>
+            Back to <a href="/">jspuyo</a>.
+        </footer>
+        <script src="../limited.js"></script>
+    </main>
+</body>
+</html>

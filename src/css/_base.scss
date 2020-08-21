@@ -6,6 +6,8 @@ $box-drop-shadow: 3px 3px 5px 1px $dark-gray;
 $larger: 1.2rem;
 $smaller: 0.86rem;
 
+$alphabet: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+
 // Uncomment to add borders on elements. Can be useful in determining which elements are taking up what space.
 // * {
 //   border: 1px solid #f00 !important;
@@ -21,6 +23,7 @@ html {
 
 	background-position: center;
 	background-size: cover;
+	background-attachment: fixed;
 }
 
 body {
@@ -33,6 +36,8 @@ main {
 	display: flex;
 	flex-direction: column;
 	height: 100%;		// Take up entire height instead of fitting to size
+
+	overflow: auto;
 }
 
 canvas {

@@ -6,6 +6,7 @@
   	"color-named": "always-where-possible",
   	"indentation": "tab",
   	"length-zero-no-unit": null,
+    "max-nesting-depth": 3,
     "property-no-vendor-prefix": null,
   	"selector-class-pattern": null,
   	"selector-max-id": 1,

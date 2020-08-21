@@ -1,6 +1,7 @@
 'use strict';
 
 const { showDialog } = require('./webpage/dialog.js');
+const { PlayerInfo } = require('./webpage/firebase.js');
 
 class Session {
 	constructor(gameId, game, socket, roomId) {
@@ -18,6 +19,10 @@ class Session {
 			if(this.stopped) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish('Disconnect');
+
+				// Save stats since the game was forcefully disconnected
+				this.game.statTracker.addResult('undecided');
+				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
 				return;
 			}
 
@@ -29,6 +34,9 @@ class Session {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish(endResult);
 				this.stopped = true;
+
+				// Save stats
+				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
 				return;
 			}
 		};

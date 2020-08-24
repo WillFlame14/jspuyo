@@ -185,13 +185,14 @@ class SettingsBuilder {
 }
 
 class UserSettings {
-	constructor(das = 133, arr = 33, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1, appearance = 'TsuClassic') {
+	constructor(das = 133, arr = 33, skipFrames = 0, sfxVolume = 0.1, musicVolume = 0.1, appearance = 'TsuClassic', voice = 'akari') {
 		this.das = das;						// Milliseconds before holding a key repeatedly triggers the event
 		this.arr = arr;						// Milliseconds between event triggers after the DAS timer is complete
 		this.skipFrames = skipFrames;		// Frames to skip when drawing opponent boards (improves performance)
 		this.sfxVolume = sfxVolume;			// SFX Volume (varies between 0 and 1)
 		this.musicVolume = musicVolume;		// Music Volume (varies between 0 and 1)
 		this.appearance = appearance;
+		this.voice = voice;
 
 		this.keyBindings = {				// Default key bindings
 			moveLeft: 'ArrowLeft',
@@ -209,16 +210,26 @@ class UserSettings {
 }
 
 const audioFilenames = {
-	move: { numClips: 1 },
-	rotate: { numClips: 1 },
-	win: { numClips: 1 },
-	loss: { numClips: 1 },
-	chain: { numClips: 7, start: 1 },
-	nuisance_send: { numClips: 4, start: 2 },
-	nuisance_fall: { numClips: 2 },
-	all_clear: { numClips: 1 }
+	move: { numClips: 1, defaultVolume: 1, extension: 'wav' },
+	rotate: { numClips: 1, defaultVolume: 1, extension: 'wav' },
+	win: { numClips: 1, defaultVolume: 0.6, extension: 'wav' },
+	loss: { numClips: 1, defaultVolume: 0.6, extension: 'wav' },
+	chain: { numClips: 7, defaultVolume: 1, start: 1, extension: 'wav' },
+	nuisance_send: { numClips: 4, defaultVolume: 1, start: 2, extension: 'wav' },
+	nuisance_fall: { numClips: 2, defaultVolume: 1, extension: 'wav' },
+	all_clear: { numClips: 1, defaultVolume: 1, extension: 'wav' },
+	open_panel: { numClips: 1, defaultVolume: 10, extension: 'ogg' },
+	close_panel: { numClips: 1, defaultVolume: 10, extension: 'ogg' },
+	hover_option: { numClips: 2, defaultVolume: 2, extension: 'ogg' },
+	click_option: { numClips: 1, defaultVolume: 6, extension: 'ogg' },
+	close_modal: { numClips: 1, defaultVolume: 6, extension: 'ogg' },
+	submit: { numClips: 1, defaultVolume: 2, extension: 'ogg' }
 };
-const characterNames = ['akari'];
+
+const voiceFilenames = {
+	'akari': { defaultVolume: 3, extension: 'ogg '},
+	'maria': { defaultVolume: 6, extension: 'ogg '}
+};
 
 const SOUNDS_DIRECTORY = './sounds/';
 
@@ -236,7 +247,7 @@ class AudioPlayer {
 				const audioInfo = audioFilenames[name];
 
 				if(audioInfo.numClips === 1) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.wav`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.${audioInfo.extension}`);
 					this.sfx[name] = [audio];
 				}
 				else {
@@ -244,7 +255,7 @@ class AudioPlayer {
 					const audioFiles = Array(start).fill(null);		// Fill array with null until start
 
 					for(let i = 0; i < audioInfo.numClips; i++) {
-						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.wav`);
+						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.${audioInfo.extension}`);
 						audioFiles.push([audio]);
 					}
 					this.sfx[name] = audioFiles;
@@ -253,16 +264,18 @@ class AudioPlayer {
 
 			this.voices = {};
 
-			characterNames.forEach(name => {
+			Object.keys(voiceFilenames).forEach(name => {
+				const { extension } = voiceFilenames[name];
 				const chainAudio = [null];
+
 				for(let i = 0; i < 13; i++) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.${extension}`);
 					chainAudio.push([audio]);
 				}
 
 				const spellAudio = [null];
 				for(let i = 0; i < 5; i++) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.ogg`);
+					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.${extension}`);
 					spellAudio.push([audio]);
 				}
 				this.voices[name] = { chain: chainAudio, spell: spellAudio };
@@ -270,8 +283,11 @@ class AudioPlayer {
 		}
 	}
 
-	configure(gameId, sfxVolume, musicVolume) {
+	assignGameId(gameId) {
 		this.gameId = gameId;
+	}
+
+	configureVolume(sfxVolume, musicVolume) {
 		this.sfxVolume = sfxVolume;
 		this.musicVolume = musicVolume;
 	}
@@ -290,7 +306,6 @@ class AudioPlayer {
 			const newsfx = audio[channel - 1].cloneNode();
 			audio.push(newsfx);
 		}
-
 		audio[channel].volume = volume;
 		audio[channel].play();
 	}
@@ -300,7 +315,7 @@ class AudioPlayer {
 			return;
 		}
 		const audio = (index === null) ? this.sfx[sfx_name] : this.sfx[sfx_name][index];
-		const volume = this.sfxVolume * ((sfx_name === 'win' || sfx_name === 'lose') ? 0.6 : 1);
+		const volume = this.sfxVolume * audioFilenames[sfx_name].defaultVolume;
 		this.playAudio(audio, volume);
 	}
 
@@ -309,7 +324,7 @@ class AudioPlayer {
 			return;
 		}
 		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
-		const volume = 0.3;
+		const volume = this.sfxVolume * voiceFilenames[character].defaultVolume;
 		this.playAudio(audio, volume);
 	}
 

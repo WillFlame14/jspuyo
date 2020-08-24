@@ -27,10 +27,10 @@ let initialized;
 	initialized = new Promise((resolve) => {
 		Promise.all([
 			init(globalSocket, getCurrentUID),
-			navbarInit(),
-			panelsInit(globalSocket, getCurrentUID, stopCurrentSession),
+			navbarInit(globalAudioPlayer),
+			panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
 			dialogInit(),
-			mainpageInit(globalSocket, getCurrentUID)
+			mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer)
 		]).then(() => {
 			resolve();
 		}).catch(err => {
@@ -53,7 +53,7 @@ async function loginSuccess(user) {
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
-			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'), globalAudioPlayer);
 		}
 		catch(error) {
 			console.log(error);

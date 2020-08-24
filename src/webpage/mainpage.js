@@ -12,8 +12,14 @@ let lastSender = null;
 
 let currentlyHost = false;
 
-function mainpageInit(socket, getCurrentUID) {
+function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	pageInit();
+
+	document.querySelectorAll('.roomManageOption').forEach(element => {
+		element.addEventListener('click', () => {
+			audioPlayer.playSfx('click_option');
+		});
+	});
 
 	const sendMessageField = document.getElementById('sendMessage');
 	const messageField = document.getElementById('messageField');
@@ -32,7 +38,7 @@ function mainpageInit(socket, getCurrentUID) {
 	const cpuOptionsError = document.getElementById('cpuOptionsError');		// The error message that appears when performing an invalid action (invisible otherwise)
 	const cpuOptionsEmpty = document.getElementById('cpuOptionsEmpty');		// The division that indicates there are currently no CPUs (invisible otherwise)
 
-	document.getElementById('manageCpus').onclick = function() {
+	document.getElementById('manageCpus').onclick = () => {
 		toggleHost(currentlyHost);
 
 		modal.style.display = 'block';
@@ -61,6 +67,7 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('cpuOptionsAdd').onclick = function() {
 		// Send request to server to add CPU (can only add only up to roomsize)
 		socket.emit('addCpu', getCurrentUID());
+		audioPlayer.playSfx('submit');
 	};
 
 	socket.on('addCpuReply', index => {
@@ -82,6 +89,7 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('cpuOptionsRemove').onclick = function() {
 		// Send request to server to remove CPU (can only remove if there are any CPUs)
 		socket.emit('removeCpu', getCurrentUID());
+		audioPlayer.playSfx('submit');
 	};
 
 	socket.on('removeCpuReply', index => {
@@ -118,6 +126,7 @@ function mainpageInit(socket, getCurrentUID) {
 			}
 		});
 		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
+		audioPlayer.playSfx('submit');
 
 		// Close the CPU options menu
 		document.getElementById('cpuOptionsModal').style.display = 'none';
@@ -149,10 +158,11 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('roomPasswordForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
-
 		const password = document.getElementById('roomPassword').value || null;
 
 		socket.emit('setRoomPassword', getCurrentUID(), password);
+		audioPlayer.playSfx('submit');
+
 		document.getElementById('roomPasswordModal').style.display = 'none';
 		modal.style.display = 'none';
 	};

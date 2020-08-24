@@ -121,14 +121,12 @@ class Game {
 	 * Determines if the Game should be ended.
 	 */
 	end() {
-		if(this.board.checkGameOver(this.settings.gamemode)
-			&& this.resolvingChains.length === 0
-			&& this.nuisanceDroppingFrame == null
-			&& this.endResult === null) {
-			// eslint-disable-next-line indent
+		if(this.board.checkGameOver(this.settings.gamemode)) {
+			if(this.resolvingChains.length === 0 && this.endResult === null) {
 				this.endResult = 'Loss';
+			}
 		}
-		if(this.endResult !== null) {
+		if(this.endResult !== null && this.resolvingChains.length === 0 && this.nuisanceState.nuisanceAmount === 0) {
 			switch(this.endResult) {
 				case 'Win':
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
@@ -139,8 +137,9 @@ class Game {
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					this.statTracker.addResult('loss');
 			}
+			return this.endResult;
 		}
-		return this.endResult;
+		return null;
 	}
 
 	/**
@@ -445,10 +444,10 @@ class Game {
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play sfx
 			if(this.resolvingState.chain === this.resolvingChains.length && this.resolvingState.chain > 2) {
-				this.audioPlayer.playAndEmitVoice('akari', 'spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
+				this.audioPlayer.playAndEmitVoice(this.userSettings.voice, 'spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
 			}
 			else {
-				this.audioPlayer.playAndEmitVoice('akari', 'chain', this.resolvingState.chain);
+				this.audioPlayer.playAndEmitVoice(this.userSettings.voice, 'chain', this.resolvingState.chain);
 			}
 			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
 			if(this.resolvingState.chain > 1) {

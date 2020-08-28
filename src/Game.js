@@ -58,7 +58,7 @@ class Game {
 		this.socket.off('gameOver');
 		this.socket.on('gameOver', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
+			if(!this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has topped out.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -70,7 +70,7 @@ class Game {
 		this.socket.off('playerDisconnect');
 		this.socket.on('playerDisconnect', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
+			if(!this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has disconnected.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -94,18 +94,6 @@ class Game {
 			this.endResult = 'Timeout';
 		});
 
-		this.socket.off('timeoutDisconnect');
-		this.socket.on('timeoutDisconnect', oppId => {
-			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
-				console.log('Player with id ' + oppId + ' has timed out.');
-			}
-			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.endResult = 'Win';
-			}
-		});
-
 		this.opponentIds.forEach(id => {
 			this.visibleNuisance[id] = 0;
 		});
@@ -121,14 +109,12 @@ class Game {
 	 * Determines if the Game should be ended.
 	 */
 	end() {
-		if(this.board.checkGameOver(this.settings.gamemode)
-			&& this.resolvingChains.length === 0
-			&& this.nuisanceDroppingFrame == null
-			&& this.endResult === null) {
-			// eslint-disable-next-line indent
+		if(this.board.checkGameOver(this.settings.gamemode)) {
+			if(this.resolvingChains.length === 0 && this.endResult === null) {
 				this.endResult = 'Loss';
+			}
 		}
-		if(this.endResult !== null) {
+		if(this.endResult !== null && this.resolvingChains.length === 0 && this.nuisanceState.nuisanceAmount === 0) {
 			switch(this.endResult) {
 				case 'Win':
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
@@ -139,8 +125,9 @@ class Game {
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					this.statTracker.addResult('loss');
 			}
+			return this.endResult;
 		}
-		return this.endResult;
+		return null;
 	}
 
 	/**

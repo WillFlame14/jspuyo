@@ -99,13 +99,13 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 	});
 
 	// Queue Panel
-	document.getElementById('freeForAll').onclick = () => {
-		stopCurrentSession();
+	document.getElementById('freeForAll').onclick = async () => {
+		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		socket.emit('freeForAll', { gameId: getCurrentUID() });
 	};
-	document.getElementById('ranked').onclick = () => {
-		stopCurrentSession();
+	document.getElementById('ranked').onclick = async () => {
+		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
@@ -202,7 +202,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		winConditionButton.value = winConditions[currentIndex];
 	};
 
-	document.getElementById('createRoomSubmit').onclick = function (event) {
+	document.getElementById('createRoomSubmit').onclick = async function (event) {
 		event.preventDefault();		// Prevent submit button from refreshing the page
 
 		let roomSize;
@@ -228,7 +228,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 
 		switch(createRoomTrigger) {
 			case 'create':
-				stopCurrentSession();
+				await stopCurrentSession();
 				socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
 				break;
 			case 'set':
@@ -275,13 +275,12 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		document.getElementById('joinRoomModal').style.display = 'block';
 	};
 
-	document.getElementById('joinIdForm').onsubmit = function (event) {
+	document.getElementById('joinIdForm').onsubmit = async function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
 		const joinId = document.getElementById('joinId').value;
 
-		stopCurrentSession();
-
+		await stopCurrentSession();
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId });
 	};
 

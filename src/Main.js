@@ -249,14 +249,15 @@ async function init(socket) {
 /**
  * Causes the current session to stop updating and emit a "Disconnect" event.
  */
-function stopCurrentSession() {
+async function stopCurrentSession() {
 	if(currentSession !== null) {
 		// Returning true means the session had not ended yet
-		if (currentSession.stop() && !currentSession.spectate) {
+		if (await currentSession.stop() && !currentSession.spectate) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
 			clearMessages();
 		}
 	}
+	return Promise.resolve();
 }
 
 /**

@@ -58,7 +58,7 @@ class Game {
 		this.socket.off('gameOver');
 		this.socket.on('gameOver', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
+			if(!this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has topped out.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -70,7 +70,7 @@ class Game {
 		this.socket.off('playerDisconnect');
 		this.socket.on('playerDisconnect', oppId => {
 			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
+			if(!this.gameId.includes('CPU')) {
 				console.log('Player with id ' + oppId + ' has disconnected.');
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
@@ -92,18 +92,6 @@ class Game {
 		this.socket.off('timeout');
 		this.socket.on('timeout', () => {
 			this.endResult = 'Timeout';
-		});
-
-		this.socket.off('timeoutDisconnect');
-		this.socket.on('timeoutDisconnect', oppId => {
-			// Do not log to console for CPUs
-			if(this.gameId.includes('CPU')) {
-				console.log('Player with id ' + oppId + ' has timed out.');
-			}
-			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.endResult = 'Win';
-			}
 		});
 
 		this.opponentIds.forEach(id => {

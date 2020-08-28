@@ -12,7 +12,7 @@ class RoomManager {
 	static createRoom(gameId, members, host, roomSize, settingsString, roomType = 'default') {
 		if(idToRoomId.has(gameId)) {
 			// Leave old room first
-			roomIdToRoom.get(idToRoomId.get(gameId)).leave(gameId);
+			RoomManager.leaveRoom(gameId);
 		}
 
 		const roomId = generateRoomId(6);
@@ -62,10 +62,11 @@ class RoomManager {
 			}
 		}
 		else if(idToRoomId.has(gameId)) {
-			// Leave old room first
+			// Leave old room first if it is a different room
 			const oldRoom = roomIdToRoom.get(idToRoomId.get(gameId));
-			if(oldRoom !== undefined) {
-				oldRoom.leave(gameId);
+
+			if(oldRoom !== undefined && oldRoom.roomId !== room.roomId) {
+				RoomManager.leaveRoom(gameId, oldRoom.roomId);
 			}
 		}
 
@@ -131,22 +132,25 @@ class RoomManager {
 
 		if(room === undefined) {
 			if(notify) {
-				console.log(`Attempted to remove ${gameId}, but they were not in a room.`);
+				console.log(`Attempted to remove ${gameId.substring(0, 6)}, but they were not in a room.`);
 			}
 			return;
 		}
 		const empty = room.leave(gameId);
 
-		// Clear from maps
-		idToRoomId.delete(gameId);
-
 		if(empty) {
-			roomIdToRoom.delete(room.roomId);
-			roomIds.delete(room.roomId);
-			console.log(`Closed room ${room.roomId}`);
+			RoomManager.closeRoom(room);
 		}
 
+		// Clear from maps
+		idToRoomId.delete(gameId);
 		return room;
+	}
+
+	static closeRoom(room) {
+		roomIdToRoom.delete(room.roomId);
+		roomIds.delete(room.roomId);
+		console.log(`Closed room ${room.roomId}`);
 	}
 
 	/**
@@ -230,7 +234,7 @@ class RoomManager {
 
 		if(room === undefined) {
 			if(!undefinedSendState.has(gameId) || Date.now() - undefinedSendState.get(gameId) > 5000) {
-				console.log(`Received sendState from gameId ${gameId}, but they were not in a room.`);
+				console.log(`Received sendState from gameId ${gameId.substring(0, 6)}, but they were not in a room.`);
 				undefinedSendState.set(gameId, Date.now());
 			}
 			return;

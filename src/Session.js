@@ -8,6 +8,7 @@ class Session {
 		this.gameId = gameId;
 		this.game = game;
 		this.socket = socket;
+		this.forceStop = false;
 		this.stopped = false;
 		this.roomId = roomId;
 	}
@@ -16,13 +17,14 @@ class Session {
 		const main = () => {
 			const mainFrame = window.requestAnimationFrame(main);
 
-			if(this.stopped) {
+			if(this.forceStop) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish('Disconnect');
 
 				// Save stats since the game was forcefully disconnected
 				this.game.statTracker.addResult('undecided');
 				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
+				this.stopped = true;
 				return;
 			}
 
@@ -71,13 +73,24 @@ class Session {
 	 * Returns true if the force stop had an effect, and false if it did not.
 	 */
 	stop() {
-		if(this.stopped) {
-			return false;
-		}
-		else {
-			this.stopped = true;
-			return true;
-		}
+		return new Promise((resolve) => {
+			if(this.stopped) {
+				resolve(false);
+			}
+			else {
+				this.forceStop = true;
+
+				const waitForStop = () => {
+					if(this.stopped) {
+						resolve(true);
+					}
+					else {
+						setTimeout(waitForStop, 500);
+					}
+				};
+				setTimeout(waitForStop, 500);
+			}
+		});
 	}
 }
 

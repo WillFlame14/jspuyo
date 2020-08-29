@@ -614,7 +614,7 @@ function clearModal() {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-function updateUserSettings(userSettings, globalAudioPlayer) {
+function updateUserSettings(user, userSettings, globalAudioPlayer) {
 	// These settings can be easily updated since they only contain a numeric value.
 	const numericProperties = ['das', 'arr'];
 	numericProperties.forEach(property => {
@@ -639,6 +639,10 @@ function updateUserSettings(userSettings, globalAudioPlayer) {
 	document.getElementById(selectedAppearance).classList.remove('selected');
 	document.getElementById(userSettings.appearance).classList.add('selected');
 	selectedAppearance = userSettings.appearance;
+
+	// Update the status bar
+	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');
+	document.getElementById('statusName').innerHTML = user.displayName;
 }
 
 function setCreateRoomTrigger(trigger) {

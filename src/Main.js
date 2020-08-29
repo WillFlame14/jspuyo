@@ -53,7 +53,7 @@ async function loginSuccess(user) {
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
-			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'), globalAudioPlayer);
+			updateUserSettings(user, await PlayerInfo.getUserProperty(currentUID, 'userSettings'), globalAudioPlayer);
 		}
 		catch(error) {
 			console.log(error);
@@ -110,6 +110,10 @@ async function init(socket) {
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
+
+		// Show the status bar
+		document.getElementById('statusHover').style.display = 'block';
+		document.getElementById('statusClick').style.display = 'block';
 
 		document.getElementById('spectateNotice').style.display = 'none';
 		document.getElementById('statusArea').style.display = 'flex';
@@ -189,6 +193,10 @@ async function init(socket) {
 		// Adjust the number of boards drawn
 		clearBoards();
 		generateBoards(opponentIds.length + 1);
+
+		// Hide the status bar
+		document.getElementById('statusHover').style.display = 'none';
+		document.getElementById('statusClick').style.display = 'none';
 
 		// Stop and reset the quick play timer if not already done
 		clearInterval(quickPlayTimer);

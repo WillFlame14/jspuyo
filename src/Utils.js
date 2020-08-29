@@ -226,12 +226,12 @@ const audioFilenames = {
 	submit: { numClips: 1, defaultVolume: 2, extension: 'ogg' }
 };
 
-const voiceFilenames = {
-	'akari': { defaultVolume: 3, extension: 'ogg '},
-	'maria': { defaultVolume: 6, extension: 'ogg '}
+const VOICES = {
+	'akari': { defaultVolume: 3, extension: 'ogg', colour: [130, 212, 187] },
+	'maria': { defaultVolume: 6, extension: 'ogg', colour: [224, 175, 160] },
 };
 
-const SOUNDS_DIRECTORY = './sounds/';
+const SOUNDS_DIRECTORY = './sounds';
 
 class AudioPlayer {
 	constructor(socket, disable) {
@@ -247,7 +247,7 @@ class AudioPlayer {
 				const audioInfo = audioFilenames[name];
 
 				if(audioInfo.numClips === 1) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `${name}.${audioInfo.extension}`);
+					const audio = new Audio(`${SOUNDS_DIRECTORY}/${name}.${audioInfo.extension}`);
 					this.sfx[name] = [audio];
 				}
 				else {
@@ -255,7 +255,7 @@ class AudioPlayer {
 					const audioFiles = Array(start).fill(null);		// Fill array with null until start
 
 					for(let i = 0; i < audioInfo.numClips; i++) {
-						const audio = new Audio(SOUNDS_DIRECTORY + `${name}_${i + 1}.${audioInfo.extension}`);
+						const audio = new Audio(`${SOUNDS_DIRECTORY}/${name}_${i + 1}.${audioInfo.extension}`);
 						audioFiles.push([audio]);
 					}
 					this.sfx[name] = audioFiles;
@@ -264,21 +264,23 @@ class AudioPlayer {
 
 			this.voices = {};
 
-			Object.keys(voiceFilenames).forEach(name => {
-				const { extension } = voiceFilenames[name];
+			Object.keys(VOICES).forEach(name => {
+				const { extension } = VOICES[name];
 				const chainAudio = [null];
 
 				for(let i = 0; i < 13; i++) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/chain_${i + 1}.${extension}`);
+					const audio = new Audio(`${SOUNDS_DIRECTORY}/voices/${name}/chain_${i + 1}.${extension}`);
 					chainAudio.push([audio]);
 				}
 
 				const spellAudio = [null];
 				for(let i = 0; i < 5; i++) {
-					const audio = new Audio(SOUNDS_DIRECTORY + `voices/${name}/spell_${i + 1}.${extension}`);
+					const audio = new Audio(`${SOUNDS_DIRECTORY}/voices/${name}/spell_${i + 1}.${extension}`);
 					spellAudio.push([audio]);
 				}
-				this.voices[name] = { chain: chainAudio, spell: spellAudio };
+
+				const selectAudio = [new Audio(`${SOUNDS_DIRECTORY}/voices/${name}/select.${extension}`)];
+				this.voices[name] = { chain: chainAudio, spell: spellAudio, select: selectAudio };
 			});
 		}
 	}
@@ -324,7 +326,7 @@ class AudioPlayer {
 			return;
 		}
 		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
-		const volume = this.sfxVolume * voiceFilenames[character].defaultVolume;
+		const volume = this.sfxVolume * VOICES[character].defaultVolume;
 		this.playAudio(audio, volume);
 	}
 
@@ -465,6 +467,7 @@ module.exports = {
 	COLOUR_LIST,
 	PUYO_COLOURS,
 	PUYO_EYES_COLOUR,
+	VOICES,
 	Settings,
 	SettingsBuilder,
 	UserSettings,

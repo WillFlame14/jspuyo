@@ -4,6 +4,7 @@ const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
 const { pageInit } = require('./pages.js');
 const { PlayerInfo } = require('./firebase.js');
+const { VOICES } = require('../Utils.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -14,6 +15,49 @@ let currentlyHost = false;
 
 function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	pageInit();
+
+	const statusClick = document.getElementById('statusClick');
+	const statusHover = document.getElementById('statusHover');
+
+	statusClick.onclick = function() {
+		statusClick.classList.toggle('open');
+		statusHover.classList.toggle('open');
+	};
+
+	const voiceSelect = document.getElementById('voiceSelect');
+	let currentRow;
+
+	Object.keys(VOICES).forEach(async (name, index) => {
+		const { colour } = VOICES[name];
+
+		if(index % 4 === 0) {
+			currentRow = voiceSelect.insertRow(-1);
+		}
+		const optionBox = currentRow.insertCell(-1);
+		const option = document.createElement('div');
+		option.id = `${name}Voice`;
+
+		// Add select functionality for all voice options
+		option.onclick = async function() {
+			audioPlayer.playVoice(name, 'select');
+			const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
+
+			// De-select old voice
+			document.getElementById(`${userSettings.voice}Voice`).classList.remove('selected');
+
+			// Select new voice
+			option.classList.add('selected');
+
+			// Update user settings
+			userSettings.voice = name;
+			PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
+
+		};
+		option.classList.add('voiceOption');
+		option.style.backgroundColor = rgbaString(...colour, 0.8);
+
+		optionBox.appendChild(option);
+	});
 
 	document.querySelectorAll('.roomManageOption').forEach(element => {
 		element.addEventListener('click', () => {
@@ -333,6 +377,10 @@ function toggleSpectate() {
 		element.style.display = 'none';
 	});
 	document.getElementById('managePlay').style.display = 'grid';
+}
+
+function rgbaString(red, green, blue, opacity = 1) {
+	return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
 
 module.exports = {

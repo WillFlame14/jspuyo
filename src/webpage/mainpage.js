@@ -82,7 +82,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	const cpuOptionsError = document.getElementById('cpuOptionsError');		// The error message that appears when performing an invalid action (invisible otherwise)
 	const cpuOptionsEmpty = document.getElementById('cpuOptionsEmpty');		// The division that indicates there are currently no CPUs (invisible otherwise)
 
-	document.getElementById('manageCpus').onclick = () => {
+	document.getElementById('manageCpus').onclick = function() {
 		toggleHost(currentlyHost);
 
 		modal.style.display = 'block';
@@ -379,6 +379,9 @@ function toggleSpectate() {
 	document.getElementById('managePlay').style.display = 'grid';
 }
 
+/**
+ * Returns an rgba CSS string, given the RGB + opacity values.
+ */
 function rgbaString(red, green, blue, opacity = 1) {
 	return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }

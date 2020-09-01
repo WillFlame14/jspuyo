@@ -95,11 +95,16 @@
 	text-shadow: base.$text-drop-shadow;
 }
 
-#statusLevel,
-#statusTitle {
-	margin-bottom: 5px;
+#statusRating {
+	margin-bottom: 2px;
 
-	font: 0.85rem base.$font-title;
+	font: 1rem base.$font-title;
+}
+
+#statusTitle {
+	margin-bottom: 8px;
+
+	font: 0.8rem "Chelsea Market";
 }
 
 #voiceSelectTitle {

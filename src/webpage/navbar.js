@@ -12,11 +12,13 @@ let audioPlayer;
 
 async function navbarInit(globalAudioPlayer) {
 	audioPlayer = globalAudioPlayer;
+
 	// Add onclick listener to each panel
 	Object.keys(panelDropdowns).forEach(panelId => {
 		document.getElementById(panelId).onclick = () => expand_dropdown(panelId);
 	});
 
+	// Add 'hover' sfx to all the dropdown options
 	document.querySelectorAll('.dropdown').forEach(dropdown => {
 		dropdown.querySelectorAll('a').forEach(option => {
 			option.onmouseover = () => {

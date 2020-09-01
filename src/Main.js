@@ -53,7 +53,7 @@ async function loginSuccess(user) {
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
-			updateUserSettings(user, await PlayerInfo.getUserProperty(currentUID, 'userSettings'), globalAudioPlayer);
+			updateUserSettings(user, currentUID, globalAudioPlayer);
 		}
 		catch(error) {
 			console.log(error);

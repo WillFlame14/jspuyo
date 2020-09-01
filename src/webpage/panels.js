@@ -610,11 +610,25 @@ function clearModal() {
 	});
 }
 
+const ranks = {
+	'0': 'Blob',
+	'1000': 'Forest Learner',
+	'1250': 'Ocean Diver',
+	'1500': 'Waterfall Fighter',
+	'1750': 'Lightning Ranger'
+};
+
 /**
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-function updateUserSettings(user, userSettings, globalAudioPlayer) {
+async function updateUserSettings(user, currentUID, globalAudioPlayer) {
+	const promises = [];
+	promises.push(PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+	promises.push(PlayerInfo.getUserProperty(currentUID, 'rating'));
+
+	const [userSettings, rating] = await Promise.all(promises);
+
 	// These settings can be easily updated since they only contain a numeric value.
 	const numericProperties = ['das', 'arr'];
 	numericProperties.forEach(property => {
@@ -643,6 +657,10 @@ function updateUserSettings(user, userSettings, globalAudioPlayer) {
 	// Update the status bar
 	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');
 	document.getElementById('statusName').innerHTML = user.displayName;
+
+	document.getElementById('statusRating').innerHTML = `Rating: ${rating}`;
+	const title = ranks[Object.keys(ranks).find(minimumRating => Number(minimumRating) > rating)];
+	document.getElementById('statusTitle').innerHTML = title;
 }
 
 function setCreateRoomTrigger(trigger) {

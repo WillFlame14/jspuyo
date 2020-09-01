@@ -2,6 +2,37 @@
 
 ## v0.8 - Personalization
 
+### v0.8.3 (September 1, 2020)
+[`Add status bar, second voice option #52`](https://github.com/WillFlame14/jspuyo/pull/52)
+
+**New features:**
+- New status bar on the left
+  - Displays username, rating, title and currently selected voice
+  - Disappears during a game to prevent distraction
+- New 'Maria' voice available for select
+- Added sfx on click/hover for a more tactile feel
+
+**Other changes:**
+- The Create Room modal box should now correctly disappear on submit all the time.
+- Trying to view Gallery with zero games played no longer crashes the server.
+- Voices are now affected by SFX volume.
+
+### v0.8.2a (August 28, 2020)
+
+**Bug fixes:**
+- The default soft drop speed is correctly updated to 0.375.
+- Game-related logs now correctly show on client and not in the server.
+- CPU games no longer end early and repeatedly, which caused glitching between boards due to multiple games.
+- Rejoining the same game should no longer have unintended side effects (hopefully).
+- Spectators that join with the Play button can now see opponent boards.
+- Rooms are now correctly closed when the last player leaves in the middle of a game.
+- Players now correctly leave the FFA/Ranked rooms when switching between them.
+- Attempting to spectate the room you are currently spectating no longer sends you into the void.
+
+**Other changes:**
+- Games now wait for chains to resolve or puyos to fall before ending.
+- Console logs are easier to read.
+
 ### v0.8.2 (August 21, 2020)
 [`Add StatTracker, display stats in Gallery #51`](https://github.com/WillFlame14/jspuyo/pull/51)
 

@@ -2,7 +2,7 @@
 
 ## v0.8 - Personalization
 
-### v0.8.3 (September 1, 2020)
+### v0.8.3 (September 2, 2020)
 [`Add status bar, second voice option #52`](https://github.com/WillFlame14/jspuyo/pull/52)
 
 **New features:**

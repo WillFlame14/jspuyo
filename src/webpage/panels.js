@@ -559,7 +559,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
 		}
 
 		// Configure audio player with new volume settings
-		audioPlayer.configureVolume(this.userSettings.sfxVolume, this.userSettings.musicVolume);
+		audioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
 
 		// Ranges from 0 to 100, default 50
 		const musicVolume = Number(document.getElementById('musicVolume').value);

@@ -212,8 +212,8 @@ class UserSettings {
 const audioFilenames = {
 	move: { numClips: 1, defaultVolume: 1, extension: 'wav' },
 	rotate: { numClips: 1, defaultVolume: 1, extension: 'wav' },
-	win: { numClips: 1, defaultVolume: 0.6, extension: 'wav' },
-	loss: { numClips: 1, defaultVolume: 0.6, extension: 'wav' },
+	win: { numClips: 1, defaultVolume: 0.8, extension: 'wav' },
+	loss: { numClips: 1, defaultVolume: 0.8, extension: 'wav' },
 	chain: { numClips: 7, defaultVolume: 1, start: 1, extension: 'wav' },
 	nuisance_send: { numClips: 4, defaultVolume: 1, start: 2, extension: 'wav' },
 	nuisance_fall: { numClips: 2, defaultVolume: 1, extension: 'wav' },

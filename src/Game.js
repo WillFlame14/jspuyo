@@ -432,10 +432,10 @@ class Game {
 		if(this.resolvingState.currentFrame === this.settings.popFrames) {
 			// Play sfx
 			if(this.resolvingState.chain === this.resolvingChains.length && this.resolvingState.chain > 2) {
-				this.audioPlayer.playAndEmitVoice('akari', 'spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
+				this.audioPlayer.playAndEmitVoice(this.userSettings.voice, 'spell', this.resolvingState.chain > 7 ? 5 : this.resolvingState.chain - 2);
 			}
 			else {
-				this.audioPlayer.playAndEmitVoice('akari', 'chain', this.resolvingState.chain);
+				this.audioPlayer.playAndEmitVoice(this.userSettings.voice, 'chain', this.resolvingState.chain);
 			}
 			this.audioPlayer.playAndEmitSfx('chain', this.resolvingState.chain > 7 ? 7 : this.resolvingState.chain);
 			if(this.resolvingState.chain > 1) {

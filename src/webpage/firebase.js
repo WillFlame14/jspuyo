@@ -105,6 +105,17 @@ function initializeUI(loginSuccess) {
 	onlineUsersMessage.id = 'onlineUsers';
 	document.getElementById('firebaseui-auth-container').prepend(onlineUsersMessage);
 
+	const alphaDisclaimer = document.createElement('div');
+	alphaDisclaimer.id = 'alphaDisclaimer';
+	alphaDisclaimer.innerHTML = 'NOTE: jspuyo is in alpha, which means that some features may' +
+								'<br>be broken and your account data may be occasionally reset.';
+	document.getElementById('firebaseui-auth-container').prepend(alphaDisclaimer);
+
+	const introMessage = document.createElement('div');
+	introMessage.id = 'introMessage';
+	introMessage.innerHTML = 'A multiplayer puzzle game for your browser.';
+	document.getElementById('firebaseui-auth-container').prepend(introMessage);
+
 	const welcomeMessage = document.createElement('div');
 	welcomeMessage.id = 'welcomeMessage';
 	welcomeMessage.innerHTML = 'Welcome to jspuyo!';

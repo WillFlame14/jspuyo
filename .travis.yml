@@ -17,5 +17,5 @@ install:
   - npm ci
 script:
   - npm test
-  - node server.js & wait-on http://localhost:3000
+  - npm start & wait-on http://localhost:3000
   - $(npm bin)/cypress run --record

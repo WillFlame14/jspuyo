@@ -5,15 +5,18 @@
   "main": "Main.js",
   "scripts": {
     "autoprefix": "postcss temp.css --use autoprefixer -o public/style.css --watch",
+    "autoprefix_prod": "postcss temp.css --use autoprefixer -o public/style.css",
     "bundle": "watchify src/Main.js -o public/bundle.js --debug",
     "bundle2": "watchify src/webpage/pages.js -o public/limited.js --debug",
     "eslint": "eslint src/ --fix",
     "node": "node server.js",
     "sass": "sass --watch src/css/style.scss temp.css --no-source-map",
+    "sass_prod": "sass src/css/style.scss temp.css --no-source-map",
     "start": "npm-run-all --parallel bundle bundle2 node sass autoprefix",
     "stylelint": "stylelint \"src/css/*.scss\" --fix",
     "test": "eslint src/ --fix && stylelint \"src/css/*.scss\" --fix && mocha",
-    "uglify": "browserify -t uglifyify src/Main.js > public/bundle.js"
+    "uglify": "browserify -t uglifyify src/Main.js > public/bundle.js",
+    "uglify_limited": "browserify -t uglifyify src/webpage/pages.js > public/limited.js"
   },
   "repository": {
     "type": "git",

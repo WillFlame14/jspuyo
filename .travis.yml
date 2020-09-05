@@ -17,5 +17,8 @@ install:
   - npm ci
 script:
   - npm test
-  - npm start & wait-on http://localhost:3000
+  - npm run uglify & npm run uglify_limited
+  - npm run sass_prod
+  - npm run autoprefix_prod
+  - node server.js & wait-on http://localhost:3000
   - $(npm bin)/cypress run --record

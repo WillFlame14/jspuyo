@@ -239,6 +239,11 @@ class AudioPlayer {
 		this.cancel = false;
 		this.disabled = disable === 'disable';
 
+		const { sfxVolume, musicVolume } = new UserSettings();
+
+		this.sfxVolume = sfxVolume;
+		this.musicVolume = musicVolume;
+
 		this.sfx = {};
 
 		// Load sound clips

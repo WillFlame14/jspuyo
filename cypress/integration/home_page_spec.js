@@ -7,23 +7,23 @@ describe('Login flow', () => {
 		cy.visit('/').then(async () => {
 			cy.wait(500);
 			// Log out if already logged in
-			// cy.get('#welcomeMessage').then(element => {
-			// 	if(!element.is(':visible')) {
-			// 		cy.get('#profilePanel').click();
-			// 		cy.contains('Log Out').click();
-			// 	}
-			// });
+			cy.get('#welcomeMessage').then(element => {
+				if(!element.is(':visible')) {
+					cy.get('#profilePanel').click();
+					cy.contains('Log Out').click();
+				}
+			});
 		});
 	});
 
-	// it('can login a guest account', () => {
-	// 	cy.get('#welcomeMessage').should('be.visible');
-	// 	cy.contains('Continue as guest').click();
-	// 	cy.get('#usernamePickerText').type(TEST_USERNAME);
-	// 	cy.contains('Confirm').click();
+	it('can login a guest account', () => {
+		cy.get('#welcomeMessage').should('be.visible');
+		cy.contains('Continue as guest').click();
+		cy.get('#usernamePickerText').type(TEST_USERNAME);
+		cy.contains('Confirm').click();
 
-	// 	cy.get('.playerList').should('contain', TEST_USERNAME);
-	// });
+		cy.get('.playerList').should('contain', TEST_USERNAME);
+	});
 });
 
 // NOTE: For all future tests, the user is assumed to be logged in.

@@ -165,14 +165,17 @@ function initializeUI(loginSuccess) {
  * Used in other modules where Firebase is not accessible.
  * If the user was an anonymous user, their account is deleted to save space.
  */
-function signOut() {
+async function signOut() {
 	// Update the online users counter
 	socket.emit('getOnlineUsers');
 
 	if(firebase.auth().currentUser && firebase.auth().currentUser.isAnonymous) {
-		PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
+		await PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
+		firebase.auth().signOut();
 	}
-	firebase.auth().signOut();
+	else {
+		firebase.auth().signOut();
+	}
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
 
@@ -251,11 +254,14 @@ class PlayerInfo {
 	 * Deletes all user information stored in the database.
 	 * Only called when an anonymous user logs out.
 	 */
-	static deleteUser(uid) {
-		firebase.database().ref(`username/${uid}`).remove();
-		firebase.database().ref(`userSettings/${uid}`).remove();
-		firebase.database().ref(`rating/${uid}`).remove();
-		firebase.database().ref(`stats/${uid}`).remove();
+	static async deleteUser(uid) {
+		const promises = [
+			firebase.database().ref(`username/${uid}`).remove(),
+			firebase.database().ref(`userSettings/${uid}`).remove(),
+			firebase.database().ref(`rating/${uid}`).remove(),
+			firebase.database().ref(`stats/${uid}`).remove()
+		];
+		return Promise.all(promises);
 	}
 
 	static getUserProperty(uid, property) {

@@ -2,6 +2,13 @@
 
 ## v0.8 - Personalization
 
+### v0.8.3a (September 12, 2020)
+[`Add cypress testing #53`](https://github.com/WillFlame14/jspuyo/pull/53)
+
+**Changes:**
+- Automated end-to-end testing! It's currently not very exhaustive, but it's a start.
+  - Currently tests login flow, the navbar, and some room management options.
+
 ### v0.8.3 (September 2, 2020)
 [`Add status bar, second voice option #52`](https://github.com/WillFlame14/jspuyo/pull/52)
 

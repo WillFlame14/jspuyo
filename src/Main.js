@@ -311,6 +311,7 @@ function generateBoards (numBoards) {
 
 		const centralArea = document.createElement('div');
 		centralArea.id = 'centralArea' + id;
+		centralArea.classList.add('centralArea');
 		gameArea.appendChild(centralArea);
 
 		const boardCanvas = document.createElement('canvas');

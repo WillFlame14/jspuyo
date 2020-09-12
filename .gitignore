@@ -3,4 +3,5 @@ bundle.js
 limited.js
 style.css
 temp.css
-config.js
+cypress/screenshots
+cypress/videos

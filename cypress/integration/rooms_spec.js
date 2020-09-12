@@ -1,86 +1,6 @@
 'use strict';
 
-const TEST_USERNAME = 'cypressTest';
-
-describe('Login flow', () => {
-	it('can log out if logged in', () => {
-		cy.visit('/').then(async () => {
-			cy.wait(500);
-			// Log out if already logged in
-			cy.get('#welcomeMessage').then(element => {
-				if(!element.is(':visible')) {
-					cy.get('#profilePanel').click();
-					cy.contains('Log Out').click();
-				}
-			});
-		});
-	});
-
-	it('can login a guest account', () => {
-		cy.get('#welcomeMessage').should('be.visible');
-		cy.contains('Continue as guest').click();
-		cy.get('#usernamePickerText').type(TEST_USERNAME);
-		cy.contains('Confirm').click();
-
-		cy.get('.playerList').should('contain', TEST_USERNAME);
-	});
-});
-
-// NOTE: For all future tests, the user is assumed to be logged in.
-
-describe('Navbar', () => {
-	it('can expand the Queue navbar panel', () => {
-		cy.get('#queuePanel').should('not.have.class', 'expanded');
-		cy.get('#queuePanel').click();
-		cy.get('#queuePanel').should('have.class', 'expanded');
-	});
-
-	it('can expand the Custom Room navbar panel', () => {
-		cy.get('#customPanel').should('not.have.class', 'expanded');
-		cy.get('#customPanel').click();
-		cy.get('#customPanel').should('have.class', 'expanded');
-		cy.get('#queuePanel').should('not.have.class', 'expanded');
-	});
-
-	it('can expand the Singleplayer navbar panel', () => {
-		cy.get('#singleplayerPanel').should('not.have.class', 'expanded');
-		cy.get('#singleplayerPanel').click();
-		cy.get('#singleplayerPanel').should('have.class', 'expanded');
-		cy.get('#customPanel').should('not.have.class', 'expanded');
-	});
-
-	it('can expand the Profile navbar panel', () => {
-		cy.get('#profilePanel').should('not.have.class', 'expanded');
-		cy.get('#profilePanel').click();
-		cy.get('#profilePanel').should('have.class', 'expanded');
-		cy.get('#singleplayerPanel').should('not.have.class', 'expanded');
-	});
-
-	it('can close the currently open navbar panel', () => {
-		cy.get('#profilePanel').click();
-
-		const panelIds = ['#profilePanel', '#queuePanel', '#customPanel', '#singleplayerPanel'];
-		panelIds.forEach(id => {
-			cy.get(id).should('not.have.class', 'expanded');
-		});
-	});
-
-	it('can join the Ranked queue', () => {
-		cy.get('#queuePanel').click();
-		cy.contains('Ranked').click();
-
-		cy.get('#statusGamemode').should('contain', 'Ranked');
-		cy.get('#playerList').should('contain', TEST_USERNAME);
-	});
-
-	it('can rejoin the FFA queue', () => {
-		cy.get('#queuePanel').click();
-		cy.contains('Free for all').click();
-
-		cy.get('#statusGamemode').should('contain', 'Free For All');
-		cy.get('#playerList').should('contain', TEST_USERNAME);
-	});
-});
+import { TEST_USERNAME } from '../support/index.js';
 
 describe('Custom rooms', () => {
 	it('can create a room', () => {
@@ -232,5 +152,21 @@ describe('Custom rooms', () => {
 		// Returned to room after loss
 		cy.get('#statusArea', {timeout: 60000}).should('be.visible');
 		cy.get('#sidebar').should('be.visible');
+	});
+
+	it('cannot spectate a room when there is only one player', () => {
+		cy.get('#manageSpectate').click();
+		cy.contains('You cannot spectate').should('be.visible');
+		cy.contains('OK').click();
+	});
+
+	it('can view the room join link', () => {
+		cy.get('#manageJoinLink').click();
+		cy.get('#giveJoinId').should('be.visible');
+		cy.get('#joinIdLink').then(element => {
+			const joinLink = element.val();
+			expect(joinLink).to.include('http://localhost:3000/?joinRoom=');
+		});
+		cy.get('#giveJoinId > .close').click();
 	});
 });

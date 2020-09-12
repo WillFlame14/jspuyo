@@ -120,7 +120,7 @@ describe('Custom rooms', () => {
 		// Wait for game to start
 		cy.get('#statusArea').should('not.be.visible');
 		cy.get('#sidebar').should('not.be.visible');
-		cy.get('body').find('.centralArea').should(elements => {
+		cy.get('body').find('canvas').should(elements => {
 			expect(elements.length).to.equal(2);
 		});
 
@@ -140,7 +140,7 @@ describe('Custom rooms', () => {
 		// Wait for game to start
 		cy.get('#statusArea').should('not.be.visible');
 		cy.get('#sidebar').should('not.be.visible');
-		cy.get('body').find('.centralArea').should(elements => {
+		cy.get('body').find('canvas').should(elements => {
 			expect(elements.length).to.equal(2);
 		});
 

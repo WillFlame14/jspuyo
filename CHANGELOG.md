@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.9 - Game Improvements, Singleplayer
+
+### v0.9.0 (September 12, 2020)
+[`Overhaul BoardDrawer into GameDrawer #54`](https://github.com/WillFlame14/jspuyo/pull/54)
+
+**New features:**
+- New nuisance and next queues
+  - Next queues will not be drawn for boards that are too small
+- New drop ghost pieces
+- X displayed on the vital point
+
+**Other changes:**
+- Popping sprites changed
+- Canvas framework is now layered, which should make board drawing much more flexible and speedy
+
 ## v0.8 - Personalization
 
 ### v0.8.3a (September 12, 2020)

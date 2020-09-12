@@ -27,7 +27,6 @@ before(() => {
 		// Make sure user is logged in
 		cy.get('#welcomeMessage').then(element => {
 			if(element.is(':visible')) {
-				cy.get('#profilePanel').click();
 				cy.contains('Continue as guest').click();
 				cy.get('#usernamePickerText').type(TEST_USERNAME);
 				cy.contains('Confirm').click();

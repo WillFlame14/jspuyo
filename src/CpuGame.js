@@ -21,7 +21,7 @@ class CpuGame extends Game {
 
 		// Disable certain classes
 		this.audioPlayer = new AudioPlayer(socket, 'disable');
-		this.audioPlayer.configure(gameId, this.userSettings.sfxVolume, this.userSettings.musicVolume);
+		this.audioPlayer.assignGameId(gameId);
 	}
 
 	/**

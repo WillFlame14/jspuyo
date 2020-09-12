@@ -3,6 +3,8 @@
   
 Puyo Puyo for your browser.
 
+<img src="https://i.imgur.com/DzyWklk.png" alt="JSPuyo gameplay">
+
 ## Features
 - **Free-for-all queue** Game will start soon after 2+ players are in queue.
 - **1v1 Matchmaking** No rating system currently implemented.
@@ -10,6 +12,8 @@ Puyo Puyo for your browser.
 - **Custom rooms** Create a room with custom options, and give a join link `?joinRoom=<id>` to your friends!
 - **Support for 4+ players**  Only works for non-queue options (CPUs or custom rooms)
   - If you're experiencing lag, try reducing `Intermediate Frames Shown` in Settings to skip some frames from being rendered.
+
+<img src="https://i.imgur.com/iDteHgM.png" alt="JSPuyo gameplay">
 
 ### CPU Options
 CPU AIs supported:

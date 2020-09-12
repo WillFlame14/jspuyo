@@ -4,6 +4,7 @@ const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
 const { pageInit } = require('./pages.js');
 const { PlayerInfo } = require('./firebase.js');
+const { VOICES } = require('../Utils.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -12,8 +13,57 @@ let lastSender = null;
 
 let currentlyHost = false;
 
-function mainpageInit(socket, getCurrentUID) {
+function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	pageInit();
+
+	const statusClick = document.getElementById('statusClick');
+	const statusHover = document.getElementById('statusHover');
+
+	statusClick.onclick = function() {
+		statusClick.classList.toggle('open');
+		statusHover.classList.toggle('open');
+	};
+
+	const voiceSelect = document.getElementById('voiceSelect');
+	let currentRow;
+
+	Object.keys(VOICES).forEach(async (name, index) => {
+		const { colour } = VOICES[name];
+
+		if(index % 4 === 0) {
+			currentRow = voiceSelect.insertRow(-1);
+		}
+		const optionBox = currentRow.insertCell(-1);
+		const option = document.createElement('div');
+		option.id = `${name}Voice`;
+
+		// Add select functionality for all voice options
+		option.onclick = async function() {
+			audioPlayer.playVoice(name, 'select');
+			const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
+
+			// De-select old voice
+			document.getElementById(`${userSettings.voice}Voice`).classList.remove('selected');
+
+			// Select new voice
+			option.classList.add('selected');
+
+			// Update user settings
+			userSettings.voice = name;
+			PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
+
+		};
+		option.classList.add('voiceOption');
+		option.style.backgroundColor = rgbaString(...colour, 0.8);
+
+		optionBox.appendChild(option);
+	});
+
+	document.querySelectorAll('.roomManageOption').forEach(element => {
+		element.addEventListener('click', () => {
+			audioPlayer.playSfx('click_option');
+		});
+	});
 
 	const sendMessageField = document.getElementById('sendMessage');
 	const messageField = document.getElementById('messageField');
@@ -61,6 +111,7 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('cpuOptionsAdd').onclick = function() {
 		// Send request to server to add CPU (can only add only up to roomsize)
 		socket.emit('addCpu', getCurrentUID());
+		audioPlayer.playSfx('submit');
 	};
 
 	socket.on('addCpuReply', index => {
@@ -82,6 +133,7 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('cpuOptionsRemove').onclick = function() {
 		// Send request to server to remove CPU (can only remove if there are any CPUs)
 		socket.emit('removeCpu', getCurrentUID());
+		audioPlayer.playSfx('submit');
 	};
 
 	socket.on('removeCpuReply', index => {
@@ -118,6 +170,7 @@ function mainpageInit(socket, getCurrentUID) {
 			}
 		});
 		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
+		audioPlayer.playSfx('submit');
 
 		// Close the CPU options menu
 		document.getElementById('cpuOptionsModal').style.display = 'none';
@@ -149,10 +202,11 @@ function mainpageInit(socket, getCurrentUID) {
 	document.getElementById('roomPasswordForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
-
 		const password = document.getElementById('roomPassword').value || null;
 
 		socket.emit('setRoomPassword', getCurrentUID(), password);
+		audioPlayer.playSfx('submit');
+
 		document.getElementById('roomPasswordModal').style.display = 'none';
 		modal.style.display = 'none';
 	};
@@ -323,6 +377,13 @@ function toggleSpectate() {
 		element.style.display = 'none';
 	});
 	document.getElementById('managePlay').style.display = 'grid';
+}
+
+/**
+ * Returns an rgba CSS string, given the RGB + opacity values.
+ */
+function rgbaString(red, green, blue, opacity = 1) {
+	return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
 
 module.exports = {

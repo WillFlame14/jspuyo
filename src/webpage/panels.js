@@ -27,13 +27,16 @@ let keyBindings = {
 
 let createRoomTrigger;
 
-function panelsInit(socket, getCurrentUID, stopCurrentSession) {
+function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
 	// Set all close buttons to remove modals
 	Array.from(document.getElementsByClassName('close')).forEach(close => {
-		close.onclick = () => clearModal();
+		close.onclick = () => {
+			clearModal();
+			audioPlayer.playSfx('close_modal');
+		};
 	});
 
 	// Manage window onclick
@@ -99,13 +102,13 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 	});
 
 	// Queue Panel
-	document.getElementById('freeForAll').onclick = () => {
-		stopCurrentSession();
+	document.getElementById('freeForAll').onclick = async () => {
+		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Free For All';
 		socket.emit('freeForAll', { gameId: getCurrentUID() });
 	};
-	document.getElementById('ranked').onclick = () => {
-		stopCurrentSession();
+	document.getElementById('ranked').onclick = async () => {
+		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
@@ -202,7 +205,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		winConditionButton.value = winConditions[currentIndex];
 	};
 
-	document.getElementById('createRoomSubmit').onclick = function (event) {
+	document.getElementById('createRoomSubmit').onclick = async function (event) {
 		event.preventDefault();		// Prevent submit button from refreshing the page
 
 		let roomSize;
@@ -228,17 +231,18 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 
 		switch(createRoomTrigger) {
 			case 'create':
-				stopCurrentSession();
+				await stopCurrentSession();
 				socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
 				break;
 			case 'set':
 				socket.emit('changeSettings', getCurrentUID(), settingsString, roomSize);
-
-				// Close the CPU options menu
-				document.getElementById('createRoomModal').style.display = 'none';
-				modal.style.display = 'none';
 				break;
 		}
+		audioPlayer.playSfx('submit');
+
+		// Close the CPU options menu
+		document.getElementById('createRoomModal').style.display = 'none';
+		modal.style.display = 'none';
 	};
 
 	// Receiving the id of the newly created room
@@ -266,6 +270,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		finally {
 			// Deselect the input field
 			document.getSelection().removeAllRanges();
+			audioPlayer.playSfx('submit');
 		}
 	};
 
@@ -275,14 +280,14 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		document.getElementById('joinRoomModal').style.display = 'block';
 	};
 
-	document.getElementById('joinIdForm').onsubmit = function (event) {
+	document.getElementById('joinIdForm').onsubmit = async function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
 		const joinId = document.getElementById('joinId').value;
 
-		stopCurrentSession();
-
+		await stopCurrentSession();
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId });
+		audioPlayer.playSfx('submit');
 	};
 
 	// Received when room cannot be joined
@@ -313,6 +318,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		const joinId = document.getElementById('joinRoomId').innerHTML || null;
 
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId, roomPassword });
+		audioPlayer.playSfx('submit');
 	};
 
 	// Event received when entering the wrong password to a password-protected room
@@ -404,6 +410,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		event.preventDefault();
 
 		socket.emit('spectate', getCurrentUID(), roomList.value);
+		audioPlayer.playSfx('submit');
 	};
 
 	// Received when attempting to spectate an invalid room
@@ -474,9 +481,19 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 		// Leave the room
 		socket.emit('forceDisconnect');
 
-		const stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
-		// Need to stringify object before storing, otherwise the data will not be stored correctly
-		window.localStorage.setItem('stats', JSON.stringify(stats));
+		let stats;
+
+		try {
+			stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
+
+			// Need to stringify object before storing, otherwise the data will not be stored correctly
+			window.localStorage.setItem('stats', JSON.stringify(stats));
+		}
+		catch(err) {
+			// No games played yet. Special warning message?
+			window.localStorage.setItem('stats', JSON.stringify([]));
+			console.log(err);
+		}
 
 		// Redirect to gallery subdirectory
 		window.location.assign('/gallery');
@@ -541,6 +558,9 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 			userSettings['sfxVolume'] = (sfxVolume / 100)**2 * 0.4;
 		}
 
+		// Configure audio player with new volume settings
+		audioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
+
 		// Ranges from 0 to 100, default 50
 		const musicVolume = Number(document.getElementById('musicVolume').value);
 		if(!Number.isNaN(musicVolume)) {
@@ -552,6 +572,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession) {
 
 		// Update the values
 		PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
+		audioPlayer.playSfx('submit');
 
 		// Modal is not auto-cleared since a game does not start as a result
 		clearModal();
@@ -589,11 +610,25 @@ function clearModal() {
 	});
 }
 
+const ranks = {
+	'0': 'Blob',
+	'1000': 'Forest Learner',
+	'1250': 'Ocean Diver',
+	'1500': 'Waterfall Fighter',
+	'1750': 'Lightning Ranger'
+};
+
 /**
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-function updateUserSettings(userSettings) {
+async function updateUserSettings(user, currentUID, globalAudioPlayer) {
+	const promises = [];
+	promises.push(PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+	promises.push(PlayerInfo.getUserProperty(currentUID, 'rating'));
+
+	const [userSettings, rating] = await Promise.all(promises);
+
 	// These settings can be easily updated since they only contain a numeric value.
 	const numericProperties = ['das', 'arr'];
 	numericProperties.forEach(property => {
@@ -606,6 +641,7 @@ function updateUserSettings(userSettings) {
 	// Volume controls are non-linear
 	document.getElementById('sfxVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
 	document.getElementById('musicVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+	globalAudioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
 
 	// Update the key bindings
 	Object.keys(userSettings.keyBindings).forEach(key => {
@@ -617,6 +653,14 @@ function updateUserSettings(userSettings) {
 	document.getElementById(selectedAppearance).classList.remove('selected');
 	document.getElementById(userSettings.appearance).classList.add('selected');
 	selectedAppearance = userSettings.appearance;
+
+	// Update the status bar
+	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');
+	document.getElementById('statusName').innerHTML = user.displayName;
+
+	document.getElementById('statusRating').innerHTML = `Rating: ${rating}`;
+	const title = ranks[Object.keys(ranks).find(minimumRating => Number(minimumRating) > rating)];
+	document.getElementById('statusTitle').innerHTML = title;
 }
 
 function setCreateRoomTrigger(trigger) {

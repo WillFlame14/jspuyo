@@ -28,10 +28,10 @@ let initialized;
 	initialized = new Promise((resolve) => {
 		Promise.all([
 			init(globalSocket, getCurrentUID),
-			navbarInit(),
-			panelsInit(globalSocket, getCurrentUID, stopCurrentSession),
+			navbarInit(globalAudioPlayer),
+			panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
 			dialogInit(),
-			mainpageInit(globalSocket, getCurrentUID)
+			mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer)
 		]).then(() => {
 			resolve();
 		}).catch(err => {
@@ -54,7 +54,7 @@ async function loginSuccess(user) {
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
-			updateUserSettings(await PlayerInfo.getUserProperty(currentUID, 'userSettings'));
+			updateUserSettings(user, currentUID, globalAudioPlayer);
 		}
 		catch(error) {
 			console.log(error);
@@ -111,6 +111,10 @@ async function init(socket) {
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
+
+		// Show the status bar
+		document.getElementById('statusHover').style.display = 'block';
+		document.getElementById('statusClick').style.display = 'block';
 
 		document.getElementById('spectateNotice').style.display = 'none';
 		document.getElementById('statusArea').style.display = 'flex';
@@ -191,6 +195,10 @@ async function init(socket) {
 		clearCells();
 		const gameAreas = generateCells(opponentIds.length + 1, settings, userSettings.appearance);
 
+		// Hide the status bar
+		document.getElementById('statusHover').style.display = 'none';
+		document.getElementById('statusClick').style.display = 'none';
+
 		// Stop and reset the quick play timer if not already done
 		clearInterval(quickPlayTimer);
 		quickPlayTimer = null;
@@ -250,14 +258,15 @@ async function init(socket) {
 /**
  * Causes the current session to stop updating and emit a "Disconnect" event.
  */
-function stopCurrentSession() {
+async function stopCurrentSession() {
 	if(currentSession !== null) {
 		// Returning true means the session had not ended yet
-		if (currentSession.stop() && !currentSession.spectate) {
+		if (await currentSession.stop() && !currentSession.spectate) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
 			clearMessages();
 		}
 	}
+	return Promise.resolve();
 }
 
 /**

@@ -45,7 +45,7 @@ class Room {
 			player.socket.join(this.roomId);
 		});
 
-		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()))}`);
+		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()).map(id => id.substring(0, 6)))}`);
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Room {
 		else {
 			this.cpus.set(gameId, cpuInfo);
 		}
-		console.log(`Added gameId ${gameId} to room ${this.roomId}`);
+		console.log(`Added gameId ${gameId.substring(0, 6)} to room ${this.roomId}`);
 
 		if(notify) {
 			this.sendRoomUpdate();
@@ -124,7 +124,7 @@ class Room {
 			);
 		}
 
-		console.log(`Added gameId ${gameId} to room ${this.roomId} as a spectator`);
+		console.log(`Added gameId ${gameId.substring(0, 6)} to room ${this.roomId} as a spectator`);
 	}
 
 	/**
@@ -174,7 +174,6 @@ class Room {
 							// Ignore if CPU wins due to player disconnect
 							break;
 					}
-					this.defeated.push(cpuId);
 				}
 				else {
 					// If CPU game has not ended, recursively set a new timeout
@@ -227,7 +226,7 @@ class Room {
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
 			socket.leave(this.roomId);
-			console.log(`Removed spectator ${gameId} from room ${this.roomId}`);
+			console.log(`Removed spectator ${gameId.substring(0, 6)} from room ${this.roomId}`);
 			return;
 		}
 
@@ -235,7 +234,7 @@ class Room {
 		const playerList = (gameId.includes('CPU')) ? this.cpus : this.members;
 
 		if(playerList.get(gameId) === undefined) {
-			console.log(`Attempted to remove ${gameId}, but they were not in the room.`);
+			console.log(`Attempted to remove ${gameId.substring(0, 6)}, but they were not in the room.`);
 			return;
 		}
 
@@ -255,7 +254,7 @@ class Room {
 			this.host = Array.from(this.members.keys())[0];
 		}
 
-		console.log(`Removed ${gameId} from room ${this.roomId}`);
+		console.log(`Removed ${gameId.substring(0, 6)} from room ${this.roomId}`);
 
 		// Disconnect the CPU socket, since they cannot exist outside of the room
 		if(gameId.includes('CPU')) {
@@ -274,7 +273,6 @@ class Room {
 			this.games.forEach(player => {
 				player.socket.emit('playerDisconnect', gameId);
 			});
-			return;
 		}
 		else {
 			if(notify) {
@@ -298,7 +296,7 @@ class Room {
 
 			this.spectating.forEach((spectatorSocket, id) => {
 				this.leave(id, false);
-				// TODO: Kick to main menu?
+				// TODO: Kick to main menu? Leave a message?
 			});
 			return true;
 		}
@@ -330,6 +328,8 @@ class Room {
 
 			this.sendRoomUpdate();
 		}, 5000);
+
+		console.log(`Ended room ${this.roomId}`);
 	}
 
 	/**
@@ -338,7 +338,7 @@ class Room {
 	advance(gameId) {
 		const thisPlayer = this.games.get(gameId);
 		if(thisPlayer === undefined) {
-			console.log(`Attempted to advance undefined game with id ${gameId}`);
+			console.log(`Attempted to advance undefined game with id ${gameId.substring(0, 6)}`);
 			return;
 		}
 		thisPlayer.frames++;
@@ -373,7 +373,6 @@ class Room {
 					this.games.forEach((player, id) => {
 						if(id !== minId) {
 							player.socket.emit('play');
-							player.socket.emit('timeoutDisconnect', minId);
 						}
 					});
 					this.leave(minId);

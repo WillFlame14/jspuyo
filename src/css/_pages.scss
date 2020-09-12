@@ -173,7 +173,7 @@ $build-order-colours: [#595959, #808f85, #91c499, #f2e9dc, #cfd11a, #d29519];
 		.ct-series-#{nth(base.$alphabet, $i)} {
 			.ct-bar {
 				stroke: nth($build-order-colours, $i);
-				stroke-width: 11px;
+				stroke-width: 10px;
 			}
 		}
 

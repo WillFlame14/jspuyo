@@ -41,6 +41,104 @@
 
 #playArea {
 	margin: 70px auto 0px;
+	padding-left: 40px;
+}
+
+.centralArea {
+	white-space: nowrap;
+}
+
+#statusClick {
+	position: fixed;
+	top: 250;
+	left: 0;
+
+	width: 40px;
+	height: 40px;
+	margin: auto 0;
+
+	font-weight: bold;
+
+	text-align: center;
+
+	background: white;
+	box-shadow: base.$box-drop-shadow;
+
+	transition: 0.5s;
+
+	&.open {
+		left: calc(20% - 3px);
+	}
+}
+
+#statusHover {
+	position: fixed;
+	top: 250;
+	left: -20%;
+
+	box-sizing: border-box;
+	width: 20%;
+
+	color: white;
+	text-align: center;
+
+	background: rgba(64, 75, 100, 0.8);
+	border: 3px solid white;
+
+	transition: 0.5s;
+
+	&.open {
+		left: -3;
+
+		box-shadow: base.$box-drop-shadow;
+	}
+}
+
+#statusName {
+	font: 1.2rem "Rock Salt";
+	text-shadow: base.$text-drop-shadow;
+}
+
+#statusRating {
+	margin-bottom: 2px;
+
+	font: 1rem base.$font-title;
+}
+
+#statusTitle {
+	margin-bottom: 8px;
+
+	font: 0.8rem "Chelsea Market";
+}
+
+#voiceSelectTitle {
+	margin: 1rem 0px 0.2rem;
+
+	font-size: 1.1rem;
+
+	text-shadow: base.$text-drop-shadow;
+}
+
+#voiceSelect {
+	margin: 0 auto 0.5rem;
+
+	th,
+	td {
+		border: 7.5px solid transparent;
+	}
+}
+
+.voiceOption {
+	width: 2rem;
+	height: 1.7rem;
+	// background: blue;
+	border: 2px solid white;
+	box-shadow: base.$box-drop-shadow;
+	filter: brightness(75%);
+
+	&.selected {
+		filter: none;
+	}
 }
 
 /* ---------- Status Column (Room Management/Status Information) ---------- */

@@ -105,6 +105,17 @@ function initializeUI(loginSuccess) {
 	onlineUsersMessage.id = 'onlineUsers';
 	document.getElementById('firebaseui-auth-container').prepend(onlineUsersMessage);
 
+	const alphaDisclaimer = document.createElement('div');
+	alphaDisclaimer.id = 'alphaDisclaimer';
+	alphaDisclaimer.innerHTML = 'NOTE: jspuyo is in alpha, which means that some features may' +
+								'<br>be broken and your account data may be occasionally reset.';
+	document.getElementById('firebaseui-auth-container').prepend(alphaDisclaimer);
+
+	const introMessage = document.createElement('div');
+	introMessage.id = 'introMessage';
+	introMessage.innerHTML = 'A multiplayer puzzle game for your browser.';
+	document.getElementById('firebaseui-auth-container').prepend(introMessage);
+
 	const welcomeMessage = document.createElement('div');
 	welcomeMessage.id = 'welcomeMessage';
 	welcomeMessage.innerHTML = 'Welcome to jspuyo!';
@@ -154,14 +165,17 @@ function initializeUI(loginSuccess) {
  * Used in other modules where Firebase is not accessible.
  * If the user was an anonymous user, their account is deleted to save space.
  */
-function signOut() {
+async function signOut() {
 	// Update the online users counter
 	socket.emit('getOnlineUsers');
 
 	if(firebase.auth().currentUser && firebase.auth().currentUser.isAnonymous) {
-		PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
+		await PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
+		firebase.auth().signOut();
 	}
-	firebase.auth().signOut();
+	else {
+		firebase.auth().signOut();
+	}
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
 
@@ -240,11 +254,14 @@ class PlayerInfo {
 	 * Deletes all user information stored in the database.
 	 * Only called when an anonymous user logs out.
 	 */
-	static deleteUser(uid) {
-		firebase.database().ref(`username/${uid}`).remove();
-		firebase.database().ref(`userSettings/${uid}`).remove();
-		firebase.database().ref(`rating/${uid}`).remove();
-		firebase.database().ref(`stats/${uid}`).remove();
+	static async deleteUser(uid) {
+		const promises = [
+			firebase.database().ref(`username/${uid}`).remove(),
+			firebase.database().ref(`userSettings/${uid}`).remove(),
+			firebase.database().ref(`rating/${uid}`).remove(),
+			firebase.database().ref(`stats/${uid}`).remove()
+		];
+		return Promise.all(promises);
 	}
 
 	static getUserProperty(uid, property) {

@@ -25,7 +25,7 @@ class PlayerGame extends Game {
 		});
 
 		this.audioPlayer = audioPlayer;
-		this.audioPlayer.configure(this.gameId, this.userSettings.sfxVolume, this.userSettings.musicVolume);
+		this.audioPlayer.assignGameId(this.gameId);
 
 		// Reset the event listeners
 		this.socket.off('sendState');

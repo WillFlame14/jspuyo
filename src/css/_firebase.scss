@@ -1,11 +1,28 @@
 @use "base";
 
-#welcomeMessage {
+%login-info {
 	margin-bottom: 10px;
 
-	font-size: 2rem;
 	text-align: center;
+}
+
+#welcomeMessage {
+	@extend %login-info;
+	font-size: 2rem;
+
 	text-shadow: base.$text-drop-shadow;
+}
+
+#introMessage {
+	@extend %login-info;
+	font-size: 1rem;
+
+	text-shadow: base.$text-drop-shadow;
+}
+
+#alphaDisclaimer {
+	@extend %login-info;
+	font-size: 0.6rem;
 }
 
 #onlineUsers {

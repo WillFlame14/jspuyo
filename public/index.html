@@ -68,7 +68,7 @@
                     <label for="gravity" class="roomOptionLabel">Gravity</label>
                     <input type="number" class="roomOptionInput" id="gravity" value="0.036" min="0" max="0.2">
                     <label for="softDrop" class="roomOptionLabel">Soft Drop</label>
-                    <input type="number" class="roomOptionInput" id="softDrop" value="0.5" min="0" max="1">
+                    <input type="number" class="roomOptionInput" id="softDrop" value="0.375" min="0" max="1">
                     <label for="hardDrop" class="roomOptionLabel">Hard Drop</label>
                     <input type="button" class="roomOptionInput off" id="hardDrop" value="OFF">
                     <label for="winCondition" class="roomOptionLabel">Win Condition</label>
@@ -269,6 +269,16 @@
             <span id="logo">jspuyo</span>
         </div>
         <div id="spectateNotice">You are currently spectating this room.</div>
+        <div id="statusHover">
+            <div id="statusName"></div>
+            <div id="statusRating"></div>
+            <div id="statusTitle"></div>
+            <div id="voiceSelectTitle">Voice Selector</div>
+            <table id="voiceSelect">
+                <!-- Inserted by javascript -->
+            </table>
+        </div>
+        <div id="statusClick">☰</div>
         <div id="main-content">
             <table id="playArea">
                 <!-- Inserted by javascript -->

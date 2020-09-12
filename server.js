@@ -24,7 +24,7 @@ io.on('connection', function(socket) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
 		socketIdToId.set(socket.id, gameId);
-		console.log(`User ${gameId} has logged in.`);
+		console.log(`User ${gameId.substring(0, 6)} has logged in.`);
 		socket.emit('registered');
 	});
 
@@ -124,7 +124,6 @@ io.on('connection', function(socket) {
 			RoomManager.joinRoom(gameId, joinId, socket, roomPassword);
 		}
 		catch(err) {
-			console.log(err);
 			socket.emit('joinFailure', err.message);
 		}
 	});
@@ -172,11 +171,10 @@ io.on('connection', function(socket) {
 				}
 			}
 			catch(err) {
-				console.log(err);
 				socket.emit('joinFailure', err.message);
 			}
 		}
-		console.log(`${gameId} has joined the ranked queue.`);
+		console.log(`${gameId.substring(0, 6)} has joined the ranked queue.`);
 	});
 
 	socket.on('freeForAll', gameInfo => {
@@ -206,11 +204,10 @@ io.on('connection', function(socket) {
 				}
 			}
 			catch(err) {
-				console.log(err);
 				socket.emit('joinFailure', err.message);
 			}
 		}
-		console.log(`${gameId} has joined the default queue.`);
+		console.log(`${gameId.substring(0, 6)} has joined the default queue.`);
 	});
 
 	// Upon receiving an emission from a client socket, broadcast it to all other client sockets
@@ -281,7 +278,7 @@ io.on('connection', function(socket) {
 			}
 			else {
 				socketIdToId.delete(socket.id);
-				console.log(`Disconnected ${gameId}`);
+				console.log(`Disconnected ${gameId.substring(0, 6)}`);
 			}
 		}
 	});

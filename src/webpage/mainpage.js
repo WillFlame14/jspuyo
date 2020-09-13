@@ -4,7 +4,7 @@ const { puyoImgs } = require('./panels.js');
 const { setCreateRoomTrigger } = require('./panels.js');
 const { pageInit } = require('./pages.js');
 const { PlayerInfo } = require('./firebase.js');
-const { VOICES } = require('../Utils.js');
+const { VOICES } = require('../utils/AudioPlayer.js');
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');

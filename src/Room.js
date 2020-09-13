@@ -1,8 +1,8 @@
 'use strict';
 
-const { Cpu } = require('./Cpu.js');
+const { CpuVariants } = require('./cpu/CpuVariants.js');
 const { CpuGame } = require('./CpuGame.js');
-const { Settings } = require('./Utils.js');
+const { Settings } = require('./utils/Settings.js');
 
 const MAX_FRAME_DIFFERENCE = 20;
 
@@ -149,7 +149,7 @@ class Room {
 				cpuId,
 				opponentIds,
 				client_socket,
-				Cpu.fromString(ai, settings),
+				CpuVariants.fromString(ai, settings),
 				Number(speed),
 				settings
 			);

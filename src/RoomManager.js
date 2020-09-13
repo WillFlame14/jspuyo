@@ -191,6 +191,9 @@ class RoomManager {
 	static requestCpus(gameId) {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
+		// Reset the number of CPUs, in case user did not submit CPU selections last time
+		room.numCpus = room.cpus.size;
+
 		if(room.numCpus === 0) {
 			return [];
 		}

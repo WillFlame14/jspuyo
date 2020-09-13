@@ -3,7 +3,7 @@
 const firebase = require('firebase/app');
 const firebaseui = require('firebaseui');
 const { firebaseConfig } = require('../../config.js');
-const { UserSettings } = require('../Utils.js');
+const { UserSettings } = require('../utils/Settings.js');
 
 // Add the Firebase products that you want to use
 require("firebase/auth");

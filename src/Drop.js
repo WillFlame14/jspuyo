@@ -1,6 +1,6 @@
 'use strict';
 
-const { Utils } = require('./Utils.js');
+const { Utils } = require('./utils/Utils.js');
 
 class Drop {
 	constructor (shape, colours, settings, arle, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
@@ -202,9 +202,9 @@ class DropGenerator {
 			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
 		});
 
-		// Generate the 3 colours that will be used for the first 3 drops
+		// Generate the 3 colours (or less) that will be used for the first 3 drops
 		const firstColours = [];
-		while(firstColours.length < 3) {
+		while(firstColours.length < Math.min(3, settings.numColours)) {
 			const colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
 			if(!firstColours.includes(colour)) {
 				firstColours.push(colour);

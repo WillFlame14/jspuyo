@@ -1,7 +1,8 @@
 'use strict';
 
 const { Game } = require('./Game.js');
-const { AudioPlayer, UserSettings } = require('./Utils.js');
+const { AudioPlayer } = require('./utils/AudioPlayer.js');
+const { UserSettings } = require('./utils/Settings.js');
 
 const defaultUserSettings = new UserSettings();
 

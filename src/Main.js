@@ -3,7 +3,8 @@
 const { GameArea } = require('./GameDrawer.js');
 const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
 const { Session } = require('./Session.js');
-const { Settings, UserSettings, AudioPlayer } = require('./Utils.js');
+const { Settings, UserSettings } = require('./utils/Settings.js');
+const { AudioPlayer } = require('./utils/AudioPlayer.js');
 
 const { dialogInit, showDialog } = require('./webpage/dialog.js');
 const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');

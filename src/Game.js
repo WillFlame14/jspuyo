@@ -4,7 +4,7 @@ const { Board } = require('./Board.js');
 const { GameArea } = require('./GameDrawer.js');
 const { DropGenerator } = require('./Drop.js');
 const { StatTracker } = require('./StatTracker.js');
-const { Utils } = require('./Utils.js');
+const { Utils } = require('./utils/Utils.js');
 
 class Game {
 	constructor(gameId, opponentIds, socket, settings, userSettings, cellId = null, gameArea = null) {

@@ -1,7 +1,8 @@
 'use strict';
 
-const { Cpu } = require('../Cpu.js');
-const { Utils, SettingsBuilder } = require('../Utils.js');
+const { CpuVariants } = require('../cpu/CpuVariants.js');
+const { Utils } = require('../utils/Utils.js');
+const { SettingsBuilder } = require('../utils/Settings.js');
 const { PlayerInfo, signOut } = require('./firebase.js');
 
 const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
@@ -425,7 +426,7 @@ function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
 	const aiDropdown = document.createElement('select');
 	aiDropdown.classList.add('aiOption');
 
-	Cpu.getAllCpuNames().forEach(cpuName => {
+	CpuVariants.getAllCpuNames().forEach(cpuName => {
 		const option = document.createElement('option');
 		option.value = cpuName;
 		option.innerHTML = cpuName;

@@ -1,7 +1,7 @@
 'use strict';
 
 const { puyoImgs } = require('./panels.js');
-const { setCreateRoomTrigger } = require('./panels.js');
+const { setCreateRoomTrigger } = require('./panels_custom.js');
 const { pageInit } = require('./pages.js');
 const { PlayerInfo } = require('./firebase.js');
 const { VOICES } = require('../utils/AudioPlayer.js');

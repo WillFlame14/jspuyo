@@ -43,63 +43,66 @@ const uiConfig = {
 
 /**
  * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
+ * Returns a resolved promise with the user object once login is completed.
  */
-function initApp(globalSocket, loginSuccess) {
-	// Initialize Firebase
-	firebase.initializeApp(firebaseConfig);
-	ui = new firebaseui.auth.AuthUI(firebase.auth());
-	ui.start('#firebaseui-auth-container', uiConfig);
+function initApp(globalSocket) {
+	return new Promise((resolve) => {
+		// Initialize Firebase
+		firebase.initializeApp(firebaseConfig);
+		ui = new firebaseui.auth.AuthUI(firebase.auth());
+		ui.start('#firebaseui-auth-container', uiConfig);
 
-	socket = globalSocket;
-	initializeUI(loginSuccess);
+		socket = globalSocket;
+		initializeUI(resolve);
 
-	firebase.auth().onAuthStateChanged(async function(user) {
-		// Just logged in
-		if (user) {
-			document.getElementById('firebaseui-auth-container').style.display = 'none';
+		firebase.auth().onAuthStateChanged(async function(user) {
+			// Just logged in
+			if (user) {
+				document.getElementById('firebaseui-auth-container').style.display = 'none';
 
-			if(user.isAnonymous) {
-				document.getElementById('guestMessage').style.display = 'block';
+				if(user.isAnonymous) {
+					document.getElementById('guestMessage').style.display = 'block';
+				}
+				else {
+					document.getElementById('guestMessage').style.display = 'none';
+				}
+
+				// Open username change screen if new user
+				if(newUser) {
+					// Set their current name as default
+					document.getElementById('usernamePickerText').value = user.displayName;
+					document.getElementById('usernamePickerText').placeholder = user.displayName || '';
+					fallbackName = user.displayName;
+
+					document.getElementById('usernamePicker').style.display = 'block';
+					currentUser = user;
+
+					// Login will occur on username submission
+				}
+				else {
+					document.getElementById('modal-login').style.display = 'none';
+					document.getElementById('main-content').style.display = 'grid';
+
+					// Start the actual game logic
+					resolve(user);
+				}
 			}
+			// Just logged out
 			else {
-				document.getElementById('guestMessage').style.display = 'none';
+				document.getElementById('main-content').style.display = 'none';
+				document.getElementById('modal-background').style.display = 'none';
+				document.getElementById('modal-background-disable').style.display = 'none';
+
+				document.getElementById('modal-login').style.display = 'block';
+				document.getElementById('firebaseui-auth-container').style.display = 'block';
 			}
-
-			// Open username change screen if new user
-			if(newUser) {
-				// Set their current name as default
-				document.getElementById('usernamePickerText').value = user.displayName;
-				document.getElementById('usernamePickerText').placeholder = user.displayName || '';
-				fallbackName = user.displayName;
-
-				document.getElementById('usernamePicker').style.display = 'block';
-				currentUser = user;
-
-				// Login will occur on username submission
-			}
-			else {
-				document.getElementById('modal-login').style.display = 'none';
-				document.getElementById('main-content').style.display = 'grid';
-
-				// Start the actual game logic
-				loginSuccess(user);
-			}
-		}
-		// Just logged out
-		else {
-			document.getElementById('main-content').style.display = 'none';
-			document.getElementById('modal-background').style.display = 'none';
-			document.getElementById('modal-background-disable').style.display = 'none';
-
-			document.getElementById('modal-login').style.display = 'block';
-			document.getElementById('firebaseui-auth-container').style.display = 'block';
-		}
-	}, function(error) {
-		console.log(error);
+		}, function(error) {
+			console.log(error);
+		});
 	});
 }
 
-function initializeUI(loginSuccess) {
+function initializeUI(resolve) {
 	// Hackily add some messages into the FirebaseUI login screen
 	const onlineUsersMessage = document.createElement('div');
 	onlineUsersMessage.id = 'onlineUsers';
@@ -145,7 +148,7 @@ function initializeUI(loginSuccess) {
 				document.getElementById('main-content').style.display = 'grid';
 
 				// Start game logic
-				loginSuccess(currentUser);
+				resolve(currentUser);
 			}
 			).catch(function(error) {
 				console.log(error);

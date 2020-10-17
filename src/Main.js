@@ -18,27 +18,27 @@ const globalSocket = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
 let currentUID;
-let initialized;
 
 // This is the "main" function, which starts up the entire app.
-(function() {
-	// Start login process
-	initApp(globalSocket, loginSuccess);
+(async function() {
+	const promises = [
+		initApp(globalSocket),					// for firebase login
+		init(globalSocket, getCurrentUID),		// game-related
+		navbarInit(globalAudioPlayer),
+		panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
+		dialogInit(),
+		mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer)
+	];
 
-	// Set up behaviour
-	initialized = new Promise((resolve) => {
-		Promise.all([
-			init(globalSocket, getCurrentUID),
-			navbarInit(globalAudioPlayer),
-			panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
-			dialogInit(),
-			mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer)
-		]).then(() => {
-			resolve();
-		}).catch(err => {
-			console.log(err);
-		});
-	});
+	try {
+		const results = await Promise.all(promises);
+
+		// The firebase initialization will return the user object; all others will return undefined
+		loginSuccess(results[0]);
+	}
+	catch(err) {
+		console.error(err);
+	}
 })();
 
 /**
@@ -46,16 +46,13 @@ let initialized;
  * Links the current user to the socket and registers with the game server.
  */
 async function loginSuccess(user) {
-	// Make sure initialization is finished
-	await initialized;
-
 	globalSocket.emit('register', user.uid);
 
 	globalSocket.off('registered');
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
-			updateUserSettings(user, currentUID, globalAudioPlayer);
+			await updateUserSettings(user, currentUID, globalAudioPlayer);
 		}
 		catch(error) {
 			console.log(error);
@@ -250,11 +247,9 @@ async function init(socket) {
 		}
 	});
 
-
 	// Return a promise that instantly resolves
-	return new Promise(resolve => resolve());
+	return Promise.resolve();
 }
-
 
 /**
  * Causes the current session to stop updating and emit a "Disconnect" event.

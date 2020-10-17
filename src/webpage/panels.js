@@ -135,7 +135,9 @@ async function updateUserSettings(user, currentUID, globalAudioPlayer) {
 	document.getElementById('statusName').innerHTML = user.displayName;
 
 	document.getElementById('statusRating').innerHTML = `Rating: ${rating}`;
-	const title = ranks[Object.keys(ranks).find(minimumRating => rating > Number(minimumRating))];
+
+	const rankBoundaries = Object.keys(ranks);
+	const title = ranks[rankBoundaries[rankBoundaries.findIndex(minimumRating => Number(minimumRating) > rating) - 1]];
 	document.getElementById('statusTitle').innerHTML = title;
 }
 

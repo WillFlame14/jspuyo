@@ -260,15 +260,9 @@ async function stopCurrentSession() {
 		if (await currentSession.stop() && !currentSession.spectate) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
 			clearMessages();
-			return Promise.resolve();
-		}
-		else {
-			return Promise.resolve();
 		}
 	}
-	else {
-		return Promise.resolve();
-	}
+	return Promise.resolve();
 }
 
 /**

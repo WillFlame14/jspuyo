@@ -1,9 +1,12 @@
 'use strict';
 
-const { Board } = require('../Board.js');
-const { Utils } = require('../../src/utils/Utils.js');
+import { Board } from '../Board';
+import { Settings } from '../utils/Settings';
+import * as Utils from '../utils/Utils';
 
-class Cpu {
+export class Cpu {
+	settings: Settings;
+
 	constructor(settings) {
 		if(this.constructor === Cpu) {
 			throw new Error('Abstract class cannot be instantiated.');
@@ -126,5 +129,3 @@ class Cpu {
 		return { col, rotations };
 	}
 }
-
-module.exports = { Cpu };

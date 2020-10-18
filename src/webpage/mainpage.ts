@@ -1,10 +1,11 @@
 'use strict';
 
-const { puyoImgs } = require('./panels.js');
-const { setCreateRoomTrigger } = require('./panels_custom.js');
-const { pageInit } = require('./pages.js');
-const { PlayerInfo } = require('./firebase.js');
-const { VOICES } = require('../utils/AudioPlayer.js');
+import { puyoImgs } from './panels';
+import { setCreateRoomTrigger } from './panels_custom';
+import { pageInit } from './pages';
+import { PlayerInfo } from './firebase';
+import { UserSettings } from '../utils/Settings';
+import { VOICES } from '../utils/AudioPlayer';
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -13,7 +14,7 @@ let lastSender = null;
 
 let currentlyHost = false;
 
-function mainpageInit(socket, getCurrentUID, audioPlayer) {
+export function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	pageInit();
 
 	const statusClick = document.getElementById('statusClick');
@@ -24,7 +25,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 		statusHover.classList.toggle('open');
 	};
 
-	const voiceSelect = document.getElementById('voiceSelect');
+	const voiceSelect = document.getElementById('voiceSelect') as HTMLTableElement;
 	let currentRow;
 
 	Object.keys(VOICES).forEach(async (name, index) => {
@@ -40,7 +41,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 		// Add select functionality for all voice options
 		option.onclick = async function() {
 			audioPlayer.playVoice(name, 'select');
-			const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
+			const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings') as UserSettings;
 
 			// De-select old voice
 			document.getElementById(`${userSettings.voice}Voice`).classList.remove('selected');
@@ -65,8 +66,8 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 		});
 	});
 
-	const sendMessageField = document.getElementById('sendMessage');
-	const messageField = document.getElementById('messageField');
+	const sendMessageField = document.getElementById('sendMessage') as HTMLInputElement;
+	const messageField = document.getElementById('messageField') as HTMLInputElement;
 	sendMessageField.addEventListener("submit", event => {
 		event.preventDefault();		// Do not refresh the page
 
@@ -93,7 +94,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 
 	socket.on('requestCpusReply', cpus => {
 		// Hide ("delete") all existing CPUs
-		document.querySelectorAll('.cpuOption').forEach(option => {
+		document.querySelectorAll('.cpuOption').forEach((option: HTMLElement) => {
 			option.style.display = 'none';
 		});
 
@@ -102,8 +103,8 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 			const { ai, speed } = cpu;
 			const cpuElement = document.getElementById('cpu' + (index + 1));
 			cpuElement.style.display = 'grid';
-			cpuElement.querySelector('.aiOption').value = ai;
-			cpuElement.querySelector('.cpuSpeedSlider').value = speed;
+			(cpuElement.querySelector('.aiOption') as HTMLSelectElement).value = ai;
+			(cpuElement.querySelector('.cpuSpeedSlider') as HTMLInputElement).value = speed;
 		});
 		cpuOptionsEmpty.style.display = (cpus.length === 0) ? 'block' : 'none';
 	});
@@ -155,18 +156,18 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	document.getElementById('cpuOptionsSubmit').onclick = function() {
 		const cpus = [];
 
-		document.querySelectorAll('.aiOption').forEach(dropdown => {
+		document.querySelectorAll('.aiOption').forEach((dropdown: HTMLSelectElement) => {
 			// Do not read from invisible options
 			if(window.getComputedStyle(dropdown).getPropertyValue('display') === 'block') {
 				cpus.push({ id: null, ai: dropdown.options[dropdown.selectedIndex].value });
 			}
 		});
 
-		document.querySelectorAll('.cpuSpeedSlider').forEach((slider, index) => {
+		document.querySelectorAll('.cpuSpeedSlider').forEach((slider: HTMLInputElement, index) => {
 			// Do not read from invisible options
 			if(window.getComputedStyle(slider).getPropertyValue('display') === 'block') {
 				// Slider value is between 0 and 10, map to between 5000 and 0
-				cpus[index].speed = (10 - slider.value) * 500;
+				cpus[index].speed = (10 - Number(slider.value)) * 500;
 			}
 		});
 		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
@@ -182,13 +183,13 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomSubmit').value = 'Save Settings';
+		(document.getElementById('createRoomSubmit') as HTMLInputElement).value = 'Save Settings';
 
 		// Disable the roomsize options
 		document.querySelectorAll('.numPlayerButton').forEach(element => {
 			element.classList.add('disabled');
 		});
-		document.getElementById('5player').disabled = true;
+		(document.getElementById('5player') as HTMLInputElement).disabled = true;
 
 		// Flag so the submit button causes settings to be changed (instead of creating a new room)
 		setCreateRoomTrigger('set');
@@ -202,7 +203,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 	document.getElementById('roomPasswordForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
-		const password = document.getElementById('roomPassword').value || null;
+		const password = (document.getElementById('roomPassword') as HTMLInputElement).value || null;
 
 		socket.emit('setRoomPassword', getCurrentUID(), password);
 		audioPlayer.playSfx('submit');
@@ -231,7 +232,7 @@ function mainpageInit(socket, getCurrentUID, audioPlayer) {
 /**
  * Adds a message to the chat box.
  */
-async function addMessage(sender, message) {
+export async function addMessage(sender, message) {
 	if(lastSender === sender) {
 		const element = document.getElementById('message' + (messageId - 1)).querySelector('.message');
 		element.innerHTML += '<br>' + message;
@@ -243,7 +244,7 @@ async function addMessage(sender, message) {
 		messageId++;
 
 		const senderElement = document.createElement('span');
-		senderElement.innerHTML = await PlayerInfo.getUserProperty(sender, 'username');
+		senderElement.innerHTML = await PlayerInfo.getUserProperty(sender, 'username') as string;
 		lastSender = sender;
 		senderElement.classList.add('senderName');
 		element.appendChild(senderElement);
@@ -261,7 +262,7 @@ async function addMessage(sender, message) {
 /**
  * Clears all messages from the chat.
  */
-function clearMessages() {
+export function clearMessages() {
 	while(messageList.firstChild) {
 		messageList.firstChild.remove();
 	}
@@ -274,7 +275,7 @@ function clearMessages() {
 /**
  * Adds a player to the list of players.
  */
-function addPlayer(name, rating) {
+export function addPlayer(name, rating) {
 	const newPlayer = document.createElement('li');
 	newPlayer.classList.add('playerIndividual');
 	newPlayer.id = 'player' + name;
@@ -297,7 +298,7 @@ function addPlayer(name, rating) {
 /**
  * Removes all players from the list of players.
  */
-function clearPlayers() {
+export function clearPlayers() {
 	while(playerList.firstChild) {
 		playerList.firstChild.remove();
 	}
@@ -306,7 +307,7 @@ function clearPlayers() {
 /**
  * Updates the playerList to the current array.
  */
-function updatePlayers(players) {
+export function updatePlayers(players) {
 	document.getElementById('playersDisplay').style.display = 'block';
 
 	const promises = [];
@@ -331,31 +332,31 @@ function updatePlayers(players) {
 	});
 }
 
-function hidePlayers() {
+export function hidePlayers() {
 	clearPlayers();
 	document.getElementById('playersDisplay').style.display = 'none';
 }
 
-function toggleHost(host) {
+export function toggleHost(host) {
 	currentlyHost = host;
 	// The Add/Remove/Save CPU buttons
 	document.getElementById('cpuOptionsButtons').style.display = host ? 'grid' : 'none';
 
 	// The CPU control options
-	document.querySelectorAll('.aiOption').forEach(dropdown => {
+	document.querySelectorAll('.aiOption').forEach((dropdown: HTMLOptionElement) => {
 		dropdown.disabled = !host;
 	});
-	document.querySelectorAll('.cpuSpeedSlider').forEach(slider => {
+	document.querySelectorAll('.cpuSpeedSlider').forEach((slider: HTMLInputElement) => {
 		slider.disabled = !host;
 	});
 
 	// The main Room Options (Disable the mode icon in future?)
-	document.getElementById('numRows').disabled = !host;
-	document.getElementById('numCols').disabled = !host;
-	document.getElementById('numColours').disabled = !host;
+	['numRow', 'numCols', 'numColours'].forEach(elementId => {
+		(document.getElementById(elementId) as HTMLInputElement).disabled = !host;
+	});
 
 	// The advanced Room Options
-	document.querySelectorAll('.roomOptionInput').forEach(input => {
+	document.querySelectorAll('.roomOptionInput').forEach((input: HTMLInputElement) => {
 		input.disabled = !host;
 	});
 
@@ -363,7 +364,7 @@ function toggleHost(host) {
 	document.getElementById('createRoomSubmit').style.display = host ? 'block' : 'none';
 
 	// Turn on all the typical room manage options
-	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
+	document.getElementById('roomManage').querySelectorAll('.player').forEach((element: HTMLElement) => {
 		element.style.display = 'grid';
 	});
 
@@ -372,8 +373,8 @@ function toggleHost(host) {
 	document.getElementById('managePlay').style.display = 'none';
 }
 
-function toggleSpectate() {
-	document.getElementById('roomManage').querySelectorAll('.player').forEach(element => {
+export function toggleSpectate() {
+	document.getElementById('roomManage').querySelectorAll('.player').forEach((element: HTMLElement) => {
 		element.style.display = 'none';
 	});
 	document.getElementById('managePlay').style.display = 'grid';
@@ -382,16 +383,6 @@ function toggleSpectate() {
 /**
  * Returns an rgba CSS string, given the RGB + opacity values.
  */
-function rgbaString(red, green, blue, opacity = 1) {
+function rgbaString(red?, green?, blue?, opacity = 1) {
 	return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
-
-module.exports = {
-	mainpageInit,
-	addMessage,
-	clearMessages,
-	updatePlayers,
-	hidePlayers,
-	toggleHost,
-	toggleSpectate
-};

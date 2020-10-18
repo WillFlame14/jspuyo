@@ -1,6 +1,16 @@
 'use strict';
 
-class InputManager{
+import { UserSettings, KeyBindings } from './utils/Settings';
+
+export class InputManager{
+	events: any[];
+	keysPressed: Record<string, boolean>;
+	lastPressed: string;
+	dasTimer: Record<string, number>;
+	arrTimer: Record<string, number>;
+	userSettings: UserSettings;
+	keyBindings: KeyBindings;
+
 	constructor(userSettings) {
 		this.events = [];				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
@@ -107,10 +117,8 @@ class InputManager{
 	 * @param  {string} event  The name of the event that was fired
 	 * @param  {[type]} data   Any parameters that need to be passed to the callback
 	 */
-	emit(event, data, das) {
+	emit(event, data, das = false) {
 		const callback = this.events[event];
 		callback(data, das);
 	}
 }
-
-module.exports = { InputManager };

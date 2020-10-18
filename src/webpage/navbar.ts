@@ -10,7 +10,7 @@ const panelDropdowns = {
 let currentlyExpandedPanel = null;
 let audioPlayer;
 
-async function navbarInit(globalAudioPlayer) {
+export async function navbarInit(globalAudioPlayer) {
 	audioPlayer = globalAudioPlayer;
 
 	// Add onclick listener to each panel
@@ -40,18 +40,18 @@ function expand_dropdown(id) {
 
 	if(currentlyExpandedPanel === id) {
 		newPanel.classList.remove('expanded');
-		newPanel.querySelector('.dropdown').style.height = '0';
+		(newPanel.querySelector('.dropdown') as HTMLElement).style.height = '0';
 		currentlyExpandedPanel = null;
 		audioPlayer.playSfx('close_panel');
 	}
 	else {
-		newPanel.querySelector('.dropdown').style.height = `${panelDropdowns[id].length * 40}`;
+		(newPanel.querySelector('.dropdown') as HTMLElement).style.height = `${panelDropdowns[id].length * 40}`;
 		newPanel.classList.add('expanded');
 		newPanel.style.zIndex = '10';
 		if(currentlyExpandedPanel !== null) {
 			const oldPanel = document.getElementById(currentlyExpandedPanel);
 			oldPanel.classList.remove('expanded');
-			oldPanel.querySelector('.dropdown').style.height = '0';
+			(oldPanel.querySelector('.dropdown') as HTMLElement).style.height = '0';
 		}
 		currentlyExpandedPanel = id;
 		audioPlayer.playSfx('open_panel');
@@ -77,5 +77,3 @@ function expand_dropdown(id) {
 		document.getElementById(panel).style.zIndex = indexes[i];
 	});
 }
-
-module.exports = navbarInit;

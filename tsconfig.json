@@ -3,7 +3,8 @@
     "outDir": "./public",
     "allowJs": true,
     "module": "commonjs",
-    "target": "es6"
+    "moduleResolution": "node",
+    "target": "ESNext"
   },
-  "include": ["./src/**/*"]
+  "include": ["./src/**/*", "./server.ts"]
 }

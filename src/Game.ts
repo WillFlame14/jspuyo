@@ -1,12 +1,77 @@
 'use strict';
 
-const { Board } = require('./Board.js');
-const { GameArea } = require('./GameDrawer.js');
-const { DropGenerator } = require('./Drop.js');
-const { StatTracker } = require('./StatTracker.js');
-const { Utils } = require('./utils/Utils.js');
+import { AudioPlayer } from './utils/AudioPlayer';
+import { Board } from './Board';
+import { Drop, DropGenerator } from './Drop';
+import { GameArea } from './GameDrawer';
+import { Settings, UserSettings } from './utils/Settings';
+import { StatTracker } from './StatTracker';
+import * as Utils from './utils/Utils';
 
-class Game {
+interface ResolvingState {
+	chain: number,
+	puyoLocs: Record<string, number>[],
+	currentFrame: number,
+	totalFrames: number,
+	connections?: number[][],
+	poppedLocs?: number[][],
+	connectionsAfterPop?: number[][],
+	unstablePuyos?: number[][],
+}
+
+interface NuisanceState {
+	nuisanceArray: number[][],
+	nuisanceAmount: number,
+	positions: number[],
+	velocities: number[],
+	allLanded: boolean,
+	landFrames: number
+}
+
+export class Game {
+	board: Board;
+	gameId: string;
+	opponentIds: string[];
+	settings: Settings;
+	userSettings: UserSettings;
+	statTracker: StatTracker;
+	audioPlayer: AudioPlayer;
+	socket: SocketIO.Socket;
+
+	dropGenerator: DropGenerator;
+	dropQueue: Drop[];
+	dropQueueIndex: number;
+	dropQueueSetIndex: number;
+
+	cellId: number;
+	gameArea: GameArea;
+	lastBoardHash: any;
+	currentBoardHash: any;
+	currentDrop: Drop;
+
+	endResult = null;			// Final result of the game
+	softDrops = 0;				// Frames in which the soft drop button was held
+	dropNum = 0;				// Current drop number
+	preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
+	currentScore = 0;			// Current score (completely accurate)
+	allClear = false;
+	paused = false;
+
+	leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
+	visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
+	activeNuisance = 0;			// Active nuisance
+	lastRotateAttempt = {};		// Timestamp of the last failed rotate attempt
+	resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
+	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
+	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
+	squishState = { currentFrame: -1 };
+	fallingVelocity = [];
+	currentFrame = 0;
+
+	currentDropLockFrames = 0;			// Frames spent being locked
+	forceLock = false;
+	currentMovements = [];
+
 	constructor(gameId, opponentIds, socket, settings, userSettings, cellId = null, gameArea = null) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
@@ -15,29 +80,10 @@ class Game {
 		this.userSettings = userSettings;
 		this.statTracker = new StatTracker();
 
-		this.endResult = null;			// Final result of the game
-		this.softDrops = 0;				// Frames in which the soft drop button was held
-		this.dropNum = 0;				// Current drop number
-		this.preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
-		this.currentScore = 0;			// Current score (completely accurate)
-		this.allClear = false;
-		this.paused = false;
-
 		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
 		this.dropQueueSetIndex = 1;
-
-		this.leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
-		this.visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
-		this.activeNuisance = 0;		// Active nuisance
-		this.lastRotateAttempt = {};	// Timestamp of the last failed rotate attempt
-		this.resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
-		this.resolvingState = { chain: 0, connections: [], poppedConnections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
-		this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
-		this.squishState = { currentFrame: -1 };
-		this.fallingVelocity = [];
-		this.currentFrame = 0;
 
 		this.cellId = cellId;
 		if (gameArea) {
@@ -49,18 +95,18 @@ class Game {
 		this.lastBoardHash = null;
 		this.socket = socket;
 
-		this.socket.off('sendNuisance');
+		this.socket.off('sendNuisance', undefined);
 		this.socket.on('sendNuisance', (oppId, nuisance) => {
 			this.visibleNuisance[oppId] += nuisance;
 		});
 
-		this.socket.off('activateNuisance');
+		this.socket.off('activateNuisance', undefined);
 		this.socket.on('activateNuisance', oppId => {
 			this.activeNuisance += this.visibleNuisance[oppId];
 			this.visibleNuisance[oppId] = 0;
 		});
 
-		this.socket.off('gameOver');
+		this.socket.off('gameOver', undefined);
 		this.socket.on('gameOver', oppId => {
 			// Do not log to console for CPUs
 			if(!this.gameId.includes('CPU')) {
@@ -72,7 +118,7 @@ class Game {
 			}
 		});
 
-		this.socket.off('playerDisconnect');
+		this.socket.off('playerDisconnect', undefined);
 		this.socket.on('playerDisconnect', oppId => {
 			// Do not log to console for CPUs
 			if(!this.gameId.includes('CPU')) {
@@ -84,17 +130,17 @@ class Game {
 			}
 		});
 
-		this.socket.off('pause');
+		this.socket.off('pause', undefined);
 		this.socket.on('pause', () => {
 			this.paused = true;
 		});
 
-		this.socket.off('play');
+		this.socket.off('play', undefined);
 		this.socket.on('play', () => {
 			this.paused = false;
 		});
 
-		this.socket.off('timeout');
+		this.socket.off('timeout', undefined);
 		this.socket.on('timeout', () => {
 			this.endResult = 'Timeout';
 		});
@@ -103,11 +149,8 @@ class Game {
 			this.visibleNuisance[id] = 0;
 		});
 
-		this.currentDropLockFrames = 0;			// Frames spent being locked
-		this.forceLock = false;
 		this.currentDrop = this.dropQueue.shift();
 		this.dropNum++;
-		this.currentMovements = [];
 
 		this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 	}
@@ -208,7 +251,7 @@ class Game {
 			}
 			// Not locking
 			else {
-				this.currentDrop.affectGravity(this.settings.gravity);
+				this.currentDrop.affectGravity();
 				this.currentDrop.affectRotation();
 			}
 
@@ -240,7 +283,7 @@ class Game {
 
 		// Slight hack to inject some code that runs only on the first frame of dropping
 		if(this.resolvingState.chain === 0) {
-			this.resolvingState = { chain: -1, puyoLocs: null, nuisanceLocs: null, currentFrame: 0, totalFrames: 0 };
+			this.resolvingState = { chain: -1, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 			if(!arleDropped) {
 				this.fallingVelocity[currentDrop.arle.x] = this.settings.splitPuyoInitialSpeed;
 			}
@@ -292,7 +335,7 @@ class Game {
 			// Delete any puyos if they were placed on an overstacked column
 			this.board.trim();
 
-			this.resolvingState = { chain: 0, puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+			this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 			this.resolvingChains = this.board.resolveChains();
 
 			// Pass control over to squishPuyos()
@@ -468,7 +511,7 @@ class Game {
 			if(this.resolvingState.chain === this.resolvingChains.length) {
 				this.statTracker.finishChain(this.resolvingState.chain);
 				this.resolvingChains = [];
-				this.resolvingState = { chain: 0, connections: [], puyoLocs: [], nuisanceLocs: [], currentFrame: 0, totalFrames: 0 };
+				this.resolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
@@ -646,7 +689,7 @@ class Game {
 	/**
 	 * Updates the score displayed on the screen.
 	 */
-	updateVisibleScore() {
+	updateVisibleScore(pointsDisplayName, currentScore) {
 		// Overridden by the subclass.
 	}
 
@@ -727,7 +770,7 @@ class Game {
 	 * Called when a move event is emitted, and validates the event before performing it.
 	 * Puyos may not move into the wall or into the stack.
 	 */
-	move(direction, das) {
+	move(direction, das = false) {
 	// Do not move while rotating 180
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
@@ -915,5 +958,3 @@ class Game {
 		return this.activeNuisance + totalVisibleNuisance;
 	}
 }
-
-module.exports = { Game };

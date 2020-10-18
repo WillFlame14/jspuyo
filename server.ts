@@ -1,13 +1,18 @@
 'use strict';
 
-const express = require('express');
+import express = require('express');
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, { perMessageDeflate: false });
-const io_client = require('socket.io-client');
+
+import http_lib = require('http');
+const http = http_lib.createServer(app);
+
+import io_lib = require('socket.io');
+const io = io_lib(http, { perMessageDeflate: false });
+
+import io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
-const { RoomManager } = require('./src/RoomManager.js');
+import { RoomManager } from './src/RoomManager';
 
 const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
@@ -95,7 +100,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('startRoom', async gameId => {
-		RoomManager.startRoom(null, gameId, socket);
+		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
 	socket.on('createRoom', gameInfo => {
@@ -164,7 +169,7 @@ io.on('connection', function(socket) {
 					room.quickPlayTimer = setTimeout(() => {
 						// Double-check that the room still contains 2 players
 						if(room.members.size === 2) {
-							RoomManager.startRoom(room.roomId);
+							RoomManager.startRoomWithRoomId(room.roomId);
 						}
 					}, 10000);
 					room.quickPlayStartTime = Date.now() + 10000;
@@ -197,7 +202,7 @@ io.on('connection', function(socket) {
 					room.quickPlayTimer = setTimeout(() => {
 						// Double-check that the room still contains at least 2 players
 						if(room.members.size >= 2) {
-							RoomManager.startRoom(room.roomId);
+							RoomManager.startRoomWithRoomId(room.roomId);
 						}
 					}, 30000);
 					room.quickPlayStartTime = Date.now() + 30000;

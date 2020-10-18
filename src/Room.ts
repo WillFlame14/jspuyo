@@ -1,12 +1,36 @@
 'use strict';
 
-const { CpuVariants } = require('./cpu/CpuVariants.js');
-const { CpuGame } = require('./CpuGame.js');
-const { Settings } = require('./utils/Settings.js');
+import { CpuVariants } from './cpu/CpuVariants';
+import { CpuGame } from './CpuGame';
+import { Settings } from './utils/Settings';
 
 const MAX_FRAME_DIFFERENCE = 20;
 
-class Room {
+export class Room {
+	roomId: string;
+	password: string;
+	members: Map<string, any>;
+	cpus: Map<string, any>;
+	numCpus = 0;
+	games: Map<string, any>;
+	host: string;
+
+	ingame = false;
+	paused = [];
+	unfocused = [];
+	spectating = new Map();
+	defeated = [];
+	timeout = null;
+
+	roomSize: number;
+	settingsString: string;
+	roomType: string;
+	quickPlayTimer: ReturnType<typeof setTimeout>;		// This, and the below variable are only used if roomType is 'ffa'
+	quickPlayStartTime: number;
+
+	static rankedRoomId;
+
+
 	constructor(roomId, members, host, roomSize, settingsString, roomType = 'default') {
 		this.roomId = roomId;
 		this.password = null;
@@ -14,20 +38,13 @@ class Room {
 		this.cpus = new Map();
 		this.numCpus = 0;
 		this.games = new Map();
+		this.host = host;
 
 		this.roomSize = roomSize;
 		this.settingsString = settingsString;
 		this.roomType = roomType;
 		this.quickPlayTimer = null;		// This, and the below variable are only used if roomType is 'ffa'
 		this.quickPlayStartTime = null;
-
-		this.ingame = false;
-		this.host = host;
-		this.paused = [];
-		this.unfocused = [];
-		this.spectating = new Map();
-		this.defeated = [];
-		this.timeout = null;
 
 		this.members.forEach((player, gameId) => {
 			// Send update to all players
@@ -209,7 +226,7 @@ class Room {
 				this.quickPlayTimer = null;
 				break;
 			case 'ranked':
-				Room.rankedRoomId = null;
+				// RoomManager.rankedRoomId = null;
 				this.quickPlayTimer = null;
 				break;
 		}
@@ -259,7 +276,7 @@ class Room {
 		// Disconnect the CPU socket, since they cannot exist outside of the room
 		if(gameId.includes('CPU')) {
 			if(this.games.has(gameId)) {
-				clearTimeout(this.games.timeout);
+				clearTimeout(this.games.get(gameId).timeout);
 				this.games.delete(gameId);
 			}
 			socket.disconnect();
@@ -311,7 +328,7 @@ class Room {
 
 		// Stop all CPU timers
 		this.games.forEach((player, id) => {
-			if(id < 0) {
+			if(Number(id) < 0) {
 				clearTimeout(player.timeout);
 			}
 		});
@@ -447,5 +464,3 @@ class Room {
 		});
 	}
 }
-
-module.exports = { Room };

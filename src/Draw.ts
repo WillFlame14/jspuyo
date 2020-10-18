@@ -15,7 +15,7 @@ const SUB_SCALE_FACTOR = 1.05;
  *
  */
 
-class SpriteDrawer {
+export class SpriteDrawer {
 	/**
 	 * @param   {CanvasRenderingContext2D}  ctx         The context to draw on
 	 * @param   {String}                    spriteSheet The name of the sprite sheet to use, e.g. "TsuClassic" for TsuClassic.png
@@ -79,5 +79,3 @@ class SpriteDrawer {
 		}
 	}
 }
-
-module.exports = { SpriteDrawer };

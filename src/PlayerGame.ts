@@ -1,16 +1,20 @@
 'use strict';
 
-const { Game } = require('./Game.js');
-const { InputManager } = require('./InputManager.js');
+import { Game } from './Game';
+import { InputManager } from './InputManager';
 
-class PlayerGame extends Game {
+export class PlayerGame extends Game {
+	inputManager: InputManager;
+	opponentGameAreas: any;
+	opponentIdToCellId: any;
+
 	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas, audioPlayer) {
 		super(gameId, opponentIds, socket, settings, userSettings, 1, gameAreas[1]);
 
 		let frame = 0;
 
 		// Accepts inputs from player
-		this.inputManager = new InputManager(this.userSettings, this.player, this.gameId, this.opponentId, this.socket);
+		this.inputManager = new InputManager(this.userSettings);
 		this.inputManager.on('Move', this.move.bind(this));
 		this.inputManager.on('Rotate', this.rotate.bind(this));
 		this.opponentGameAreas = {};
@@ -28,9 +32,9 @@ class PlayerGame extends Game {
 		this.audioPlayer.assignGameId(this.gameId);
 
 		// Reset the event listeners
-		this.socket.off('sendState');
-		this.socket.off('sendSound');
-		this.socket.off('sendVoice');
+		this.socket.off('sendState', undefined);
+		this.socket.off('sendSound', undefined);
+		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
@@ -97,7 +101,9 @@ class PlayerGame extends Game {
 /**
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
-class SpectateGame extends Game {
+export class SpectateGame extends Game {
+	opponentGameAreas: any;
+	opponentIdToCellId: any;
 	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas, audioPlayer) {
 		super(gameId, opponentIds, socket, settings, userSettings);
 
@@ -114,12 +120,12 @@ class SpectateGame extends Game {
 		});
 
 		this.audioPlayer = audioPlayer;
-		this.audioPlayer.configure(this.gameId, this.userSettings.sfxVolume, this.userSettings.musicVolume);
+		this.audioPlayer.configureVolume(this.userSettings.sfxVolume, this.userSettings.musicVolume);
 
 		// Reset the event listeners
-		this.socket.off('sendState');
-		this.socket.off('sendSound');
-		this.socket.off('sendVoice');
+		this.socket.off('sendState', undefined);
+		this.socket.off('sendSound', undefined);
+		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line no-unused-vars
 		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
@@ -163,8 +169,3 @@ class SpectateGame extends Game {
 		}
 	}
 }
-
-module.exports = {
-	PlayerGame,
-	SpectateGame
-};

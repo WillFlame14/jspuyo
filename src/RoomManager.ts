@@ -1,6 +1,6 @@
 'use strict';
 
-const { Room } = require('./Room.js');
+import { Room } from './Room';
 
 const roomIds = new Set();		// Set of roomIds currently in use
 const roomIdToRoom = new Map();
@@ -8,7 +8,10 @@ const idToRoomId = new Map();
 
 const undefinedSendState = new Map();		// Map of gameId --> time of last undefined sendState
 
-class RoomManager {
+export class RoomManager {
+	static defaultQueueRoomId: string = null;
+	static rankedRoomId: string = null;
+
 	static createRoom(gameId, members, host, roomSize, settingsString, roomType = 'default') {
 		if(idToRoomId.has(gameId)) {
 			// Leave old room first
@@ -100,16 +103,24 @@ class RoomManager {
 		room.password = password;
 	}
 
-	static startRoom(roomId = null, gameId, socket) {
-		const room = roomId === null ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
+	static startRoomWithRoomId(roomId: string): Room {
+		const room = roomIdToRoom.get(roomId);
 		if(room.members.size + room.cpus.size > 1) {
 			room.start();
 		}
-		else if(socket) {
-			socket.emit('showDialog', 'There are not enough players in the room to start.');
-		}
 		else {
 			console.log('Attempted to start a room automatically, but there weren\'t enough players.');
+		}
+		return room;
+	}
+
+	static startRoomWithGameId(gameId: string, socket: SocketIO.Socket): Room {
+		const room = roomIdToRoom.get(idToRoomId.get(gameId));
+		if(room.members.size + room.cpus.size > 1) {
+			room.start();
+		}
+		else {
+			socket.emit('showDialog', 'There are not enough players in the room to start.');
 		}
 		return room;
 	}
@@ -201,7 +212,7 @@ class RoomManager {
 			const cpuInfos = Array.from(room.cpus.values());
 			const cpus = [];		// The cpuInfo object has too much data. Only send the speed and AI of each CPU.
 
-			cpuInfos.forEach(cpuInfo => {
+			cpuInfos.forEach((cpuInfo: any) => {
 				const { ai, speed } = cpuInfo;
 				// Undo the speed conversion
 				cpus.push({ ai, speed: 10 - (speed / 500) });
@@ -316,8 +327,3 @@ function generateRoomId(length = 6) {
 	roomIds.add(result);
 	return result;
 }
-
-RoomManager.defaultQueueRoomId = null;
-RoomManager.rankedRoomId = null;
-
-module.exports = { RoomManager };

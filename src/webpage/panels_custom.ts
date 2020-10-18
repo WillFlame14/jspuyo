@@ -1,9 +1,9 @@
 'use strict';
 
-const { CpuVariants } = require('../cpu/CpuVariants.js');
-const { PlayerInfo } = require('./firebase.js');
-const { SettingsBuilder } = require('../utils/Settings.js');
-const { Utils } = require('../utils/Utils.js');
+import { CpuVariants } from '../cpu/CpuVariants';
+import { PlayerInfo } from './firebase';
+import { SettingsBuilder } from '../utils/Settings';
+import * as Utils from '../utils/Utils';
 
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
 
@@ -16,7 +16,7 @@ const createRoomOptionsState = {
 
 let createRoomTrigger;
 
-function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID) {
+export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID) {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
@@ -24,21 +24,21 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	document.getElementById('createRoom').onclick = () => {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		document.getElementById('createRoomSubmit').value = 'Create Room';
+		(document.getElementById('createRoomSubmit') as HTMLInputElement).value = 'Create Room';
 
 		// Re-enable the roomsize options
 		document.querySelectorAll('.numPlayerButton').forEach(element => {
 			element.classList.remove('disabled');
 		});
-		document.getElementById('5player').disabled = false;
+		(document.getElementById('5player') as HTMLButtonElement).disabled = false;
 
 		// Re-enable the main Room Options (Disable the mode icon in future?)
-		document.getElementById('numRows').disabled = false;
-		document.getElementById('numCols').disabled = false;
-		document.getElementById('numColours').disabled = false;
+		['numRows', 'numCols', 'numColours'].forEach(elementId => {
+			(document.getElementById(elementId) as HTMLInputElement).disabled = false;
+		});
 
 		// Re-enable the advanced Room Options
-		document.querySelectorAll('.roomOptionInput').forEach(input => {
+		document.querySelectorAll('.roomOptionInput').forEach((input: HTMLInputElement) => {
 			input.disabled = false;
 		});
 
@@ -50,7 +50,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	};
 
 	// Switch between Tsu and Fever mods on click
-	const modeIcon = document.getElementById('modeIcon');
+	const modeIcon = document.getElementById('modeIcon') as HTMLImageElement;
 	modeIcon.onclick = () => {
 		switch(createRoomOptionsState.selectedMode) {
 			case "Tsu":
@@ -65,7 +65,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	};
 
 	// Maintain the currently selected button and highlight it
-	Array.from(document.getElementsByClassName('numPlayerButton')).forEach(element => {
+	Array.from(document.getElementsByClassName('numPlayerButton')).forEach((element: HTMLElement) => {
 		element.onclick = () => {
 			const oldId = createRoomOptionsState.selectedPlayers;
 			if(element.id !== oldId && !element.classList.contains('disabled')) {
@@ -78,7 +78,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 
 	// Read the input field and update the number of colours displayed accordingly
 	document.getElementById('numColours').oninput = () => {
-		let currentNumber = Math.floor(Number(document.getElementById('numColours').value)) || 0;
+		let currentNumber = Math.floor(Number((document.getElementById('numColours') as HTMLInputElement).value)) || 0;
 		let lastNumber = createRoomOptionsState.numColours;
 		const coloursSelected = document.getElementById('coloursSelected');
 
@@ -100,7 +100,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	};
 
 	// Switch between win conditions on click
-	const winConditionButton = document.getElementById('winCondition');
+	const winConditionButton = document.getElementById('winCondition') as HTMLButtonElement;
 	winConditionButton.onclick = () => {
 		let currentIndex = winConditions.indexOf(winConditionButton.value);
 		if(currentIndex === winConditions.length - 1) {
@@ -117,7 +117,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 
 		let roomSize;
 		if(createRoomOptionsState.selectedPlayers === '5player') {
-			const value = Number(document.getElementById('5player').value) || 4;
+			const value = Number((document.getElementById('5player') as HTMLInputElement).value) || 4;
 			roomSize = Utils.clampBetween(value, 1, 16);
 		}
 		else {
@@ -127,14 +127,14 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 		// Generate the validated settings string
 		const settingsString = new SettingsBuilder()
 			.setGamemode(createRoomOptionsState.selectedMode)
-			.setGravity(document.getElementById('gravity').value)
-			.setRows(document.getElementById('numRows').value)
-			.setCols(document.getElementById('numCols').value)
-			.setSoftDrop(document.getElementById('softDrop').value)
-			.setNumColours(document.getElementById('numColours').value)
-			.setTargetPoints(document.getElementById('targetPoints').value)
-			.setMarginTimeInSeconds(document.getElementById('marginTime').value)
-			.setMinChain(document.getElementById('minChainLength').value).build().toString();
+			.setGravity(Number((document.getElementById('gravity') as HTMLInputElement).value))
+			.setRows(Number((document.getElementById('numRows') as HTMLInputElement).value))
+			.setCols(Number((document.getElementById('numCols') as HTMLInputElement).value))
+			.setSoftDrop(Number((document.getElementById('softDrop') as HTMLInputElement).value))
+			.setNumColours(Number((document.getElementById('numColours') as HTMLInputElement).value))
+			.setTargetPoints(Number((document.getElementById('targetPoints') as HTMLInputElement).value))
+			.setMarginTimeInSeconds(Number((document.getElementById('marginTime') as HTMLInputElement).value))
+			.setMinChain(Number((document.getElementById('minChainLength') as HTMLInputElement).value)).build().toString();
 
 		switch(createRoomTrigger) {
 			case 'create':
@@ -159,13 +159,13 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 
 		modal.style.display = 'block';
 		document.getElementById('giveJoinId').style.display = 'block';
-		document.getElementById('joinIdLink').value = `${window.location.href.split('?')[0]}?joinRoom=${id}`;
+		(document.getElementById('joinIdLink') as HTMLInputElement).value = `${window.location.href.split('?')[0]}?joinRoom=${id}`;
 	});
 
 	// Setting the click event for copying link to clipboard
 	document.getElementById('copyJoinId').onclick = function() {
 		// Select the input field with the link
-		document.getElementById('joinIdLink').select();
+		(document.getElementById('joinIdLink') as HTMLInputElement).select();
 		try {
 			// Copy the selected text and show "Copied!" message
 			document.execCommand('copy');
@@ -190,7 +190,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	document.getElementById('joinIdForm').onsubmit = async function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
-		const joinId = document.getElementById('joinId').value;
+		const joinId = (document.getElementById('joinId') as HTMLInputElement).value;
 
 		await stopCurrentSession();
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId });
@@ -221,7 +221,7 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 	document.getElementById('joinRoomPasswordForm').onsubmit = function (event) {
 		// Prevent submit button from refreshing the page
 		event.preventDefault();
-		const roomPassword = document.getElementById('joinRoomPassword').value;
+		const roomPassword = (document.getElementById('joinRoomPassword') as HTMLInputElement).value;
 		const joinId = document.getElementById('joinRoomId').innerHTML || null;
 
 		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId, roomPassword });
@@ -245,13 +245,13 @@ function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, get
 		document.getElementById('spectateRoomModal').style.display = 'block';
 	};
 
-	const roomList = document.getElementById('roomList');
+	const roomList = document.getElementById('roomList') as HTMLInputElement;
 	const roomPlayers = document.getElementById('roomPlayers');
 
 	socket.on('allRooms', roomIds => {
 		const roomIdsElement = document.getElementById('roomIds');
 		const spectateFormError = document.getElementById('spectateFormError');
-		const spectateSubmit = document.getElementById('spectateSubmit');
+		const spectateSubmit = document.getElementById('spectateSubmit') as HTMLButtonElement;
 
 		while(roomIdsElement.firstChild) {
 			roomIdsElement.firstChild.remove();
@@ -377,10 +377,10 @@ function createCPUOptions(puyoImgs) {
 		cpuOptionElement.appendChild(speedLabel.cloneNode(true));
 		cpuOptionElement.appendChild(aiDropdown.cloneNode(true));
 
-		const speedDisplayClone = speedDisplay.cloneNode(true);
-		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true);
+		const speedDisplayClone = speedDisplay.cloneNode(true) as HTMLInputElement;
+		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true) as HTMLInputElement;
 		cpuSpeedSliderClone.oninput = function() {
-			speedDisplayClone.innerHTML = this.value;
+			speedDisplayClone.innerHTML = cpuSpeedSliderClone.value;
 		};
 		cpuOptionElement.appendChild(speedDisplayClone);
 		cpuOptionElement.appendChild(cpuSpeedSliderClone);
@@ -389,8 +389,6 @@ function createCPUOptions(puyoImgs) {
 	}
 }
 
-function setCreateRoomTrigger(trigger) {
+export function setCreateRoomTrigger(trigger) {
 	createRoomTrigger = trigger;
 }
-
-module.exports = { initCustomPanels };

@@ -3,7 +3,7 @@
 /**
  * Returns a random puyo colour, given the size of the colour pool.
  */
-function getRandomColour (numColours) {
+export function getRandomColour (numColours) {
 	return Math.floor(Math.random() * numColours) + 1;
 }
 
@@ -12,7 +12,7 @@ function getRandomColour (numColours) {
  *
  * Currently only works for I-shaped Drops (Tsu).
  */
-function getOtherPuyo (drop) {
+export function getOtherPuyo (drop) {
 	let x = drop.arle.x + Math.cos(drop.standardAngle + Math.PI / 2);
 	let y = drop.arle.y + Math.sin(drop.standardAngle + Math.PI / 2);
 
@@ -29,7 +29,7 @@ function getOtherPuyo (drop) {
 /**
  * Gets the frames needed for the animation (accounts for falling time).
  */
-function getDropFrames(poppingLocs, boardState, settings) {
+export function getDropFrames(poppingLocs, boardState, settings) {
 	return poppingLocs.some(loc => {
 		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.some(loc2 => loc2.col === loc.col && loc2.row === loc.row + 1);
 	}) ? settings.dropFrames : 0;
@@ -38,7 +38,7 @@ function getDropFrames(poppingLocs, boardState, settings) {
 /**
  * Finds the score of the given chain. Currently only for Tsu rule.
  */
-function calculateScore (puyos, chain_length) {
+export function calculateScore (puyos, chain_length) {
 	// These arrays are 1-indexed.
 	const CHAIN_POWER = [null, 0, 8, 16, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672];
 	const COLOUR_BONUS = [null, 0, 3, 6, 12, 24, 48];
@@ -74,7 +74,7 @@ function calculateScore (puyos, chain_length) {
 /**
  * Finds the amount of nuisance generated from a particular increase in score.
  */
-function calculateNuisance(chain_score, targetPoints, leftoverNuisance) {
+export function calculateNuisance(chain_score, targetPoints, leftoverNuisance) {
 	const nuisancePoints = chain_score / targetPoints + leftoverNuisance;
 	const nuisanceSent = Math.floor(nuisancePoints);
 
@@ -85,14 +85,14 @@ function calculateNuisance(chain_score, targetPoints, leftoverNuisance) {
  * Deep copies an object where all values are primitype types.
  * Call this function recursively to deep copy more nested objects.
  */
-function objectCopy(obj) {
+export function objectCopy(obj) {
 	return JSON.parse(JSON.stringify(obj));
 }
 
 /**
  * Clamps a number between a minimum and maximum number.
  */
-function clampBetween(value, min, max) {
+export function clampBetween(value, min, max) {
 	if(value < min) {
 		return min;
 	}
@@ -101,15 +101,3 @@ function clampBetween(value, min, max) {
 	}
 	return value;
 }
-
-const Utils = {
-	getRandomColour,
-	getOtherPuyo,
-	getDropFrames,
-	calculateScore,
-	calculateNuisance,
-	objectCopy,
-	clampBetween
-};
-
-module.exports = { Utils };

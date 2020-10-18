@@ -1,9 +1,9 @@
 'use strict';
 
-const { Board } = require('../Board.js');
-const { Cpu } = require('./Cpu.js');
+import { Board } from '../Board';
+import { Cpu } from './Cpu';
 
-class CpuVariants {
+export class CpuVariants {
 	constructor() {
 		throw new Error('CpuVariants cannot be instantiated.');
 	}
@@ -158,8 +158,8 @@ class ChainCpu extends Cpu {
  * TestCpu: ChainCPU, but instead of placing randomly it attempts to connect a colour.
  */
 class TestCpu extends Cpu {
-	constructor(settings, speed) {
-		super(settings, speed);
+	constructor(settings) {
+		super(settings);
 	}
 
 	getMove(boardState, currentDrop) {
@@ -274,5 +274,3 @@ class TestCpu extends Cpu {
 		return value;
 	}
 }
-
-module.exports = { CpuVariants };

@@ -1,11 +1,11 @@
 'use strict';
 
+import { PlayerInfo } from './firebase';
+import { initCustomPanels } from './panels_custom';
+import { setKeyBindings, setAppearance, initProfilePanels } from './panels_profile';
+import { UserSettings } from '../utils/Settings';
 
-const { PlayerInfo } = require('./firebase.js');
-const { initCustomPanels } = require('./panels_custom.js');
-const { setKeyBindings, setAppearance, initProfilePanels } = require('./panels_profile.js');
-
-const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
+export const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const ranks = {
 	'0': 'Blob',
 	'1000': 'Forest Learner',
@@ -14,12 +14,12 @@ const ranks = {
 	'1750': 'Lightning Ranger'
 };
 
-async function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
+export async function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
 	// Set all close buttons to remove modals
-	Array.from(document.getElementsByClassName('close')).forEach(close => {
+	Array.from(document.getElementsByClassName('close')).forEach((close: HTMLElement) => {
 		close.onclick = () => {
 			clearModal();
 			audioPlayer.playSfx('close_modal');
@@ -34,7 +34,8 @@ async function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer
 	};
 
 	// Switch all toggleable buttons between on/off when clicked
-	Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off'))).forEach(button => {
+	const toggleableButtons = Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off')));
+	toggleableButtons.forEach((button: HTMLButtonElement) => {
 		button.onclick = () => {
 			if(button.value === "ON") {
 				button.classList.add('off');
@@ -74,7 +75,7 @@ async function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer
 /**
  * Removes all modal elements from view.
  */
-function clearModal() {
+export function clearModal() {
 	// Prevent closing modal boxes if any dialog box has not been closed yet
 	if(document.getElementById('modal-background-disable').style.display === 'block') {
 		return;
@@ -84,12 +85,12 @@ function clearModal() {
 	modal.style.display = "none";
 
 	// Clear all modal content
-	Array.from(document.getElementsByClassName('modal-content')).forEach(element => {
+	Array.from(document.getElementsByClassName('modal-content')).forEach((element: HTMLElement) => {
 		element.style.display = 'none';
 	});
 
 	// Clear all error messages
-	Array.from(document.getElementsByClassName('errorMsg')).forEach(element => {
+	Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
 		element.style.display = 'none';
 	});
 }
@@ -98,31 +99,32 @@ function clearModal() {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-async function updateUserSettings(user, currentUID, globalAudioPlayer) {
-	const promises = [];
-	promises.push(PlayerInfo.getUserProperty(currentUID, 'userSettings'));
-	promises.push(PlayerInfo.getUserProperty(currentUID, 'rating'));
+export async function updateUserSettings(user, currentUID, globalAudioPlayer) {
+	const promises: [Promise<UserSettings>, Promise<number>] = [
+		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
+		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)
+	];
 
-	const [userSettings, rating] = await Promise.all(promises);
+	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
 
 	// These settings can be easily updated since they only contain a numeric value.
 	const numericProperties = ['das', 'arr'];
 	numericProperties.forEach(property => {
-		document.getElementById(property).value = userSettings[property];
+		(document.getElementById(property) as HTMLInputElement).value = userSettings[property];
 	});
 
 	// Intermediate Frames Shown is inverted
-	document.getElementById('skipFrames').value = 50 - userSettings.skipFrames;
+	(document.getElementById('skipFrames') as HTMLInputElement).value = `${50 - userSettings.skipFrames}`;
 
 	// Volume controls are non-linear
-	document.getElementById('sfxVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
-	document.getElementById('musicVolume').value = 100 * Math.sqrt(userSettings.sfxVolume / 0.4);
+	(document.getElementById('sfxVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
+	(document.getElementById('musicVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
 	globalAudioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
 
 	// Update the key bindings
 	const keyBindings = userSettings.keyBindings;
 	Object.keys(keyBindings).forEach(key => {
-		document.getElementById(`${key}Binding`).value = keyBindings[key];
+		(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key];
 	});
 	setKeyBindings(keyBindings);
 
@@ -140,10 +142,3 @@ async function updateUserSettings(user, currentUID, globalAudioPlayer) {
 	const title = ranks[rankBoundaries[rankBoundaries.findIndex(minimumRating => Number(minimumRating) > rating) - 1]];
 	document.getElementById('statusTitle').innerHTML = title;
 }
-
-module.exports = {
-	puyoImgs,
-	panelsInit,
-	clearModal,
-	updateUserSettings
-};

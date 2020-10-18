@@ -1,15 +1,22 @@
 'use strict';
 
-const { showDialog } = require('./webpage/dialog.js');
-const { PlayerInfo } = require('./webpage/firebase.js');
+import { Game } from './Game';
+import { showDialog } from './webpage/dialog';
+import { PlayerInfo } from './webpage/firebase';
 
-class Session {
+export class Session {
+	gameId: string;
+	game: Game;
+	socket: SocketIO.Socket;
+	roomId: string;
+
+	forceStop = false;
+	stopped = false;
+
 	constructor(gameId, game, socket, roomId) {
 		this.gameId = gameId;
 		this.game = game;
 		this.socket = socket;
-		this.forceStop = false;
-		this.stopped = false;
 		this.roomId = roomId;
 	}
 
@@ -93,5 +100,3 @@ class Session {
 		});
 	}
 }
-
-module.exports = { Session };

@@ -1,9 +1,9 @@
 'use strict';
 
-const firebase = require('firebase/app');
-const firebaseui = require('firebaseui');
-const { firebaseConfig } = require('../../config.js');
-const { UserSettings } = require('../utils/Settings.js');
+import firebase = require('firebase/app');
+import firebaseui = require('firebaseui');
+import { firebaseConfig } from '../../config';
+import { UserSettings } from '../utils/Settings';
 
 // Add the Firebase products that you want to use
 require("firebase/auth");
@@ -45,7 +45,7 @@ const uiConfig = {
  * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
  * Returns a resolved promise with the user object once login is completed.
  */
-function initApp(globalSocket) {
+export function initApp(globalSocket) {
 	return new Promise((resolve) => {
 		// Initialize Firebase
 		firebase.initializeApp(firebaseConfig);
@@ -70,8 +70,8 @@ function initApp(globalSocket) {
 				// Open username change screen if new user
 				if(newUser) {
 					// Set their current name as default
-					document.getElementById('usernamePickerText').value = user.displayName;
-					document.getElementById('usernamePickerText').placeholder = user.displayName || '';
+					(document.getElementById('usernamePickerText') as HTMLInputElement).value = user.displayName;
+					(document.getElementById('usernamePickerText') as HTMLInputElement).placeholder = user.displayName || '';
 					fallbackName = user.displayName;
 
 					document.getElementById('usernamePicker').style.display = 'block';
@@ -136,7 +136,7 @@ function initializeUI(resolve) {
 		event.preventDefault();
 
 		// Use fallback name if there is no name in the input field
-		let username = document.getElementById('usernamePickerText').value || fallbackName;
+		let username = (document.getElementById('usernamePickerText') as HTMLInputElement).value || fallbackName;
 
 		validateUsername(username).then(() => {
 			// Update with new username
@@ -158,7 +158,7 @@ function initializeUI(resolve) {
 			// Promise was rejected - username not valid
 			document.getElementById('usernamePickerError').innerHTML = error;
 			document.getElementById('usernamePickerError').style.display = 'block';
-			username = document.getElementById('usernamePickerText').value || fallbackName;
+			username = (document.getElementById('usernamePickerText') as HTMLInputElement).value || fallbackName;
 		});
 	};
 }
@@ -168,7 +168,7 @@ function initializeUI(resolve) {
  * Used in other modules where Firebase is not accessible.
  * If the user was an anonymous user, their account is deleted to save space.
  */
-async function signOut() {
+export async function signOut() {
 	// Update the online users counter
 	socket.emit('getOnlineUsers');
 
@@ -205,7 +205,7 @@ function validateUsername(username) {
 				resolve();
 			}
 			else {
-				const takenUsernames = Object.values(data.val()).map(pair => pair.username);
+				const takenUsernames = Object.values(data.val()).map((pair: Record<string, string>) => pair.username);
 				if(takenUsernames.includes(username)) {
 					reject('This username is already in use.');
 				}
@@ -220,7 +220,7 @@ function validateUsername(username) {
 // Properties of the firebase auth User object
 const userProperties = ['username', 'email'];
 
-class PlayerInfo {
+export class PlayerInfo {
 	/**
 	 * Initializes all the user data with default values.
 	 */
@@ -280,9 +280,3 @@ class PlayerInfo {
 		});
 	}
 }
-
-module.exports = {
-	PlayerInfo,
-	initApp,
-	signOut
-};

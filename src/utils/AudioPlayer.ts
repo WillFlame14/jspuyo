@@ -1,6 +1,6 @@
 'use strict';
 
-const { UserSettings } = require('./Settings.js');
+import { UserSettings } from './Settings';
 
 const audioFilenames = {
 	move: { numClips: 1, defaultVolume: 1, extension: 'wav' },
@@ -19,7 +19,7 @@ const audioFilenames = {
 	submit: { numClips: 1, defaultVolume: 2, extension: 'ogg' }
 };
 
-const VOICES = {
+export const VOICES = {
 	'akari': { defaultVolume: 3, extension: 'ogg', colour: [130, 212, 187] },
 	'maria': { defaultVolume: 6, extension: 'ogg', colour: [224, 175, 160] },
 };
@@ -27,10 +27,19 @@ const VOICES = {
 // Relative to root directory
 const SOUNDS_DIRECTORY = './sounds';
 
-class AudioPlayer {
-	constructor(socket, disable) {
+export class AudioPlayer {
+	socket: SocketIO.Socket;
+	disabled: boolean;
+	sfxVolume: number;
+	musicVolume: number;
+
+	sfx: any;
+	voices: any;
+
+	gameId: string;
+
+	constructor(socket: SocketIO.Socket, disable: string = null) {
 		this.socket = socket;
-		this.cancel = false;
 		this.disabled = disable === 'disable';
 
 		const { sfxVolume, musicVolume } = new UserSettings();
@@ -147,8 +156,3 @@ class AudioPlayer {
 		this.socket.emit('sendVoice', this.gameId, character, audio_name, index);
 	}
 }
-
-module.exports = {
-	VOICES,
-	AudioPlayer
-};

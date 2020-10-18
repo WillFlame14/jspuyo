@@ -1,12 +1,24 @@
 'use strict';
 
-const { Game } = require('./Game.js');
-const { AudioPlayer } = require('./utils/AudioPlayer.js');
-const { UserSettings } = require('./utils/Settings.js');
+import { Game } from './Game';
+import { AudioPlayer } from './utils/AudioPlayer';
+import { UserSettings } from './utils/Settings';
 
 const defaultUserSettings = new UserSettings();
 
-class CpuGame extends Game {
+export class CpuGame extends Game {
+	ai: any;
+	softDropSpeed: number;
+	movementSpeed: number;
+	currentMove: any;
+	rotations: number;
+	lastArle: any;
+
+	softDropTimer: number;
+	movementTimer: number;
+
+	audioPlayer: AudioPlayer;
+
 	constructor(gameId, opponentIds, socket, ai, speed, settings) {
 		super(gameId, opponentIds, socket, settings, defaultUserSettings, null, null);
 
@@ -92,5 +104,3 @@ class CpuGame extends Game {
 		this.softDropTimer = Date.now();
 	}
 }
-
-module.exports = { CpuGame };

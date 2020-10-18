@@ -1,9 +1,23 @@
 'use strict';
 
-const { Utils } = require('./utils/Utils.js');
+import * as Utils from './utils/Utils';
+import { Settings } from './utils/Settings';
 
-class Drop {
-	constructor (shape, colours, settings, arle, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
+enum Shape {
+	'h', 'L', 'H', 'O', 'I'
+}
+
+export class Drop {
+	shape: Shape;
+	settings: Settings;
+	colours: number[];
+	arle: any;
+	schezo: any;
+	standardAngle: number;
+	rotating: any;
+	rotating180: number;
+
+	constructor (shape, colours, settings, arle = undefined, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
@@ -103,7 +117,7 @@ class Drop {
 	/**
 	 * Rotates a Drop. Validation is done before calling this method.
 	 */
-	rotate(direction, angle) {
+	rotate(direction, angle = 0) {
 		if(angle === 180) {
 			this.rotating180 = 2;
 		}
@@ -187,7 +201,13 @@ class Drop {
 	}
 }
 
-class DropGenerator {
+export class DropGenerator {
+	settings: Settings;
+	seed: number;
+	drops: Drop[][];
+	colourList: number[];
+	colourBuckets: Record<string, number>;
+
 	constructor(settings) {
 		this.settings = settings;
 		this.seed = this.settings.seed;
@@ -273,5 +293,3 @@ class DropGenerator {
 		return x - Math.floor(x);
 	}
 }
-
-module.exports = { Drop, DropGenerator };

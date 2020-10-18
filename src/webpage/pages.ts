@@ -1,6 +1,6 @@
 'use strict';
 
-const path = require('path');
+import path = require('path');
 const { Chartist } = window;
 
 const backgrounds = [
@@ -12,7 +12,7 @@ const backgrounds = [
 
 let selectedVariableGames = -1;
 
-function pageInit() {
+export function pageInit(): void {
 	const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
 	const address = path.join(__dirname, '..', '..', 'images', 'backgrounds', background);
 	document.documentElement.style.backgroundImage = 'url("' + address + '")';
@@ -22,13 +22,13 @@ function pageInit() {
 	};
 
 	// Initialize event listeners for the variable game options
-	document.querySelectorAll('.variableGameOption').forEach(element => {
+	document.querySelectorAll('.variableGameOption').forEach((element: HTMLElement) => {
 		element.onclick = function() {
 			// Turn off the old selected option
 			document.getElementById(`${selectedVariableGames}games`).classList.remove('selected');
 
 			// All ids are in the form "##games"
-			selectedVariableGames = element.id.substring(0, element.id.length - 5);
+			selectedVariableGames = Number(element.id.substring(0, element.id.length - 5));
 			createCharts(selectedVariableGames);
 			element.classList.add('selected');
 		};
@@ -449,10 +449,10 @@ function createCharts(gameRange = -1) {
 	charts['finesse'] = finesseChart;
 
 	// Configure the refresh button
-	document.querySelectorAll('.refresh').forEach(button => {
+	document.querySelectorAll('.refresh').forEach((button: HTMLElement) => {
 		button.onclick = function() {
 			// Grab the id from the chart
-			const id = button.parentNode.id;
+			const id = button.parentElement.id;
 			const chart = charts[id.substring(0, id.length - 5)];
 			chart.update();
 		};
@@ -612,7 +612,3 @@ function animatePie(chart, duration) {
 }
 
 pageInit();
-
-module.exports = {
-	pageInit
-};

@@ -1,6 +1,13 @@
 'use strict';
 
-class Board {
+import { Settings } from './utils/Settings';
+
+export class Board {
+	settings: Settings;
+	height: number;
+	width: number;
+	boardState: number[][];
+
 	constructor(settings, boardState = null) {
 		this.settings = settings;
 		this.height = settings.rows;
@@ -188,8 +195,8 @@ class Board {
 	 */
 	trim() {
 		this.boardState = this.boardState.map(col => {
-			if(col.length > this.settings.height + 1) {
-				col = col.slice(0, this.settings.height + 1);
+			if(col.length > this.settings.rows + 1) {
+				col = col.slice(0, this.settings.rows + 1);
 			}
 			return col;
 		});
@@ -269,5 +276,3 @@ class Board {
 		return { nuisanceDropped, nuisanceArray };
 	}
 }
-
-module.exports = { Board };

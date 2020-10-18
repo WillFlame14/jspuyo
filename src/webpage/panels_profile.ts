@@ -1,6 +1,7 @@
 'use strict';
 
-const { PlayerInfo, signOut } = require('./firebase.js');
+import { PlayerInfo, signOut } from './firebase';
+import { UserSettings } from '../utils/Settings';
 
 // Default key bindings
 let keyBindings = {
@@ -14,13 +15,13 @@ let keyBindings = {
 let keyBindingRegistration = null;
 let selectedAppearance = 'TsuClassic';
 
-function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID, ) {
+export function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID, ) {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
 	window.onkeydown = function(event) {
 		if(keyBindingRegistration !== null) {
-			document.getElementById(keyBindingRegistration).value = codeToDisplay(event.code);
+			(document.getElementById(keyBindingRegistration) as HTMLInputElement).value = codeToDisplay(event.code);
 
 			// set the actual key binding
 			keyBindings[keyBindingRegistration.replace('Binding', '')] = event.code;
@@ -59,7 +60,7 @@ function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, 
 		modal.style.display = 'block';
 
 		// Use saved settings
-		Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
+		Array.from(document.getElementsByClassName('keyBinding')).forEach((button: HTMLButtonElement) => {
 			button.value = codeToDisplay(keyBindings[button.id.replace('Binding', '')]);
 		});
 
@@ -67,7 +68,7 @@ function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, 
 	};
 
 	// Attach onclick events for each key binding
-	Array.from(document.getElementsByClassName('keyBinding')).forEach(button => {
+	Array.from(document.getElementsByClassName('keyBinding')).forEach((button: HTMLButtonElement)=> {
 		button.onclick = function() {
 			button.value = '...';
 			keyBindingRegistration = button.id;
@@ -75,7 +76,7 @@ function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, 
 	});
 
 	// Attach onclick events for each icon
-	Array.from(document.getElementsByClassName('appearanceIcon')).forEach(icon => {
+	Array.from(document.getElementsByClassName('appearanceIcon')).forEach((icon: HTMLElement) => {
 		icon.onclick = function() {
 			// Remove selection from previous icon
 			document.getElementById(selectedAppearance).classList.remove('selected');
@@ -87,26 +88,26 @@ function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, 
 	});
 
 	document.getElementById('settingsSubmit').onclick = async function() {
-		const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings');
+		const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings') as UserSettings;
 
-		const das = Number(document.getElementById('das').value);
+		const das = Number((document.getElementById('das') as HTMLInputElement).value);
 		if(!Number.isNaN(das) && das >= 0) {
 			userSettings['das'] = das;
 		}
 
-		const arr = Number(document.getElementById('arr').value);
+		const arr = Number((document.getElementById('arr') as HTMLInputElement).value);
 		if(!Number.isNaN(arr) && arr >= 0) {
 			userSettings['arr'] = arr;
 		}
 
 		// Ranges from 0 to 50, default 50 - map to 50 to 0
-		const skipFrames = Number(document.getElementById('skipFrames').value);
+		const skipFrames = Number((document.getElementById('skipFrames') as HTMLInputElement).value);
 		if(!Number.isNaN(skipFrames)) {
 			userSettings['skipFrames'] = 50 - Math.floor(skipFrames);
 		}
 
 		// Ranges from 0 to 100, default 50
-		const sfxVolume = Number(document.getElementById('sfxVolume').value);
+		const sfxVolume = Number((document.getElementById('sfxVolume') as HTMLInputElement).value);
 		if(!Number.isNaN(sfxVolume)) {
 			userSettings['sfxVolume'] = (sfxVolume / 100)**2 * 0.4;
 		}
@@ -115,7 +116,7 @@ function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, 
 		audioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
 
 		// Ranges from 0 to 100, default 50
-		const musicVolume = Number(document.getElementById('musicVolume').value);
+		const musicVolume = Number((document.getElementById('musicVolume') as HTMLInputElement).value);
 		if(!Number.isNaN(musicVolume)) {
 			userSettings['musicVolume'] = (musicVolume / 100)**2 * 0.4;
 		}
@@ -169,16 +170,10 @@ function codeToDisplay(code) {
 	}
 }
 
-function setKeyBindings(newKeyBindings) {
+export function setKeyBindings(newKeyBindings) {
 	keyBindings = newKeyBindings;
 }
 
-function setAppearance(appearance) {
+export function setAppearance(appearance) {
 	selectedAppearance = appearance;
 }
-
-module.exports = {
-	setKeyBindings,
-	setAppearance,
-	initProfilePanels
-};

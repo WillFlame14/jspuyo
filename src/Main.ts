@@ -1,19 +1,19 @@
 'use strict';
 
-const { GameArea } = require('./GameDrawer.js');
-const { PlayerGame, SpectateGame } = require('./PlayerGame.js');
-const { Session } = require('./Session.js');
-const { Settings, UserSettings } = require('./utils/Settings.js');
-const { AudioPlayer } = require('./utils/AudioPlayer.js');
+import { GameArea } from './GameDrawer';
+import { PlayerGame, SpectateGame } from './PlayerGame';
+import { Session } from './Session';
+import { Settings, UserSettings } from './utils/Settings';
+import { AudioPlayer } from './utils/AudioPlayer';
 
-const { dialogInit, showDialog } = require('./webpage/dialog.js');
-const { PlayerInfo, initApp, signOut } = require('./webpage/firebase.js');
-const { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, toggleSpectate } = require('./webpage/mainpage.js');
-const navbarInit = require('./webpage/navbar.js');
-const { panelsInit, clearModal, updateUserSettings } = require('./webpage/panels.js');
+import { dialogInit, showDialog } from './webpage/dialog';
+import { PlayerInfo, initApp, signOut } from './webpage/firebase';
+import { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, toggleSpectate } from './webpage/mainpage';
+import { navbarInit } from './webpage/navbar';
+import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
 
-const io = require('socket.io-client');
-const globalSocket = io();
+import io = require('socket.io-client');
+const globalSocket: SocketIO.Socket = io();
 
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
@@ -23,7 +23,7 @@ let currentUID;
 (async function() {
 	const promises = [
 		initApp(globalSocket),					// for firebase login
-		init(globalSocket, getCurrentUID),		// game-related
+		init(globalSocket),		// game-related
 		navbarInit(globalAudioPlayer),
 		panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
 		dialogInit(),
@@ -48,7 +48,7 @@ let currentUID;
 async function loginSuccess(user) {
 	globalSocket.emit('register', user.uid);
 
-	globalSocket.off('registered');
+	globalSocket.off('registered', undefined);
 	globalSocket.on('registered', async () => {
 		currentUID = user.uid;
 		try {
@@ -184,7 +184,7 @@ async function init(socket) {
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings');
+		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings') as UserSettings;
 
 		// Add default skipFrames
 		userSettings.skipFrames += defaultSkipFrames[opponentIds.length + 1];
@@ -214,7 +214,7 @@ async function init(socket) {
 		showGameOnly();
 
 		const settings = Settings.fromString(settingsString);
-		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings');
+		const userSettings = await PlayerInfo.getUserProperty(currentUID, 'userSettings') as UserSettings;
 
 		// Add default skipFrames
 		userSettings.skipFrames += defaultSkipFrames[allIds.length];
@@ -283,7 +283,7 @@ function showGameOnly() {
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
 function generateCells(numCells, settings, appearance = new UserSettings().appearance) {
-	const playArea = document.getElementById('playArea');
+	const playArea = document.getElementById('playArea') as HTMLTableElement;
 	playArea.style.display = 'table';
 
 	const firstRow = playArea.insertRow(-1);
@@ -310,7 +310,7 @@ function generateCells(numCells, settings, appearance = new UserSettings().appea
 		pointsDisplay.id = 'pointsDisplay' + id;
 		pointsDisplay.className = 'pointsDisplay';
 		pointsDisplay.innerHTML = '00000000';
-		pointsDisplay.style.fontSize = 52 * size;
+		pointsDisplay.style.fontSize = `${52 * size}`;
 		pointsArea.appendChild(pointsDisplay);
 
 		return cell;

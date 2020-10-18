@@ -2,20 +2,25 @@
 
 const FIRST_DROPS_TRACKED = 50;
 
-class StatTracker {
+export class StatTracker {
+	buildOrder: number[][];
+	buildSpeed: number[][];
+	chainScores: number[][];
+	splitPuyos: any[];
+
+	finesse = {};
+	gameResult = null;
+	runningScore = 0;
+	framesOfLastDrop = null;
+
 	constructor() {
 		this.buildOrder = [...new Array(FIRST_DROPS_TRACKED)].map(() => new Array(6).fill(0));
 		this.buildSpeed = [...new Array(FIRST_DROPS_TRACKED)].map(() => []);
 		this.chainScores = [...new Array(19)].map(() => []);
 		this.splitPuyos = [...new Array(FIRST_DROPS_TRACKED)].map(() => {return { split: 0, nonsplit: 0 };});
-		this.finesse = {};
-		this.gameResult = null;
-
-		this.runningScore = 0;
-		this.framesOfLastDrop = null;
 	}
 
-	addDrop(dropNum, currentFrame, movements, arleCol, schezoCol, trueSplit) {
+	addDrop(dropNum, currentFrame, movements, arleCol, schezoCol, trueSplit = false) {
 		// Do not track future drops
 		if(dropNum >= FIRST_DROPS_TRACKED) {
 			return;
@@ -130,5 +135,3 @@ function checkFinesse(movements, arleCol) {
 
 	return null;
 }
-
-module.exports = { StatTracker };

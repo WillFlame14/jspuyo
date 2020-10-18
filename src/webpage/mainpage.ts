@@ -351,7 +351,7 @@ export function toggleHost(host) {
 	});
 
 	// The main Room Options (Disable the mode icon in future?)
-	['numRow', 'numCols', 'numColours'].forEach(elementId => {
+	['numRows', 'numCols', 'numColours'].forEach(elementId => {
 		(document.getElementById(elementId) as HTMLInputElement).disabled = !host;
 	});
 

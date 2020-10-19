@@ -1,5 +1,6 @@
 'use strict';
 
+import { AudioPlayer } from '../utils/AudioPlayer';
 import { CpuVariants } from '../cpu/CpuVariants';
 import { PlayerInfo } from './firebase';
 import { SettingsBuilder } from '../utils/Settings';
@@ -8,7 +9,7 @@ import * as Utils from '../utils/Utils';
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
 
 const createRoomOptionsState = {
-	selectedMode: 'Tsu',
+	selectedMode: Gamemode.TSU,
 	selectedPlayers: '4player',
 	numColours: 4,
 	winCondition: 'FT 3'
@@ -16,7 +17,13 @@ const createRoomOptionsState = {
 
 let createRoomTrigger;
 
-export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID) {
+export function initCustomPanels(
+	puyoImgs: string[],
+	stopCurrentSession: () => Promise<void>,
+	socket: SocketIOClient.Socket,
+	audioPlayer: AudioPlayer,
+	getCurrentUID: () => string
+): void {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
@@ -55,11 +62,11 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 		switch(createRoomOptionsState.selectedMode) {
 			case "Tsu":
 				modeIcon.src = "images/modal_boxes/Fever_icon.png";
-				createRoomOptionsState.selectedMode = "Fever";
+				createRoomOptionsState.selectedMode = Gamemode.FEVER;
 				break;
 			case "Fever":
 				modeIcon.src = "images/modal_boxes/Tsu_icon.png";
-				createRoomOptionsState.selectedMode = "Tsu";
+				createRoomOptionsState.selectedMode = Gamemode.TSU;
 				break;
 		}
 	};
@@ -115,7 +122,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	document.getElementById('createRoomSubmit').onclick = async function (event) {
 		event.preventDefault();		// Prevent submit button from refreshing the page
 
-		let roomSize;
+		let roomSize: number;
 		if(createRoomOptionsState.selectedPlayers === '5player') {
 			const value = Number((document.getElementById('5player') as HTMLInputElement).value) || 4;
 			roomSize = Utils.clampBetween(value, 1, 16);
@@ -153,7 +160,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	};
 
 	// Receiving the id of the newly created room
-	socket.on('giveRoomId', id => {
+	socket.on('giveRoomId', (id: string) => {
 		// Hide the "Copied" message
 		document.getElementById('joinIdCopied').style.display = 'none';
 
@@ -198,7 +205,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	};
 
 	// Received when room cannot be joined
-	socket.on('joinFailure', (errMessage) => {
+	socket.on('joinFailure', (errMessage: string) => {
 		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
 		modal.style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'block';
@@ -210,7 +217,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	});
 
 	// Event received when attempting to join a password-protected room
-	socket.on('requireRoomPassword', roomId => {
+	socket.on('requireRoomPassword', (roomId: string) => {
 		modal.style.display = 'block';
 		document.getElementById('joinRoomPasswordModal').style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'none';
@@ -229,7 +236,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	};
 
 	// Event received when entering the wrong password to a password-protected room
-	socket.on('joinRoomPasswordFailure', message => {
+	socket.on('joinRoomPasswordFailure', (message: string) => {
 		modal.style.display = 'block';
 		document.getElementById('joinRoomPasswordModal').style.display = 'block';
 		document.getElementById('joinRoomPasswordFormError').innerHTML = message;
@@ -238,7 +245,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
-		stopCurrentSession();
+		void stopCurrentSession();
 		socket.emit('getAllRooms', getCurrentUID());
 
 		modal.style.display = 'block';
@@ -248,7 +255,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	const roomList = document.getElementById('roomList') as HTMLInputElement;
 	const roomPlayers = document.getElementById('roomPlayers');
 
-	socket.on('allRooms', roomIds => {
+	socket.on('allRooms', (roomIds: string[]) => {
 		const roomIdsElement = document.getElementById('roomIds');
 		const spectateFormError = document.getElementById('spectateFormError');
 		const spectateSubmit = document.getElementById('spectateSubmit') as HTMLButtonElement;
@@ -297,7 +304,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	});
 
 	// Receiving the results of the request
-	socket.on('givePlayers', players => {
+	socket.on('givePlayers', (players: string[]) => {
 		// Server returns an empty array if room does not exist
 		if(players.length === 0) {
 			roomPlayers.style.display = 'none';
@@ -308,6 +315,8 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 			Promise.all(promises).then(playerNames => {
 				roomPlayers.style.display = 'block';
 				roomPlayers.innerHTML = `Players: ${JSON.stringify(playerNames)}`;
+			}).catch((err) => {
+				console.log(err);
 			});
 		}
 	});
@@ -321,7 +330,7 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	};
 
 	// Received when attempting to spectate an invalid room
-	socket.on('spectateFailure', errMessage => {
+	socket.on('spectateFailure', (errMessage: string) => {
 		const spectateFormError = document.getElementById('spectateFormError');
 
 		spectateFormError.innerHTML = errMessage;
@@ -329,11 +338,9 @@ export function initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlay
 	});
 
 	createCPUOptions(puyoImgs);
-
-	return Promise.resolve();
 }
 
-function createCPUOptions(puyoImgs) {
+function createCPUOptions(puyoImgs: string[]) {
 	const aiDropdown = document.createElement('select');
 	aiDropdown.classList.add('aiOption');
 
@@ -366,7 +373,7 @@ function createCPUOptions(puyoImgs) {
 	// Add CPU options selectors
 	for(let i = 0; i < 6; i++) {
 		const cpuOptionElement = document.createElement('div');
-		cpuOptionElement.id = 'cpu' + (i + 1);
+		cpuOptionElement.id = `cpu ${i + 1}`;
 		cpuOptionElement.classList.add('cpuOption');
 
 		const cpuIcon = document.createElement('img');
@@ -389,6 +396,6 @@ function createCPUOptions(puyoImgs) {
 	}
 }
 
-export function setCreateRoomTrigger(trigger) {
+export function setCreateRoomTrigger(trigger: string): void {
 	createRoomTrigger = trigger;
 }

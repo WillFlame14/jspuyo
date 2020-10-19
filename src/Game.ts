@@ -3,30 +3,10 @@
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Board } from './Board';
 import { Drop, DropGenerator } from './Drop';
-import { GameArea } from './GameDrawer';
+import { GameArea } from './draw/GameArea';
 import { Settings, UserSettings } from './utils/Settings';
 import { StatTracker } from './StatTracker';
 import * as Utils from './utils/Utils';
-
-interface ResolvingState {
-	chain: number,
-	puyoLocs: Record<string, number>[],
-	currentFrame: number,
-	totalFrames: number,
-	connections?: number[][],
-	poppedLocs?: number[][],
-	connectionsAfterPop?: number[][],
-	unstablePuyos?: number[][],
-}
-
-interface NuisanceState {
-	nuisanceArray: number[][],
-	nuisanceAmount: number,
-	positions: number[],
-	velocities: number[],
-	allLanded: boolean,
-	landFrames: number
-}
 
 export class Game {
 	board: Board;
@@ -36,7 +16,7 @@ export class Game {
 	userSettings: UserSettings;
 	statTracker: StatTracker;
 	audioPlayer: AudioPlayer;
-	socket: SocketIO.Socket;
+	socket: SocketIOClient.Socket;
 
 	dropGenerator: DropGenerator;
 	dropQueue: Drop[];
@@ -45,11 +25,11 @@ export class Game {
 
 	cellId: number;
 	gameArea: GameArea;
-	lastBoardHash: any;
-	currentBoardHash: any;
+	lastBoardHash: string;
+	currentBoardHash: string;
 	currentDrop: Drop;
 
-	endResult = null;			// Final result of the game
+	endResult: string = null;			// Final result of the game
 	softDrops = 0;				// Frames in which the soft drop button was held
 	dropNum = 0;				// Current drop number
 	preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
@@ -61,18 +41,26 @@ export class Game {
 	visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
 	activeNuisance = 0;			// Active nuisance
 	lastRotateAttempt = {};		// Timestamp of the last failed rotate attempt
-	resolvingChains = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
+	resolvingChains: Puyo[][] = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
 	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
 	squishState = { currentFrame: -1 };
-	fallingVelocity = [];
+	fallingVelocity: Record<number, number> = [];
 	currentFrame = 0;
 
 	currentDropLockFrames = 0;			// Frames spent being locked
 	forceLock = false;
 	currentMovements = [];
 
-	constructor(gameId, opponentIds, socket, settings, userSettings, cellId = null, gameArea = null) {
+	constructor(
+		gameId: string,
+		opponentIds: string[],
+		socket: SocketIOClient.Socket,
+		settings: Settings,
+		userSettings: UserSettings,
+		cellId: number = null,
+		gameArea: GameArea = null
+	) {
 		this.board = new Board(settings);
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
@@ -86,31 +74,26 @@ export class Game {
 		this.dropQueueSetIndex = 1;
 
 		this.cellId = cellId;
-		if (gameArea) {
-			this.gameArea = gameArea;
-		}
-		else {
-			this.gameArea = new GameArea(settings, userSettings.appearance, 1, true);
-		}
+		this.gameArea = gameArea || new GameArea(settings, userSettings.appearance, 1, true);
 		this.lastBoardHash = null;
 		this.socket = socket;
 
 		this.socket.off('sendNuisance', undefined);
-		this.socket.on('sendNuisance', (oppId, nuisance) => {
+		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
 			this.visibleNuisance[oppId] += nuisance;
 		});
 
 		this.socket.off('activateNuisance', undefined);
-		this.socket.on('activateNuisance', oppId => {
+		this.socket.on('activateNuisance', (oppId: string) => {
 			this.activeNuisance += this.visibleNuisance[oppId];
 			this.visibleNuisance[oppId] = 0;
 		});
 
 		this.socket.off('gameOver', undefined);
-		this.socket.on('gameOver', oppId => {
+		this.socket.on('gameOver', (oppId: string) => {
 			// Do not log to console for CPUs
 			if(!this.gameId.includes('CPU')) {
-				console.log('Player with id ' + oppId + ' has topped out.');
+				console.log(`Player with id ${oppId} has topped out.`);
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
@@ -119,10 +102,10 @@ export class Game {
 		});
 
 		this.socket.off('playerDisconnect', undefined);
-		this.socket.on('playerDisconnect', oppId => {
+		this.socket.on('playerDisconnect', (oppId: string) => {
 			// Do not log to console for CPUs
 			if(!this.gameId.includes('CPU')) {
-				console.log('Player with id ' + oppId + ' has disconnected.');
+				console.log(`Player with id ${oppId} has disconnected.`);
 			}
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
@@ -158,8 +141,8 @@ export class Game {
 	/**
 	 * Determines if the Game should be ended.
 	 */
-	end() {
-		if(this.board.checkGameOver(this.settings.gamemode)) {
+	end(): string {
+		if(this.board.checkGameOver()) {
 			if(this.resolvingChains.length === 0 && this.endResult === null) {
 				this.endResult = 'Loss';
 			}
@@ -189,13 +172,13 @@ export class Game {
 	 * and rotation) while accepting any queued events from InputManager. Next it determines if the drop will become
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
-	step() {
+	step(): string {
 		// Do not step if game paused
 		if(this.paused) {
 			return;
 		}
 
-		let currentBoardHash = null;
+		let currentBoardHash: string = null;
 		this.gameArea.updateNuisance(this.getTotalNuisance());
 
 		// Isolated puyo currently dropping
@@ -273,13 +256,13 @@ export class Game {
 	/**
 	 * Called every frame while a drop is being split. (Prevents inputs.)
 	 */
-	dropIsolatedPuyo() {
+	dropIsolatedPuyo(): string {
 		const boardState = this.board.boardState;
 		const currentDrop = this.currentDrop;
 		const arleDropped = currentDrop.arle.y <= boardState[currentDrop.arle.x].length;
 		const schezoDropped = currentDrop.schezo.y <= boardState[currentDrop.schezo.x].length;
 
-		let currentBoardHash = null;
+		let currentBoardHash: string = null;
 
 		// Slight hack to inject some code that runs only on the first frame of dropping
 		if(this.resolvingState.chain === 0) {
@@ -353,8 +336,8 @@ export class Game {
 	/**
 	 * Called every frame while nuisance is dropping.
 	 */
-	dropNuisance() {
-		let hash = null;
+	dropNuisance(): string {
+		let hash: string = null;
 		// Initialize the nuisance state
 		if (this.nuisanceState.positions.length === 0) {
 			this.nuisanceState.nuisanceArray.forEach((nuisance, index) => {
@@ -426,8 +409,8 @@ export class Game {
 	 * Called every frame while chaining is occurring. (Prevents inputs.)
 	 * Returns the current board hash.
 	 */
-	resolveChains() {
-		let currentBoardHash = null;
+	resolveChains(): string {
+		let currentBoardHash: string = null;
 
 		// Setting up the board state
 		if(this.resolvingState.currentFrame === 0) {
@@ -439,7 +422,7 @@ export class Game {
 			const poppedLocs = puyoLocs.concat(nuisanceLocs);
 			const dropFrames = Utils.getDropFrames(poppedLocs, this.board.boardState, this.settings);
 
-			const lowestUnstablePos = {};
+			const lowestUnstablePos: Record<number, number> = {};
 			poppedLocs.forEach(puyo => {
 				if(lowestUnstablePos[puyo.col] === undefined || lowestUnstablePos[puyo.col] > puyo.row) {
 					lowestUnstablePos[puyo.col] = puyo.row;
@@ -536,7 +519,7 @@ export class Game {
 	/**
 	 * Squishes the puyos into the stack after lock delay finishes.
 	 */
-	squishPuyos() {
+	squishPuyos(): string {
 		this.squishState.currentFrame++;
 
 		// Insert squishing puyos drawing here
@@ -546,16 +529,14 @@ export class Game {
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started
 			if(this.resolvingChains.length === 0) {
-				const { nuisanceDropped, nuisanceArray } = this.board.dropNuisance(this.activeNuisance);
-				this.nuisanceState.nuisanceAmount = nuisanceDropped;
-				this.nuisanceState.nuisanceArray = nuisanceArray;
+				Object.assign(this.nuisanceState, this.board.dropNuisance(this.activeNuisance));
 			}
 			this.squishState.currentFrame = -1;
 		}
 		return currentBoardHash;
 	}
 
-	getInputs() {
+	getInputs(): void {
 		// Implemented by the child classes
 		throw new Error('getInput() must be implemented in the child class!');
 	}
@@ -572,14 +553,14 @@ export class Game {
 	 *     Then compare the y-coordinate of both puyos against the y-coordinate of the stack.
 	 *     If the drop is (or will be) vertical, only the lower one needs to be compared.
 	 */
-	checkLock(currentDrop = this.currentDrop, boardState = this.board.boardState) {
+	checkLock(currentDrop: Drop = this.currentDrop, boardState: number[][] = this.board.boardState): boolean {
 		// Do not lock while rotating 180
 		if(currentDrop.rotating180 > 0) {
 			return false;
 		}
 		const arle = currentDrop.arle;
 		const schezo = Utils.getOtherPuyo(currentDrop);
-		let lock;
+		let lock: boolean;
 
 		if(schezo.x > this.settings.cols - 1) {
 			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
@@ -592,7 +573,7 @@ export class Game {
 			schezo.x++;
 		}
 
-		if(currentDrop.rotating === 'CW') {
+		if(currentDrop.rotating === Direction.CW) {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
 					lock = boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
@@ -610,7 +591,7 @@ export class Game {
 				}
 			}
 		}
-		else if(currentDrop.rotating === 'CCW') {
+		else if(currentDrop.rotating === Direction.CCW) {
 			if(schezo.x > arle.x) {
 				if(schezo.y > arle.y) {		// quadrant 1
 					lock = boardState[arle.x].length > arle.y;
@@ -642,7 +623,7 @@ export class Game {
 	/**
 	 * Locks the drop and adds the puyos to the stack.
 	 */
-	lockDrop() {
+	lockDrop(): void {
 		const currentDrop = this.currentDrop;
 		const boardState = this.board.boardState;
 		currentDrop.schezo = Utils.getOtherPuyo(currentDrop);
@@ -689,15 +670,15 @@ export class Game {
 	/**
 	 * Updates the score displayed on the screen.
 	 */
-	updateVisibleScore(pointsDisplayName, currentScore) {
+	updateVisibleScore(_pointsDisplayName: string, _currentScore: number): void {
 		// Overridden by the subclass.
 	}
 
 	/**
 	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
-	updateScore() {
-		const pointsDisplayName = 'pointsDisplay' + this.cellId;
+	updateScore(): void {
+		const pointsDisplayName = `pointsDisplay ${this.cellId}`;
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)
@@ -770,7 +751,7 @@ export class Game {
 	 * Called when a move event is emitted, and validates the event before performing it.
 	 * Puyos may not move into the wall or into the stack.
 	 */
-	move(direction, das = false) {
+	move(direction: Direction, das = false): boolean {
 	// Do not move while rotating 180
 		if(this.currentDrop.rotating180 > 0) {
 			return false;
@@ -779,7 +760,7 @@ export class Game {
 		const arle = this.currentDrop.arle;
 		const schezo = Utils.getOtherPuyo(this.currentDrop);
 		const boardState = this.board.boardState;
-		let leftest, rightest;
+		let leftest: Position, rightest: Position;
 
 		if(arle.x < schezo.x) {
 			leftest = arle;
@@ -798,23 +779,23 @@ export class Game {
 			}
 		}
 
-		if(direction === 'Left') {
+		if(direction === Direction.LEFT) {
 			if(leftest.x >= 1 && boardState[Math.floor(leftest.x) - 1].length <= leftest.y) {
-				this.currentDrop.shift('Left');
+				this.currentDrop.shift(Direction.LEFT);
 				this.audioPlayer.playAndEmitSfx('move');
 				this.currentMovements.push(`Left${das ? 'DAS': ''}`);
 			}
 		}
-		else if(direction === 'Right') {
+		else if(direction === Direction.RIGHT) {
 			if(rightest.x <= this.settings.cols - 2 && boardState[Math.ceil(rightest.x) + 1].length <= rightest.y) {
-				this.currentDrop.shift('Right');
+				this.currentDrop.shift(Direction.RIGHT);
 				this.audioPlayer.playAndEmitSfx('move');
 				this.currentMovements.push(`Right${das ? 'DAS': ''}`);
 			}
 		}
-		else if(direction === 'Down') {
+		else if(direction === Direction.DOWN) {
 			if(arle.y > boardState[arle.x].length && schezo.y > boardState[Math.round(schezo.x)].length) {
-				this.currentDrop.shift('Down');
+				this.currentDrop.shift(Direction.DOWN);
 				this.softDrops += 1;
 			}
 			else {
@@ -823,11 +804,11 @@ export class Game {
 			}
 			const new_schezo = Utils.getOtherPuyo(this.currentDrop);
 			if(new_schezo.y < 0) {
-				this.currentDrop.shift('Up', -new_schezo.y);
+				this.currentDrop.shift(Direction.UP, -new_schezo.y);
 			}
 		}
 		else {
-			throw new Error('Attempted to move in an undefined direction');
+			throw new Error('Attempted to move in an undefined direction.');
 		}
 	}
 
@@ -835,21 +816,21 @@ export class Game {
 	 * Called when a rotate event is emitted from the InputManager, and validates the event before performing it.
 	 * The drop cannot be rotated while it is already rotating, and kick/180 rotate checking must be performed.
 	 */
-	rotate(direction) {
-		if(this.currentDrop.rotating !== 'not') {
+	rotate(direction: Direction): void {
+		if(this.currentDrop.rotating !== null) {
 			return;
 		}
 
 		const newDrop = this.currentDrop.copy();
 
-		if(direction === 'CW') {
+		if(direction === Direction.CW) {
 			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
 			newDrop.standardAngle = newStandardAngle;
 
 			if(this.checkKick(newDrop, direction)) {
-				this.currentDrop.rotate('CW');
+				this.currentDrop.rotate(Direction.CW);
 				this.audioPlayer.playAndEmitSfx('rotate');
-				this.currentMovements.push('CW');
+				this.currentMovements.push(Direction.CW);
 			}
 		}
 		else {
@@ -857,9 +838,9 @@ export class Game {
 			newDrop.standardAngle = newStandardAngle;
 
 			if(this.checkKick(newDrop, direction)) {
-				this.currentDrop.rotate('CCW');
+				this.currentDrop.rotate(Direction.CCW);
 				this.audioPlayer.playAndEmitSfx('rotate');
-				this.currentMovements.push('CCW');
+				this.currentMovements.push(Direction.CCW);
 			}
 		}
 	}
@@ -873,7 +854,7 @@ export class Game {
 	 * @param  {string}  direction 	The direction of rotation
 	 * @return {boolean} 			Whether rotating is a valid operation or not
 	 */
-	checkKick(newDrop, direction) {
+	checkKick(newDrop: Drop, direction: Direction): boolean {
 		const arle = this.currentDrop.arle;
 		const schezo = Utils.getOtherPuyo(newDrop);
 		const boardState = this.board.boardState;
@@ -883,45 +864,45 @@ export class Game {
 
 		// Check board edges to determine kick diretion
 		if(schezo.x > this.settings.cols - 1) {
-			kick = 'left';
+			kick = Direction.LEFT;
 		}
 		else if(schezo.x < 0) {
-			kick = 'right';
+			kick = Direction.RIGHT;
 		}
 		else {
 			// Check the stacks to determine kick direction
 			if(boardState[schezo.x].length >= schezo.y) {
 				if(schezo.x > arle.x) {
-					kick = 'Left';
+					kick = Direction.LEFT;
 				}
 				else if(schezo.x < arle.x) {
-					kick = 'Right';
+					kick = Direction.RIGHT;
 				}
 				else {
-					kick = 'Up';
+					kick = Direction.UP;
 				}
 			}
 		}
 
 		// Determine if kicking is possible
-		if(kick === 'Left') {
+		if(kick === Direction.LEFT) {
 			if(arle.x >= 1 && boardState[arle.x - 1].length < arle.y) {
-				this.currentDrop.shift('Left');
+				this.currentDrop.shift(Direction.LEFT);
 			}
 			else {
 				doRotate = false;
 			}
 		}
-		else if(kick === 'Right') {
+		else if(kick === Direction.RIGHT) {
 			if(arle.x <= this.settings.cols - 2 && boardState[arle.x + 1].length < arle.y) {
-				this.currentDrop.shift('Right');
+				this.currentDrop.shift(Direction.RIGHT);
 			}
 			else {
 				doRotate = false;
 			}
 		}
-		else if(kick === 'Up') {
-			this.currentDrop.shift('Up', boardState[schezo.x].length - schezo.y + 0.05);
+		else if(kick === Direction.UP) {
+			this.currentDrop.shift(Direction.UP, boardState[schezo.x].length - schezo.y + 0.05);
 		}
 
 		// Cannot kick, but might be able to 180 rotate
@@ -930,10 +911,10 @@ export class Game {
 				this.currentDrop.rotate(direction, 180);
 
 				// Check case where schezo 180 rotates through the stack/ground
-				if((schezo.x > arle.x && direction === 'CW') || (schezo.x < arle.x && direction === 'CCW')) {
+				if((schezo.x > arle.x && direction === Direction.CW) || (schezo.x < arle.x && direction === Direction.CCW)) {
 					if(boardState[arle.x].length >= arle.y - 1) {
 						// Only kick the remaining amount
-						this.currentDrop.shift('Up', boardState[arle.x].length - arle.y + 1);
+						this.currentDrop.shift(Direction.UP, boardState[arle.x].length - arle.y + 1);
 					}
 				}
 			}
@@ -948,7 +929,7 @@ export class Game {
 	/**
 	 * Returns the sum of all visible and active nuisance.
 	 */
-	getTotalNuisance() {
+	getTotalNuisance(): number {
 		const totalVisibleNuisance =
 			Object.keys(this.visibleNuisance).reduce((nuisance, opp) => {
 				nuisance += this.visibleNuisance[opp];

@@ -2,17 +2,24 @@
 
 import { Room } from './Room';
 
-const roomIds = new Set();		// Set of roomIds currently in use
-const roomIdToRoom = new Map();
-const idToRoomId = new Map();
+const roomIds = new Set<string>();		// Set of roomIds currently in use
+const roomIdToRoom = new Map<string, Room>();
+const idToRoomId = new Map<string | number, string>();
 
-const undefinedSendState = new Map();		// Map of gameId --> time of last undefined sendState
+const undefinedSendState = new Map<string, number>();		// Map of gameId --> time of last undefined sendState
 
 export class RoomManager {
 	static defaultQueueRoomId: string = null;
 	static rankedRoomId: string = null;
 
-	static createRoom(gameId, members, host, roomSize, settingsString, roomType = 'default') {
+	static createRoom(
+		gameId: string,
+		members: Map<string, { socket: SocketIO.Socket, frames: number }>,
+		host: string,
+		roomSize: number,
+		settingsString: string,
+		roomType = 'default'
+	): Room {
 		if(idToRoomId.has(gameId)) {
 			// Leave old room first
 			RoomManager.leaveRoom(gameId);
@@ -38,14 +45,14 @@ export class RoomManager {
 		return room;
 	}
 
-	static changeSettings(gameId, settingsString, roomSize) {
+	static changeSettings(gameId: string, settingsString: string, roomSize: number): Room {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		room.changeSettings(settingsString, roomSize);
 		return room;
 	}
 
-	static joinRoom(gameId, roomId = null, socket, roomPassword = null) {
+	static joinRoom(gameId: string, roomId: string = null, socket: SocketIO.Socket, roomPassword: string = null): Room {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -79,7 +86,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static spectateRoom(gameId, socket, roomId = null) {
+	static spectateRoom(gameId: string, socket: SocketIO.Socket, roomId: string = null): Room {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -98,9 +105,11 @@ export class RoomManager {
 		return room;
 	}
 
-	static setRoomPassword(gameId, password) {
+	static setRoomPassword(gameId: string, password: string): Room {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 		room.password = password;
+
+		return room;
 	}
 
 	static startRoomWithRoomId(roomId: string): Room {
@@ -125,7 +134,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static endRoom(roomId) {
+	static endRoom(roomId: string): Room {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -137,7 +146,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static leaveRoom(gameId, roomId = null, notify = false) {
+	static leaveRoom(gameId: string, roomId: string = null, notify = false): Room {
 		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
@@ -158,7 +167,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static closeRoom(room) {
+	static closeRoom(room: Room): void {
 		roomIdToRoom.delete(room.roomId);
 		roomIds.delete(room.roomId);
 		console.log(`Closed room ${room.roomId}`);
@@ -168,7 +177,7 @@ export class RoomManager {
 	 * Visually adds a CPU to the 'Manage CPUs' modal box (does not actually add a CPU until confirmed.)
 	 * Returns the index of the CPU that should be turned on (0-indexed), or -1 if the room is full.
 	 */
-	static addCpu(gameId) {
+	static addCpu(gameId: string): number {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		if(room.members.size + room.numCpus === room.roomSize) {
@@ -184,7 +193,7 @@ export class RoomManager {
 	 * Visually removes a CPU to the 'Manage CPUs' modal box (does not actually remove a CPU until confirmed.)
 	 * Returns the index of the CPU that should be turned off (0-indexed), or -1 if there are no CPUs.
 	 */
-	static removeCpu(gameId) {
+	static removeCpu(gameId: string): number {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		if(room.numCpus === 0) {
@@ -199,7 +208,7 @@ export class RoomManager {
 	/**
 	 * Returns the current list of CPUs in the room, or an empty array if there are none.
 	 */
-	static requestCpus(gameId) {
+	static requestCpus(gameId: string): { speed: number, ai: string }[] {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		// Reset the number of CPUs, in case user did not submit CPU selections last time
@@ -210,9 +219,9 @@ export class RoomManager {
 		}
 		else {
 			const cpuInfos = Array.from(room.cpus.values());
-			const cpus = [];		// The cpuInfo object has too much data. Only send the speed and AI of each CPU.
+			const cpus: { speed: number, ai: string }[] = [];		// The cpuInfo object has too much data. Only send the speed and AI of each CPU.
 
-			cpuInfos.forEach((cpuInfo: any) => {
+			cpuInfos.forEach((cpuInfo: CpuInfo) => {
 				const { ai, speed } = cpuInfo;
 				// Undo the speed conversion
 				cpus.push({ ai, speed: 10 - (speed / 500) });
@@ -222,7 +231,7 @@ export class RoomManager {
 		}
 	}
 
-	static setCpus(gameId, cpuInfos) {
+	static setCpus(gameId: string, cpuInfos: Map<string, CpuInfo>): void {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		// Disconnect previous cpus
@@ -243,7 +252,7 @@ export class RoomManager {
 		room.sendRoomUpdate();
 	}
 
-	static advanceFrame(gameId) {
+	static advanceFrame(gameId: string): void {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		if(room === undefined) {
@@ -257,7 +266,7 @@ export class RoomManager {
 		room.advance(gameId);
 	}
 
-	static setFocus(gameId, focused) {
+	static setFocus(gameId: string, focused: boolean): void {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 
 		if(room !== undefined) {
@@ -272,7 +281,7 @@ export class RoomManager {
 		}
 	}
 
-	static beenDefeated(gameId, roomId) {
+	static beenDefeated(gameId: string, roomId: string): void {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room !== undefined) {
@@ -288,7 +297,7 @@ export class RoomManager {
 	/**
 	 * Returns a list of room ids excluding the one the player is already part of.
 	 */
-	static getAllRooms(gameId) {
+	static getAllRooms(gameId: string): string[] {
 		return Array.from(roomIds).filter(id => {
 			const room = roomIdToRoom.get(id);
 			return !room.members.has(gameId) && room.roomType === 'default';
@@ -298,7 +307,7 @@ export class RoomManager {
 	/**
 	 * Returns a list of the players in the room, if the room is valid.
 	 */
-	static getPlayers(roomId) {
+	static getPlayers(roomId: string): string[] {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -307,15 +316,15 @@ export class RoomManager {
 		return Array.from(room.members.keys());
 	}
 
-	static getRoomIdFromId(gameId) {
+	static getRoomIdFromId(gameId: string): string {
 		return idToRoomId.get(gameId);
 	}
 }
 
 const validChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-function generateRoomId(length = 6) {
-	let result;
+function generateRoomId(length = 6): string {
+	let result: string;
 	do {
 		result = '';
 		for (let i = 0; i < length; i++) {

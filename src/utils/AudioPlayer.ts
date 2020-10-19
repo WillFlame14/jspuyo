@@ -2,7 +2,21 @@
 
 import { UserSettings } from './Settings';
 
-const audioFilenames = {
+interface AudioInfo {
+	numClips?: number,
+	defaultVolume: number,
+	start?: number,
+	colour?: number[],
+	extension: string
+}
+
+interface VoiceInfo {
+	chain: HTMLAudioElement[][],
+	spell: HTMLAudioElement[][],
+	select: HTMLAudioElement[]
+}
+
+const audioFilenames: Record<string, AudioInfo> = {
 	move: { numClips: 1, defaultVolume: 1, extension: 'wav' },
 	rotate: { numClips: 1, defaultVolume: 1, extension: 'wav' },
 	win: { numClips: 1, defaultVolume: 0.8, extension: 'wav' },
@@ -19,7 +33,7 @@ const audioFilenames = {
 	submit: { numClips: 1, defaultVolume: 2, extension: 'ogg' }
 };
 
-export const VOICES = {
+export const VOICES: Record<string, AudioInfo> = {
 	'akari': { defaultVolume: 3, extension: 'ogg', colour: [130, 212, 187] },
 	'maria': { defaultVolume: 6, extension: 'ogg', colour: [224, 175, 160] },
 };
@@ -28,17 +42,17 @@ export const VOICES = {
 const SOUNDS_DIRECTORY = './sounds';
 
 export class AudioPlayer {
-	socket: SocketIO.Socket;
+	socket: SocketIOClient.Socket;
 	disabled: boolean;
 	sfxVolume: number;
 	musicVolume: number;
 
-	sfx: any;
-	voices: any;
+	sfx: Record<string, HTMLAudioElement[] | HTMLAudioElement[][]> = {};
+	voices: Record<string, VoiceInfo> = {};
 
 	gameId: string;
 
-	constructor(socket: SocketIO.Socket, disable: string = null) {
+	constructor(socket: SocketIOClient.Socket, disable: string = null) {
 		this.socket = socket;
 		this.disabled = disable === 'disable';
 
@@ -46,8 +60,6 @@ export class AudioPlayer {
 
 		this.sfxVolume = sfxVolume;
 		this.musicVolume = musicVolume;
-
-		this.sfx = {};
 
 		// Load sound clips
 		if(!this.disabled) {
@@ -70,18 +82,16 @@ export class AudioPlayer {
 				}
 			});
 
-			this.voices = {};
-
 			Object.keys(VOICES).forEach(name => {
 				const { extension } = VOICES[name];
-				const chainAudio = [null];
+				const chainAudio: HTMLAudioElement[][] = [null];
 
 				for(let i = 0; i < 13; i++) {
 					const audio = new Audio(`${SOUNDS_DIRECTORY}/voices/${name}/chain_${i + 1}.${extension}`);
 					chainAudio.push([audio]);
 				}
 
-				const spellAudio = [null];
+				const spellAudio: HTMLAudioElement[][] = [null];
 				for(let i = 0; i < 5; i++) {
 					const audio = new Audio(`${SOUNDS_DIRECTORY}/voices/${name}/spell_${i + 1}.${extension}`);
 					spellAudio.push([audio]);
@@ -93,11 +103,11 @@ export class AudioPlayer {
 		}
 	}
 
-	assignGameId(gameId) {
+	assignGameId(gameId: string): void {
 		this.gameId = gameId;
 	}
 
-	configureVolume(sfxVolume, musicVolume) {
+	configureVolume(sfxVolume: number, musicVolume: number): void {
 		this.sfxVolume = sfxVolume;
 		this.musicVolume = musicVolume;
 	}
@@ -105,7 +115,7 @@ export class AudioPlayer {
 	/**
 	 * Plays an audio clip. An 1-based index parameter is provided for more detailed selection.
 	 */
-	playAudio(audio, volume) {
+	playAudio(audio: HTMLAudioElement[], volume: number): void {
 		let channel = 0;
 		while(channel < audio.length && !audio[channel].paused) {
 			channel++;
@@ -113,27 +123,42 @@ export class AudioPlayer {
 
 		// Generate a new audio object
 		if(channel === audio.length) {
-			const newsfx = audio[channel - 1].cloneNode();
+			const newsfx = audio[channel - 1].cloneNode() as HTMLAudioElement;
 			audio.push(newsfx);
 		}
 		audio[channel].volume = volume;
-		audio[channel].play();
+		void audio[channel].play();
 	}
 
-	playSfx(sfx_name, index = null) {
+	playSfx(sfx_name: string, index: number = null): void {
 		if(this.disabled) {
 			return;
 		}
-		const audio = (index === null) ? this.sfx[sfx_name] : this.sfx[sfx_name][index];
+		let audio: HTMLAudioElement[];
+		if(index === null) {
+			audio = this.sfx[sfx_name] as HTMLAudioElement[];
+		}
+		else {
+			audio = this.sfx[sfx_name][index] as HTMLAudioElement[];
+		}
+
 		const volume = this.sfxVolume * audioFilenames[sfx_name].defaultVolume;
 		this.playAudio(audio, volume);
 	}
 
-	playVoice(character, audio_name, index = null) {
+	playVoice(character: string, audio_name: string, index: number = null): void {
 		if(this.disabled) {
 			return;
 		}
-		const audio = (index === null) ? this.voices[character][audio_name] : this.voices[character][audio_name][index];
+
+		let audio: HTMLAudioElement[];
+		if(index === null) {
+			audio = this.voices[character][audio_name] as HTMLAudioElement[];
+		}
+		else {
+			audio = (this.voices[character][audio_name] as HTMLAudioElement[][])[index];
+		}
+
 		const volume = this.sfxVolume * VOICES[character].defaultVolume;
 		this.playAudio(audio, volume);
 	}
@@ -142,7 +167,7 @@ export class AudioPlayer {
 	 * Plays a sound effect, and emits the sound to the server.
 	 * Used so that other players can hear the appropriate sound.
 	 */
-	playAndEmitSfx(sfx_name, index = null) {
+	playAndEmitSfx(sfx_name: string, index = null): void {
 		this.playSfx(sfx_name, index);
 		this.socket.emit('sendSound', this.gameId, sfx_name, index);
 	}
@@ -151,7 +176,7 @@ export class AudioPlayer {
 	 * Plays a voiced audio clip, and emits the sound to the server.
 	 * Used so that other players can hear the appropriate sound.
 	 */
-	playAndEmitVoice(character, audio_name, index = null) {
+	playAndEmitVoice(character: string, audio_name: string, index = null): void {
 		this.playVoice(character, audio_name, index);
 		this.socket.emit('sendVoice', this.gameId, character, audio_name, index);
 	}

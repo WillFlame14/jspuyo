@@ -1,7 +1,7 @@
 'use strict';
 
 export class Settings {
-	gamemode: string;
+	gamemode: Gamemode;
 	gravity: number;
 	rows: number;
 	cols: number;
@@ -35,7 +35,7 @@ export class Settings {
 	hashRotFactor = 50;				// Fraction of a rev rounded to when hashing
 	nuisanceSpawnRow: number;		// Row of nuisance spawn
 
-	constructor(gamemode = 'Tsu', gravity = 0.036, rows = 12, cols = 6, softDrop = 0.375, numColours = 4,
+	constructor(gamemode = Gamemode.TSU, gravity = 0.036, rows = 12, cols = 6, softDrop = 0.375, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -52,23 +52,11 @@ export class Settings {
 	}
 
 	toString(): string {
-		return this.gamemode + ' '
-			+ this.gravity + ' '
-			+ this.rows + ' '
-			+ this.cols + ' '
-			+ this.softDrop + ' '
-			+ this.numColours + ' '
-			+ this.targetPoints + ' '
-			+ this.marginTime + ' '
-			+ this.minChain + ' '
-			+ this.seed;
+		return JSON.stringify(this);
 	}
 
 	static fromString(str: string): Settings {
-		const parts = str.split(' ');
-		const gamemode = parts.splice(0, 1)[0];
-		const parsedParts = parts.map(part => Number(part));
-		return new Settings(gamemode, ...parsedParts);
+		return JSON.parse(str) as Settings;
 	}
 
 	static seedString(str: string): string {
@@ -131,7 +119,7 @@ function checkNonnegativeDecimal(value) {
 }
 
 export class SettingsBuilder {
-	gamemode: string;
+	gamemode: Gamemode;
 	gravity: number;
 	rows: number;
 	cols: number;
@@ -145,9 +133,8 @@ export class SettingsBuilder {
 		// no default constructor
 	}
 
-	setGamemode (gamemode: string): SettingsBuilder {		// specific values fixed by options
+	setGamemode (gamemode: Gamemode): SettingsBuilder {		// specific values fixed by options
 		this.gamemode = gamemode;
-
 		return this;
 	}
 
@@ -197,15 +184,6 @@ export class SettingsBuilder {
 	build (): Settings {
 		return new Settings(this.gamemode, this.gravity, this.rows, this.cols, this.softDrop, this.numColours, this.targetPoints, this.marginTime, this.minChain);
 	}
-}
-
-export interface KeyBindings {
-	moveLeft: string;
-	moveRight: string;
-	rotateCCW: string;
-	rotateCW: string;
-	softDrop: string;
-	hardDrop: string;
 }
 
 export class UserSettings {

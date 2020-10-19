@@ -18,13 +18,13 @@ const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
 
 let cpuCounter = 1;
 
-const socketIdToId = new Map();
-const cpuInfos = new Map();
+const socketIdToId = new Map<string, string>();
+const cpuInfos = new Map<string, Map<string, CpuInfo>>();
 
 app.use('/', express.static('./public/'));
 
 io.on('connection', function(socket) {
-	socket.on('register', gameId => {
+	socket.on('register', (gameId: string) => {
 		if(Array.from(socketIdToId.values()).includes(gameId)) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
@@ -37,25 +37,25 @@ io.on('connection', function(socket) {
 		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
 	});
 
-	socket.on('addCpu', gameId => {
+	socket.on('addCpu', (gameId: string) => {
 		const index = RoomManager.addCpu(gameId);
 		socket.emit('addCpuReply', index);
 	});
 
-	socket.on('removeCpu', gameId => {
+	socket.on('removeCpu', (gameId: string) => {
 		const index = RoomManager.removeCpu(gameId);
 		socket.emit('removeCpuReply', index);
 	});
 
-	socket.on('requestCpus', gameId => {
+	socket.on('requestCpus', (gameId: string) => {
 		const cpus = RoomManager.requestCpus(gameId);
 		socket.emit('requestCpusReply', cpus);
 	});
 
-	socket.on('setCpus', async (gameInfo) => {
+	socket.on('setCpus', (gameInfo: {gameId: string, cpus: CpuInfo[]}) => {
 		const { gameId, cpus } = gameInfo;
 
-		const promises = [];
+		const promises: Promise<unknown>[] = [];
 
 		// Temporarily store in a shared map
 		cpuInfos.set(gameId, new Map());
@@ -63,47 +63,49 @@ io.on('connection', function(socket) {
 		// Assign each cpu a negative id
 		cpus.forEach(cpu => {
 			const cpuSocket = io_client.connect('http://localhost:3000');
-			const cpuId = 'CPU-' + cpuCounter;
+			const cpuId = `CPU-${cpuCounter}`;
 			cpuCounter++;
 
-			cpuInfos.get(gameId).set(cpuId, { client_socket: cpuSocket });
+			// Add the client socket
+			Object.assign(cpu, { client_socket: cpuSocket });
+			cpuInfos.get(gameId).set(cpuId, cpu);
 
 			const promise =	new Promise(resolve => {
 				cpuSocket.emit('cpuAssign', gameId, cpuId, cpu, () => resolve());
 			});
 			promises.push(promise);
 		});
-		await Promise.all(promises);
 
-		RoomManager.setCpus(gameId, cpuInfos.get(gameId));
+		Promise.all(promises).then(() => {
+			RoomManager.setCpus(gameId, cpuInfos.get(gameId));
 
-		// Delete the temporarily stored info
-		cpuInfos.delete(gameId);
+			// Delete the temporarily stored info
+			cpuInfos.delete(gameId);
+		}).catch((err: string) => {
+			console.log(`Error setting CPUs. ${err}`);
+		});
 	});
 
-	socket.on('cpuAssign', (gameId, cpuId, cpu, callback) => {
-		const { speed, ai } = cpu;
-
+	socket.on('cpuAssign', (gameId: string, cpuId: string, callback: () => void) => {
 		socketIdToId.set(socket.id, cpuId);
+
 		const cpuInfo = cpuInfos.get(gameId).get(cpuId);
 		cpuInfo.socket = socket;
-		cpuInfo.speed = speed;
-		cpuInfo.ai = ai;
 		cpuInfos.get(gameId).set(cpuId, cpuInfo);
 
 		// Resolve the promise to indicate that a socket has been created
 		callback();
 	});
 
-	socket.on('setRoomPassword', (gameId, password) => {
+	socket.on('setRoomPassword', (gameId: string, password: string) => {
 		RoomManager.setRoomPassword(gameId, password);
 	});
 
-	socket.on('startRoom', async gameId => {
+	socket.on('startRoom', (gameId: string) => {
 		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
-	socket.on('createRoom', gameInfo => {
+	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number}) => {
 		const { gameId, settingsString, roomSize } = gameInfo;
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
@@ -123,13 +125,15 @@ io.on('connection', function(socket) {
 		RoomManager.changeSettings(gameId, settingsString, roomSize);
 	});
 
-	socket.on('joinRoom', gameInfo => {
+	socket.on('joinRoom', (gameInfo: { gameId: string, joinId: string, roomPassword: string }) => {
 		const { gameId, joinId, roomPassword } = gameInfo;
 		try {
 			RoomManager.joinRoom(gameId, joinId, socket, roomPassword);
 		}
 		catch(err) {
-			socket.emit('joinFailure', err.message);
+			if(err instanceof Error) {
+				socket.emit('joinFailure', err.message);
+			}
 		}
 	});
 
@@ -149,7 +153,7 @@ io.on('connection', function(socket) {
 		socket.emit('givePlayers', RoomManager.getPlayers(roomId));
 	});
 
-	socket.on('ranked', gameInfo => {
+	socket.on('ranked', (gameInfo: { gameId: string }) => {
 		const { gameId } = gameInfo;
 
 		// No pending ranked game
@@ -158,7 +162,7 @@ io.on('connection', function(socket) {
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for ranked games
 
-			RoomManager.createRoom(gameId, members, roomSize, host, defaultSettings, 'ranked');
+			RoomManager.createRoom(gameId, members, host, roomSize, defaultSettings, 'ranked');
 		}
 		// Pending ranked game
 		else {
@@ -176,22 +180,24 @@ io.on('connection', function(socket) {
 				}
 			}
 			catch(err) {
-				socket.emit('joinFailure', err.message);
+				if(err instanceof Error) {
+					socket.emit('joinFailure', err.message);
+				}
 			}
 		}
 		console.log(`${gameId.substring(0, 6)} has joined the ranked queue.`);
 	});
 
-	socket.on('freeForAll', gameInfo => {
+	socket.on('freeForAll', (gameInfo: { gameId: string }) => {
 		const { gameId } = gameInfo;
 
 		if(RoomManager.defaultQueueRoomId === null) {
-			const members = new Map().set(gameId, { socket, frames: 0 });
+			const members = new Map().set(gameId, { socket });
 			const roomSize = 2;		// Fixed room size
 			const host = null;		// No host for FFA games
 
 			// Fixed settings for FFA rooms
-			RoomManager.createRoom(gameId, members, roomSize, host, defaultSettings, 'ffa');
+			RoomManager.createRoom(gameId, members, host, roomSize, defaultSettings, 'ffa');
 		}
 		else {
 			try {
@@ -209,7 +215,9 @@ io.on('connection', function(socket) {
 				}
 			}
 			catch(err) {
-				socket.emit('joinFailure', err.message);
+				if(err instanceof Error) {
+					socket.emit('joinFailure', err.message);
+				}
 			}
 		}
 		console.log(`${gameId.substring(0, 6)} has joined the default queue.`);
@@ -290,5 +298,5 @@ io.on('connection', function(socket) {
 });
 
 http.listen(port, function() {
-	console.log('Listening on port: ' + port);
+	console.log(`Listening on port: ${port}`);
 });

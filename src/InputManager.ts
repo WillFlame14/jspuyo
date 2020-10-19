@@ -1,9 +1,9 @@
 'use strict';
 
-import { UserSettings, KeyBindings } from './utils/Settings';
+import { UserSettings } from './utils/Settings';
 
 export class InputManager{
-	events: any[];
+	events: Record<string, (data, das) => void>;
 	keysPressed: Record<string, boolean>;
 	lastPressed: string;
 	dasTimer: Record<string, number>;
@@ -11,8 +11,8 @@ export class InputManager{
 	userSettings: UserSettings;
 	keyBindings: KeyBindings;
 
-	constructor(userSettings) {
-		this.events = [];				// Array of callback functions, indexed at their triggering event
+	constructor(userSettings: UserSettings) {
+		this.events = {};				// Array of callback functions, indexed at their triggering event
 		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
 		this.lastPressed = undefined;	// Last pressed Left/Right key. Becomes undefined if the key is released.
 		this.dasTimer = {};				// Object containing DAS timers for each key
@@ -45,7 +45,7 @@ export class InputManager{
 	 * All 'successful' events will be emitted and caught by the game's validation functions before being executed.
 	 * Soft dropping will always be executed.
 	 */
-	executeKeys() {
+	executeKeys(): void {
 		// First, take all the keys currently pressed
 		Object.keys(this.keysPressed).filter(key => this.keysPressed[key] !== undefined).forEach(key => {
 
@@ -107,7 +107,7 @@ export class InputManager{
 	 * @param  {string}   event    The name of the event that will be fired
 	 * @param  {Function} callback The function that will be executed when the event fires
 	 */
-	on(event, callback) {
+	on(event: string, callback: (data, das) => void): void {
 		this.events[event] = callback;
 	}
 
@@ -115,9 +115,9 @@ export class InputManager{
 	 * Executes the appropriate callback function when an event fires.
 	 *
 	 * @param  {string} event  The name of the event that was fired
-	 * @param  {[type]} data   Any parameters that need to be passed to the callback
+	 * @param  {string} data   Any parameters that need to be passed to the callback
 	 */
-	emit(event, data, das = false) {
+	emit(event: string, data: string, das = false): void {
 		const callback = this.events[event];
 		callback(data, das);
 	}

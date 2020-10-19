@@ -7,20 +7,22 @@ import { PlayerInfo } from './webpage/firebase';
 export class Session {
 	gameId: string;
 	game: Game;
-	socket: SocketIO.Socket;
+	socket: SocketIOClient.Socket;
 	roomId: string;
+	spectating: boolean;
 
 	forceStop = false;
 	stopped = false;
 
-	constructor(gameId, game, socket, roomId) {
+	constructor(gameId: string, game: Game, socket: SocketIOClient.Socket, roomId: string, spectating = false) {
 		this.gameId = gameId;
 		this.game = game;
 		this.socket = socket;
 		this.roomId = roomId;
+		this.spectating = spectating;
 	}
 
-	run() {
+	run(): void {
 		const main = () => {
 			const mainFrame = window.requestAnimationFrame(main);
 
@@ -52,7 +54,7 @@ export class Session {
 		main();
 	}
 
-	finish(endResult) {
+	finish(endResult: string): void {
 		switch(endResult) {
 			case 'Win':
 				console.log('You win!');
@@ -79,7 +81,7 @@ export class Session {
 	 * Forcefully stops the session (if it is still running). Called when a player navigates away from a game.
 	 * Returns true if the force stop had an effect, and false if it did not.
 	 */
-	stop() {
+	stop(): Promise<boolean> {
 		return new Promise((resolve) => {
 			if(this.stopped) {
 				resolve(false);

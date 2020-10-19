@@ -8,17 +8,17 @@ const MAX_FRAME_DIFFERENCE = 20;
 
 export class Room {
 	roomId: string;
-	password: string;
-	members: Map<string, any>;
-	cpus: Map<string, any>;
+	password: string = null;
+	members: Map<string, { socket: SocketIO.Socket }>;
+	cpus = new Map<string, CpuInfo>();
 	numCpus = 0;
-	games: Map<string, any>;
+	games = new Map<string, { socket: SocketIO.Socket, frames: number, timeout?: ReturnType<typeof setTimeout> }>();
 	host: string;
 
 	ingame = false;
-	paused = [];
-	unfocused = [];
-	spectating = new Map();
+	paused: string[] = [];
+	unfocused: string[] = [];
+	spectating = new Map<string, SocketIO.Socket>();
 	defeated = [];
 	timeout = null;
 
@@ -31,13 +31,16 @@ export class Room {
 	static rankedRoomId;
 
 
-	constructor(roomId, members, host, roomSize, settingsString, roomType = 'default') {
+	constructor(
+		roomId: string,
+		members: Map<string, { socket: SocketIO.Socket }>,
+		host: string,
+		roomSize: number,
+		settingsString: string,
+		roomType = 'default'
+	) {
 		this.roomId = roomId;
-		this.password = null;
 		this.members = members;
-		this.cpus = new Map();
-		this.numCpus = 0;
-		this.games = new Map();
 		this.host = host;
 
 		this.roomSize = roomSize;
@@ -68,7 +71,7 @@ export class Room {
 	/**
 	 * Sets new settings of the room.
 	 */
-	changeSettings(settingsString, roomSize) {
+	changeSettings(settingsString: string, roomSize: number): void {
 		this.settingsString = settingsString;
 		this.roomSize = roomSize;
 	}
@@ -76,7 +79,7 @@ export class Room {
 	/**
 	 * Adds a player/CPU to an existing room.
 	 */
-	join(gameId, socket, cpuInfo = null, notify = true) {
+	join(gameId: string, socket: SocketIO.Socket, cpuInfo = null, notify = true): void {
 		// Room is full or ingame
 		if((this.members.size === this.roomSize && cpuInfo === null) || this.ingame) {
 			this.spectate(gameId, socket);
@@ -108,7 +111,7 @@ export class Room {
 	/**
 	 * Spectates a room (receives player data but does not play).
 	 */
-	spectate(gameId, socket) {
+	spectate(gameId: string, socket: SocketIO.Socket): void {
 		if(this.members.has(gameId)) {
 			this.leave(gameId, true, true);
 		}
@@ -147,7 +150,7 @@ export class Room {
 	/**
 	 * Starts a room by generating necessary CPU games and sending a 'start' event to all sockets in the room.
 	 */
-	start() {
+	start(): void {
 		const allIds = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 
 		// Generate a random seed and use it in the settings for this game
@@ -171,7 +174,7 @@ export class Room {
 				settings
 			);
 
-			let cpuTimer;
+			let cpuTimer: ReturnType<typeof setTimeout>;
 
 			// Called every "frame" to simulate the game loop
 			const timeout = () => {
@@ -239,7 +242,7 @@ export class Room {
 	 * Removes a player from a room (if possible).
 	 * Returns true if the room is now empty, and false if it is not.
 	 */
-	leave(gameId, notify = true, spectate = false) {
+	leave(gameId: string, notify = true, spectate = false): boolean {
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
 			socket.leave(this.roomId);
@@ -323,7 +326,7 @@ export class Room {
 	/**
 	 * Ends the game.
 	 */
-	end() {
+	end(): void {
 		this.ingame = false;
 
 		// Stop all CPU timers
@@ -352,7 +355,7 @@ export class Room {
 	/**
 	 * Increments the frame counter for a player, and determines whether other games should be paused/resumed.
 	 */
-	advance(gameId) {
+	advance(gameId: string): void {
 		const thisPlayer = this.games.get(gameId);
 		if(thisPlayer === undefined) {
 			console.log(`Attempted to advance undefined game with id ${gameId.substring(0, 6)}`);
@@ -421,7 +424,7 @@ export class Room {
 	/**
 	 * Sends a room update to all the members and spectators of the room.
 	 */
-	sendRoomUpdate() {
+	sendRoomUpdate(): void {
 		// Get all display names of members and CPUs
 		const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
 

@@ -1,5 +1,6 @@
 'use strict';
 
+import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo, signOut } from './firebase';
 import { UserSettings } from '../utils/Settings';
 
@@ -12,14 +13,19 @@ let keyBindings = {
 	softDrop: 'ArrowDown',
 	hardDrop: 'ArrowUp'
 };
-let keyBindingRegistration = null;
+let keyBindingRegistration: string = null;
 let selectedAppearance = 'TsuClassic';
 
-export function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID, ) {
+export function initProfilePanels(
+	clearModal: () => void,
+	socket: SocketIOClient.Socket,
+	audioPlayer: AudioPlayer,
+	stopCurrentSession: () => Promise<void>,
+	getCurrentUID: () => string ): void {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
-	window.onkeydown = function(event) {
+	window.onkeydown = function(event: KeyboardEvent) {
 		if(keyBindingRegistration !== null) {
 			(document.getElementById(keyBindingRegistration) as HTMLInputElement).value = codeToDisplay(event.code);
 
@@ -31,7 +37,7 @@ export function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSe
 	};
 
 	document.getElementById('gallery').onclick = async function() {
-		stopCurrentSession();
+		void stopCurrentSession();
 		// Leave the room
 		socket.emit('forceDisconnect');
 
@@ -55,7 +61,7 @@ export function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSe
 
 	// Profile Panel - Settings
 	document.getElementById('settings').onclick = function() {
-		stopCurrentSession();
+		void stopCurrentSession();
 
 		modal.style.display = 'block';
 
@@ -136,14 +142,14 @@ export function initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSe
 	document.getElementById('logout').onclick = function() {
 		socket.emit('forceDisconnect', getCurrentUID());
 		socket.emit('unlinkUser');
-		signOut();
+		void signOut();
 	};
 }
 
 /**
  * Turns a code.event string into a more human-readable display.
  */
-function codeToDisplay(code) {
+function codeToDisplay(code: string): string {
 	// Cut off prefixes
 	if(code.includes('Key')) {
 		code = code.substring(3);
@@ -170,10 +176,10 @@ function codeToDisplay(code) {
 	}
 }
 
-export function setKeyBindings(newKeyBindings) {
+export function setKeyBindings(newKeyBindings: KeyBindings): void {
 	keyBindings = newKeyBindings;
 }
 
-export function setAppearance(appearance) {
+export function setAppearance(appearance: string): void {
 	selectedAppearance = appearance;
 }

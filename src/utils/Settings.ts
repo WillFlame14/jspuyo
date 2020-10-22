@@ -1,5 +1,10 @@
 'use strict';
 
+export enum Gamemode {
+	TSU = 'Tsu',
+	FEVER = 'Fever'
+}
+
 export class Settings {
 	gamemode: Gamemode;
 	gravity: number;
@@ -56,7 +61,7 @@ export class Settings {
 	}
 
 	static fromString(str: string): Settings {
-		return JSON.parse(str) as Settings;
+		return Object.assign(new Settings(), JSON.parse(str) as Settings);
 	}
 
 	static seedString(str: string): string {

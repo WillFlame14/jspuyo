@@ -44,38 +44,6 @@ interface NuisanceState {
 	landFrames?: number
 }
 
-declare enum Gamemode {
-	TSU = 'Tsu',
-	FEVER = 'Fever'
-}
-
-declare enum Shape {
-	h = 'h',
-	L = 'L',
-	H = 'H',
-	O = 'O',
-	I = 'I'
-}
-
-declare enum Direction {
-	UP = 'Up',
-	DOWN = 'Down',
-	LEFT = 'Left',
-	RIGHT = 'Right',
-	CW = 'CW',
-	CCW = 'CCW'
-}
-
-declare enum NuisanceSymbol {
-	SMALL = 'SMALL',
-	LARGE = 'LARGE',
-	ROCK = 'ROCK',
-	STAR = 'STAR',
-	MOON = 'MOON',
-	CROWN = 'CROWN',
-	COMET = 'COMET'
-}
-
 interface CpuInfo {
 	client_socket: SocketIOClient.Socket,
 	socket: SocketIO.Socket,

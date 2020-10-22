@@ -3,7 +3,7 @@
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { CpuVariants } from '../cpu/CpuVariants';
 import { PlayerInfo } from './firebase';
-import { SettingsBuilder } from '../utils/Settings';
+import { Gamemode, SettingsBuilder } from '../utils/Settings';
 import * as Utils from '../utils/Utils';
 
 const winConditions = ['FT 3', 'FT 5', 'FT 7'];
@@ -373,7 +373,7 @@ function createCPUOptions(puyoImgs: string[]) {
 	// Add CPU options selectors
 	for(let i = 0; i < 6; i++) {
 		const cpuOptionElement = document.createElement('div');
-		cpuOptionElement.id = `cpu ${i + 1}`;
+		cpuOptionElement.id = `cpu${i + 1}`;
 		cpuOptionElement.classList.add('cpuOption');
 
 		const cpuIcon = document.createElement('img');

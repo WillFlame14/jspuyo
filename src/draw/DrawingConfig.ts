@@ -1,3 +1,13 @@
+export enum NuisanceSymbol {
+	SMALL = 'SMALL',
+	LARGE = 'LARGE',
+	ROCK = 'ROCK',
+	STAR = 'STAR',
+	MOON = 'MOON',
+	CROWN = 'CROWN',
+	COMET = 'COMET'
+}
+
 export const DIMENSIONS = {
 	BOARD : { W: 270, H: 540 },
 	QUEUE : { W: 72, H: 540 },

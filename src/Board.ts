@@ -1,6 +1,6 @@
 'use strict';
 
-import { Settings } from './utils/Settings';
+import { Gamemode, Settings } from './utils/Settings';
 
 export class Board {
 	settings: Settings;

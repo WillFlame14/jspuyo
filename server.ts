@@ -13,8 +13,9 @@ import io_client = require('socket.io-client');
 const port = process.env.PORT || 3000;
 
 import { RoomManager } from './src/RoomManager';
+import { Settings } from './src/utils/Settings';
 
-const defaultSettings = 'Tsu 0.036 12 6 0.27 4 70';
+const defaultSettings = new Settings().toString();
 
 let cpuCounter = 1;
 
@@ -71,7 +72,7 @@ io.on('connection', function(socket) {
 			cpuInfos.get(gameId).set(cpuId, cpu);
 
 			const promise =	new Promise(resolve => {
-				cpuSocket.emit('cpuAssign', gameId, cpuId, cpu, () => resolve());
+				cpuSocket.emit('cpuAssign', gameId, cpuId, () => resolve());
 			});
 			promises.push(promise);
 		});

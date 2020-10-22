@@ -14,8 +14,8 @@ export class NuisanceLayer extends DrawingLayer {
 		};
 	}
 
-	drawIncomingSymbol(symbol: NuisanceSymbol, dX: number, dY: number): void {
-		const { X: sX, Y: sY, SCALE: scale } = CONSTANTS.PUYO_COORDINATES.INCOMING[symbol];
+	drawIncomingSymbol(symbol: CONSTANTS.NuisanceSymbol, dX: number, dY: number): void {
+		const { X: sX, Y: sY, SCALE: scale } = CONSTANTS.PUYO_COORDINATES.INCOMING[symbol as string];
 		this.draw({ sX, sY, dX, dY, sWidth: scale, sHeight: scale });
 	}
 

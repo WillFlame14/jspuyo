@@ -24,6 +24,7 @@ export async function drawSprite(args: DrawingArgs): Promise<void> {
 	if (await loadSprite(spriteSheet, sourceSize)) {
 		const spriteWidth = sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT;
 		const spriteHeight = sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT;
+		// console.log(`${SpriteCache[spriteSheet].sizes.get(sourceSize).id}`);
 		ctx.drawImage(
 			SpriteCache[spriteSheet].sizes.get(sourceSize),
 			(sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
@@ -56,10 +57,11 @@ async function loadSprite(spriteSheet: string, size: number) {
 
 	// SpriteDrawer[spriteSheet].sizes.get(size) is an html canvas object
 	// e.g. SpriteDrawer['Aqua'].sizes.get(50) is a canvas that has Aqua.png drawn with unit size 50
-	if(SpriteCache[spriteSheet].sizes.get(size) == null) {
+	if(!SpriteCache[spriteSheet].sizes.has(size)) {
 		const canvas = document.createElement('canvas');
 		canvas.width = Math.ceil(SHEET_COLS * SHEET_UNIT * size / SHEET_USED_UNIT);
 		canvas.height = Math.ceil(SHEET_ROWS * SHEET_UNIT * size / SHEET_USED_UNIT);
+
 		canvas.getContext('2d').drawImage(
 			SpriteCache[spriteSheet].image,
 			0, 0,
@@ -81,13 +83,14 @@ function loadImage(spriteSheet: string): Promise<void> {
 	}
 
 	return new Promise((resolve) => {
-		const sprite = {} as Sprite;
+		const sprite = { sizes: new Map<number, HTMLCanvasElement>() } as Sprite;
 
 		const image = new Image();
-		image.src = `../images/${spriteSheet}.png`;
+		image.src = `./images/${spriteSheet}.png`;
 		image.addEventListener('load', function() {
 			resolve();
 		});
+		sprite.image = image;
 
 		SpriteCache[spriteSheet] = sprite;
 	});

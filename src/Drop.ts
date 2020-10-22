@@ -1,7 +1,24 @@
 'use strict';
 
 import * as Utils from './utils/Utils';
-import { Settings } from './utils/Settings';
+import { Gamemode, Settings } from './utils/Settings';
+
+export enum Shape {
+	h = 'h',
+	L = 'L',
+	H = 'H',
+	O = 'O',
+	I = 'I'
+}
+
+export enum Direction {
+	UP = 'Up',
+	DOWN = 'Down',
+	LEFT = 'Left',
+	RIGHT = 'Right',
+	CW = 'CW',
+	CCW = 'CCW'
+}
 
 export class Drop {
 	shape: Shape;

@@ -1,6 +1,7 @@
 'use strict';
 
 import { Cpu, CpuMove } from './cpu/Cpu';
+import { Direction } from './Drop';
 import { Game } from './Game';
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Settings, UserSettings } from './utils/Settings';

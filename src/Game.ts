@@ -2,7 +2,7 @@
 
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Board } from './Board';
-import { Drop, DropGenerator } from './Drop';
+import { Direction, Drop, DropGenerator } from './Drop';
 import { GameArea } from './draw/GameArea';
 import { Settings, UserSettings } from './utils/Settings';
 import { StatTracker } from './StatTracker';
@@ -678,7 +678,7 @@ export class Game {
 	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
 	updateScore(): void {
-		const pointsDisplayName = `pointsDisplay ${this.cellId}`;
+		const pointsDisplayName = `pointsDisplay${this.cellId}`;
 
 		if(this.resolvingState.chain === 0) {
 			// Score from soft dropping (will not send nuisance)

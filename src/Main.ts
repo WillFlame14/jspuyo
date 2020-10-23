@@ -1,5 +1,7 @@
 'use strict';
 
+import firebase = require('firebase/app');
+
 import { GameArea } from './GameDrawer';
 import { PlayerGame, SpectateGame } from './PlayerGame';
 import { Session } from './Session';
@@ -13,28 +15,23 @@ import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
 
 import io = require('socket.io-client');
-const globalSocket: SocketIO.Socket = io();
+const globalSocket = io();
 
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
-let currentUID;
+let currentUID: string;
 
 // This is the "main" function, which starts up the entire app.
-(async function() {
-	const promises = [
-		initApp(globalSocket),					// for firebase login
-		init(globalSocket),		// game-related
-		navbarInit(globalAudioPlayer),
-		panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer),
-		dialogInit(),
-		mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer)
-	];
+void (async function() {
+	init(globalSocket);			// game-related
+	navbarInit(globalAudioPlayer);
+	panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+	dialogInit();
+	mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer);
 
 	try {
-		const results = await Promise.all(promises);
-
-		// The firebase initialization will return the user object; all others will return undefined
-		loginSuccess(results[0]);
+		// Login to firebase
+		loginSuccess(await initApp(globalSocket));
 	}
 	catch(err) {
 		console.error(err);
@@ -45,34 +42,31 @@ let currentUID;
  * Called after successfully logging in.
  * Links the current user to the socket and registers with the game server.
  */
-async function loginSuccess(user) {
+function loginSuccess(user: firebase.User) {
 	globalSocket.emit('register', user.uid);
 
 	globalSocket.off('registered', undefined);
-	globalSocket.on('registered', async () => {
+	globalSocket.on('registered', () => {
 		currentUID = user.uid;
-		try {
-			await updateUserSettings(user, currentUID, globalAudioPlayer);
-		}
-		catch(error) {
+		updateUserSettings(user, currentUID, globalAudioPlayer).then(() => {
+			// Check if a joinRoom link was used
+			const urlParams = new URLSearchParams(window.location.search);
+			const joinId = urlParams.get('joinRoom');				// Id of room to join
+
+			if(joinId !== null) {
+				globalSocket.emit('joinRoom', { gameId: currentUID, joinId, spectate: false });
+				console.log('Joining a room...');
+			}
+			else {
+				globalSocket.emit('freeForAll', { gameId: currentUID });
+				document.getElementById('statusGamemode').innerHTML = 'Free For All';
+			}
+		}).catch((error) => {
 			console.log(error);
 			console.log('Your account was not correctly set up. You will now be logged out.');
-			signOut();
+			void signOut();
 			return;
-		}
-
-		// Check if a joinRoom link was used
-		const urlParams = new URLSearchParams(window.location.search);
-		const joinId = urlParams.get('joinRoom');				// Id of room to join
-
-		if(joinId !== null) {
-			globalSocket.emit('joinRoom', { gameId: currentUID, joinId, spectate: false });
-			console.log('Joining a room...');
-		}
-		else {
-			globalSocket.emit('freeForAll', { gameId: currentUID });
-			document.getElementById('statusGamemode').innerHTML = 'Free For All';
-		}
+		});
 	});
 }
 
@@ -85,19 +79,28 @@ function getCurrentUID() {
 
 /*----------------------------------------------------------*/
 
-let currentSession = null;
-let currentRoomId = null;
+let currentSession: Session = null;
+let currentRoomId: string = null;
 
 const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
 
 const mainContent = document.getElementById('main-content');
 const sidebar = document.getElementById('sidebar');
 
-let quickPlayTimer = null;
+let quickPlayTimer: ReturnType<typeof setTimeout> = null;
 
 // Set up all the event listeners
-async function init(socket) {
-	socket.on('roomUpdate', (roomId, allIds, roomSize, settingsString, roomType, host, spectating, quickPlayStartTime) => {
+function init(socket: SocketIOClient.Socket): void {
+	socket.on('roomUpdate', (
+		roomId: string,
+		allIds: string[],
+		roomSize: number,
+		settingsString: string,
+		roomType: string,
+		host: boolean,
+		spectating: boolean,
+		quickPlayStartTime: number
+	) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
 			clearMessages();
@@ -179,7 +182,7 @@ async function init(socket) {
 		updatePlayers(allIds);
 	});
 
-	socket.on('start', async (roomId, opponentIds, settingsString) => {
+	socket.on('start', async (roomId: string, opponentIds: string[], settingsString: string) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -209,7 +212,7 @@ async function init(socket) {
 		currentSession.run();
 	});
 
-	socket.on('spectate', async (roomId, allIds, settingsString) => {
+	socket.on('spectate', async (roomId: string, allIds: string[], settingsString: string) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -228,8 +231,7 @@ async function init(socket) {
 		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId);
-		currentSession.spectate = true;
+		currentSession = new Session(getCurrentUID(), game, socket, roomId, true);
 		currentSession.run();
 	});
 
@@ -246,18 +248,15 @@ async function init(socket) {
 			socket.emit('focus', getCurrentUID(), true);
 		}
 	});
-
-	// Return a promise that instantly resolves
-	return Promise.resolve();
 }
 
 /**
  * Causes the current session to stop updating and emit a "Disconnect" event.
  */
-async function stopCurrentSession() {
+async function stopCurrentSession(): Promise<void> {
 	if(currentSession !== null) {
 		// Returning true means the session had not ended yet
-		if (await currentSession.stop() && !currentSession.spectate) {
+		if (await currentSession.stop() && !currentSession.spectating) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
 			clearMessages();
 		}
@@ -282,15 +281,15 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateCells(numCells, settings, appearance = new UserSettings().appearance) {
+function generateCells(numCells: number, settings: Settings, appearance = new UserSettings().appearance): Record<number, GameArea> {
 	const playArea = document.getElementById('playArea') as HTMLTableElement;
 	playArea.style.display = 'table';
 
 	const firstRow = playArea.insertRow(-1);
 	let runningId = 1;
-	const gameAreas = {};
+	const gameAreas: Record<number, GameArea> = {};
 
-	const createGameCanvas = function(id, row, size) {
+	const createGameCanvas = function(id: number, row: HTMLTableRowElement, size: number) {
 		gameAreas[id] = new GameArea(settings, appearance, size);
 
 		const cell = row.insertCell(-1);
@@ -307,7 +306,7 @@ function generateCells(numCells, settings, appearance = new UserSettings().appea
 		playerArea.appendChild(pointsArea);
 
 		const pointsDisplay = document.createElement('span');
-		pointsDisplay.id = 'pointsDisplay' + id;
+		pointsDisplay.id = `pointsDisplay${id}`;
 		pointsDisplay.className = 'pointsDisplay';
 		pointsDisplay.innerHTML = '00000000';
 		pointsDisplay.style.fontSize = `${52 * size}`;

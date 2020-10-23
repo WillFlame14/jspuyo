@@ -1,25 +1,27 @@
 'use strict';
 
+import { Cpu, CpuMove } from './cpu/Cpu';
+import { Direction } from './Drop';
 import { Game } from './Game';
 import { AudioPlayer } from './utils/AudioPlayer';
-import { UserSettings } from './utils/Settings';
+import { Settings, UserSettings } from './utils/Settings';
 
 const defaultUserSettings = new UserSettings();
 
 export class CpuGame extends Game {
-	ai: any;
+	ai: Cpu;
 	softDropSpeed: number;
 	movementSpeed: number;
-	currentMove: any;
+	currentMove: CpuMove;
 	rotations: number;
-	lastArle: any;
+	lastArle: Position;
 
 	softDropTimer: number;
 	movementTimer: number;
 
 	audioPlayer: AudioPlayer;
 
-	constructor(gameId, opponentIds, socket, ai, speed, settings) {
+	constructor(gameId: string, opponentIds: string[], socket: SocketIOClient.Socket, ai: Cpu, speed: number, settings: Settings) {
 		super(gameId, opponentIds, socket, settings, defaultUserSettings, null, null);
 
 		this.ai = ai;							// The algorithm used to determine the optimal move
@@ -41,7 +43,7 @@ export class CpuGame extends Game {
 	 * @Override
 	 * Apply an input for the CPU. Used to get the current drop to the optimal move position.
 	 */
-	getInputs() {
+	getInputs(): void {
 		if(this.currentMove === null) {
 			this.currentMove = this.ai.getMove(this.board.boardState, this.currentDrop);
 		}
@@ -56,23 +58,23 @@ export class CpuGame extends Game {
 
 		// Move drop to correct column
 		if(this.currentDrop.arle.x < col) {
-			this.move('Right');
+			this.move(Direction.RIGHT);
 			applied = true;
 		}
 		else if(this.currentDrop.arle.x > col) {
-			this.move('Left');
+			this.move(Direction.LEFT);
 			applied = true;
 		}
 
 		// Perform correct amount of rotations
-		if(this.currentDrop.rotating === 'not') {
+		if(this.currentDrop.rotating === null) {
 			if(this.rotations < rotations) {
-				this.rotate('CW');
+				this.rotate(Direction.CW);
 				this.rotations++;
 				applied = true;
 			}
 			else if(this.rotations > rotations) {
-				this.rotate('CCW');
+				this.rotate(Direction.CCW);
 				this.rotations--;
 				applied = true;
 			}
@@ -87,17 +89,17 @@ export class CpuGame extends Game {
 		if(!applied || (this.lastArle !== null && JSON.stringify(this.currentDrop.arle) === JSON.stringify(this.lastArle))) {
 			// Must also meet speed threshold
 			if(Date.now() - this.softDropTimer > this.softDropSpeed) {
-				this.move('Down');
+				this.move(Direction.DOWN);
 			}
 		}
 
-		this.lastArle = Object.assign(this.currentDrop.arle);
+		this.lastArle = Object.assign(this.currentDrop.arle) as Position;
 	}
 
 	/**
 	 * After locking a drop, also reset the currentMove and timer.
 	 */
-	lockDrop() {
+	lockDrop(): void {
 		super.lockDrop();
 		this.currentMove = null;
 		this.rotations = 0;

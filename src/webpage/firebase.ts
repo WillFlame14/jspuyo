@@ -10,16 +10,17 @@ require("firebase/auth");
 require("firebase/database");
 
 let newUser = false;
-let currentUser = null;
+let currentUser: firebase.User = null;
 let fallbackName = '';		// Display name that is used if empty string is provided (aka the original name)
 
-let ui;				// Firebaseui object
-let socket;	// Socket associated with the browser tab
+let ui: firebaseui.auth.AuthUI;				// Firebaseui object
+let socket: SocketIOClient.Socket;	// Socket associated with the browser tab
 
 const uiConfig = {
 	callbacks: {
 		signInSuccessWithAuthResult: function(authResult) {
 			// Update global boolean with whether user is new or not
+			// eslint-disable-next-line
 			newUser = authResult.additionalUserInfo.isNewUser;
 
 			// Do not redirect page
@@ -45,7 +46,7 @@ const uiConfig = {
  * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
  * Returns a resolved promise with the user object once login is completed.
  */
-export function initApp(globalSocket) {
+export function initApp(globalSocket: SocketIOClient.Socket): Promise<firebase.User> {
 	return new Promise((resolve) => {
 		// Initialize Firebase
 		firebase.initializeApp(firebaseConfig);
@@ -55,7 +56,7 @@ export function initApp(globalSocket) {
 		socket = globalSocket;
 		initializeUI(resolve);
 
-		firebase.auth().onAuthStateChanged(async function(user) {
+		firebase.auth().onAuthStateChanged((user: firebase.User) => {
 			// Just logged in
 			if (user) {
 				document.getElementById('firebaseui-auth-container').style.display = 'none';
@@ -102,7 +103,7 @@ export function initApp(globalSocket) {
 	});
 }
 
-function initializeUI(resolve) {
+function initializeUI(resolve: (user) => void) {
 	// Hackily add some messages into the FirebaseUI login screen
 	const onlineUsersMessage = document.createElement('div');
 	onlineUsersMessage.id = 'onlineUsers';
@@ -126,7 +127,7 @@ function initializeUI(resolve) {
 
 	// Send request for number of online users
 	socket.emit('getOnlineUsers');
-	socket.on('onlineUsersCount', (numUsers) => {
+	socket.on('onlineUsersCount', (numUsers: number) => {
 		onlineUsersMessage.innerHTML = `Online users: ${numUsers}`;
 	});
 
@@ -154,7 +155,7 @@ function initializeUI(resolve) {
 				console.log(error);
 			});
 		}
-		).catch((error) => {
+		).catch((error: string) => {
 			// Promise was rejected - username not valid
 			document.getElementById('usernamePickerError').innerHTML = error;
 			document.getElementById('usernamePickerError').style.display = 'block';
@@ -168,16 +169,16 @@ function initializeUI(resolve) {
  * Used in other modules where Firebase is not accessible.
  * If the user was an anonymous user, their account is deleted to save space.
  */
-export async function signOut() {
+export async function signOut(): Promise<void> {
 	// Update the online users counter
 	socket.emit('getOnlineUsers');
 
 	if(firebase.auth().currentUser && firebase.auth().currentUser.isAnonymous) {
 		await PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
-		firebase.auth().signOut();
+		void firebase.auth().signOut();
 	}
 	else {
-		firebase.auth().signOut();
+		void firebase.auth().signOut();
 	}
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
@@ -185,7 +186,7 @@ export async function signOut() {
 /**
  * Checks if a username is valid.
  */
-function validateUsername(username) {
+function validateUsername(username: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		if(!username || username.trim().length === 0) {
 			reject('Please enter a username.');
@@ -213,6 +214,8 @@ function validateUsername(username) {
 					resolve();
 				}
 			}
+		}).catch((err: string) => {
+			console.log(`There was an error checking for duplicate usernames. ${err}`);
 		});
 	});
 }
@@ -224,32 +227,32 @@ export class PlayerInfo {
 	/**
 	 * Initializes all the user data with default values.
 	 */
-	static addUser(uid, username) {
-		firebase.database().ref(`username/${uid}`).set(username);
-		firebase.database().ref(`userSettings/${uid}`).set(new UserSettings());
-		firebase.database().ref(`rating/${uid}`).set(1000);
+	static addUser(uid: string, username: string): void {
+		void firebase.database().ref(`username/${uid}`).set(username);
+		void firebase.database().ref(`userSettings/${uid}`).set(new UserSettings());
+		void firebase.database().ref(`rating/${uid}`).set(1000);
 	}
 
 	/**
 	 * Updates a specific property of the user data.
 	 */
-	static updateUser(uid, property, value, overwrite = true) {
+	static updateUser(uid: string, property: string, value: unknown, overwrite = true): void {
 		// Update the firebase auth User object if it is one of their properties
 		if(userProperties.includes(property)) {
 			if(property === 'username') {
-				firebase.auth().currentUser.updateProfile({ displayName: value });
+				void firebase.auth().currentUser.updateProfile({ displayName: value as string });
 			}
 			else {
-				firebase.auth().currentUser.updateProfile({ [property]: value });
+				void firebase.auth().currentUser.updateProfile({ [property]: value });
 			}
 		}
 
 		// Overwrite/update the database property
 		if(overwrite) {
-			firebase.database().ref(`${property}/${uid}`).set(value);
+			void firebase.database().ref(`${property}/${uid}`).set(value);
 		}
 		else {
-			firebase.database().ref(`${property}/${uid}`).update(value);
+			void firebase.database().ref(`${property}/${uid}`).update(value);
 		}
 	}
 
@@ -257,7 +260,7 @@ export class PlayerInfo {
 	 * Deletes all user information stored in the database.
 	 * Only called when an anonymous user logs out.
 	 */
-	static async deleteUser(uid) {
+	static async deleteUser(uid: string) : Promise<unknown[]> {
 		const promises = [
 			firebase.database().ref(`username/${uid}`).remove(),
 			firebase.database().ref(`userSettings/${uid}`).remove(),
@@ -267,7 +270,7 @@ export class PlayerInfo {
 		return Promise.all(promises);
 	}
 
-	static getUserProperty(uid, property) {
+	static getUserProperty(uid: string, property: string): Promise<unknown> {
 		return new Promise((resolve, reject) => {
 			firebase.database().ref(`${property}/${uid}`).once('value').then(data => {
 				if(!data.exists()) {
@@ -276,6 +279,8 @@ export class PlayerInfo {
 				else {
 					resolve(data.val());
 				}
+			}).catch((error: string) => {
+				reject(`Unable to access firebase database. ${error}`);
 			});
 		});
 	}

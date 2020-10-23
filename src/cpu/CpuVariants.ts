@@ -1,14 +1,22 @@
 'use strict';
 
 import { Board } from '../Board';
-import { Cpu } from './Cpu';
+import { Cpu, CpuMove } from './Cpu';
+import { Drop } from '../Drop';
+import { Settings } from '../utils/Settings';
 
 export class CpuVariants {
 	constructor() {
 		throw new Error('CpuVariants cannot be instantiated.');
 	}
 
-	static fromString(ai, settings) {
+	/**
+	 * Creates a Cpu from its name.
+	 * @param  {string} 	ai       The name of the Cpu variant
+	 * @param  {Settings} 	settings The game settings
+	 * @return {Cpu}             	The returned Cpu, TestCpu by default
+	 */
+	static fromString(ai: string, settings: Settings): Cpu {
 		switch(ai.toLowerCase()) {
 			case 'random':
 				return new RandomCpu(settings);
@@ -23,7 +31,10 @@ export class CpuVariants {
 		}
 	}
 
-	static getAllCpuNames() {
+	/**
+	 * Returns all the names of currently available Cpus.
+	 */
+	static getAllCpuNames(): string[] {
 		return [
 			'Random',
 			'Flat',
@@ -42,8 +53,13 @@ class RandomCpu extends Cpu {
 		super(settings);
 	}
 
-	// eslint-disable-next-line no-unused-vars
-	getMove(boardState, currentDrop) {
+	/**
+	 * Returns the optimal move according to the AI.
+	 * @param 	{number[][]} boardState  The current board state
+	 * @param 	{Drop}       currentDrop The current drop
+	 * @return 	{CpuMove}	             The optimal move as determined by the AI
+	 */
+	getMove(_boardState?: number[][], _currentDrop?: Drop): CpuMove {
 		const col = Math.floor(Math.random() * this.settings.cols);
 		const rotations = Math.floor(Math.random() * 4) - 2;
 		return { col, rotations };
@@ -58,7 +74,13 @@ class FlatCpu extends Cpu {
 		super(settings);
 	}
 
-	getMove(boardState, currentDrop) {
+	/**
+	 * Returns the optimal move according to the AI.
+	 * @param 	{number[][]} boardState  The current board state
+	 * @param 	{Drop}       currentDrop The current drop
+	 * @return 	{CpuMove}	             The optimal move as determined by the AI
+	 */
+	getMove(boardState: number[][], currentDrop: Drop): CpuMove {
 		let col = 0;
 		let rotations = 0;
 		let minHeight = -1;
@@ -89,7 +111,13 @@ class TallCpu extends Cpu {
 		super(settings);
 	}
 
-	getMove(boardState, currentDrop) {
+	/**
+	 * Returns the optimal move according to the AI.
+	 * @param 	{number[][]} boardState  The current board state
+	 * @param 	{Drop}       currentDrop The current drop
+	 * @return 	{CpuMove}	             The optimal move as determined by the AI
+	 */
+	getMove(boardState: number[][], currentDrop: Drop): CpuMove {
 		let col = this.settings.cols - 1;
 		let rotations = 0;
 		// Attempt to place on the right side of the board
@@ -134,7 +162,13 @@ class ChainCpu extends Cpu {
 		super(settings);
 	}
 
-	getMove(boardState, currentDrop) {
+	/**
+	 * Returns the optimal move according to the AI.
+	 * @param 	{number[][]} boardState  The current board state
+	 * @param 	{Drop}       currentDrop The current drop
+	 * @return 	{CpuMove}	             The optimal move as determined by the AI
+	 */
+	getMove(boardState: number[][], currentDrop: Drop): CpuMove {
 		let col = Math.floor(Math.random() * this.settings.cols);
 		let rotations = 0;
 
@@ -162,7 +196,13 @@ class TestCpu extends Cpu {
 		super(settings);
 	}
 
-	getMove(boardState, currentDrop) {
+	/**
+	 * Returns the optimal move according to the AI.
+	 * @param 	{number[][]} boardState  The current board state
+	 * @param 	{Drop}       currentDrop The current drop
+	 * @return 	{CpuMove}	             The optimal move as determined by the AI
+	 */
+	getMove(boardState: number[][], currentDrop: Drop): CpuMove {
 		const averageHeight = super.getAverageHeight(boardState);
 		const minChain = (averageHeight > this.settings.rows * 3 / 4) ? 0 :
 						(averageHeight > this.settings.rows / 2) ? 2 :		// eslint-disable-line indent
@@ -178,36 +218,38 @@ class TestCpu extends Cpu {
 			for(let i = 0; i < this.settings.cols * 4; i++) {
 				const currCol = i % this.settings.cols;
 				const board = new Board(this.settings, boardState);
-				let tempRotations;
+				const { boardState: currentBoardState } = board;
+				let tempRotations: number;
+
 				if(i < this.settings.cols) {
-					board.boardState[currCol].push(currentDrop.colours[1]);
-					board.boardState[currCol].push(currentDrop.colours[0]);
+					currentBoardState[currCol].push(currentDrop.colours[1]);
+					currentBoardState[currCol].push(currentDrop.colours[0]);
 					tempRotations = 2;
 				}
 				else if(i < this.settings.cols * 2) {
 					if(currCol === 0) {
 						continue;
 					}
-					board.boardState[currCol - 1].push(currentDrop.colours[1]);
-					board.boardState[currCol].push(currentDrop.colours[0]);
+					currentBoardState[currCol - 1].push(currentDrop.colours[1]);
+					currentBoardState[currCol].push(currentDrop.colours[0]);
 					tempRotations = -1;
 				}
 				else if(i < this.settings.cols * 3) {
 					if(currCol === this.settings.cols - 1) {
 						continue;
 					}
-					board.boardState[currCol].push(currentDrop.colours[0]);
-					board.boardState[currCol + 1].push(currentDrop.colours[1]);
+					currentBoardState[currCol].push(currentDrop.colours[0]);
+					currentBoardState[currCol + 1].push(currentDrop.colours[1]);
 					tempRotations = 1;
 				}
 				else {
-					board.boardState[currCol].push(currentDrop.colours[0]);
-					board.boardState[currCol].push(currentDrop.colours[1]);
+					currentBoardState[currCol].push(currentDrop.colours[0]);
+					currentBoardState[currCol].push(currentDrop.colours[1]);
 					tempRotations = 0;
 				}
 
 				// Deter from placing in column 2, as well as building skyscrapers
-				const deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(board, currCol);
+				const deterrent = (currCol === 2) ? boardState[2].length : this.getSkyScraperValue(currentBoardState, currCol);
 				const value = this.evaluateBoard(board) + (Math.random() * 2) - deterrent;
 
 				if(value > maxValue) {
@@ -238,39 +280,5 @@ class TestCpu extends Cpu {
 		}
 
 		return { col, rotations };
-	}
-
-	/**
-	 * Returns the skyscraper value (empirically determined) of a column.
-	 */
-	getSkyScraperValue(board, col) {
-		const boardState = board.boardState;
-		let value = 2 * boardState[col].length;
-		if(col !== 0) {
-			value -= boardState[col - 1].length;
-		}
-		if(col !== this.settings.cols - 1) {
-			value -= boardState[col + 1].length;
-		}
-		return value / 2;
-	}
-
-	/**
-	 * Returns the total "value" of the board (i.e. how connected the puyos are).
-	 */
-	evaluateBoard(board) {
-		const connections = board.getConnections();
-		let value = 0;
-
-		connections.forEach(connection => {
-			if(connection.length < 4) {
-				value += connection.length * connection.length;
-			}
-			else if(connection.length > 4) {
-				value += connection.length;
-			}
-		});
-
-		return value;
 	}
 }

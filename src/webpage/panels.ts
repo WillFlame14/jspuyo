@@ -1,12 +1,13 @@
 'use strict';
 
+import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { initCustomPanels } from './panels_custom';
 import { setKeyBindings, setAppearance, initProfilePanels } from './panels_profile';
 import { UserSettings } from '../utils/Settings';
 
-export const puyoImgs = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
-const ranks = {
+export const puyoImgs: string[] = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
+const ranks: Record<string, string> = {
 	'0': 'Blob',
 	'1000': 'Forest Learner',
 	'1250': 'Ocean Diver',
@@ -14,7 +15,15 @@ const ranks = {
 	'1750': 'Lightning Ranger'
 };
 
-export async function panelsInit(socket, getCurrentUID, stopCurrentSession, audioPlayer) {
+export function panelsInit(
+	socket: SocketIOClient.Socket,
+	getCurrentUID: () => string,
+	stopCurrentSession: () => Promise<void>,
+	audioPlayer: AudioPlayer
+): void {
+	initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
+	initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
+
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
@@ -27,7 +36,7 @@ export async function panelsInit(socket, getCurrentUID, stopCurrentSession, audi
 	});
 
 	// Manage window onclick
-	window.onclick = function(event) {
+	window.onclick = function(event: Event) {
 		if (event.target === modal) {
 			clearModal();
 		}
@@ -61,21 +70,12 @@ export async function panelsInit(socket, getCurrentUID, stopCurrentSession, audi
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
-
-	const promises = [
-		initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID),
-		initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID)
-	];
-
-	await Promise.all(promises);
-
-	return Promise.resolve();
 }
 
 /**
  * Removes all modal elements from view.
  */
-export function clearModal() {
+export function clearModal(): void {
 	// Prevent closing modal boxes if any dialog box has not been closed yet
 	if(document.getElementById('modal-background-disable').style.display === 'block') {
 		return;
@@ -99,7 +99,7 @@ export function clearModal() {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-export async function updateUserSettings(user, currentUID, globalAudioPlayer) {
+export async function updateUserSettings(user: firebase.User, currentUID: string, globalAudioPlayer: AudioPlayer): Promise<void> {
 	const promises: [Promise<UserSettings>, Promise<number>] = [
 		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
 		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)
@@ -110,7 +110,7 @@ export async function updateUserSettings(user, currentUID, globalAudioPlayer) {
 	// These settings can be easily updated since they only contain a numeric value.
 	const numericProperties = ['das', 'arr'];
 	numericProperties.forEach(property => {
-		(document.getElementById(property) as HTMLInputElement).value = userSettings[property];
+		(document.getElementById(property) as HTMLInputElement).value = `${userSettings[property] as number}`;
 	});
 
 	// Intermediate Frames Shown is inverted
@@ -124,7 +124,7 @@ export async function updateUserSettings(user, currentUID, globalAudioPlayer) {
 	// Update the key bindings
 	const keyBindings = userSettings.keyBindings;
 	Object.keys(keyBindings).forEach(key => {
-		(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key];
+		(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key] as string;
 	});
 	setKeyBindings(keyBindings);
 

@@ -1,6 +1,9 @@
 'use strict';
 
+/* eslint-disable */
+
 import path = require('path');
+import { StatTracker, SplitData } from '../StatTracker';
 const { Chartist } = window;
 
 const backgrounds = [
@@ -41,13 +44,13 @@ export function pageInit(): void {
 	}
 }
 
-let stats;
+let stats: Record<number, string>[];
 
 function initCharts() {
 	const statsString = window.localStorage.getItem('stats');
 
 	try {
-		stats = JSON.parse(statsString);
+		stats = JSON.parse(statsString) as Record<number, string>[];
 	}
 	catch(err) {
 		console.log(`Could not parse statsString: ${statsString}`);
@@ -70,7 +73,7 @@ function initCharts() {
 	document.getElementById('chartsWrapper').style.display = 'block';
 }
 
-const charts = {};
+const charts: Record<string, Chartist.IChartistBase<Chartist.IChartOptions>> = {};
 
 /**
  * Generates all the charts on screen based on the game range.
@@ -78,7 +81,7 @@ const charts = {};
  * @return {undefined}
  */
 function createCharts(gameRange = -1) {
-	let includedGameKeys;
+	let includedGameKeys: string[];
 
 	// All games
 	if(gameRange === -1) {
@@ -91,11 +94,11 @@ function createCharts(gameRange = -1) {
 	// -------------------- Split Data Chart --------------------
 
 	const splitDataSeries = [];
-	const split = [], nonsplit = [];
+	const split: number[] = [], nonsplit: number[] = [];
 
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
-		game.splitPuyos.forEach((dropNumData, dropNum) => {
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
+		game.splitPuyos.forEach((dropNumData: SplitData, dropNum) => {
 			// Do not include data that has not yet been collected
 			if(dropNumData.split + dropNumData.nonsplit === 0) {
 				return;
@@ -127,14 +130,15 @@ function createCharts(gameRange = -1) {
 		chartPadding: { left: 35, top: 35, bottom: 170, right: 40 },
 		high: 100,
 		axisX: {
-			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 5 === 0 ? index : null),
 			offset: 55
 		},
 		axisY: {
-			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 2 === 0 ? value : null),
 			offset: 60
 		},
 		plugins: [
+			// eslint-disable-next-line
 			Chartist.plugins.ctAxisTitle({
 				axisX: {
 					axisTitle: "Drop Number",
@@ -155,12 +159,12 @@ function createCharts(gameRange = -1) {
 
 	// -------------------- Build Order Chart --------------------
 
-	const buildOrderSeries = [[], [], [], [], [], []];
-	const columns = [[], [], [], [], [], []];
-	const totals = [];
+	const buildOrderSeries: number[][] = [[], [], [], [], [], []];
+	const columns: number[][] = [[], [], [], [], [], []];
+	const totals: number[] = [];
 
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
 		game.buildOrder.forEach((dropNumData, dropNum) => {
 			// Consolidate the games
 			dropNumData.forEach((puyos, col) => {
@@ -209,10 +213,11 @@ function createCharts(gameRange = -1) {
 		},
 		axisY: {
 			showGrid: false,
-			labelInterpolationFnc: (value) => (value % 10 === 0 ? value : null),
+			labelInterpolationFnc: (value: number) => (value % 10 === 0 ? value : null),
 			offset: 70
 		},
 		plugins: [
+			// eslint-disable-next-line
 			Chartist.plugins.ctAxisTitle({
 				axisY: {
 					axisTitle: "Drop Number",
@@ -220,6 +225,7 @@ function createCharts(gameRange = -1) {
 					offset: { x: 0, y: -15 }
 				}
 			}),
+			// eslint-disable-next-line
 			Chartist.plugins.legend({
 				legendNames: ['Col 1', 'Col 2', 'Col 3', 'Col 4', 'Col 5', 'Col 6'],
 				position: "bottom"
@@ -232,11 +238,11 @@ function createCharts(gameRange = -1) {
 
 	// -------------------- Build Speed Chart --------------------
 
-	const buildSpeedSeries = [];
-	const speeds = [];
+	const buildSpeedSeries: number[] = [];
+	const speeds: number[] = [];
 
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
 		game.buildSpeed.forEach((frames, dropNum) => {
 			if(speeds[dropNum] === undefined) {
 				speeds[dropNum] = 0;
@@ -264,14 +270,15 @@ function createCharts(gameRange = -1) {
 		low: 0,
 		chartPadding: { left: 35, top: 25, bottom: 165, right: 40 },
 		axisX: {
-			labelInterpolationFnc: (value, index) => (index % 5 === 0 ? index : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 5 === 0 ? index : null),
 			offset: 65
 		},
 		axisY: {
-			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 2 === 0 ? value : null),
 			offset: 75
 		},
 		plugins: [
+			// eslint-disable-next-line
 			Chartist.plugins.ctAxisTitle({
 				axisX: {
 					axisTitle: "Drop Number",
@@ -292,11 +299,11 @@ function createCharts(gameRange = -1) {
 
 	// -------------------- Chain Scores Chart --------------------
 
-	const chainScoresSeries = [[], []];
-	const allScores = [];
+	const chainScoresSeries: number[][] = [[], []];
+	const allScores: number[][]= [];
 
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
 		game.chainScores.forEach((scores, chainLength) => {
 			if(allScores[chainLength] === undefined) {
 				allScores[chainLength] = [];
@@ -335,10 +342,11 @@ function createCharts(gameRange = -1) {
 			offset: 55
 		},
 		axisY: {
-			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 2 === 0 ? value : null),
 			offset: 85
 		},
 		plugins: [
+			// eslint-disable-next-line
 			Chartist.plugins.ctAxisTitle({
 				axisX: {
 					axisTitle: "Drop Number",
@@ -351,6 +359,7 @@ function createCharts(gameRange = -1) {
 					offset: { x: 0, y: -15 }
 				}
 			}),
+			// eslint-disable-next-line
 			Chartist.plugins.legend({
 				legendNames: ['Average', 'Highest'],
 				position: "bottom"
@@ -367,7 +376,7 @@ function createCharts(gameRange = -1) {
 	const finesseDist = {};		// Map of {fault: number of faults}
 
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
 		Object.keys(game.finesse).forEach(fault => {
 			if(finesseDist[fault] === undefined) {
 				finesseDist[fault] = game.finesse[fault];
@@ -390,9 +399,11 @@ function createCharts(gameRange = -1) {
 		chartPadding: 120,
 		labelOffset: 0,
 		donut: true,
-		labelInterpolationFnc: (value, index) => {
+		labelInterpolationFnc: (value: number, index: number) => {
+			// eslint-disable-next-line
 			return `${Math.round(100 * finesseFaultData.series[index].value / totalFaults)}%`;
 		},
+		// eslint-disable-next-line
 		plugins: [Chartist.plugins.legend()]
 	};
 	const finesseFaultChart = new Chartist.Pie('#finesseFaultData', finesseFaultData, finesseFaultOptions);
@@ -401,12 +412,13 @@ function createCharts(gameRange = -1) {
 
 	// -------------------- Finesse (Progress) Chart --------------------
 
+
 	const finesseSeries = [];
 	includedGameKeys.forEach(timestamp => {
-		const game = JSON.parse(stats[timestamp]);
+		const game = JSON.parse(stats[timestamp]) as StatTracker;
 		const faults = Object.keys(game.finesse).reduce((total = 0, fault) => total + game.finesse[fault], 0);
 
-		finesseSeries.push({x: timestamp, y: faults});
+		finesseSeries.push({x: Number(timestamp), y: faults});
 	});
 
 	const finesseData = {
@@ -427,9 +439,10 @@ function createCharts(gameRange = -1) {
 			}
 		},
 		axisY : {
-			labelInterpolationFnc: (value, index) => (index % 2 === 0 ? value : null),
+			labelInterpolationFnc: (value: number, index: number) => (index % 2 === 0 ? value : null),
 		},
 		plugins: [
+			// eslint-disable-next-line
 			Chartist.plugins.ctAxisTitle({
 				axisX: {
 					axisTitle: "Date",
@@ -444,6 +457,7 @@ function createCharts(gameRange = -1) {
 			})
 		]
 	};
+	// eslint-disable-next-line
 	const finesseChart = new Chartist.Line('#finesseData', finesseData, finesseOptions);
 	animateLine(finesseChart, 500, 50);
 	charts['finesse'] = finesseChart;
@@ -454,7 +468,7 @@ function createCharts(gameRange = -1) {
 			// Grab the id from the chart
 			const id = button.parentElement.id;
 			const chart = charts[id.substring(0, id.length - 5)];
-			chart.update();
+			chart.update(undefined);
 		};
 	});
 }
@@ -465,7 +479,7 @@ function createCharts(gameRange = -1) {
  * @param  {number} 		duration 	How long each individual animation takes (in ms)
  * @param  {number} 		delay    	The length between each individual animation (in ms)
  */
-function animateLine(chart, duration, delay) {
+function animateLine(chart: Chartist.IChartistLineChart, duration, delay) {
 	// Counter for the number of objects drawn
 	let seq = 0;
 
@@ -541,7 +555,7 @@ function animateLine(chart, duration, delay) {
  * @param  {number} 		duration 	How long each individual animation takes (in ms)
  * @param  {number} 		delay    	The length between each individual animation (in ms)
  */
-function animateBar(chart, duration) {
+function animateBar(chart: Chartist.IChartistBarChart, duration: number) {
 	chart.on('draw', (data) => {
 		if(data.type === 'bar') {
 			const distance = data.x2 - data.x1;
@@ -563,7 +577,7 @@ function animateBar(chart, duration) {
  * @param  {number} 		duration 	How long each individual animation takes (in ms)
  * @param  {number} 		delay    	The length between each individual animation (in ms)
  */
-function animatePie(chart, duration) {
+function animatePie(chart: Chartist.IChartistPieChart, duration: number) {
 	chart.on('draw', (data) => {
 
 		let pathLength, animationDefinition;

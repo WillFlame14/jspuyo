@@ -2,25 +2,30 @@
 
 const FIRST_DROPS_TRACKED = 50;
 
+export interface SplitData {
+	split: number,
+	nonsplit: number
+}
+
 export class StatTracker {
 	buildOrder: number[][];
 	buildSpeed: number[][];
 	chainScores: number[][];
-	splitPuyos: any[];
+	splitPuyos: SplitData[];
 
-	finesse = {};
-	gameResult = null;
+	finesse: Record<string, number> = {};
+	gameResult: string = null;
 	runningScore = 0;
-	framesOfLastDrop = null;
+	framesOfLastDrop: number = null;
 
 	constructor() {
-		this.buildOrder = [...new Array(FIRST_DROPS_TRACKED)].map(() => new Array(6).fill(0));
-		this.buildSpeed = [...new Array(FIRST_DROPS_TRACKED)].map(() => []);
-		this.chainScores = [...new Array(19)].map(() => []);
-		this.splitPuyos = [...new Array(FIRST_DROPS_TRACKED)].map(() => {return { split: 0, nonsplit: 0 };});
+		this.buildOrder = [...new Array<number>(FIRST_DROPS_TRACKED)].map(() => new Array<number>(6).fill(0));
+		this.buildSpeed = [...new Array<number>(FIRST_DROPS_TRACKED)].map(() => [] as number[]);
+		this.chainScores = [...new Array<number>(19)].map(() => [] as number[]);
+		this.splitPuyos = [...new Array<number>(FIRST_DROPS_TRACKED)].map(() => {return { split: 0, nonsplit: 0 };});
 	}
 
-	addDrop(dropNum, currentFrame, movements, arleCol, schezoCol, trueSplit = false) {
+	addDrop(dropNum: number, currentFrame: number, movements: string[], arleCol: number, schezoCol: number, trueSplit = false): void {
 		// Do not track future drops
 		if(dropNum >= FIRST_DROPS_TRACKED) {
 			return;
@@ -58,31 +63,31 @@ export class StatTracker {
 		}
 	}
 
-	addScore(score) {
+	addScore(score: number): void {
 		this.runningScore += score;
 	}
 
-	finishChain(finalChainLength) {
+	finishChain(finalChainLength: number): void {
 		this.chainScores[finalChainLength].push(this.runningScore);
 		this.runningScore = 0;
 	}
 
-	addResult(result) {
+	addResult(result: string): void {
 		this.gameResult = result;
 	}
 
-	toString() {
+	toString(): string {
 		return JSON.stringify(this);
 	}
 }
 
 /**
  * Determines if a finesse fault was performed during the placement of the drop. Only works with the normal board.
- * @param  	{array}		movements 	The list of moves and rotations performed in chronological order.
+ * @param  	{string[]}		movements 	The list of moves and rotations performed in chronological order.
  * @param  	{number}	arleCol   	The column (0-indexed) or the arle puyo
  * @return 	{string}           		The name of the finesse fault, or null if none were performed.
  */
-function checkFinesse(movements, arleCol) {
+function checkFinesse(movements: string[], arleCol: number): string {
 	const rotations = [];
 	const moves = [];
 	let das = false;

@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "outDir": "./public",
-    "allowJs": true,
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ESNext"

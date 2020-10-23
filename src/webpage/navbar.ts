@@ -1,6 +1,8 @@
 'use strict';
 
-const panelDropdowns = {
+import { AudioPlayer } from '../utils/AudioPlayer';
+
+const panelDropdowns: Record<string, string[]> = {
 	'queuePanel': ['freeForAll', 'ranked'],
 	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
 	'singleplayerPanel': ['sprint', 'timeChallenge'],
@@ -8,9 +10,9 @@ const panelDropdowns = {
 };
 
 let currentlyExpandedPanel = null;
-let audioPlayer;
+let audioPlayer: AudioPlayer;
 
-export async function navbarInit(globalAudioPlayer) {
+export function navbarInit(globalAudioPlayer: AudioPlayer): void {
 	audioPlayer = globalAudioPlayer;
 
 	// Add onclick listener to each panel
@@ -26,39 +28,42 @@ export async function navbarInit(globalAudioPlayer) {
 			};
 		});
 	});
-
-	return new Promise(resolve => resolve());
 }
 
 /**
  * Expands a dropdown menu and closes any other open dropdown menu.
  * If the current dropdown menu is already open, it is closed.
  */
-function expand_dropdown(id) {
+function expand_dropdown(id: string) {
 	const panels = Object.keys(panelDropdowns);
 	const newPanel = document.getElementById(id);
 
 	if(currentlyExpandedPanel === id) {
 		newPanel.classList.remove('expanded');
-		(newPanel.querySelector('.dropdown') as HTMLElement).style.height = '0';
+		const element: HTMLDivElement | null = newPanel.querySelector('.dropdown');
+		element.style.height = '0';
+
 		currentlyExpandedPanel = null;
 		audioPlayer.playSfx('close_panel');
 	}
 	else {
-		(newPanel.querySelector('.dropdown') as HTMLElement).style.height = `${panelDropdowns[id].length * 40}`;
+		const element: HTMLDivElement | null = newPanel.querySelector('.dropdown');
+		element.style.height = `${panelDropdowns[id].length * 40}`;
 		newPanel.classList.add('expanded');
 		newPanel.style.zIndex = '10';
 		if(currentlyExpandedPanel !== null) {
 			const oldPanel = document.getElementById(currentlyExpandedPanel);
 			oldPanel.classList.remove('expanded');
-			(oldPanel.querySelector('.dropdown') as HTMLElement).style.height = '0';
+
+			const dropdown: HTMLDivElement | null = oldPanel.querySelector('.dropdown');
+			dropdown.style.height = '0';
 		}
 		currentlyExpandedPanel = id;
 		audioPlayer.playSfx('open_panel');
 	}
 
 	// Then set the z-index for each panel on selection for nice shadow cascading.
-	let indexes;
+	let indexes: number[];
 	switch(id) {
 		case panels[0]:
 			indexes = [6, 5, 4, 3];
@@ -74,6 +79,6 @@ function expand_dropdown(id) {
 			break;
 	}
 	panels.forEach((panel, i) => {
-		document.getElementById(panel).style.zIndex = indexes[i];
+		document.getElementById(panel).style.zIndex = `${indexes[i]}`;
 	});
 }

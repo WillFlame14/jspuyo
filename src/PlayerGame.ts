@@ -1,14 +1,25 @@
 'use strict';
 
+import { AudioPlayer } from './utils/AudioPlayer';
 import { Game } from './Game';
+import { GameArea } from './GameDrawer';
 import { InputManager } from './InputManager';
+import { Settings, UserSettings } from './utils/Settings';
 
 export class PlayerGame extends Game {
 	inputManager: InputManager;
-	opponentGameAreas: any;
-	opponentIdToCellId: any;
+	opponentGameAreas: Record<string, GameArea>;
+	opponentIdToCellId: Record<string, number>;
 
-	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas, audioPlayer) {
+	constructor(
+		gameId: string,
+		opponentIds: string[],
+		socket: SocketIOClient.Socket,
+		settings: Settings,
+		userSettings: UserSettings,
+		gameAreas: Record<number, GameArea>,
+		audioPlayer: AudioPlayer
+	) {
 		super(gameId, opponentIds, socket, settings, userSettings, 1, gameAreas[1]);
 
 		let frame = 0;
@@ -36,8 +47,8 @@ export class PlayerGame extends Game {
 		this.socket.off('sendSound', undefined);
 		this.socket.off('sendVoice', undefined);
 
-		// eslint-disable-next-line no-unused-vars
-		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
+		// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
@@ -61,7 +72,7 @@ export class PlayerGame extends Game {
 	 * @Override
 	 * Executes the InputManager for the game.
 	 */
-	getInputs() {
+	getInputs(): void {
 		this.inputManager.executeKeys();
 	}
 
@@ -69,26 +80,27 @@ export class PlayerGame extends Game {
 	 * @Override
 	 * Draws the board with the new hash after stepping.
 	 */
-	step() {
+	step(): string {
 		const currentBoardHash = super.step();
 		if(currentBoardHash) {
 			this.gameArea.drawFromHash(currentBoardHash);
 		}
+		return currentBoardHash;
 	}
 
 	/**
 	 * @Override
 	 * Updates the score displayed on screen.
 	 */
-	updateVisibleScore(pointsDisplayName, score) {
+	updateVisibleScore(pointsDisplayName: string, score: number): void {
 		document.getElementById(pointsDisplayName).innerHTML = `${score}`.padStart(8, '0');
 	}
 
 	/**
 	 * Updates the score displayed on screen for opponents.
 	 */
-	updateOpponentScore(oppId, score) {
-		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToCellId[oppId];
+	updateOpponentScore(oppId: string, score: number): void {
+		const pointsDisplayName = `pointsDisplay${this.opponentIdToCellId[oppId]}`;
 		const pointsDisplay = document.getElementById(pointsDisplayName);
 
 		// Make sure element exists
@@ -102,9 +114,18 @@ export class PlayerGame extends Game {
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
 export class SpectateGame extends Game {
-	opponentGameAreas: any;
-	opponentIdToCellId: any;
-	constructor(gameId, opponentIds, socket, settings, userSettings, gameAreas, audioPlayer) {
+	opponentGameAreas: Record<string, GameArea>;
+	opponentIdToCellId: Record<string, number>;
+
+	constructor(
+		gameId: string,
+		opponentIds: string[],
+		socket: SocketIOClient.Socket,
+		settings: Settings,
+		userSettings: UserSettings,
+		gameAreas: Record<number, GameArea>,
+		audioPlayer: AudioPlayer
+	) {
 		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;
@@ -127,8 +148,8 @@ export class SpectateGame extends Game {
 		this.socket.off('sendSound', undefined);
 		this.socket.off('sendVoice', undefined);
 
-		// eslint-disable-next-line no-unused-vars
-		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
+		// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
@@ -152,15 +173,15 @@ export class SpectateGame extends Game {
 	 * @Override
 	 * Increments the game. Since player is spectating, do nothing.
 	 */
-	step() {
+	step(): string {
 		return;
 	}
 
 	/**
 	 * Updates the score for opponents.
 	 */
-	updateOpponentScore(oppId, score) {
-		const pointsDisplayName = 'pointsDisplay' + this.opponentIdToCellId[oppId];
+	updateOpponentScore(oppId: string, score: number): void {
+		const pointsDisplayName = `pointsDisplay${this.opponentIdToCellId[oppId]}`;
 		const pointsDisplay = document.getElementById(pointsDisplayName);
 
 		// Make sure element exists

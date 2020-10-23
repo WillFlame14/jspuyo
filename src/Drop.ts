@@ -1,27 +1,48 @@
 'use strict';
 
 import * as Utils from './utils/Utils';
-import { Settings } from './utils/Settings';
+import { Gamemode, Settings } from './utils/Settings';
 
-enum Shape {
-	'h', 'L', 'H', 'O', 'I'
+export enum Shape {
+	h = 'h',
+	L = 'L',
+	H = 'H',
+	O = 'O',
+	I = 'I'
+}
+
+export enum Direction {
+	UP = 'Up',
+	DOWN = 'Down',
+	LEFT = 'Left',
+	RIGHT = 'Right',
+	CW = 'CW',
+	CCW = 'CCW'
 }
 
 export class Drop {
 	shape: Shape;
 	settings: Settings;
 	colours: number[];
-	arle: any;
-	schezo: any;
+	arle: Position;
+	schezo: Position;
 	standardAngle: number;
-	rotating: any;
+	rotating: Direction;
 	rotating180: number;
 
-	constructor (shape, colours, settings, arle = undefined, schezo = { x: null, y: null }, standardAngle = 0, rotating = 'not') {
+	constructor(
+		shape: Shape,
+		colours: number[],
+		settings: Settings,
+		arle: Position = undefined,
+		schezo = { x: null, y: null } as Position,
+		standardAngle = 0,
+		rotating: Direction = null
+	) {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
-		this.arle = arle || { x: 2, y: this.settings.rows + 0.5 };
+		this.arle = arle || { x: 2, y: this.settings.rows + 0.5 } as Position;
 		this.schezo = schezo;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
@@ -33,20 +54,20 @@ export class Drop {
 	/**
 	 * Returns a new, random drop determined by the gamemode and the player's dropset.
 	 */
-	static getNewDrop(settings, colours) {
+	static getNewDrop(settings: Settings, colours: number[]): Drop {
 		let shape;
-		if(settings.gamemode === 'Tsu') {
-			shape = 'I';
+		if(settings.gamemode === Gamemode.TSU) {
+			shape = Shape.I;
 		}
 		else {
-			// Get the shape from the dropset
-			shape = settings.dropset[settings.dropset_position];
-			settings.dropset_position++;
+			// // Get the shape from the dropset
+			// shape = settings.dropset[settings.dropset_position];
+			// settings.dropset_position++;
 
-			// Check if the end of the dropset has been reached
-			if(settings.dropset_position === settings.dropset.length - 1) {
-				settings.dropset_position = 1;
-			}
+			// // Check if the end of the dropset has been reached
+			// if(settings.dropset_position === settings.dropset.length - 1) {
+			// 	settings.dropset_position = 1;
+			// }
 		}
 
 		// Generate array of colours based on the shape of the drop
@@ -55,19 +76,19 @@ export class Drop {
 		const second_col = (colours && colours[1]) || Utils.getRandomColour(settings.numColours);
 
 		switch(shape) {
-			case 'I':
+			case Shape.I:
 				puyos = [first_col, second_col];
 				break;
-			case 'h':
+			case Shape.h:
 				puyos = [first_col, first_col, second_col];
 				break;
-			case 'L':
+			case Shape.L:
 				puyos = [first_col, second_col, second_col];
 				break;
-			case 'H':
+			case Shape.H:
 				puyos = [first_col, first_col, second_col, second_col];
 				break;
-			case 'O':
+			case Shape.O:
 				puyos = [first_col, first_col, first_col, first_col];
 				break;
 		}
@@ -81,13 +102,13 @@ export class Drop {
 	 * NOTE: The settings object only uses a shallow copy.
 	 * However, it should not be able to be modified during a game.
 	 */
-	copy() {
+	copy(): Drop {
 		return new Drop(
 			this.shape,
 			this.colours.slice(),
 			this.settings,
-			Utils.objectCopy(this.arle),
-			Utils.objectCopy(this.schezo),
+			Utils.objectCopy(this.arle) as Position,
+			Utils.objectCopy(this.schezo) as Position,
 			this.standardAngle,
 			this.rotating);
 	}
@@ -95,21 +116,21 @@ export class Drop {
 	/**
 	 * Moves a Drop. Validation is done before calling this method.
 	 */
-	shift(direction, amount = 1) {
+	shift(direction: Direction, amount = 1): void {
 		switch(direction) {
-			case 'Left':
+			case Direction.LEFT:
 				this.arle.x -= amount;
 				break;
-			case 'Right':
+			case Direction.RIGHT:
 				this.arle.x += amount;
 				break;
-			case 'Down':
+			case Direction.DOWN:
 				this.arle.y -= this.settings.softDrop;
 				if(this.arle.y < 0) {
 					this.arle.y = 0;
 				}
 				break;
-			case 'Up':
+			case Direction.UP:
 				this.arle.y += amount;
 		}
 	}
@@ -117,7 +138,7 @@ export class Drop {
 	/**
 	 * Rotates a Drop. Validation is done before calling this method.
 	 */
-	rotate(direction, angle = 0) {
+	rotate(direction: Direction, angle = 0): void {
 		if(angle === 180) {
 			this.rotating180 = 2;
 		}
@@ -127,7 +148,7 @@ export class Drop {
 	/**
 	 * Applies the effect of gravity to the Drop. Validation is done before calling this method.
 	 */
-	affectGravity() {
+	affectGravity(): void {
 		this.arle.y -= this.settings.gravity;
 	}
 
@@ -136,12 +157,12 @@ export class Drop {
 	 * The arle's standard angle must be between 0 and 2*PI.
 	 * The drop will stop rotating once its standard angle reaches an integer multiple of PI/2 radians (unless it is 180 rotating).
 	 */
-	affectRotation() {
+	affectRotation(): void {
 		let angleToRotate;
-		if(this.rotating === 'CW') {
+		if(this.rotating === Direction.CW) {
 			angleToRotate = -Math.PI / (2 * this.settings.frames_per_rotation);
 		}
-		else if(this.rotating === 'CCW') {
+		else if(this.rotating === Direction.CCW) {
 			angleToRotate = Math.PI / (2 * this.settings.frames_per_rotation);
 		}
 		else {
@@ -171,7 +192,7 @@ export class Drop {
 				return;
 			}
 			// Rotation has finished
-			this.rotating = 'not';
+			this.rotating = null;
 			this.rotating180 = 0;
 		}
 	}
@@ -181,8 +202,8 @@ export class Drop {
 	 * Called when the Drop is locked into place, as due to rotation it may be misaligned.
 	 * This function snaps the Drop to the grid (if needed), making it easy to lock and add to the stack.
 	 */
-	finishRotation() {
-		if(this.rotating === 'not') {
+	finishRotation(): void {
+		if(this.rotating === null) {
 			return;
 		}
 		const cw = (this.rotating === 'CW');
@@ -208,7 +229,7 @@ export class DropGenerator {
 	colourList: number[];
 	colourBuckets: Record<string, number>;
 
-	constructor(settings) {
+	constructor(settings: Settings) {
 		this.settings = settings;
 		this.seed = this.settings.seed;
 		this.drops = [];
@@ -223,7 +244,7 @@ export class DropGenerator {
 		});
 
 		// Generate the 3 colours (or less) that will be used for the first 3 drops
-		const firstColours = [];
+		const firstColours: number[] = [];
 		while(firstColours.length < Math.min(3, settings.numColours)) {
 			const colour = this.colourList[Math.floor(this.randomNumber() * this.colourList.length)];
 			if(!firstColours.includes(colour)) {
@@ -258,8 +279,10 @@ export class DropGenerator {
 
 	/**
 	 * Called when a queue is running low on drops so that a new batch is generated.
+	 * @param  {number} index The current index of the drop batch
+	 * @return {Drop[]}       The next drop batch
 	 */
-	requestDrops(index) {
+	requestDrops(index: number): Drop[] {
 		if(this.drops[index + 1] === undefined) {
 			this.drops[index + 1] = [];
 
@@ -288,7 +311,7 @@ export class DropGenerator {
 	/**
 	 * Seeded RNG so that each game's drop generator always creates the same drops
 	 */
-	randomNumber() {
+	randomNumber(): number {
 		const x = Math.sin(this.seed++) * 10000;
 		return x - Math.floor(x);
 	}

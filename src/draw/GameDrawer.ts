@@ -1,6 +1,6 @@
 'use strict';
 
-import * as SpriteDrawer from './Draw';
+import { drawSprite } from './Draw';
 import * as CONSTANTS from './DrawingConfig';
 
 export class CanvasLayer {
@@ -54,7 +54,7 @@ export class DrawingLayer extends CanvasLayer {
 			args.dX *= this.unit;
 			args.dY *= this.unit;
 
-			void SpriteDrawer.drawSprite(args);
+			drawSprite(args);
 		}
 	}
 

@@ -1,5 +1,6 @@
 interface Sprite {
 	image: HTMLImageElement,
+	loaded: boolean,
 	sizes: Map<number, HTMLCanvasElement>
 }
 

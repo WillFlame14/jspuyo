@@ -2,7 +2,7 @@
 
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Game } from './Game';
-import { GameArea } from './GameDrawer';
+import { GameArea } from './draw/GameArea';
 import { InputManager } from './InputManager';
 import { Settings, UserSettings } from './utils/Settings';
 

@@ -17,14 +17,13 @@ const SpriteCache: Record<string, Sprite> = {};
  *
  */
 
-export async function drawSprite(args: DrawingArgs): Promise<void> {
+export function drawSprite(args: DrawingArgs): void {
 	const { ctx, appearance: spriteSheet, size, sX, sY, dX = 0, dY = 0, sWidth = 1, sHeight = 1, merge = true} = args;
 
 	const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
-	if (await loadSprite(spriteSheet, sourceSize)) {
+	if (loadSprite(spriteSheet, sourceSize)) {
 		const spriteWidth = sWidth * sourceSize + (sWidth - 1) * sourceSize / SHEET_USED_UNIT;
 		const spriteHeight = sHeight * sourceSize + (sHeight - 1) * sourceSize / SHEET_USED_UNIT;
-		// console.log(`${SpriteCache[spriteSheet].sizes.get(sourceSize).id}`);
 		ctx.drawImage(
 			SpriteCache[spriteSheet].sizes.get(sourceSize),
 			(sX * SHEET_UNIT / SHEET_USED_UNIT + 1 / SHEET_USED_UNIT) * sourceSize,
@@ -36,6 +35,7 @@ export async function drawSprite(args: DrawingArgs): Promise<void> {
 	}
 }
 
+
 /**
  * Loads canvas with scaled sprite sheet if it hasn't been done yet.
  * Will return false if the original image hasn't been loaded and cannot be accessed to scale into a canvas.
@@ -43,15 +43,8 @@ export async function drawSprite(args: DrawingArgs): Promise<void> {
  * @param  {number} 	size        [description]
  * @return {boolean}	            Whether the sprite was able to be drawn.
  */
-async function loadSprite(spriteSheet: string, size: number) {
-	const timeout: Promise<string> = new Promise((resolve, reject) => {
-		setTimeout(() => reject('The canvas element could not be loaded.'), 10000);
-	});
-	try {
-		await Promise.race([loadImage(spriteSheet), timeout]);
-	}
-	catch(err) {
-		console.log(err);
+function loadSprite(spriteSheet: string, size: number) {
+	if(!loadImage(spriteSheet)) {
 		return false;
 	}
 
@@ -75,23 +68,22 @@ async function loadSprite(spriteSheet: string, size: number) {
 /**
  * Loads sprite sheet image if it hasn't been done yet.
  * @param 	{string} 	 	spriteSheet The name of the spritesheet to be loaded
- * @return 	{Promise<void>}				A promise that resolves when the image has loaded.
+ * @return 	{boolean}					Whether the image has been loaded yet
  */
-function loadImage(spriteSheet: string): Promise<void> {
-	if(SpriteCache[spriteSheet] != null) {
-		return Promise.resolve();
+function loadImage(spriteSheet: string): boolean {
+	if(SpriteCache[spriteSheet]) {
+		return SpriteCache[spriteSheet].loaded;
 	}
 
-	return new Promise((resolve) => {
-		const sprite = { sizes: new Map<number, HTMLCanvasElement>() } as Sprite;
+	const sprite = { sizes: new Map<number, HTMLCanvasElement>(), loaded: false } as Sprite;
 
-		const image = new Image();
-		image.src = `./images/${spriteSheet}.png`;
-		image.addEventListener('load', function() {
-			resolve();
-		});
-		sprite.image = image;
-
-		SpriteCache[spriteSheet] = sprite;
+	const image = new Image();
+	image.src = `./images/${spriteSheet}.png`;
+	image.addEventListener('load', function() {
+		sprite.loaded = true;
 	});
+	sprite.image = image;
+
+	SpriteCache[spriteSheet] = sprite;
+	return sprite.loaded;
 }

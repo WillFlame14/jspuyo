@@ -2,7 +2,7 @@
 
 import firebase = require('firebase/app');
 
-import { GameArea } from './GameDrawer';
+import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
 import { Session } from './Session';
 import { Settings, UserSettings } from './utils/Settings';

@@ -3,7 +3,7 @@
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Board } from './Board';
 import { Direction, Drop, DropGenerator } from './Drop';
-import { GameArea } from './GameDrawer';
+import { GameArea } from './draw/GameArea';
 import { Settings, UserSettings } from './utils/Settings';
 import { StatTracker } from './StatTracker';
 import * as Utils from './utils/Utils';

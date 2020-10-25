@@ -16,9 +16,10 @@ cache:
 install:
   - npm ci
 script:
+  - npm run tsc
   - npm test
-  - npm run uglify & npm run uglify_limited
-  - npm run sass_prod
-  - npm run autoprefix_prod
+  - npm run uglify & npm run uglify-limited
+  - npm run sass
+  - npm run autoprefix
   - node server.js & wait-on http://localhost:3000
   - $(npm bin)/cypress run --record

@@ -19,17 +19,14 @@ export class Room {
 	paused: string[] = [];
 	unfocused: string[] = [];
 	spectating = new Map<string, SocketIO.Socket>();
-	defeated = [];
-	timeout = null;
+	defeated: string[] = [];
+	timeout: ReturnType<typeof setTimeout> = null;
 
 	roomSize: number;
 	settingsString: string;
 	roomType: string;
-	quickPlayTimer: ReturnType<typeof setTimeout>;		// This, and the below variable are only used if roomType is 'ffa'
-	quickPlayStartTime: number;
-
-	static rankedRoomId;
-
+	quickPlayTimer: ReturnType<typeof setTimeout> = null;		// This, and the below variable are only used if roomType is 'ffa'
+	quickPlayStartTime: number = null;
 
 	constructor(
 		roomId: string,
@@ -42,12 +39,9 @@ export class Room {
 		this.roomId = roomId;
 		this.members = members;
 		this.host = host;
-
 		this.roomSize = roomSize;
 		this.settingsString = settingsString;
 		this.roomType = roomType;
-		this.quickPlayTimer = null;		// This, and the below variable are only used if roomType is 'ffa'
-		this.quickPlayStartTime = null;
 
 		this.members.forEach((player, gameId) => {
 			// Send update to all players
@@ -70,6 +64,8 @@ export class Room {
 
 	/**
 	 * Sets new settings of the room.
+	 * @param {string} settingsString The new settingsString
+	 * @param {number} roomSize       The new room size.
 	 */
 	changeSettings(settingsString: string, roomSize: number): void {
 		this.settingsString = settingsString;
@@ -78,6 +74,10 @@ export class Room {
 
 	/**
 	 * Adds a player/CPU to an existing room.
+	 * @param {string}          gameId  [description]
+	 * @param {SocketIO.Socket} socket  [description]
+	 * @param {CpuInfo}         cpuInfo Additional information if this is a CPU player (optional).
+	 * @param {boolean}         notify 	Whether to notify the other members of the room that someone has joined (true by default).
 	 */
 	join(gameId: string, socket: SocketIO.Socket, cpuInfo = null, notify = true): void {
 		// Room is full or ingame
@@ -110,6 +110,8 @@ export class Room {
 
 	/**
 	 * Spectates a room (receives player data but does not play).
+	 * @param {string}          gameId The game id of the player wishing to spectate
+	 * @param {SocketIO.Socket} socket The player's socket
 	 */
 	spectate(gameId: string, socket: SocketIO.Socket): void {
 		if(this.members.has(gameId)) {
@@ -124,16 +126,14 @@ export class Room {
 
 		// Send start if ingame, otherwise
 		if(this.ingame) {
-			socket.emit(
-				'spectate',
+			socket.emit('spectate',
 				this.roomId,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 				this.settingsString
 			);
 		}
 		else {
-			socket.emit(
-				'roomUpdate',
+			socket.emit('roomUpdate',
 				this.roomId,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 				this.roomSize,
@@ -224,14 +224,8 @@ export class Room {
 			);
 		});
 
-		switch(this.roomType) {
-			case 'ffa':
-				this.quickPlayTimer = null;
-				break;
-			case 'ranked':
-				// RoomManager.rankedRoomId = null;
-				this.quickPlayTimer = null;
-				break;
+		if(this.roomType === 'ffa' || this.roomType === 'ranked') {
+			this.quickPlayTimer = null;
 		}
 
 		console.log(`Started room ${this.roomId}`);
@@ -241,6 +235,10 @@ export class Room {
 	/**
 	 * Removes a player from a room (if possible).
 	 * Returns true if the room is now empty, and false if it is not.
+	 * @param  {string}  gameId   The game id of the player.
+	 * @param  {boolean} notify   Whether to notify the other players of the removal (true by default).
+	 * @param  {boolean} spectate Whether the player is switching to spectating or not (false by default).
+	 * @return {boolean}          True if the room is now empty, and false otherwise.
 	 */
 	leave(gameId: string, notify = true, spectate = false): boolean {
 		if(this.spectating.has(gameId)) {
@@ -440,8 +438,7 @@ export class Room {
 		}
 
 		this.members.forEach((player, id) => {
-			player.socket.emit(
-				'roomUpdate',
+			player.socket.emit('roomUpdate',
 				this.roomId,
 				playersInRoom,
 				this.roomSize,
@@ -454,8 +451,7 @@ export class Room {
 		});
 
 		this.spectating.forEach(socket => {
-			socket.emit(
-				'roomUpdate',
+			socket.emit('roomUpdate',
 				this.roomId,
 				playersInRoom,
 				this.roomSize,

@@ -52,8 +52,8 @@ export class RoomManager {
 		return room;
 	}
 
-	static joinRoom(gameId: string, roomId: string = null, socket: SocketIO.Socket, roomPassword: string = null): Room {
-		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
+	static joinRoom(gameId: string, roomId: string, socket: SocketIO.Socket, roomPassword: string = null): Room {
+		const room = roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
 			throw new Error(`The room you are trying to join ${roomId ? `(id ${roomId}) `:''}does not exist.`);

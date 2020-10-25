@@ -60,13 +60,7 @@ export function initApp(globalSocket: SocketIOClient.Socket): Promise<firebase.U
 			// Just logged in
 			if (user) {
 				document.getElementById('firebaseui-auth-container').style.display = 'none';
-
-				if(user.isAnonymous) {
-					document.getElementById('guestMessage').style.display = 'block';
-				}
-				else {
-					document.getElementById('guestMessage').style.display = 'none';
-				}
+				document.getElementById('guestMessage').style.display = user.isAnonymous ? 'block' : 'none';
 
 				// Open username change screen if new user
 				if(newUser) {
@@ -206,7 +200,7 @@ function validateUsername(username: string): Promise<string> {
 				resolve();
 			}
 			else {
-				const takenUsernames = Object.values(data.val()).map((pair: Record<string, string>) => pair.username);
+				const takenUsernames: string[] = Object.values(data.val());
 				if(takenUsernames.includes(username)) {
 					reject('This username is already in use.');
 				}

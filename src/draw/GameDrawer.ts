@@ -1,6 +1,6 @@
 'use strict';
 
-import { drawSprite } from './Draw';
+import { drawSprite } from './SpriteDrawer';
 import * as CONSTANTS from './DrawingConfig';
 
 export class CanvasLayer {

@@ -29,26 +29,47 @@ export class Game {
 	currentBoardHash: string;
 	currentDrop: Drop;
 
-	endResult: string = null;			// Final result of the game
-	softDrops = 0;				// Frames in which the soft drop button was held
-	dropNum = 0;				// Current drop number
-	preChainScore = 0;			// Cumulative score from previous chains (without any new softdrop score)
-	currentScore = 0;			// Current score (completely accurate)
+	/** Final result of the game */
+	endResult: string = null;
+
+	/** Frames in which the soft drop button was held for this drop */
+	softDrops = 0;
+
+	/** Current drop number */
+	dropNum = 0;
+
+	/** Cumulative score from previous chains (without any new softdrop score) */
+	preChainScore = 0;
+
+	/** Current score (completely accurate) */
+	currentScore = 0;
+
 	allClear = false;
 	paused = false;
 
-	leftoverNuisance = 0;		// Leftover nuisance (decimal between 0 and 1)
-	visibleNuisance = {};		// Dictionary of { gameId: amount } of received nuisance
-	activeNuisance = 0;			// Active nuisance
-	lastRotateAttempt = {};		// Timestamp of the last failed rotate attempt
-	resolvingChains: Puyo[][] = [];		// Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...]
+	/** Leftover nuisance (decimal between 0 and 1) */
+	leftoverNuisance = 0;
+
+	/** Dictionary of { gameId: amount } of received nuisance */
+	visibleNuisance: Record<string, number> = {};
+
+	/** Currently active nuisance (about to fall) */
+	activeNuisance = 0;
+
+	/** Timestamp of the last failed rotate attempt */
+	lastRotateAttempt = {} as Record<Direction, number>;
+
+	/** Array containing arrays of chaining puyos [[puyos_in_chain_1], [puyos_in_chain_2], ...] */
+	resolvingChains: Puyo[][] = [];
+
 	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
 	squishState = { currentFrame: -1 };
 	fallingVelocity: Record<number, number> = [];
 	currentFrame = 0;
 
-	currentDropLockFrames = 0;			// Frames spent being locked
+	/** Frames spent being locked for the current drop */
+	currentDropLockFrames = 0;
 	forceLock = false;
 	currentMovements = [];
 

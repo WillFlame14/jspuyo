@@ -35,7 +35,6 @@ export function drawSprite(args: DrawingArgs): void {
 	}
 }
 
-
 /**
  * Loads canvas with scaled sprite sheet if it hasn't been done yet.
  * Will return false if the original image hasn't been loaded and cannot be accessed to scale into a canvas.

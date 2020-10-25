@@ -3,20 +3,25 @@
 import { UserSettings } from './utils/Settings';
 
 export class InputManager{
-	events: Record<string, (data, das) => void>;
-	keysPressed: Record<string, boolean>;
-	lastPressed: string;
-	dasTimer: Record<string, number>;
-	arrTimer: Record<string, number>;
+	/** Array of callback functions, indexed at their triggering event */
+	events: Record<string, (data, das) => void> = {};
+
+	/** Object containing keys with whether they are pressed or not */
+	keysPressed: Record<string, boolean> = {};
+
+	/** Last pressed Left/Right key. Becomes undefined if the key is released. */
+	lastPressed: string = undefined;
+
+	/** Object containing DAS timers for each key */
+	dasTimer: Record<string, number> = {};
+
+	/** Object containing ARR timers for each key */
+	arrTimer: Record<string, number> = {};
+
 	userSettings: UserSettings;
 	keyBindings: KeyBindings;
 
 	constructor(userSettings: UserSettings) {
-		this.events = {};				// Array of callback functions, indexed at their triggering event
-		this.keysPressed = {};			// Object containing keys with whether they are pressed or not
-		this.lastPressed = undefined;	// Last pressed Left/Right key. Becomes undefined if the key is released.
-		this.dasTimer = {};				// Object containing DAS timers for each key
-		this.arrTimer = {};				// Object containing ARR timers for each key
 		this.userSettings = userSettings;
 		this.keyBindings = userSettings.keyBindings;
 

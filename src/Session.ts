@@ -11,7 +11,10 @@ export class Session {
 	roomId: string;
 	spectating: boolean;
 
+	/** Flag to force the session to end immediately. */
 	forceStop = false;
+
+	/** Whether the session has stopped or not. */
 	stopped = false;
 
 	constructor(gameId: string, game: Game, socket: SocketIOClient.Socket, roomId: string, spectating = false) {
@@ -22,6 +25,9 @@ export class Session {
 		this.spectating = spectating;
 	}
 
+	/**
+	 * Starts the session by running requestAnimationFrame().
+	 */
 	run(): void {
 		const main = () => {
 			const mainFrame = window.requestAnimationFrame(main);
@@ -54,6 +60,10 @@ export class Session {
 		main();
 	}
 
+	/**
+	 * Called internally when the game has ended. Emits the corresponding response to the server.
+	 * @param {string} endResult The result of the game.
+	 */
 	finish(endResult: string): void {
 		switch(endResult) {
 			case 'Win':

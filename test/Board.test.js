@@ -317,7 +317,7 @@ describe('Board.js', function() {
 			];
 
 			const board = new Board(new Settings(), boardState);
-			const { nuisanceDropped, nuisanceArray } = board.dropNuisance(10);
+			const { nuisanceAmount, nuisanceArray } = board.dropNuisance(10);
 
 			let total_nuisance = 0;
 
@@ -326,7 +326,7 @@ describe('Board.js', function() {
 				total_nuisance += col.length;
 			});
 
-			expect(nuisanceDropped).to.equal(10);
+			expect(nuisanceAmount).to.equal(10);
 			expect(total_nuisance).to.equal(10);
 		});
 
@@ -341,7 +341,7 @@ describe('Board.js', function() {
 			];
 
 			const board = new Board(new Settings(), boardState);
-			const { nuisanceDropped, nuisanceArray } = board.dropNuisance(40);
+			const { nuisanceAmount, nuisanceArray } = board.dropNuisance(40);
 
 			let total_nuisance = 0;
 
@@ -350,7 +350,7 @@ describe('Board.js', function() {
 				total_nuisance += col.length;
 			});
 
-			expect(nuisanceDropped).to.equal(30);
+			expect(nuisanceAmount).to.equal(30);
 			expect(total_nuisance).to.equal(30);
 		});
 	});

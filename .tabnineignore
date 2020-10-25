@@ -1,0 +1,4 @@
+public/
+cypress/
+test/
+.git/

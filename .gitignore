@@ -1,7 +1,9 @@
-node_modules
+node_modules/
 bundle.js
 limited.js
 style.css
 temp.css
 cypress/screenshots
 cypress/videos
+src/**/*.js
+server.js

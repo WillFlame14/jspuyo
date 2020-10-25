@@ -32,7 +32,8 @@ If you're having trouble even with the basic CPUs, you can try lowering their sp
 - Run `npm run stylelint` to get stylelint to automatically fix as many style issues as possible.
 
 ### Running locally
-- Run `npm start` to bundle the files (using watchify and sass) and start node.
+- Run `npm run tsc` to compile all the TypeScript files into JavaScript files.
+- Run `npm start` to bundle the files (using watchify, tsc and sass) and start node.
 - Type `localhost:3000` into the browser to access the website. Query options can be appended as usual.
 
 

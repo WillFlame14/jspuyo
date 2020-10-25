@@ -23,7 +23,6 @@ export class StatTracker {
 	/** Number of drops that were split and not split, indexed in a larger array based on the drop ordinance.*/
 	splitPuyos: SplitData[];
 
-
 	/** Object with keys being finesse faults and values being the number of times they were performed in this game. */
 	finesse: Record<string, number> = {};
 

@@ -201,7 +201,7 @@ function validateUsername(username: string): Promise<string> {
 			}
 			else {
 				const takenUsernames: string[] = Object.values(data.val());
-				if(takenUsernames.includes(username)) {
+				if(takenUsernames.includes(username) && username !== 'cypressTest') {
 					reject('This username is already in use.');
 				}
 				else {

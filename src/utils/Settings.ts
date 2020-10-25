@@ -53,6 +53,7 @@ export class Settings {
 		this.minChain = minChain;			// Minimum chain before nuisance is sent
 		this.seed = seed;					// Seed for generating drops
 
+		this.timer = Date.now();
 		this.nuisanceSpawnRow = this.rows + 2;
 	}
 

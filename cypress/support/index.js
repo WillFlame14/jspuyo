@@ -30,7 +30,7 @@ before(() => {
 				cy.contains('Continue as guest').click();
 				cy.get('#usernamePickerText').type(TEST_USERNAME);
 				cy.contains('Confirm').click();
-				cy.contains('Free for all').should('be.visible');
+				cy.contains('Free For All').should('be.visible');
 			}
 		});
 	});

@@ -1,5 +1,8 @@
 'use strict';
 
+import * as Vue from 'vue';
+import mitt from 'mitt';
+
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { initCustomPanels } from './panels_custom';
@@ -16,13 +19,15 @@ const ranks: Record<string, string> = {
 };
 
 export function panelsInit(
+	app: Vue.App<Element>,
+	emitter: ReturnType<typeof mitt>,
 	socket: SocketIOClient.Socket,
 	getCurrentUID: () => string,
 	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer
 ): void {
 	initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
-	initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
+	initProfilePanels(app, emitter, clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
 
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
@@ -123,9 +128,9 @@ export async function updateUserSettings(user: firebase.User, currentUID: string
 
 	// Update the key bindings
 	const keyBindings = userSettings.keyBindings;
-	Object.keys(keyBindings).forEach(key => {
-		(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key] as string;
-	});
+	// Object.keys(keyBindings).forEach(key => {
+	// 	(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key] as string;
+	// });
 	setKeyBindings(keyBindings);
 
 	// Update the selected appearance

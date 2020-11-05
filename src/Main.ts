@@ -1,6 +1,8 @@
 'use strict';
 
 import firebase = require('firebase/app');
+import * as Vue from 'vue';
+import mitt from 'mitt';
 
 import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
@@ -21,11 +23,23 @@ const globalAudioPlayer = new AudioPlayer(globalSocket);
 
 let currentUID: string;
 
+declare module '@vue/runtime-core' {
+	interface ComponentCustomProperties {
+		emitter: ReturnType<typeof mitt>
+	}
+}
+
 // This is the "main" function, which starts up the entire app.
 void (async function() {
+	const app = Vue.createApp({});
+
+	// Create emitter and attach to Vue
+	const emitter = mitt();
+	app.config.globalProperties.emitter = emitter;
+
 	init(globalSocket);			// game-related
 	navbarInit(globalAudioPlayer);
-	panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+	panelsInit(app, emitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
 	dialogInit();
 	mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer);
 

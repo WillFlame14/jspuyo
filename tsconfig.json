@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "module": "commonjs",
     "moduleResolution": "node",
+    "noImplicitThis": true,
     "target": "ESNext"
   },
   "include": ["./src/**/*", "./server.ts"]

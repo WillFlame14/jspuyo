@@ -74,6 +74,7 @@ io.on('connection', function(socket) {
 			const promise =	new Promise(resolve => {
 				cpuSocket.emit('cpuAssign', gameId, cpuId, () => resolve());
 			});
+
 			promises.push(promise);
 		});
 

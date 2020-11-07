@@ -6,8 +6,11 @@ import mitt from 'mitt';
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { initCustomPanels } from './panels_custom';
-import { setKeyBindings, setAppearance, initProfilePanels } from './panels_profile';
+import { initProfilePanels } from './panels_profile';
 import { UserSettings } from '../utils/Settings';
+
+let globalEmitter: ReturnType<typeof mitt>;
+let globalAudioPlayer: AudioPlayer;
 
 export const puyoImgs: string[] = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
 const ranks: Record<string, string> = {
@@ -26,6 +29,9 @@ export function panelsInit(
 	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer
 ): void {
+	globalEmitter = emitter;
+	globalAudioPlayer = audioPlayer;
+
 	initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
 	initProfilePanels(app, emitter, clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
 
@@ -104,7 +110,7 @@ export function clearModal(): void {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-export async function updateUserSettings(user: firebase.User, currentUID: string, globalAudioPlayer: AudioPlayer): Promise<void> {
+export async function updateUserSettings(user: firebase.User, currentUID: string): Promise<void> {
 	const promises: [Promise<UserSettings>, Promise<number>] = [
 		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
 		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)
@@ -112,30 +118,10 @@ export async function updateUserSettings(user: firebase.User, currentUID: string
 
 	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
 
-	// These settings can be easily updated since they only contain a numeric value.
-	const numericProperties = ['das', 'arr'];
-	numericProperties.forEach(property => {
-		(document.getElementById(property) as HTMLInputElement).value = `${userSettings[property] as number}`;
-	});
+	console.log(`configuring volume with ${userSettings.sfxVolume} and ${userSettings.musicVolume} from updateUserSettings`);
+	globalAudioPlayer.configureVolume(userSettings);
 
-	// Intermediate Frames Shown is inverted
-	(document.getElementById('skipFrames') as HTMLInputElement).value = `${50 - userSettings.skipFrames}`;
-
-	// Volume controls are non-linear
-	(document.getElementById('sfxVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
-	(document.getElementById('musicVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
-	globalAudioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
-
-	// Update the key bindings
-	const keyBindings = userSettings.keyBindings;
-	// Object.keys(keyBindings).forEach(key => {
-	// 	(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key] as string;
-	// });
-	setKeyBindings(keyBindings);
-
-	// Update the selected appearance
-	document.getElementById(userSettings.appearance).classList.add('selected');
-	setAppearance(userSettings.appearance);
+	globalEmitter.emit('setSettings', userSettings);
 
 	// Update the status bar
 	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');

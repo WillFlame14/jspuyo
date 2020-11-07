@@ -141,7 +141,7 @@ export class SpectateGame extends Game {
 		});
 
 		this.audioPlayer = audioPlayer;
-		this.audioPlayer.configureVolume(this.userSettings.sfxVolume, this.userSettings.musicVolume);
+		this.audioPlayer.configureVolume(this.userSettings);
 
 		// Reset the event listeners
 		this.socket.off('sendState', undefined);

@@ -220,8 +220,4 @@ export class UserSettings {
 			hardDrop: 'ArrowUp'
 		};
 	}
-
-	set(key: string, value: string): void {
-		this[key] = value;
-	}
 }

@@ -569,12 +569,12 @@ input.numPlayerButton {
 }
 
 // Sliders for volume, skipFrames, etc.
-#settingsSliders {
-	label {
+.sliders {
+	.slider-label {
 		margin: 20px 0px 10px;
 	}
 
-	input[type="range"] {
+	.slider-range {
 		width: 90%;
 		margin-bottom: 15px;
 	}

@@ -62,7 +62,8 @@ function loginSuccess(user: firebase.User) {
 	globalSocket.off('registered', undefined);
 	globalSocket.on('registered', () => {
 		currentUID = user.uid;
-		updateUserSettings(user, currentUID, globalAudioPlayer).then(() => {
+		console.log('registered!');
+		updateUserSettings(user, currentUID).then(() => {
 			// Check if a joinRoom link was used
 			const urlParams = new URLSearchParams(window.location.search);
 			const joinId = urlParams.get('joinRoom');				// Id of room to join

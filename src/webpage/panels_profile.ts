@@ -6,19 +6,8 @@ import mitt from 'mitt';
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo, signOut } from './firebase';
 import { UserSettings } from '../utils/Settings';
-import { KeyBindings } from './KeyBindingsComponent';
 
-// Default key bindings
-let keyBindings = {
-	moveLeft: 'ArrowLeft',
-	moveRight: 'ArrowRight',
-	rotateCCW: 'KeyZ',
-	rotateCW: 'KeyV',
-	softDrop: 'ArrowDown',
-	hardDrop: 'ArrowUp'
-};
-// let keyBindingRegistration: string = null;
-let selectedAppearance = 'TsuClassic';
+import { SettingsModal } from './SettingsModal';
 
 export function initProfilePanels(
 	app: Vue.App<Element>,
@@ -31,9 +20,9 @@ export function initProfilePanels(
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
-	app.component('key-bindings', KeyBindings);
+	app.component('settings-modal', SettingsModal);
 
-	app.mount('#keyBindings');
+	app.mount('#modal-background');
 
 	document.getElementById('gallery').onclick = async function() {
 		void stopCurrentSession();
@@ -64,80 +53,25 @@ export function initProfilePanels(
 
 		modal.style.display = 'block';
 
-		// Use saved settings
-		emitter.emit('bindKeys', keyBindings);
-
 		document.getElementById('settingsModal').style.display = 'block';
 	};
 
-	// Attach onclick events for each icon
-	Array.from(document.getElementsByClassName('appearanceIcon')).forEach((icon: HTMLElement) => {
-		icon.onclick = function() {
-			// Remove selection from previous icon
-			document.getElementById(selectedAppearance).classList.remove('selected');
+	emitter.on('saveSettings', (newSettings: UserSettings) => {
+		void PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
+			userSettings = Object.assign(userSettings, newSettings);
 
-			// Add newly selected icon
-			icon.classList.add('selected');
-			selectedAppearance = icon.id;
-		};
-	});
+			// Configure audio player with new volume settings
+			console.log(`configuring volume with ${userSettings.sfxVolume} and ${userSettings.musicVolume} from saveSettings`);
+			audioPlayer.configureVolume(userSettings);
 
-	document.getElementById('settingsSubmit').onclick = async function() {
-		const userSettings = await PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings') as UserSettings;
+			// Update values
+			PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
 
-		const das = Number((document.getElementById('das') as HTMLInputElement).value);
-		if(!Number.isNaN(das) && das >= 0) {
-			userSettings.das = das;
-		}
-
-		const arr = Number((document.getElementById('arr') as HTMLInputElement).value);
-		if(!Number.isNaN(arr) && arr >= 0) {
-			userSettings.arr = arr;
-		}
-
-		// Ranges from 0 to 50, default 50 - map to 50 to 0
-		const skipFrames = Number((document.getElementById('skipFrames') as HTMLInputElement).value);
-		if(!Number.isNaN(skipFrames)) {
-			userSettings.skipFrames = 50 - Math.floor(skipFrames);
-		}
-
-		// Ranges from 0 to 100, default 50
-		const sfxVolume = Number((document.getElementById('sfxVolume') as HTMLInputElement).value);
-		if(!Number.isNaN(sfxVolume)) {
-			userSettings.sfxVolume = (sfxVolume / 100)**2 * 0.4;
-		}
-
-		// Configure audio player with new volume settings
-		audioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
-
-		// Ranges from 0 to 100, default 50
-		const musicVolume = Number((document.getElementById('musicVolume') as HTMLInputElement).value);
-		if(!Number.isNaN(musicVolume)) {
-			userSettings.musicVolume = (musicVolume / 100)**2 * 0.4;
-		}
-
-		const bindings: KeyBindings = await new Promise((resolve) => {
-			emitter.emit('reqKeys', (newBindings: Record<string, Record<string, string>>) => {
-				const simplifiedBindings = {} as KeyBindings;
-				// Reduce the object to just operation: boundKey
-				Object.keys(newBindings).forEach((key: string) => {
-					simplifiedBindings[key] = newBindings[key].boundKey;
-				});
-				resolve(simplifiedBindings);
-			});
+			audioPlayer.playSfx('submit');
+			clearModal();
 		});
 
-		userSettings.keyBindings = bindings;
-		keyBindings = bindings;	// TODO: manage this better
-		userSettings.appearance = selectedAppearance;
-
-		// Update the values
-		PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
-		audioPlayer.playSfx('submit');
-
-		// Modal is not auto-cleared since a game does not start as a result
-		clearModal();
-	};
+	});
 
 	// User Panel - Log Out
 	document.getElementById('logout').onclick = function() {
@@ -145,12 +79,4 @@ export function initProfilePanels(
 		socket.emit('unlinkUser');
 		void signOut();
 	};
-}
-
-export function setKeyBindings(newKeyBindings: KeyBindings): void {
-	keyBindings = newKeyBindings;
-}
-
-export function setAppearance(appearance: string): void {
-	selectedAppearance = appearance;
 }

@@ -107,7 +107,8 @@ export class AudioPlayer {
 		this.gameId = gameId;
 	}
 
-	configureVolume(sfxVolume: number, musicVolume: number): void {
+	configureVolume(settings: UserSettings): void {
+		const { sfxVolume, musicVolume } = settings;
 		this.sfxVolume = sfxVolume;
 		this.musicVolume = musicVolume;
 	}

@@ -3,8 +3,7 @@ import * as Vue from 'vue';
 interface Binding {
 	name: string,
 	boundKey: string,
-	displayKey: string,
-	lastBoundKey?: string
+	displayKey: string
 }
 
 const KeyBindingComponent = Vue.defineComponent({
@@ -15,9 +14,17 @@ const KeyBindingComponent = Vue.defineComponent({
 		};
 	},
 	methods: {
-		releaseBinding(operation: string) {
+		releaseBind(operation: string) {
 			this.awaitingBinding = true;
 			this.$emit('releaseBind', operation);
+		},
+		restoreBind(operation: string) {
+			if(!this.awaitingBinding) {
+				return;
+			}
+
+			this.awaitingBinding = false;
+			this.$emit('restoreBind', operation);
 		},
 		/**
 		 * Binds a new key to the currently waiting operation.
@@ -31,14 +38,6 @@ const KeyBindingComponent = Vue.defineComponent({
 
 			this.$emit('updateBind', operation, event.code);
 			this.awaitingBinding = false;
-		},
-		bindOldKey(operation: string) {
-			if(!this.awaitingBinding) {
-				return;
-			}
-
-			this.awaitingBinding = false;
-			this.$emit('restoreBind', operation);
 		}
 	},
 	template:
@@ -48,9 +47,9 @@ const KeyBindingComponent = Vue.defineComponent({
 				ref="bindInput"
 				v-bind:id="operation + 'Binding'"
 				v-bind:value="keybind.displayKey"
-				v-on:click="releaseBinding(operation)"
+				v-on:click="releaseBind(operation)"
 				v-on:keydown="bindNewKey($event, operation)"
-				v-on:blur="bindOldKey(operation)">
+				v-on:blur="restoreBind(operation)">
 		</form>`
 });
 
@@ -91,7 +90,7 @@ export const KeyBindings = Vue.defineComponent({
 					boundKey: 'ArrowUp',
 					displayKey: '\u2191'
 				}
-			} as Record<string, Binding>,
+			},
 			keyAwaitingBind: '',
 		};
 	},
@@ -157,6 +156,10 @@ export const KeyBindings = Vue.defineComponent({
 		this.emitter.on('reqKeys', (callback: (bindings: Record<string, Binding>) => void) => {
 			callback(this.bindings);
 		});
+	},
+	unmounted() {
+		this.emitter.off('bindKeys', undefined);
+		this.emitter.off('reqKeys', undefined);
 	},
 	template:
 		`<key-binding

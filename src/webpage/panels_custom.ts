@@ -1,23 +1,18 @@
 'use strict';
 
+import * as Vue from 'vue';
+import mitt from 'mitt';
+
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { CpuVariants } from '../cpu/CpuVariants';
 import { PlayerInfo } from './firebase';
-import { Gamemode, SettingsBuilder } from '../utils/Settings';
-import * as Utils from '../utils/Utils';
+import { Settings } from '../utils/Settings';
 
-const winConditions = ['FT 3', 'FT 5', 'FT 7'];
-
-const createRoomOptionsState = {
-	selectedMode: Gamemode.TSU,
-	selectedPlayers: '4player',
-	numColours: 4,
-	winCondition: 'FT 3'
-};
-
-let createRoomTrigger;
+import { RoomOptionsModal } from './RoomOptionsModal';
 
 export function initCustomPanels(
+	app: Vue.App<Element>,
+	emitter: ReturnType<typeof mitt>,
 	puyoImgs: string[],
 	stopCurrentSession: () => Promise<void>,
 	socket: SocketIOClient.Socket,
@@ -27,126 +22,23 @@ export function initCustomPanels(
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
+	app.component('create-room-modal', RoomOptionsModal);
+
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		(document.getElementById('createRoomSubmit') as HTMLInputElement).value = 'Create Room';
-
-		// Re-enable the roomsize options
-		document.querySelectorAll('.numPlayerButton').forEach(element => {
-			element.classList.remove('disabled');
-		});
-		(document.getElementById('5player') as HTMLButtonElement).disabled = false;
-
-		// Re-enable the main Room Options (Disable the mode icon in future?)
-		['numRows', 'numCols', 'numColours'].forEach(elementId => {
-			(document.getElementById(elementId) as HTMLInputElement).disabled = false;
-		});
-
-		// Re-enable the advanced Room Options
-		document.querySelectorAll('.roomOptionInput').forEach((input: HTMLInputElement) => {
-			input.disabled = false;
-		});
-
-		// Re-enable the submit button
-		document.getElementById('createRoomSubmit').style.display = 'block';
-
-		// Set the new trigger
-		setCreateRoomTrigger('create');
+		emitter.emit('setMode', 'create');
+		emitter.emit('disableRoomSettings', false);
 	};
 
-	// Switch between Tsu and Fever mods on click
-	const modeIcon = document.getElementById('modeIcon') as HTMLImageElement;
-	modeIcon.onclick = () => {
-		switch(createRoomOptionsState.selectedMode) {
-			case "Tsu":
-				modeIcon.src = "images/modal_boxes/Fever_icon.png";
-				createRoomOptionsState.selectedMode = Gamemode.FEVER;
-				break;
-			case "Fever":
-				modeIcon.src = "images/modal_boxes/Tsu_icon.png";
-				createRoomOptionsState.selectedMode = Gamemode.TSU;
-				break;
-		}
-	};
-
-	// Maintain the currently selected button and highlight it
-	Array.from(document.getElementsByClassName('numPlayerButton')).forEach((element: HTMLElement) => {
-		element.onclick = () => {
-			const oldId = createRoomOptionsState.selectedPlayers;
-			if(element.id !== oldId && !element.classList.contains('disabled')) {
-				document.getElementById(oldId).classList.remove('selected');
-				element.classList.add('selected');
-				createRoomOptionsState.selectedPlayers = element.id;
-			}
-		};
-	});
-
-	// Read the input field and update the number of colours displayed accordingly
-	document.getElementById('numColours').oninput = () => {
-		let currentNumber = Math.floor(Number((document.getElementById('numColours') as HTMLInputElement).value)) || 0;
-		let lastNumber = createRoomOptionsState.numColours;
-		const coloursSelected = document.getElementById('coloursSelected');
-
-		currentNumber = Utils.clampBetween(currentNumber, 0, 5);
-
-		while(lastNumber < currentNumber) {
-			const newImg = document.createElement('img');
-			newImg.src = `images/modal_boxes/${puyoImgs[lastNumber]}.png`;
-			coloursSelected.appendChild(newImg);
-			lastNumber++;
-		}
-
-		while(lastNumber > currentNumber) {
-			// Remove last child
-			coloursSelected.removeChild(coloursSelected.children[coloursSelected.children.length - 1]);
-			lastNumber--;
-		}
-		createRoomOptionsState.numColours = currentNumber;
-	};
-
-	// Switch between win conditions on click
-	const winConditionButton = document.getElementById('winCondition') as HTMLButtonElement;
-	winConditionButton.onclick = () => {
-		let currentIndex = winConditions.indexOf(winConditionButton.value);
-		if(currentIndex === winConditions.length - 1) {
-			currentIndex = 0;
-		}
-		else {
-			currentIndex++;
-		}
-		winConditionButton.value = winConditions[currentIndex];
-	};
-
-	document.getElementById('createRoomSubmit').onclick = async function (event) {
-		event.preventDefault();		// Prevent submit button from refreshing the page
-
-		let roomSize: number;
-		if(createRoomOptionsState.selectedPlayers === '5player') {
-			const value = Number((document.getElementById('5player') as HTMLInputElement).value) || 4;
-			roomSize = Utils.clampBetween(value, 1, 16);
-		}
-		else {
-			roomSize = Number(createRoomOptionsState.selectedPlayers.charAt(0));
-		}
-
-		// Generate the validated settings string
-		const settingsString = new SettingsBuilder()
-			.setGamemode(createRoomOptionsState.selectedMode)
-			.setGravity(Number((document.getElementById('gravity') as HTMLInputElement).value))
-			.setRows(Number((document.getElementById('numRows') as HTMLInputElement).value))
-			.setCols(Number((document.getElementById('numCols') as HTMLInputElement).value))
-			.setSoftDrop(Number((document.getElementById('softDrop') as HTMLInputElement).value))
-			.setNumColours(Number((document.getElementById('numColours') as HTMLInputElement).value))
-			.setTargetPoints(Number((document.getElementById('targetPoints') as HTMLInputElement).value))
-			.setMarginTimeInSeconds(Number((document.getElementById('marginTime') as HTMLInputElement).value))
-			.setMinChain(Number((document.getElementById('minChainLength') as HTMLInputElement).value)).build().toString();
-
-		switch(createRoomTrigger) {
+	emitter.on('submitRoomSettings', ({settings, roomSize, mode}: {settings: Settings, roomSize: number, mode: string}) => {
+		const settingsString = Object.assign(new Settings(), settings).toString();
+		switch(mode) {
 			case 'create':
-				await stopCurrentSession();
-				socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
+				void stopCurrentSession().then(() => {
+					socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
+				});
 				break;
 			case 'set':
 				socket.emit('changeSettings', getCurrentUID(), settingsString, roomSize);
@@ -157,7 +49,7 @@ export function initCustomPanels(
 		// Close the CPU options menu
 		document.getElementById('createRoomModal').style.display = 'none';
 		modal.style.display = 'none';
-	};
+	});
 
 	// Receiving the id of the newly created room
 	socket.on('giveRoomId', (id: string) => {
@@ -394,8 +286,4 @@ function createCPUOptions(puyoImgs: string[]) {
 
 		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
 	}
-}
-
-export function setCreateRoomTrigger(trigger: string): void {
-	createRoomTrigger = trigger;
 }

@@ -41,7 +41,7 @@ void (async function() {
 	navbarInit(globalAudioPlayer);
 	panelsInit(app, emitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
 	dialogInit();
-	mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer);
+	mainpageInit(emitter, globalSocket, getCurrentUID, globalAudioPlayer);
 
 	try {
 		// Login to firebase
@@ -62,7 +62,6 @@ function loginSuccess(user: firebase.User) {
 	globalSocket.off('registered', undefined);
 	globalSocket.on('registered', () => {
 		currentUID = user.uid;
-		console.log('registered!');
 		updateUserSettings(user, currentUID).then(() => {
 			// Check if a joinRoom link was used
 			const urlParams = new URLSearchParams(window.location.search);

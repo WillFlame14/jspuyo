@@ -100,7 +100,7 @@ export class Settings {
 
 // Helper functions for data validation
 
-function checkBetweenInclusive(value, min, max) {
+export function checkBetweenInclusive(value: number, min: number, max: number): number | undefined {
 	const number = Number(value);
 	if(number && number >= min && number <= max) {
 		return number;
@@ -108,7 +108,7 @@ function checkBetweenInclusive(value, min, max) {
 	return undefined;
 }
 
-function checkPositiveInteger(value) {
+export function checkPositiveInteger(value: number): number | undefined {
 	const number = Number(value);
 	if(number && number >= 1) {
 		return Math.floor(number);
@@ -116,80 +116,12 @@ function checkPositiveInteger(value) {
 	return undefined;
 }
 
-function checkNonnegativeDecimal(value) {
+export function checkNonnegativeDecimal(value: number): number | undefined {
 	const number = Number(value);
 	if(number === 0 || (number && number > 0)) {
 		return number;
 	}
 	return undefined;
-}
-
-export class SettingsBuilder {
-	gamemode: Gamemode;
-	gravity: number;
-	rows: number;
-	cols: number;
-	softDrop: number;
-	numColours: number;
-	targetPoints: number;
-	marginTime: number;
-	minChain: number;
-
-	constructor() {
-		// no default constructor
-	}
-
-	setGamemode (gamemode: Gamemode): SettingsBuilder {		// specific values fixed by options
-		this.gamemode = gamemode;
-		return this;
-	}
-
-	setGravity (gravity: number): SettingsBuilder {
-		this.gravity = checkNonnegativeDecimal(gravity);
-		return this;
-	}
-
-	setRows (rows: number): SettingsBuilder {
-		this.rows = checkBetweenInclusive(checkPositiveInteger(rows), 6, 100);
-		return this;
-	}
-
-	setCols(cols: number): SettingsBuilder {
-		this.cols = checkBetweenInclusive(checkPositiveInteger(cols), 3, 50);
-		return this;
-	}
-
-	setSoftDrop (softDrop: number): SettingsBuilder {
-		this.softDrop = checkNonnegativeDecimal(softDrop);
-		return this;
-	}
-
-	setNumColours (numColours: number): SettingsBuilder {
-		this.numColours = checkBetweenInclusive(checkPositiveInteger(numColours), 1, 6);
-		return this;
-	}
-
-	setTargetPoints (targetPoints: number): SettingsBuilder {
-		this.targetPoints = checkBetweenInclusive(checkPositiveInteger(targetPoints), 1, Infinity);
-		return this;
-	}
-
-	setMarginTimeInSeconds (marginTime: number): SettingsBuilder {
-		const value = Math.floor(checkNonnegativeDecimal(marginTime));
-		if(value) {
-			this.marginTime = value * 1000;
-		}
-		return this;
-	}
-
-	setMinChain (minChain: number): SettingsBuilder {
-		this.minChain = Math.floor(checkNonnegativeDecimal(minChain));
-		return this;
-	}
-
-	build (): Settings {
-		return new Settings(this.gamemode, this.gravity, this.rows, this.cols, this.softDrop, this.numColours, this.targetPoints, this.marginTime, this.minChain);
-	}
 }
 
 export class UserSettings {

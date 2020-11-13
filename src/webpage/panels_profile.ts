@@ -61,7 +61,6 @@ export function initProfilePanels(
 			userSettings = Object.assign(userSettings, newSettings);
 
 			// Configure audio player with new volume settings
-			console.log(`configuring volume with ${userSettings.sfxVolume} and ${userSettings.musicVolume} from saveSettings`);
 			audioPlayer.configureVolume(userSettings);
 
 			// Update values

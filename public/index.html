@@ -23,59 +23,7 @@
     </div>
     <div class="modal" id="modal-background">
         <div class="modal-content" id="createRoomModal">
-            <div class="close">&times;</div>
-            <div class="modal-title">Room Options</div>
-            <div class="left-right-container" id="createRoomOptions">
-                <div id="createRoomOptionsLeft">
-                    <div id="modeSelector">
-                        <div class="option-title">Mode</div>
-                        <img src="images/modal_boxes/Tsu_icon.png" id="modeIcon">
-                    </div>
-                    <form id="boardSizeSelector" autocomplete="off">
-                        <label for="numRows">Rows</label>
-                        <input type="number" id="numRows" value="12" min="6" max="100">
-                        <label for="numCols">Columns</label>
-                        <input type="number" id="numCols" value="6" min="3" max="50">
-                    </form>
-                    <div id="roomSizeSelector">
-                        <div class="option-title">Players</div>
-                        <form id="playerButtons" autocomplete="off">
-                            <span class="numPlayerButton" id="2player">2</span>
-                            <span class="numPlayerButton" id="3player">3</span>
-                            <span class="numPlayerButton selected" id="4player">4</span>
-                            <input class="numPlayerButton" type="text" id="5player" value="5"></input>
-                        </form>
-                    </div>
-                    <form id="coloursSelector" autocomplete="off">
-                        <label id="coloursSelectorTitle" for="numColours">Colours</label><br>
-                        <input type="number" id="numColours" value="4" min="0" max="5">
-                        <span id="coloursSelected">
-                            <img src="images/modal_boxes/puyo_red.png">
-                            <img src="images/modal_boxes/puyo_blue.png">
-                            <img src="images/modal_boxes/puyo_green.png">
-                            <img src="images/modal_boxes/puyo_yellow.png">
-                        </span>
-                    </form>
-                </div>
-                <div class="divider vertical" id="createRoomDivider"></div>
-                <form id="createRoomOptionsAdvanced" autocomplete="off">
-                    <label for="marginTime" class="roomOptionLabel">Margin Time</label>
-                    <input type="number" class="roomOptionInput" id="marginTime" value="96" min="0" max="1000">
-                    <label for="targetPoints" class="roomOptionLabel">Target Points</label>
-                    <input type="number" class="roomOptionInput" id="targetPoints" value="70" min="0" max="100000">
-                    <label for="minChainLength" class="roomOptionLabel">Min Chain Length</label>
-                    <input type="number" class="roomOptionInput" id="minChainLength" value="0" min="0" max="16">
-                    <label for="gravity" class="roomOptionLabel">Gravity</label>
-                    <input type="number" class="roomOptionInput" id="gravity" value="0.036" min="0" max="0.2">
-                    <label for="softDrop" class="roomOptionLabel">Soft Drop</label>
-                    <input type="number" class="roomOptionInput" id="softDrop" value="0.375" min="0" max="1">
-                    <label for="hardDrop" class="roomOptionLabel">Hard Drop</label>
-                    <input type="button" class="roomOptionInput off" id="hardDrop" value="OFF">
-                    <label for="winCondition" class="roomOptionLabel">Win Condition</label>
-                    <input type="button" class="roomOptionInput" id="winCondition" value="FT 3">
-                    <input type="submit" id="createRoomSubmit" value="Create Room">
-                </form>
-            </div>
+            <create-room-modal></create-room-modal>
         </div>
         <div class="modal-content" id="giveJoinId">
             <div class="close">&times;</div>
@@ -125,7 +73,9 @@
                 <button id="cpuOptionsRemove">Remove CPU</button>
             </div>
         </div>
-        <settings-modal></settings-modal>
+        <div class="modal-content" id="settingsModal">
+            <settings-modal></settings-modal>
+        </div>
         <div class="modal-content" id="roomPasswordModal">
             <div class="close">&times;</div>
             <form id="roomPasswordForm" autocomplete="off">

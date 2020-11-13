@@ -7,8 +7,7 @@ const AppearanceIcon = Vue.defineComponent({
 			v-bind:class="{selected: selected}"
 			v-bind:id="appearance"
 			v-bind:src="'images/modal_boxes/puyo_' + appearance.toLowerCase() + '.png'"
-			v-on:click="$emit('selectAppearance', appearance)"
-			>`
+			v-on:click="$emit('selectAppearance', appearance)">`
 });
 
 export const AppearanceComponent = Vue.defineComponent({

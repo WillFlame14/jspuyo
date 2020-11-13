@@ -1,11 +1,12 @@
 'use strict';
 
 import { puyoImgs } from './panels';
-import { setCreateRoomTrigger } from './panels_custom';
 import { pageInit } from './pages';
 import { PlayerInfo } from './firebase';
 import { UserSettings } from '../utils/Settings';
 import { AudioPlayer, VOICES } from '../utils/AudioPlayer';
+
+import mitt from 'mitt';
 
 const playerList = document.getElementById('playerList');
 const messageList = document.getElementById('chatMessages');
@@ -13,9 +14,12 @@ let messageId = 0;
 let lastSender = null;
 
 let currentlyHost = false;
+let globalEmitter: ReturnType<typeof mitt>;
 
-export function mainpageInit(socket: SocketIOClient.Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
+export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOClient.Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
 	pageInit();
+
+	globalEmitter = emitter;
 
 	const statusClick = document.getElementById('statusClick');
 	const statusHover = document.getElementById('statusHover');
@@ -197,16 +201,9 @@ export function mainpageInit(socket: SocketIOClient.Socket, getCurrentUID: () =>
 
 		modal.style.display = 'block';
 		document.getElementById('createRoomModal').style.display = 'block';
-		(document.getElementById('createRoomSubmit') as HTMLInputElement).value = 'Save Settings';
-
-		// Disable the roomsize options
-		document.querySelectorAll('.numPlayerButton').forEach(element => {
-			element.classList.add('disabled');
-		});
-		(document.getElementById('5player') as HTMLInputElement).disabled = true;
 
 		// Flag so the submit button causes settings to be changed (instead of creating a new room)
-		setCreateRoomTrigger('set');
+		emitter.emit('setMode', 'set');
 	};
 
 	document.getElementById('manageRoomPassword').onclick = function() {
@@ -366,18 +363,7 @@ export function toggleHost(host: boolean): void {
 		slider.disabled = !host;
 	});
 
-	// The main Room Options (Disable the mode icon in future?)
-	['numRows', 'numCols', 'numColours'].forEach(elementId => {
-		(document.getElementById(elementId) as HTMLInputElement).disabled = !host;
-	});
-
-	// The advanced Room Options
-	document.querySelectorAll('.roomOptionInput').forEach((input: HTMLInputElement) => {
-		input.disabled = !host;
-	});
-
-	// The submit button for Room Options
-	document.getElementById('createRoomSubmit').style.display = host ? 'block' : 'none';
+	globalEmitter.emit('disableRoomSettings', !host);
 
 	// Turn on all the typical room manage options
 	document.getElementById('roomManage').querySelectorAll('.player').forEach((element: HTMLElement) => {

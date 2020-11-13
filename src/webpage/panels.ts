@@ -32,7 +32,7 @@ export function panelsInit(
 	globalEmitter = emitter;
 	globalAudioPlayer = audioPlayer;
 
-	initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
+	initCustomPanels(app, emitter, puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
 	initProfilePanels(app, emitter, clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
 
 	// The black overlay that appears when a modal box is shown
@@ -52,23 +52,6 @@ export function panelsInit(
 			clearModal();
 		}
 	};
-
-	// Switch all toggleable buttons between on/off when clicked
-	const toggleableButtons = Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off')));
-	toggleableButtons.forEach((button: HTMLButtonElement) => {
-		button.onclick = () => {
-			if(button.value === "ON") {
-				button.classList.add('off');
-				button.value = "OFF";
-				button.classList.remove('on');
-			}
-			else {
-				button.classList.add('on');
-				button.value = "ON";
-				button.classList.remove('off');
-			}
-		};
-	});
 
 	// Queue Panel
 	document.getElementById('freeForAll').onclick = async () => {
@@ -117,10 +100,7 @@ export async function updateUserSettings(user: firebase.User, currentUID: string
 	];
 
 	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
-
-	console.log(`configuring volume with ${userSettings.sfxVolume} and ${userSettings.musicVolume} from updateUserSettings`);
 	globalAudioPlayer.configureVolume(userSettings);
-
 	globalEmitter.emit('setSettings', userSettings);
 
 	// Update the status bar

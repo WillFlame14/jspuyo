@@ -42,7 +42,7 @@ const KeyBindingComponent = Vue.defineComponent({
 	},
 	template:
 		`<form autocomplete="off">
-			<label v-bind:for="operation">{{keybind.name}}</label>
+			<label v-bind:for="operation + 'Binding'">{{keybind.name}}</label>
 			<input type="button" class="keyBinding"
 				ref="bindInput"
 				v-bind:id="operation + 'Binding'"
@@ -60,36 +60,12 @@ export const KeyBindings = Vue.defineComponent({
 	data(): { bindings: Record<string, Binding>, keyAwaitingBind: string } {
 		return {
 			bindings: {
-				moveLeft: {
-					name: 'Move Left',
-					boundKey: 'ArrowLeft',
-					displayKey: '\u2190'
-				},
-				moveRight: {
-					name: 'Move Right',
-					boundKey: 'ArrowRight',
-					displayKey: '\u2192'
-				},
-				rotateCCW: {
-					name: 'Rotate CCW',
-					boundKey: 'KeyZ',
-					displayKey: 'Z'
-				},
-				rotateCW: {
-					name: 'Rotate CW',
-					boundKey: 'KeyX',
-					displayKey: 'X'
-				},
-				softDrop: {
-					name: 'Soft Drop',
-					boundKey: 'ArrowDown',
-					displayKey: '\u2193'
-				},
-				hardDrop: {
-					name: 'Hard Drop',
-					boundKey: 'ArrowUp',
-					displayKey: '\u2191'
-				}
+				moveLeft: { name: 'Move Left', boundKey: 'ArrowLeft', displayKey: '\u2190' },
+				moveRight: { name: 'Move Right', boundKey: 'ArrowRight', displayKey: '\u2192' },
+				rotateCCW: { name: 'Rotate CCW', boundKey: 'KeyZ', displayKey: 'Z' },
+				rotateCW: { name: 'Rotate CW', boundKey: 'KeyX', displayKey: 'X' },
+				softDrop: { name: 'Soft Drop', boundKey: 'ArrowDown', displayKey: '\u2193' },
+				hardDrop: { name: 'Hard Drop', boundKey: 'ArrowUp', displayKey: '\u2191' }
 			},
 			keyAwaitingBind: '',
 		};
@@ -162,13 +138,15 @@ export const KeyBindings = Vue.defineComponent({
 		this.emitter.off('reqKeys', undefined);
 	},
 	template:
-		`<key-binding
-			ref="bindings"
-			v-for="(keybind, operation) in bindings"
-			v-bind:keybind="keybind"
-			v-bind:operation="operation"
-			v-on:releaseBind="releaseBind"
-			v-on:restoreBind="restoreBind"
-			v-on:updateBind="updateBind">
-		</key-binding>`
+		`<div class="keyBindings" id="keyBindings">
+			<key-binding
+				ref="bindings"
+				v-for="(keybind, operation) in bindings"
+				v-bind:keybind="keybind"
+				v-bind:operation="operation"
+				v-on:releaseBind="releaseBind"
+				v-on:restoreBind="restoreBind"
+				v-on:updateBind="updateBind">
+			</key-binding>
+		</div>`
 });

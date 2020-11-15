@@ -25,13 +25,18 @@ let currentUID: string;
 
 declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
-		emitter: ReturnType<typeof mitt>
+		emitter: ReturnType<typeof mitt>,
+		audioPlayer: AudioPlayer
 	}
 }
 
 // This is the "main" function, which starts up the entire app.
 void (async function() {
-	const app = Vue.createApp({});
+	const app = Vue.createApp({
+		provide: {
+			audioPlayer: globalAudioPlayer
+		}
+	});
 
 	// Create emitter and attach to Vue
 	const emitter = mitt();

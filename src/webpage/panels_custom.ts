@@ -9,6 +9,7 @@ import { PlayerInfo } from './firebase';
 import { Settings } from '../utils/Settings';
 
 import { RoomOptionsModal } from './RoomOptionsModal';
+import { JoinIdModal } from './JoinIdModal';
 
 export function initCustomPanels(
 	app: Vue.App<Element>,
@@ -23,6 +24,7 @@ export function initCustomPanels(
 	const modal = document.getElementById('modal-background');
 
 	app.component('create-room-modal', RoomOptionsModal);
+	app.component('join-id-modal', JoinIdModal);
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
@@ -53,32 +55,11 @@ export function initCustomPanels(
 
 	// Receiving the id of the newly created room
 	socket.on('giveRoomId', (id: string) => {
-		// Hide the "Copied" message
-		document.getElementById('joinIdCopied').style.display = 'none';
+		emitter.emit('setLink', `${window.location.href.split('?')[0]}?joinRoom=${id}`);
 
 		modal.style.display = 'block';
 		document.getElementById('giveJoinId').style.display = 'block';
-		(document.getElementById('joinIdLink') as HTMLInputElement).value = `${window.location.href.split('?')[0]}?joinRoom=${id}`;
 	});
-
-	// Setting the click event for copying link to clipboard
-	document.getElementById('copyJoinId').onclick = function() {
-		// Select the input field with the link
-		(document.getElementById('joinIdLink') as HTMLInputElement).select();
-		try {
-			// Copy the selected text and show "Copied!" message
-			document.execCommand('copy');
-			document.getElementById('joinIdCopied').style.display = 'block';
-		}
-		catch(err) {
-			console.warn(err);
-		}
-		finally {
-			// Deselect the input field
-			document.getSelection().removeAllRanges();
-			audioPlayer.playSfx('submit');
-		}
-	};
 
 	// Custom - Join Room
 	document.getElementById('joinRoom').onclick = () => {

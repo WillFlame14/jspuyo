@@ -44,7 +44,6 @@ const KeyBindingComponent = Vue.defineComponent({
 		`<form autocomplete="off">
 			<label v-bind:for="operation + 'Binding'">{{keybind.name}}</label>
 			<input type="button" class="keyBinding"
-				ref="bindInput"
 				v-bind:id="operation + 'Binding'"
 				v-bind:value="keybind.displayKey"
 				v-on:click="releaseBind(operation)"
@@ -140,7 +139,6 @@ export const KeyBindings = Vue.defineComponent({
 	template:
 		`<div class="keyBindings" id="keyBindings">
 			<key-binding
-				ref="bindings"
 				v-for="(keybind, operation) in bindings"
 				v-bind:keybind="keybind"
 				v-bind:operation="operation"

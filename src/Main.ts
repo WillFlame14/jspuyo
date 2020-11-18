@@ -25,8 +25,9 @@ let currentUID: string;
 
 declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
+		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
-		audioPlayer: AudioPlayer
+		socket: SocketIOClient.Socket
 	}
 }
 
@@ -34,13 +35,18 @@ declare module '@vue/runtime-core' {
 void (async function() {
 	const app = Vue.createApp({
 		provide: {
-			audioPlayer: globalAudioPlayer
+			audioPlayer: globalAudioPlayer,
+			socket: globalSocket
 		}
 	});
 
 	// Create emitter and attach to Vue
 	const emitter = mitt();
 	app.config.globalProperties.emitter = emitter;
+
+	emitter.on('getCurrentUID', (callback: (currentUID: string) => string) => {
+		callback(getCurrentUID());
+	});
 
 	init(globalSocket);			// game-related
 	navbarInit(globalAudioPlayer);

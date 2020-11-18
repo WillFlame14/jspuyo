@@ -5,6 +5,8 @@ import { Cpu, CpuMove } from './Cpu';
 import { Drop } from '../Drop';
 import { Settings } from '../utils/Settings';
 
+export const CPU_NAMES = ['Random', 'Flat', 'Tall', 'Chain', 'Test'];
+
 export class CpuVariants {
 	constructor() {
 		throw new Error('CpuVariants cannot be instantiated.');
@@ -29,19 +31,6 @@ export class CpuVariants {
 			default:
 				return new TestCpu(settings);
 		}
-	}
-
-	/**
-	 * Returns all the names of currently available Cpus.
-	 */
-	static getAllCpuNames(): string[] {
-		return [
-			'Random',
-			'Flat',
-			'Tall',
-			'Chain',
-			'Test'
-		];
 	}
 }
 

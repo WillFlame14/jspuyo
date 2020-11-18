@@ -3,6 +3,7 @@ import * as Vue from 'vue';
 import { RoomSizeSelector } from './RoomSizeSelector';
 
 import { Gamemode } from '../utils/Settings';
+import { puyoImgs } from './panels';
 
 interface RoomSettings {
 	gamemode: string,
@@ -40,7 +41,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 				winCondition: 'FT 3'
 			},
 			wildNumSelected: false,
-			puyoImgs: ['red', 'blue', 'green', 'yellow', 'purple', 'teal'],
+			puyoImgs,
 			gamemodes: ['TSU', 'FEVER'],
 			winConditions: ['FT 3', 'FT 5', 'FT 7'],
 			disabled: false,

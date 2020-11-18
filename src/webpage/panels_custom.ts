@@ -4,12 +4,12 @@ import * as Vue from 'vue';
 import mitt from 'mitt';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
-import { CpuVariants } from '../cpu/CpuVariants';
 import { PlayerInfo } from './firebase';
 import { Settings } from '../utils/Settings';
 
 import { RoomOptionsModal } from './RoomOptionsModal';
 import { JoinIdModal } from './JoinIdModal';
+import { CpuOptionsModal } from './CpuOptionsModal';
 
 export function initCustomPanels(
 	app: Vue.App<Element>,
@@ -25,6 +25,7 @@ export function initCustomPanels(
 
 	app.component('create-room-modal', RoomOptionsModal);
 	app.component('join-id-modal', JoinIdModal);
+	app.component('cpu-options-modal', CpuOptionsModal);
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
@@ -209,62 +210,4 @@ export function initCustomPanels(
 		spectateFormError.innerHTML = errMessage;
 		spectateFormError.style.display = 'block';
 	});
-
-	createCPUOptions(puyoImgs);
-}
-
-function createCPUOptions(puyoImgs: string[]) {
-	const aiDropdown = document.createElement('select');
-	aiDropdown.classList.add('aiOption');
-
-	CpuVariants.getAllCpuNames().forEach(cpuName => {
-		const option = document.createElement('option');
-		option.value = cpuName;
-		option.innerHTML = cpuName;
-		aiDropdown.appendChild(option);
-	});
-
-	const cpuSpeedSlider = document.createElement('input');
-	cpuSpeedSlider.classList.add('cpuSpeedSlider');
-	cpuSpeedSlider.type = 'range';
-	cpuSpeedSlider.max = '10';
-	cpuSpeedSlider.min = '0';
-	cpuSpeedSlider.defaultValue = '8';
-
-	const speedDisplay = document.createElement('span');
-	speedDisplay.classList.add('option-title', 'speedDisplay');
-	speedDisplay.innerHTML = cpuSpeedSlider.defaultValue;
-
-	const aiLabel = document.createElement('span');
-	aiLabel.classList.add('option-title', 'aiLabel');
-	aiLabel.innerHTML = 'AI';
-
-	const speedLabel = document.createElement('span');
-	speedLabel.classList.add('option-title', 'speedLabel');
-	speedLabel.innerHTML = 'Speed';
-
-	// Add CPU options selectors
-	for(let i = 0; i < 6; i++) {
-		const cpuOptionElement = document.createElement('div');
-		cpuOptionElement.id = `cpu${i + 1}`;
-		cpuOptionElement.classList.add('cpuOption');
-
-		const cpuIcon = document.createElement('img');
-		cpuIcon.src = `images/modal_boxes/${puyoImgs[i]}.png`;
-		cpuOptionElement.appendChild(cpuIcon);
-
-		cpuOptionElement.appendChild(aiLabel.cloneNode(true));
-		cpuOptionElement.appendChild(speedLabel.cloneNode(true));
-		cpuOptionElement.appendChild(aiDropdown.cloneNode(true));
-
-		const speedDisplayClone = speedDisplay.cloneNode(true) as HTMLInputElement;
-		const cpuSpeedSliderClone = cpuSpeedSlider.cloneNode(true) as HTMLInputElement;
-		cpuSpeedSliderClone.oninput = function() {
-			speedDisplayClone.innerHTML = cpuSpeedSliderClone.value;
-		};
-		cpuOptionElement.appendChild(speedDisplayClone);
-		cpuOptionElement.appendChild(cpuSpeedSliderClone);
-
-		document.getElementById('cpuOptions').appendChild(cpuOptionElement);
-	}
 }

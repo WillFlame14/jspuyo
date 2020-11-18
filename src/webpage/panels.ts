@@ -12,7 +12,7 @@ import { UserSettings } from '../utils/Settings';
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
-export const puyoImgs: string[] = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
+export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
 const ranks: Record<string, string> = {
 	'0': 'Blob',
 	'1000': 'Forest Learner',

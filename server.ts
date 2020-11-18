@@ -38,14 +38,14 @@ io.on('connection', function(socket) {
 		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
 	});
 
-	socket.on('addCpu', (gameId: string) => {
+	socket.on('addCpu', (gameId: string, callback: (index: number) => void) => {
 		const index = RoomManager.addCpu(gameId);
-		socket.emit('addCpuReply', index);
+		callback(index);
 	});
 
-	socket.on('removeCpu', (gameId: string) => {
+	socket.on('removeCpu', (gameId: string, callback: (index: number) => void) => {
 		const index = RoomManager.removeCpu(gameId);
-		socket.emit('removeCpuReply', index);
+		callback(index);
 	});
 
 	socket.on('requestCpus', (gameId: string) => {

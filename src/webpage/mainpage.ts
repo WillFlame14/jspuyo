@@ -86,7 +86,6 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOC
 
 	const modal = document.getElementById('modal-background');				// The semi-transparent gray background
 	const cpuOptionsError = document.getElementById('cpuOptionsError');		// The error message that appears when performing an invalid action (invisible otherwise)
-	const cpuOptionsEmpty = document.getElementById('cpuOptionsEmpty');		// The division that indicates there are currently no CPUs (invisible otherwise)
 
 	document.getElementById('manageCpus').onclick = function() {
 		toggleHost(currentlyHost);
@@ -98,94 +97,17 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOC
 	};
 
 	socket.on('requestCpusReply', (cpus: { ai: string, speed: number }[]) => {
-		// Hide ("delete") all existing CPUs
-		document.querySelectorAll('.cpuOption').forEach((option: HTMLElement) => {
-			option.style.display = 'none';
-		});
-
-		// Then add the current CPUs
-		cpus.forEach((cpu, index) => {
-			const { ai, speed } = cpu;
-			const cpuElement = document.getElementById(`cpu${index + 1}`);
-			cpuElement.style.display = 'grid';
-
-			const option: HTMLSelectElement | null = cpuElement.querySelector('.aiOption');
-			option.value = ai;
-
-			const slider: HTMLInputElement | null = cpuElement.querySelector('.cpuSpeedSlider');
-			slider.value = `${speed}`;
-		});
-		cpuOptionsEmpty.style.display = (cpus.length === 0) ? 'block' : 'none';
+		emitter.emit('presetCpus', cpus);
 	});
 
-	document.getElementById('cpuOptionsAdd').onclick = function() {
-		// Send request to server to add CPU (can only add only up to roomsize)
-		socket.emit('addCpu', getCurrentUID());
-		audioPlayer.playSfx('submit');
-	};
-
-	socket.on('addCpuReply', (index: number) => {
-		if(index === -1) {
-			// No space in room
-			cpuOptionsError.style.display = 'block';
-			cpuOptionsError.innerHTML = 'There is no more space in the room.';
-			return;
-		}
-		else if(index === 0) {
-			// Adding the first CPU, so remove the empty message
-			cpuOptionsEmpty.style.display = 'none';
-		}
-		// Turn on the cpu at the provided index
-		document.getElementById(`cpu${index + 1}`).style.display = 'grid';
-		cpuOptionsError.style.display = 'none';
-	});
-
-	document.getElementById('cpuOptionsRemove').onclick = function() {
-		// Send request to server to remove CPU (can only remove if there are any CPUs)
-		socket.emit('removeCpu', getCurrentUID());
-		audioPlayer.playSfx('submit');
-	};
-
-	socket.on('removeCpuReply', (index: number) => {
-		if(index === -1) {
-			// No CPUs in room
-			cpuOptionsError.style.display = 'block';
-			cpuOptionsError.innerHTML = 'There no CPUs currently in the room.';
-			return;
-		}
-		else if(index === 0) {
-			// Removing the last CPU, so add the empty message
-			cpuOptionsEmpty.style.display = 'block';
-		}
-		// Turn off the cpu at the provided index
-		document.getElementById(`cpu${index + 1}`).style.display = 'none';
-		cpuOptionsError.style.display = 'none';
-	});
-
-	document.getElementById('cpuOptionsSubmit').onclick = function() {
+	emitter.on('setCpus', (cpuInfos: { ai: string, speed: number }[]) => {
 		const cpus: CpuInfo[] = [];
 
-		document.querySelectorAll('.aiOption').forEach((dropdown: HTMLSelectElement) => {
-			// Do not read from invisible options
-			if(window.getComputedStyle(dropdown).getPropertyValue('display') === 'block') {
-				cpus.push({
-					client_socket: null,
-					socket: null,
-					ai: dropdown.options[dropdown.selectedIndex].value,
-					speed: null
-				});
-			}
-		});
+		cpuInfos.forEach(cpuInfo => {
+			const cpu = Object.assign({ client_socket: null, socket: null }, cpuInfo);
+			cpu.speed = (10 - cpu.speed) * 500;
 
-		let index = 0;
-
-		document.querySelectorAll('.cpuSpeedSlider').forEach((slider: HTMLInputElement) => {
-			// Do not read from invisible options
-			if(window.getComputedStyle(slider).getPropertyValue('display') === 'block') {
-				// Slider value is between 0 and 10, map to between 5000 and 0
-				cpus[index].speed = (10 - Number(slider.value)) * 500;
-				index++;
-			}
+			cpus.push(cpu);
 		});
 
 		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
@@ -194,7 +116,7 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOC
 		// Close the CPU options menu
 		document.getElementById('cpuOptionsModal').style.display = 'none';
 		modal.style.display = 'none';
-	};
+	});
 
 	document.getElementById('manageSettings').onclick = function() {
 		toggleHost(currentlyHost);
@@ -292,7 +214,7 @@ export function addPlayer(name: string, rating: number): void {
 	newPlayer.id = 'player' + name;
 
 	const icon = document.createElement('img');
-	icon.src = `images/modal_boxes/${puyoImgs[playerList.childElementCount % puyoImgs.length]}.png`;
+	icon.src = `images/modal_boxes/puyo_${puyoImgs[playerList.childElementCount % puyoImgs.length]}.png`;
 	newPlayer.appendChild(icon);
 
 	const playerName = document.createElement('span');

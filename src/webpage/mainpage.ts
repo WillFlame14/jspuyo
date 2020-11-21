@@ -1,6 +1,6 @@
 'use strict';
 
-import { puyoImgs } from './panels';
+import { puyoImgs } from './panels_custom';
 import { pageInit } from './pages';
 import { PlayerInfo } from './firebase';
 import { UserSettings } from '../utils/Settings';

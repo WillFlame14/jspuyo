@@ -1,20 +1,16 @@
 'use strict';
 
-import * as Vue from 'vue';
 import mitt from 'mitt';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
-import { PlayerInfo } from './firebase';
-import { Settings } from '../utils/Settings';
+import { PlayerInfo, signOut } from './firebase';
+import { Settings, UserSettings } from '../utils/Settings';
 
-import { RoomOptionsModal } from './RoomOptionsModal';
-import { JoinIdModal } from './JoinIdModal';
-import { CpuOptionsModal } from './CpuOptionsModal';
+export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
 
 export function initCustomPanels(
-	app: Vue.App<Element>,
 	emitter: ReturnType<typeof mitt>,
-	puyoImgs: string[],
+	clearModal: () => void,
 	stopCurrentSession: () => Promise<void>,
 	socket: SocketIOClient.Socket,
 	audioPlayer: AudioPlayer,
@@ -22,10 +18,6 @@ export function initCustomPanels(
 ): void {
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
-
-	app.component('create-room-modal', RoomOptionsModal);
-	app.component('join-id-modal', JoinIdModal);
-	app.component('cpu-options-modal', CpuOptionsModal);
 
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
@@ -68,15 +60,11 @@ export function initCustomPanels(
 		document.getElementById('joinRoomModal').style.display = 'block';
 	};
 
-	document.getElementById('joinIdForm').onsubmit = async function (event) {
-		// Prevent submit button from refreshing the page
-		event.preventDefault();
-		const joinId = (document.getElementById('joinId') as HTMLInputElement).value;
-
-		await stopCurrentSession();
-		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId });
-		audioPlayer.playSfx('submit');
-	};
+	emitter.on('stopCurrentSession', (callback: () => void) => {
+		void stopCurrentSession().then(() => {
+			callback();
+		});
+	});
 
 	// Received when room cannot be joined
 	socket.on('joinFailure', (errMessage: string) => {
@@ -84,10 +72,7 @@ export function initCustomPanels(
 		modal.style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'block';
 
-		document.getElementById('joinIdFormError').innerHTML = errMessage;
-
-		// Make the element containing the error message visible
-		document.getElementById('joinIdFormError').style.display = 'block';
+		emitter.emit('joinFailure', errMessage);
 	});
 
 	// Event received when attempting to join a password-protected room
@@ -210,4 +195,59 @@ export function initCustomPanels(
 		spectateFormError.innerHTML = errMessage;
 		spectateFormError.style.display = 'block';
 	});
+
+	document.getElementById('gallery').onclick = async function() {
+		void stopCurrentSession();
+		// Leave the room
+		socket.emit('forceDisconnect');
+
+		let stats;
+
+		try {
+			stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
+
+			// Need to stringify object before storing, otherwise the data will not be stored correctly
+			window.localStorage.setItem('stats', JSON.stringify(stats));
+		}
+		catch(err) {
+			// No games played yet. Special warning message?
+			window.localStorage.setItem('stats', JSON.stringify([]));
+			console.log(err);
+		}
+
+		// Redirect to gallery subdirectory
+		window.location.assign('/gallery');
+	};
+
+	// Profile Panel - Settings
+	document.getElementById('settings').onclick = function() {
+		void stopCurrentSession();
+
+		modal.style.display = 'block';
+
+		document.getElementById('settingsModal').style.display = 'block';
+	};
+
+	emitter.on('saveSettings', (newSettings: UserSettings) => {
+		void PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
+			userSettings = Object.assign(userSettings, newSettings);
+
+			// Configure audio player with new volume settings
+			audioPlayer.configureVolume(userSettings);
+
+			// Update values
+			PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
+
+			audioPlayer.playSfx('submit');
+			clearModal();
+		});
+
+	});
+
+	// User Panel - Log Out
+	document.getElementById('logout').onclick = function() {
+		socket.emit('forceDisconnect', getCurrentUID());
+		socket.emit('unlinkUser');
+		void signOut();
+	};
 }

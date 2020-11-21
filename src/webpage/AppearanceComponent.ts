@@ -1,19 +1,6 @@
 import * as Vue from 'vue';
 
-const AppearanceIcon = Vue.defineComponent({
-	props: ['appearance', 'selected'],
-	template:
-		`<img class="appearanceIcon"
-			v-bind:class="{selected: selected}"
-			v-bind:id="appearance"
-			v-bind:src="'images/modal_boxes/puyo_' + appearance.toLowerCase() + '.png'"
-			v-on:click="$emit('selectAppearance', appearance)">`
-});
-
 export const AppearanceComponent = Vue.defineComponent({
-	components: {
-		'appearance-icon': AppearanceIcon
-	},
 	data(): { appearances: string[], selected: string } {
 		return {
 			appearances: ['Aqua', 'Chalk', 'TsuClassic', 'Custom', 'FlatColour', 'Test'],

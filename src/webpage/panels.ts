@@ -6,13 +6,11 @@ import mitt from 'mitt';
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { initCustomPanels } from './panels_custom';
-import { initProfilePanels } from './panels_profile';
 import { UserSettings } from '../utils/Settings';
 
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
-export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
 const ranks: Record<string, string> = {
 	'0': 'Blob',
 	'1000': 'Forest Learner',
@@ -32,8 +30,7 @@ export function panelsInit(
 	globalEmitter = emitter;
 	globalAudioPlayer = audioPlayer;
 
-	initCustomPanels(app, emitter, puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
-	initProfilePanels(app, emitter, clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
+	initCustomPanels(emitter, clearModal, stopCurrentSession, socket, audioPlayer, getCurrentUID);
 
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');

@@ -16,18 +16,26 @@ import { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, to
 import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
 
+import { CpuOptionsModal } from './webpage//CpuOptionsModal';
+import { JoinIdModal } from './webpage//JoinIdModal';
+import { JoinRoomModal } from './webpage/JoinRoomModal';
+import { RoomOptionsModal } from './webpage//RoomOptionsModal';
+import { SettingsModal } from './webpage/SettingsModal';
+
+
 import io = require('socket.io-client');
 const globalSocket = io();
 
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 
-let currentUID: string;
+let currentUID = '';
 
 declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
-		socket: SocketIOClient.Socket
+		socket: SocketIOClient.Socket,
+		getCurrentUID(): () => string
 	}
 }
 
@@ -36,7 +44,8 @@ void (async function() {
 	const app = Vue.createApp({
 		provide: {
 			audioPlayer: globalAudioPlayer,
-			socket: globalSocket
+			socket: globalSocket,
+			getCurrentUID
 		}
 	});
 
@@ -44,9 +53,13 @@ void (async function() {
 	const emitter = mitt();
 	app.config.globalProperties.emitter = emitter;
 
-	emitter.on('getCurrentUID', (callback: (currentUID: string) => string) => {
-		callback(getCurrentUID());
-	});
+	app.component('create-room-modal', RoomOptionsModal);
+	app.component('join-id-modal', JoinIdModal);
+	app.component('join-room-modal', JoinRoomModal);
+	app.component('cpu-options-modal', CpuOptionsModal);
+	app.component('settings-modal', SettingsModal);
+
+	app.mount('#modal-background');
 
 	init(globalSocket);			// game-related
 	navbarInit(globalAudioPlayer);

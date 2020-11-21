@@ -3,7 +3,7 @@ import * as Vue from 'vue';
 import { RoomSizeSelector } from './RoomSizeSelector';
 
 import { Gamemode } from '../utils/Settings';
-import { puyoImgs } from './panels';
+import { puyoImgs } from './panels_custom';
 
 interface RoomSettings {
 	gamemode: string,
@@ -64,6 +64,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 				this.wildNumSelected = wildNum;
 			}
 		},
+
 		changeGamemode() {
 			if(this.disabled) {
 				return;
@@ -90,9 +91,11 @@ export const RoomOptionsModal = Vue.defineComponent({
 				this.settings.winCondition = this.winConditions[index + 1];
 			}
 		},
+
 		toggleHardDrop() {
 			this.settings.hardDrop = !this.settings.hardDrop;
 		},
+
 		submitSettings(event: Event) {
 			event.preventDefault();
 
@@ -126,7 +129,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 			<div id="createRoomOptionsLeft">
 				<div id="modeSelector">
 					<div class="option-title">Mode</div>
-					<img id="modeIcon"
+					<img id="mode-icon"
 						v-bind:src="'images/modal_boxes/' + settings.gamemode + '_icon.png'"
 						v-on:click="changeGamemode()">
 				</div>
@@ -141,7 +144,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 						v-bind:selectedNum="settings.numPlayers"
 						v-bind:wildNumSelected="wildNumSelected"
 						v-on:selectNumPlayers="selectNumPlayers"
-						v-bind:disabled="disabled">
+						v-bind:disabled="disabled || mode === 'set'">
 					</room-size-selector>
 				</div>
 				<form id="coloursSelector" autocomplete="off">

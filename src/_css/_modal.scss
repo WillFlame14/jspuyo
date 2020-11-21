@@ -384,13 +384,9 @@ input.numPlayerButton {
 	width: 30%;
 }
 
-// Error message (invisible at first).
-#spectateFormError {
-	display: none;
-}
-
 // The datalist containing room ids.
 #roomList {
+	display: inline-block;
 	margin-top: 10px;
 }
 

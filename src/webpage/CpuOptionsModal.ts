@@ -35,10 +35,9 @@ export const CpuOptionsModal = Vue.defineComponent({
 	components: {
 		'cpu-settings-component': CpuSettingsComponent
 	},
-	inject: ['audioPlayer', 'socket'],
-	data(): { uid: string, cpus: BasicCpuInfo[], errorMsg: string } {
+	inject: ['audioPlayer', 'socket', 'getCurrentUID'],
+	data(): { cpus: BasicCpuInfo[], errorMsg: string } {
 		return {
-			uid: '',
 			cpus: [],
 			errorMsg: ''
 		};
@@ -47,12 +46,8 @@ export const CpuOptionsModal = Vue.defineComponent({
 		addCpu() {
 			this.audioPlayer.playSfx('submit');
 
-			if(this.uid.length === 0) {
-				this.retrieveUID();
-			}
-
 			// Send request to server to add CPU (can only add only up to roomsize)
-			this.socket.emit('addCpu', this.uid, (index: number) => {
+			this.socket.emit('addCpu', this.getCurrentUID(), (index: number) => {
 				if(index === -1) {
 					this.errorMsg = 'There is no more space in the room.';
 					return;
@@ -67,12 +62,8 @@ export const CpuOptionsModal = Vue.defineComponent({
 		removeCpu() {
 			this.audioPlayer.playSfx('submit');
 
-			if(this.uid.length === 0) {
-				this.retrieveUID();
-			}
-
 			// Send request to server to remove CPU (can only remove if there are any CPUs)
-			this.socket.emit('removeCpu', this.uid, (index: number) => {
+			this.socket.emit('removeCpu', this.getCurrentUID(), (index: number) => {
 				if(index === -1) {
 					// No CPUs in room
 					this.errorMsg = 'There no CPUs currently in the room.';
@@ -97,12 +88,6 @@ export const CpuOptionsModal = Vue.defineComponent({
 		setSpeed({ id, speed }: { id: number, speed: number }) {
 			this.cpus[id].speed = speed;
 		},
-
-		retrieveUID() {
-			this.emitter.emit('getCurrentUID', (currentUID: string) => {
-				this.uid = currentUID;
-			});
-		}
 	},
 	mounted() {
 		this.emitter.on('presetCpus', (cpus: BasicCpuInfo[]) => {

@@ -7,13 +7,11 @@ export const JoinRoomModal = Vue.defineComponent({
 			errorMsg: ''
 		};
 	},
-	inject: ['audioPlayer', 'socket', 'getCurrentUID'],
+	inject: ['audioPlayer', 'socket', 'getCurrentUID', 'stopCurrentSession'],
 	methods: {
 		async submit() {
 			event.preventDefault();
-			await new Promise((resolve) => {
-				this.emitter.emit('stopCurrentSession', resolve);
-			});
+			await this.stopCurrentSession();
 
 			this.socket.emit('joinRoom', { gameId: this.getCurrentUID(), joinId: this.joinId });
 			this.audioPlayer.playSfx('submit');

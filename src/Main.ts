@@ -21,7 +21,7 @@ import { JoinIdModal } from './webpage//JoinIdModal';
 import { JoinRoomModal } from './webpage/JoinRoomModal';
 import { RoomOptionsModal } from './webpage//RoomOptionsModal';
 import { SettingsModal } from './webpage/SettingsModal';
-
+import { SpectateRoomModal } from './webpage/SpectateRoomModal';
 
 import io = require('socket.io-client');
 const globalSocket = io();
@@ -35,7 +35,8 @@ declare module '@vue/runtime-core' {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
 		socket: SocketIOClient.Socket,
-		getCurrentUID(): () => string
+		getCurrentUID(): () => string,
+		stopCurrentSession: () => Promise<void>
 	}
 }
 
@@ -45,7 +46,8 @@ void (async function() {
 		provide: {
 			audioPlayer: globalAudioPlayer,
 			socket: globalSocket,
-			getCurrentUID
+			getCurrentUID,
+			stopCurrentSession
 		}
 	});
 
@@ -53,11 +55,12 @@ void (async function() {
 	const emitter = mitt();
 	app.config.globalProperties.emitter = emitter;
 
+	app.component('cpu-options-modal', CpuOptionsModal);
 	app.component('create-room-modal', RoomOptionsModal);
 	app.component('join-id-modal', JoinIdModal);
 	app.component('join-room-modal', JoinRoomModal);
-	app.component('cpu-options-modal', CpuOptionsModal);
 	app.component('settings-modal', SettingsModal);
+	app.component('spectate-room-modal', SpectateRoomModal);
 
 	app.mount('#modal-background');
 

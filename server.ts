@@ -151,8 +151,8 @@ io.on('connection', function(socket) {
 		socket.emit('allRooms', RoomManager.getAllRooms(gameId));
 	});
 
-	socket.on('getPlayers', roomId => {
-		socket.emit('givePlayers', RoomManager.getPlayers(roomId));
+	socket.on('getPlayers', (roomId: string, callback: (players: string[]) => void) => {
+		callback(RoomManager.getPlayers(roomId));
 	});
 
 	socket.on('ranked', (gameInfo: { gameId: string }) => {

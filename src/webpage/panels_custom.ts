@@ -60,12 +60,6 @@ export function initCustomPanels(
 		document.getElementById('joinRoomModal').style.display = 'block';
 	};
 
-	emitter.on('stopCurrentSession', (callback: () => void) => {
-		void stopCurrentSession().then(() => {
-			callback();
-		});
-	});
-
 	// Received when room cannot be joined
 	socket.on('joinFailure', (errMessage: string) => {
 		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
@@ -111,89 +105,13 @@ export function initCustomPanels(
 		document.getElementById('spectateRoomModal').style.display = 'block';
 	};
 
-	const roomList = document.getElementById('roomList') as HTMLInputElement;
-	const roomPlayers = document.getElementById('roomPlayers');
-
 	socket.on('allRooms', (roomIds: string[]) => {
-		const roomIdsElement = document.getElementById('roomIds');
-		const spectateFormError = document.getElementById('spectateFormError');
-		const spectateSubmit = document.getElementById('spectateSubmit') as HTMLButtonElement;
-
-		while(roomIdsElement.firstChild) {
-			roomIdsElement.firstChild.remove();
-		}
-
-		// Add all the room ids to the dropdown menu
-		roomIds.forEach(id => {
-			const option = document.createElement('option');
-			option.value = id;
-			option.innerHTML = id;
-			roomIdsElement.appendChild(option);
-		});
-
-		if(roomIds.length === 0) {
-			roomList.style.display = 'none';
-			roomPlayers.style.display = 'none';
-			spectateFormError.innerHTML = 'There are no rooms currently available to spectate.';
-			spectateFormError.style.display = 'block';
-			if(!spectateSubmit.classList.contains('disable')) {
-				spectateSubmit.classList.add('disable');
-			}
-			spectateSubmit.disabled = true;
-		}
-		else {
-			roomList.style.display = 'inline-block';
-			spectateFormError.style.display = 'none';
-			if(spectateSubmit.classList.contains('disable')) {
-				spectateSubmit.classList.remove('disable');
-			}
-			spectateSubmit.disabled = false;
-		}
+		emitter.emit('allRooms', roomIds);
 	});
-
-	// Attempt to display the players in the room by sending a request to the server
-	roomList.addEventListener('input', () => {
-		// All valid room ids are of length 6
-		if(roomList.value.length === 6) {
-			socket.emit('getPlayers', roomList.value);
-		}
-		else {
-			roomPlayers.style.display = 'none';
-		}
-	});
-
-	// Receiving the results of the request
-	socket.on('givePlayers', (players: string[]) => {
-		// Server returns an empty array if room does not exist
-		if(players.length === 0) {
-			roomPlayers.style.display = 'none';
-		}
-		else {
-			const promises = players.map(playerId => PlayerInfo.getUserProperty(playerId, 'username'));
-
-			Promise.all(promises).then(playerNames => {
-				roomPlayers.style.display = 'block';
-				roomPlayers.innerHTML = `Players: ${JSON.stringify(playerNames)}`;
-			}).catch((err) => {
-				console.log(err);
-			});
-		}
-	});
-
-	document.getElementById('spectateForm').onsubmit = event => {
-		// Do not refresh the page on submit
-		event.preventDefault();
-
-		socket.emit('spectate', getCurrentUID(), roomList.value);
-		audioPlayer.playSfx('submit');
-	};
 
 	// Received when attempting to spectate an invalid room
 	socket.on('spectateFailure', (errMessage: string) => {
-		const spectateFormError = document.getElementById('spectateFormError');
-
-		spectateFormError.innerHTML = errMessage;
-		spectateFormError.style.display = 'block';
+		emitter.emit('spectateFailure', errMessage);
 	});
 
 	document.getElementById('gallery').onclick = async function() {

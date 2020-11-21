@@ -81,9 +81,9 @@ export function clearModal(): void {
 	});
 
 	// Clear all error messages
-	Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
-		element.style.display = 'none';
-	});
+	// Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
+	// 	element.style.display = 'none';
+	// });
 }
 
 /**

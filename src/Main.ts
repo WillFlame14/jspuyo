@@ -21,6 +21,7 @@ import { JoinIdModal } from './webpage//JoinIdModal';
 import { JoinRoomModal } from './webpage/JoinRoomModal';
 import { RoomOptionsModal } from './webpage//RoomOptionsModal';
 import { SettingsModal } from './webpage/SettingsModal';
+import { SetRoomPasswordModal } from './webpage/SetRoomPasswordModal';
 import { SpectateRoomModal } from './webpage/SpectateRoomModal';
 
 import io = require('socket.io-client');
@@ -60,6 +61,7 @@ void (async function() {
 	app.component('join-id-modal', JoinIdModal);
 	app.component('join-room-modal', JoinRoomModal);
 	app.component('settings-modal', SettingsModal);
+	app.component('set-room-password-modal', SetRoomPasswordModal);
 	app.component('spectate-room-modal', SpectateRoomModal);
 
 	app.mount('#modal-background');

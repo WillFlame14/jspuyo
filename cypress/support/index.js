@@ -20,9 +20,10 @@ import './commands';
 // require('./commands')
 
 const TEST_USERNAME = 'cypressTest';
+const MOCK_UID = '070fPnWMWCfuHZPIav9ZxWyhA8V2';
 
 before(() => {
-	cy.visit('/').then(async () => {
+	cy.visit('/').then(() => {
 		cy.wait(500);
 		// Make sure user is logged in
 		cy.get('#welcomeMessage').then(element => {
@@ -30,10 +31,10 @@ before(() => {
 				cy.contains('Continue as guest').click();
 				cy.get('#usernamePickerText').type(TEST_USERNAME);
 				cy.contains('Confirm').click();
-				cy.contains('Free For All').should('be.visible');
 			}
+			cy.contains('Free For All', { timeout: 20000 }).should('be.visible');
 		});
 	});
 });
 
-module.exports = { TEST_USERNAME };
+module.exports = { TEST_USERNAME, MOCK_UID };

@@ -34,6 +34,7 @@ export const SpectateRoomModal = Vue.defineComponent({
 			this.socket.emit('getPlayers', this.currentRoomId, givePlayers);
 		},
 		submit() {
+			// Prevent submit button from refreshing the page
 			event.preventDefault();
 			// await this.stopCurrentSession();
 

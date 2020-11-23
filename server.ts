@@ -232,9 +232,9 @@ io.on('connection', function(socket) {
 	});
 
 	// Player sent a chat message
-	socket.on('sendMessage', (gameId, message) => {
+	socket.on('sendMessage', (gameId, message, roomId = null) => {
 		// Send to everyone in the room, including sender
-		io.in(RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
+		io.in(roomId || RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
 	});
 
 	// Player emitted a sound

@@ -84,11 +84,11 @@ export const SettingsModal = Vue.defineComponent({
 				<div class="justify-flexbox">
 					<form class="block-form" autocomplete="off">
 						<label for="das">DAS</label>
-						<input type="number" class="dasArrInput" v-model="settings.das" min="0" max="999"><br>
+						<input type="number" class="dasArrInput" id="das" v-model="settings.das" min="0" max="999"><br>
 					</form>
 					<form class="block-form" autocomplete="off">
 						<label for="arr">ARR</label>
-						<input type="number" class="dasArrInput" v-model="settings.arr" min="0" max="99">
+						<input type="number" class="dasArrInput" id="arr" v-model="settings.arr" min="0" max="99">
 					</form>
 				</div>
 				<form class="block-form sliders" autocomplete="off">

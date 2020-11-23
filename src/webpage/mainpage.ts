@@ -133,17 +133,10 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOC
 		document.getElementById('roomPasswordModal').style.display = 'block';
 	};
 
-	document.getElementById('roomPasswordForm').onsubmit = function (event) {
-		// Prevent submit button from refreshing the page
-		event.preventDefault();
-		const password = (document.getElementById('roomPassword') as HTMLInputElement).value || null;
-
-		socket.emit('setRoomPassword', getCurrentUID(), password);
-		audioPlayer.playSfx('submit');
-
+	emitter.on('submitRoomPassword', () => {
 		document.getElementById('roomPasswordModal').style.display = 'none';
 		modal.style.display = 'none';
-	};
+	});
 
 	document.getElementById('manageStartRoom').onclick = function() {
 		socket.emit('startRoom', getCurrentUID());

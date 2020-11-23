@@ -159,7 +159,6 @@ export function initCustomPanels(
 			audioPlayer.playSfx('submit');
 			clearModal();
 		});
-
 	});
 
 	// User Panel - Log Out

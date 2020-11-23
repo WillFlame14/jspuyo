@@ -11,27 +11,6 @@ describe('Custom rooms', () => {
 		cy.get('#statusArea').contains('Manage CPUs');
 	});
 
-	it('can send and receive a chat message', () => {
-		cy.get('#messageField').type('test message');
-		cy.get('#sendMessage').submit();
-		cy.get('#chatMessages').contains('test message');
-	});
-
-	it('can correctly chain chat messages', () => {
-		// Send two more chat messages
-		cy.get('#messageField').type('this is another');
-		cy.get('#sendMessage').submit();
-		cy.get('#messageField').type('aaaaa');
-		cy.get('#sendMessage').submit();
-
-		// The chat messages should be combined into one
-		cy.get('#chatMessages').find('li').then(elements => {
-			expect(elements.length).to.equal(1);
-		});
-		cy.get('#chatMessages').contains('this is another');
-		cy.get('#chatMessages').contains('aaaaa');
-	});
-
 	it('can add and remove CPUs', () => {
 		// No CPUs in room, should show message
 		cy.get('#manageCpus').click();

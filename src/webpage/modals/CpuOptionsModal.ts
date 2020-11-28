@@ -1,7 +1,7 @@
 import * as Vue from 'vue';
 
-import { CPU_NAMES } from '../cpu/CpuVariants';
-import { puyoImgs } from './panels_custom';
+import { CPU_NAMES } from '../../cpu/CpuVariants';
+import { puyoImgs } from '../panels_custom';
 
 interface BasicCpuInfo {
 	ai: string,

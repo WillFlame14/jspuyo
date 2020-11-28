@@ -1,6 +1,5 @@
 'use strict';
 
-import * as Vue from 'vue';
 import mitt from 'mitt';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
@@ -20,7 +19,6 @@ const ranks: Record<string, string> = {
 };
 
 export function panelsInit(
-	app: Vue.App<Element>,
 	emitter: ReturnType<typeof mitt>,
 	socket: SocketIOClient.Socket,
 	getCurrentUID: () => string,
@@ -61,6 +59,12 @@ export function panelsInit(
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
+
+	// Dialog panels
+	document.getElementById('dialogAccept').onclick = () => {
+		document.getElementById('dialogBox').style.display = 'none';
+		document.getElementById('modal-background-disable').style.display = 'none';
+	};
 }
 
 /**
@@ -84,6 +88,12 @@ export function clearModal(): void {
 	// Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
 	// 	element.style.display = 'none';
 	// });
+}
+
+export function showDialog(message: string): void {
+	document.getElementById('modal-background-disable').style.display = 'block';
+	document.getElementById('dialogText').innerHTML = message;
+	document.getElementById('dialogBox').style.display = 'block';
 }
 
 /**

@@ -2,8 +2,8 @@ import * as Vue from 'vue';
 
 import { RoomSizeSelector } from './RoomSizeSelector';
 
-import { Gamemode } from '../utils/Settings';
-import { puyoImgs } from './panels_custom';
+import { Gamemode } from '../../utils/Settings';
+import { puyoImgs } from '../panels_custom';
 
 interface RoomSettings {
 	gamemode: string,

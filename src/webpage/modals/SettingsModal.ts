@@ -3,7 +3,7 @@ import * as Vue from 'vue';
 import { AppearanceComponent } from './AppearanceComponent';
 import { KeyBindings } from './KeyBindingsComponent';
 
-import { UserSettings } from '../utils/Settings';
+import { UserSettings } from '../../utils/Settings';
 
 export const SettingsModal = Vue.defineComponent({
 	components: {

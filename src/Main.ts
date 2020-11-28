@@ -10,25 +10,16 @@ import { Session } from './Session';
 import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
-import { dialogInit, showDialog } from './webpage/dialog';
 import { PlayerInfo, initApp, signOut } from './webpage/firebase';
-import { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, toggleSpectate } from './webpage/mainpage';
+import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { navbarInit } from './webpage/navbar';
-import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
-
-import { CpuOptionsModal } from './webpage//CpuOptionsModal';
-import { JoinIdModal } from './webpage//JoinIdModal';
-import { JoinRoomModal } from './webpage/JoinRoomModal';
-import { JoinRoomPasswordModal } from './webpage/JoinRoomPasswordModal';
-import { RoomOptionsModal } from './webpage//RoomOptionsModal';
-import { SettingsModal } from './webpage/SettingsModal';
-import { SetRoomPasswordModal } from './webpage/SetRoomPasswordModal';
-import { SpectateRoomModal } from './webpage/SpectateRoomModal';
+import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
+import { vueInit } from './webpage/vue';
 
 import io = require('socket.io-client');
 const globalSocket = io();
-
 const globalAudioPlayer = new AudioPlayer(globalSocket);
+const globalEmitter = mitt();
 
 let currentUID = '';
 
@@ -53,26 +44,13 @@ void (async function() {
 		}
 	});
 
-	// Create emitter and attach to Vue
-	const emitter = mitt();
-	app.config.globalProperties.emitter = emitter;
+	app.config.globalProperties.emitter = globalEmitter;
 
-	app.component('cpu-options-modal', CpuOptionsModal);
-	app.component('create-room-modal', RoomOptionsModal);
-	app.component('join-id-modal', JoinIdModal);
-	app.component('join-room-modal', JoinRoomModal);
-	app.component('join-room-password-modal', JoinRoomPasswordModal);
-	app.component('settings-modal', SettingsModal);
-	app.component('set-room-password-modal', SetRoomPasswordModal);
-	app.component('spectate-room-modal', SpectateRoomModal);
-
-	app.mount('#modal-background');
-
+	vueInit(app);
 	init(globalSocket);			// game-related
 	navbarInit(globalAudioPlayer);
-	panelsInit(app, emitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-	dialogInit();
-	mainpageInit(emitter, globalSocket, getCurrentUID, globalAudioPlayer);
+	panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+	mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
 
 	try {
 		// Login to firebase
@@ -148,7 +126,7 @@ function init(socket: SocketIOClient.Socket): void {
 	) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
-			clearMessages();
+			globalEmitter.emit('clearMessages');
 		}
 		currentRoomId = roomId;
 		clearModal();
@@ -224,7 +202,7 @@ function init(socket: SocketIOClient.Socket): void {
 			roomManageOptions.style.display = 'block';
 		}
 
-		updatePlayers(allIds);
+		globalEmitter.emit('updatePlayers', allIds);
 	});
 
 	socket.on('start', async (roomId: string, opponentIds: string[], settingsString: string) => {
@@ -303,7 +281,7 @@ async function stopCurrentSession(): Promise<void> {
 		// Returning true means the session had not ended yet
 		if (await currentSession.stop() && !currentSession.spectating) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
-			clearMessages();
+			globalEmitter.emit('clearMessages');
 		}
 	}
 	return Promise.resolve();
@@ -314,13 +292,15 @@ async function stopCurrentSession(): Promise<void> {
  */
 function showGameOnly() {
 	clearModal();
-	clearMessages();
+	globalEmitter.emit('clearMessages');
 	document.getElementById('statusArea').style.display = 'none';
 	sidebar.style.display = 'none';
 	if(!mainContent.classList.contains('ingame')) {
 		mainContent.classList.add('ingame');
 	}
-	hidePlayers();
+
+	// Clear the player list
+	globalEmitter.emit('updatePlayers', []);
 }
 
 /**

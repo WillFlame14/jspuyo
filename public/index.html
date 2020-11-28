@@ -6,161 +6,155 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
-    <div class="modal" id="modal-login">
-        <div class="modal-content" id="usernamePicker">
-            <form id="usernamePickerForm" autocomplete="off">
-                <label for="usernamePicker">Enter your preferred display name below.</label>
-                <div class="errorMsg" id="usernamePickerError"></div>
-                <div id="usernamePickerInput">
-                    <input type="text" id="usernamePickerText" maxlength="15">
-                </div>
-                <input type="submit" id="usernamePickerSubmit" value="Confirm">
-            </form>
-            <div id="guestMessage">As a guest, your progress will only be saved within your browser cookies, and will be deleted when you log out (under the Profile tab). Creating an account lets you carry your save data between sessions.</div>
-        </div>
-        <div class="modal-content" id="firebaseui-auth-container"></div>
-        <div id="loader">Loading...</div>
-    </div>
-    <div class="modal" id="modal-background">
-        <div class="modal-content" id="createRoomModal">
-            <create-room-modal></create-room-modal>
-        </div>
-        <div class="modal-content" id="giveJoinId">
-           <join-id-modal></join-id-modal>
-        </div>
-        <div class="modal-content" id="joinRoomModal">
-            <join-room-modal></join-room-modal>
-        </div>
-        <div class="modal-content" id="spectateRoomModal">
-            <spectate-room-modal></spectate-room-modal>
-        </div>
-        <div class="modal-content" id="cpuOptionsModal">
-            <cpu-options-modal></cpu-options-modal>
-        </div>
-        <div class="modal-content" id="settingsModal">
-            <settings-modal></settings-modal>
-        </div>
-        <div class="modal-content" id="roomPasswordModal">
-            <set-room-password-modal></set-room-password-modal>
-        </div>
-        <div class="modal-content" id="joinRoomPasswordModal">
-            <join-room-password-modal></join-room-password-modal>
-        </div>
-    </div>
-    <div class="modal" id="modal-background-disable">
-        <div class="modal-content dialog" id="dialogBox">
-            <div id="dialogText"></div>
-            <input type="submit" id="dialogAccept" value="OK">
-        </div>
-    </div>
-    <main>
-        <div id="navbar">
-            <span id="navbarSpacer"></span>
-            <span class="navPanel" id="queuePanel">
-                <img src="images/navbar/QueueIcon.png" class="navIcon">
-                <span class="panelName">Queue</span>
-                <div class="dropdown">
-                    <a id="freeForAll">Free for all</a>
-                    <a id="ranked">Ranked</a>
-                </div>
-            </span>
-            <span class="navPanel" id="customPanel">
-                <img src="images/navbar/CustomIcon.png" class="navIcon">
-                <span class="panelName">Custom</span>
-                <div class="dropdown">
-                    <a id="createRoom">Create Room</a>
-                    <a id="joinRoom">Join Room</a>
-                    <a id="spectate">Spectate</a>
-                </div>
-            </span>
-            <span class="navPanel" id="singleplayerPanel">
-                <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
-                <span class="panelName">Singleplayer</span>
-                <div class="dropdown">
-                    <a id="sprint">Sprint [WIP]</a>
-                    <a id="timeChallenge">Time Challenge [WIP]</a>
-                </div>
-            </span>
-            <span class="navPanel" id="profilePanel">
-                <img src="images/navbar/ProfileIcon.png" class="navIcon">
-                <span class="panelName">Profile</span>
-                <div class="dropdown">
-                    <a id="gallery">Gallery</a>
-                    <a id="settings">Settings</a>
-                    <a id="logout">Log Out</a>
-                </div>
-            </span>
-            <span id="logo">jspuyo</span>
-        </div>
-        <div id="spectateNotice">You are currently spectating this room.</div>
-        <div id="statusHover">
-            <div id="statusName"></div>
-            <div id="statusRating"></div>
-            <div id="statusTitle"></div>
-            <div id="voiceSelectTitle">Voice Selector</div>
-            <table id="voiceSelect">
-                <!-- Inserted by javascript -->
-            </table>
-        </div>
-        <div id="statusClick">☰</div>
-        <div id="main-content">
-            <table id="playArea">
-                <!-- Inserted by javascript -->
-            </table>
-            <div class="status" id="statusArea">
-                <ul class="justify-flexbox vertical" id="roomManage">
-                    <li class="player roomManageOption" id="manageCpus">
-                        <img class="roomManageIcon" src="images/mainpage/cpu.png">
-                        <span>Manage CPUs</span>
-                    </li>
-                    <li class="player roomManageOption" id="manageSettings">
-                        <img class="roomManageIcon" src="images/mainpage/settings.png">
-                        <span>Settings</span>
-                    </li>
-                    <li class="player roomManageOption" id="manageRoomPassword">
-                        <img class="roomManageIcon" src="images/mainpage/password.png">
-                        <span>Set Password</span>
-                    </li>
-                    <li class="player roomManageOption" id="manageJoinLink">
-                        <img class="roomManageIcon" src="images/mainpage/link.png">
-                        <span>Show Join Link</span>
-                    </li>
-                    <li class="player roomManageOption" id="manageStartRoom">
-                        <img class="roomManageIcon" src="images/mainpage/start.png">
-                        <span>Start Room</span>
-                    </li>
-                    <li class="player roomManageOption" id="manageSpectate">
-                        <img class="roomManageIcon" src="images/mainpage/spectate.png">
-                        <span>Spectate</span>
-                    </li>
-                    <li class="roomManageOption" id="managePlay">
-                        <img class="roomManageIcon" src="images/navbar/CustomIcon.png">
-                        <span>Play</span>
-                    </li>
-                </ul>
-                <div id="statusMsg"></div>
-                <div id="statusGamemode"></div>
-                <div id="statusExtra"></div>
+    <div id='vue-app'>
+        <div class="modal" id="modal-login">
+            <div class="modal-content" id="usernamePicker">
+                <form id="usernamePickerForm" autocomplete="off">
+                    <label for="usernamePicker">Enter your preferred display name below.</label>
+                    <div class="errorMsg" id="usernamePickerError"></div>
+                    <div id="usernamePickerInput">
+                        <input type="text" id="usernamePickerText" maxlength="15">
+                    </div>
+                    <input type="submit" id="usernamePickerSubmit" value="Confirm">
+                </form>
+                <div id="guestMessage">As a guest, your progress will only be saved within your browser cookies, and will be deleted when you log out (under the Profile tab). Creating an account lets you carry your save data between sessions.</div>
             </div>
-            <div id="sidebar">
-                <div class="playersDisplay" id="playersDisplay">
-                    <div id="playersTitle">Players</div>
-                    <ul class="playerList" id="playerList">
-                        <!-- Inserted by javascript -->
-                    </ul>
-                </div>
-                <div class="divider horizontal"></div>
-                <div class="chat">
-                    <ul class="chatMessages" id="chatMessages">
-                        <!-- Inserted by javascript -->
-                    </ul>
-                    <form autocomplete="off" id="sendMessage">
-                        <input type="text" id="messageField">
-                    </form>
-                </div>
+            <div class="modal-content" id="firebaseui-auth-container"></div>
+            <div id="loader">Loading...</div>
+        </div>
+        <div class="modal" id="modal-background">
+            <div class="modal-content" id="createRoomModal">
+                <create-room-modal></create-room-modal>
+            </div>
+            <div class="modal-content" id="giveJoinId">
+               <join-id-modal></join-id-modal>
+            </div>
+            <div class="modal-content" id="joinRoomModal">
+                <join-room-modal></join-room-modal>
+            </div>
+            <div class="modal-content" id="spectateRoomModal">
+                <spectate-room-modal></spectate-room-modal>
+            </div>
+            <div class="modal-content" id="cpuOptionsModal">
+                <cpu-options-modal></cpu-options-modal>
+            </div>
+            <div class="modal-content" id="settingsModal">
+                <settings-modal></settings-modal>
+            </div>
+            <div class="modal-content" id="roomPasswordModal">
+                <set-room-password-modal></set-room-password-modal>
+            </div>
+            <div class="modal-content" id="joinRoomPasswordModal">
+                <join-room-password-modal></join-room-password-modal>
             </div>
         </div>
-        <script src="bundle.js"></script>
-    </main>
+        <div class="modal" id="modal-background-disable">
+            <div class="modal-content dialog" id="dialogBox">
+                <div id="dialogText"></div>
+                <input type="submit" id="dialogAccept" value="OK">
+            </div>
+        </div>
+        <main>
+            <div id="navbar">
+                <span id="navbarSpacer"></span>
+                <span class="navPanel" id="queuePanel">
+                    <img src="images/navbar/QueueIcon.png" class="navIcon">
+                    <span class="panelName">Queue</span>
+                    <div class="dropdown">
+                        <a id="freeForAll">Free for all</a>
+                        <a id="ranked">Ranked</a>
+                    </div>
+                </span>
+                <span class="navPanel" id="customPanel">
+                    <img src="images/navbar/CustomIcon.png" class="navIcon">
+                    <span class="panelName">Custom</span>
+                    <div class="dropdown">
+                        <a id="createRoom">Create Room</a>
+                        <a id="joinRoom">Join Room</a>
+                        <a id="spectate">Spectate</a>
+                    </div>
+                </span>
+                <span class="navPanel" id="singleplayerPanel">
+                    <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
+                    <span class="panelName">Singleplayer</span>
+                    <div class="dropdown">
+                        <a id="sprint">Sprint [WIP]</a>
+                        <a id="timeChallenge">Time Challenge [WIP]</a>
+                    </div>
+                </span>
+                <span class="navPanel" id="profilePanel">
+                    <img src="images/navbar/ProfileIcon.png" class="navIcon">
+                    <span class="panelName">Profile</span>
+                    <div class="dropdown">
+                        <a id="gallery">Gallery</a>
+                        <a id="settings">Settings</a>
+                        <a id="logout">Log Out</a>
+                    </div>
+                </span>
+                <span id="logo">jspuyo</span>
+            </div>
+            <div id="spectateNotice">You are currently spectating this room.</div>
+            <div id="statusHover">
+                <div id="statusName"></div>
+                <div id="statusRating"></div>
+                <div id="statusTitle"></div>
+                <div id="voiceSelectTitle">Voice Selector</div>
+                <table id="voiceSelect">
+                    <!-- Inserted by javascript -->
+                </table>
+            </div>
+            <div id="statusClick">☰</div>
+            <div id="main-content">
+                <table id="playArea">
+                    <!-- Inserted by javascript -->
+                </table>
+                <div class="status" id="statusArea">
+                    <ul class="justify-flexbox vertical" id="roomManage">
+                        <li class="player roomManageOption" id="manageCpus">
+                            <img class="roomManageIcon" src="images/mainpage/cpu.png">
+                            <span>Manage CPUs</span>
+                        </li>
+                        <li class="player roomManageOption" id="manageSettings">
+                            <img class="roomManageIcon" src="images/mainpage/settings.png">
+                            <span>Settings</span>
+                        </li>
+                        <li class="player roomManageOption" id="manageRoomPassword">
+                            <img class="roomManageIcon" src="images/mainpage/password.png">
+                            <span>Set Password</span>
+                        </li>
+                        <li class="player roomManageOption" id="manageJoinLink">
+                            <img class="roomManageIcon" src="images/mainpage/link.png">
+                            <span>Show Join Link</span>
+                        </li>
+                        <li class="player roomManageOption" id="manageStartRoom">
+                            <img class="roomManageIcon" src="images/mainpage/start.png">
+                            <span>Start Room</span>
+                        </li>
+                        <li class="player roomManageOption" id="manageSpectate">
+                            <img class="roomManageIcon" src="images/mainpage/spectate.png">
+                            <span>Spectate</span>
+                        </li>
+                        <li class="roomManageOption" id="managePlay">
+                            <img class="roomManageIcon" src="images/navbar/CustomIcon.png">
+                            <span>Play</span>
+                        </li>
+                    </ul>
+                    <div id="statusMsg"></div>
+                    <div id="statusGamemode"></div>
+                    <div id="statusExtra"></div>
+                </div>
+                <div id="sidebar">
+                    <div class="playersDisplay" id="playersDisplay">
+                        <player-list></player-list>
+                    </div>
+                    <div class="divider horizontal"></div>
+                    <div class="chat">
+                        <chat></chat>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="bundle.js"></script>
 </body>
 </html>

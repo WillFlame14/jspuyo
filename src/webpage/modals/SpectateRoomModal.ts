@@ -1,6 +1,6 @@
 import * as Vue from 'vue';
 
-import { PlayerInfo } from './firebase';
+import { PlayerInfo } from '../firebase';
 
 export const SpectateRoomModal = Vue.defineComponent({
 	data(): { roomIds: string[], errorMsg: string, currentRoomId: string, currentRoomPlayers: string[] } {

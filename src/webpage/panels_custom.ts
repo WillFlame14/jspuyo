@@ -74,26 +74,15 @@ export function initCustomPanels(
 		modal.style.display = 'block';
 		document.getElementById('joinRoomPasswordModal').style.display = 'block';
 		document.getElementById('joinRoomModal').style.display = 'none';
-		document.getElementById('joinRoomId').innerHTML = roomId;
+
+		emitter.emit('setJoinId', roomId);
 	});
-
-	// The form to submit the room password
-	document.getElementById('joinRoomPasswordForm').onsubmit = function (event) {
-		// Prevent submit button from refreshing the page
-		event.preventDefault();
-		const roomPassword = (document.getElementById('joinRoomPassword') as HTMLInputElement).value;
-		const joinId = document.getElementById('joinRoomId').innerHTML || null;
-
-		socket.emit('joinRoom', { gameId: getCurrentUID(), joinId, roomPassword });
-		audioPlayer.playSfx('submit');
-	};
 
 	// Event received when entering the wrong password to a password-protected room
 	socket.on('joinRoomPasswordFailure', (message: string) => {
 		modal.style.display = 'block';
-		document.getElementById('joinRoomPasswordModal').style.display = 'block';
-		document.getElementById('joinRoomPasswordFormError').innerHTML = message;
-		document.getElementById('joinRoomPasswordFormError').style.display = 'block';
+
+		emitter.emit('joinRoomPasswordFailure', message);
 	});
 
 	// Custom - Spectate

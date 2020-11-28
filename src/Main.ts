@@ -19,6 +19,7 @@ import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
 import { CpuOptionsModal } from './webpage//CpuOptionsModal';
 import { JoinIdModal } from './webpage//JoinIdModal';
 import { JoinRoomModal } from './webpage/JoinRoomModal';
+import { JoinRoomPasswordModal } from './webpage/JoinRoomPasswordModal';
 import { RoomOptionsModal } from './webpage//RoomOptionsModal';
 import { SettingsModal } from './webpage/SettingsModal';
 import { SetRoomPasswordModal } from './webpage/SetRoomPasswordModal';
@@ -60,6 +61,7 @@ void (async function() {
 	app.component('create-room-modal', RoomOptionsModal);
 	app.component('join-id-modal', JoinIdModal);
 	app.component('join-room-modal', JoinRoomModal);
+	app.component('join-room-password-modal', JoinRoomPasswordModal);
 	app.component('settings-modal', SettingsModal);
 	app.component('set-room-password-modal', SetRoomPasswordModal);
 	app.component('spectate-room-modal', SpectateRoomModal);

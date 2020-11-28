@@ -44,16 +44,7 @@
             <set-room-password-modal></set-room-password-modal>
         </div>
         <div class="modal-content" id="joinRoomPasswordModal">
-            <div class="close">&times;</div>
-            <form id="joinRoomPasswordForm" autocomplete="off">
-                <label for="joinRoomPassword">Enter the password for the room.</label><br>
-                <div class="hiddenInfo" id="joinRoomId"></div>
-                <div class="errorMsg" id="joinRoomPasswordFormError"></div>
-                <div id="joinRoomPasswordInput">
-                    <input type="text" id="joinRoomPassword" maxlength="20">
-                </div>
-                <input type="submit" id="joinRoomPasswordSubmit" value="Join Room">
-            </form>
+            <join-room-password-modal></join-room-password-modal>
         </div>
     </div>
     <div class="modal" id="modal-background-disable">

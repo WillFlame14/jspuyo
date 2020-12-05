@@ -40,7 +40,6 @@
 
 // Error message that appears in modal boxes.
 .errorMsg {
-	display: none; 	// Hidden by default, appears after an error occurs.
 	margin: 5px 0px;
 
 	color: base.$error-colour;
@@ -157,15 +156,15 @@
 	grid-row: 1;
 	grid-column: 1;
 	margin: 0px auto;
+}
 
-	img {
-		display: block;
-		width: 65%;
-		margin: 0px auto;
+#mode-icon {
+	display: block;
+	width: 65%;
+	margin: 0px auto;
 
-		cursor: pointer;
-		filter: drop-shadow(2px 5px 5px base.$dark-gray);
-	}
+	cursor: pointer;
+	filter: drop-shadow(2px 5px 5px base.$dark-gray);
 }
 
 // Input boxes for the number of rows and columns.
@@ -202,6 +201,15 @@
 	grid-column: 1 / span 2;
 }
 
+// Option title for selecting number of colours.
+#coloursSelectorTitle {
+	display: inline-block;
+	margin-top: 20px;
+	margin-bottom: 10px;
+
+	font-size: 1.28rem;
+}
+
 // Horizontal flexbox containing buttons to select number of players
 #playerButtons {
 	display: flex;
@@ -218,11 +226,11 @@
 	margin: 5px 10px;
 	padding: 2px;
 
-	color: #aaaaaa;			// darkened while unselected
+	color: base.$light-gray;			// darkened while unselected
 	font: 1rem base.$font-title;
 	text-align: center;
 
-	background: #274e13;	// dark green
+	background: base.$dark-green;
 	border: 3px solid gray;
 	box-shadow: 2px 2px 3px 1px base.$dark-gray;		// Smaller shadow while deselcted
 	cursor: pointer;
@@ -231,15 +239,13 @@
 	&.selected {
 		color: white;
 
-		background: #38761d;	// light green
+		background: base.$light-green;
 		border: 3px solid white;
 		box-shadow: base.$box-drop-shadow;
 	}
 
 	&.disabled {
-		color: #bbbbbb;
-
-		background: #464646;
+		background: base.$dark-gray;
 	}
 }
 
@@ -250,17 +256,8 @@ input.numPlayerButton {
 	text-shadow: base.$text-drop-shadow;
 }
 
-// Option title for selecting number of colours.
-#coloursSelectorTitle {
-	display: inline-block;
-	margin-top: 20px;
-	margin-bottom: 10px;
-
-	font-size: 1.28rem;
-}
-
 // Input box for selecting number of colours.
-#numColours {
+#numColoursInput {
 	width: 2em;
 	padding: 4px 8px;
 
@@ -333,8 +330,6 @@ input.numPlayerButton {
 }
 
 #joinIdCopied {
-	display: none;
-
 	color: #dedede;
 	font-size: 22px;
 }
@@ -389,13 +384,9 @@ input.numPlayerButton {
 	width: 30%;
 }
 
-// Error message (invisible at first).
-#spectateFormError {
-	display: none;
-}
-
 // The datalist containing room ids.
 #roomList {
+	display: inline-block;
 	margin-top: 10px;
 }
 
@@ -434,7 +425,7 @@ input.numPlayerButton {
 
 // A container for one set of CPU options.
 .cpuOption {
-	display: none;
+	display: grid;
 	grid-gap: 0px 3%;
 
 	grid-template-rows: auto auto;
@@ -569,12 +560,12 @@ input.numPlayerButton {
 }
 
 // Sliders for volume, skipFrames, etc.
-#settingsSliders {
-	label {
+.sliders {
+	.slider-label {
 		margin: 20px 0px 10px;
 	}
 
-	input[type="range"] {
+	.slider-range {
 		width: 90%;
 		margin-bottom: 15px;
 	}

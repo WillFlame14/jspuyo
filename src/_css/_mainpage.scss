@@ -346,6 +346,8 @@
 
 	.message {
 		color: #bcbcbc;		// Message in light gray
+		white-space: pre-line;
+		overflow-wrap: break-word;
 	}
 }
 

@@ -67,7 +67,7 @@ export class RoomManager {
 				return;
 			}
 			else if(roomPassword !== room.password) {
-				socket.emit('joinRoomPasswordFailure', 'This is not the correct password for the room.');
+				socket.emit('joinRoomPasswordFailure', 'That is not the correct password for the room.');
 				return;
 			}
 		}

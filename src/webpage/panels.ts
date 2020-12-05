@@ -1,12 +1,15 @@
 'use strict';
 
+import mitt from 'mitt';
+
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { initCustomPanels } from './panels_custom';
-import { setKeyBindings, setAppearance, initProfilePanels } from './panels_profile';
 import { UserSettings } from '../utils/Settings';
 
-export const puyoImgs: string[] = ['puyo_red', 'puyo_blue', 'puyo_green', 'puyo_yellow', 'puyo_purple', 'puyo_teal'];
+let globalEmitter: ReturnType<typeof mitt>;
+let globalAudioPlayer: AudioPlayer;
+
 const ranks: Record<string, string> = {
 	'0': 'Blob',
 	'1000': 'Forest Learner',
@@ -16,13 +19,16 @@ const ranks: Record<string, string> = {
 };
 
 export function panelsInit(
+	emitter: ReturnType<typeof mitt>,
 	socket: SocketIOClient.Socket,
 	getCurrentUID: () => string,
 	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer
 ): void {
-	initCustomPanels(puyoImgs, stopCurrentSession, socket, audioPlayer, getCurrentUID);
-	initProfilePanels(clearModal, socket, audioPlayer, stopCurrentSession, getCurrentUID);
+	globalEmitter = emitter;
+	globalAudioPlayer = audioPlayer;
+
+	initCustomPanels(emitter, clearModal, stopCurrentSession, socket, audioPlayer, getCurrentUID);
 
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
@@ -42,23 +48,6 @@ export function panelsInit(
 		}
 	};
 
-	// Switch all toggleable buttons between on/off when clicked
-	const toggleableButtons = Array.from(document.getElementsByClassName('on')).concat(Array.from(document.getElementsByClassName('off')));
-	toggleableButtons.forEach((button: HTMLButtonElement) => {
-		button.onclick = () => {
-			if(button.value === "ON") {
-				button.classList.add('off');
-				button.value = "OFF";
-				button.classList.remove('on');
-			}
-			else {
-				button.classList.add('on');
-				button.value = "ON";
-				button.classList.remove('off');
-			}
-		};
-	});
-
 	// Queue Panel
 	document.getElementById('freeForAll').onclick = async () => {
 		await stopCurrentSession();
@@ -69,6 +58,12 @@ export function panelsInit(
 		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
+	};
+
+	// Dialog panels
+	document.getElementById('dialogAccept').onclick = () => {
+		document.getElementById('dialogBox').style.display = 'none';
+		document.getElementById('modal-background-disable').style.display = 'none';
 	};
 }
 
@@ -90,47 +85,30 @@ export function clearModal(): void {
 	});
 
 	// Clear all error messages
-	Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
-		element.style.display = 'none';
-	});
+	// Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
+	// 	element.style.display = 'none';
+	// });
+}
+
+export function showDialog(message: string): void {
+	document.getElementById('modal-background-disable').style.display = 'block';
+	document.getElementById('dialogText').innerHTML = message;
+	document.getElementById('dialogBox').style.display = 'block';
 }
 
 /**
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-export async function updateUserSettings(user: firebase.User, currentUID: string, globalAudioPlayer: AudioPlayer): Promise<void> {
+export async function updateUserSettings(user: firebase.User, currentUID: string): Promise<void> {
 	const promises: [Promise<UserSettings>, Promise<number>] = [
 		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
 		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)
 	];
 
 	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
-
-	// These settings can be easily updated since they only contain a numeric value.
-	const numericProperties = ['das', 'arr'];
-	numericProperties.forEach(property => {
-		(document.getElementById(property) as HTMLInputElement).value = `${userSettings[property] as number}`;
-	});
-
-	// Intermediate Frames Shown is inverted
-	(document.getElementById('skipFrames') as HTMLInputElement).value = `${50 - userSettings.skipFrames}`;
-
-	// Volume controls are non-linear
-	(document.getElementById('sfxVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
-	(document.getElementById('musicVolume') as HTMLInputElement).value = `${100 * Math.sqrt(userSettings.sfxVolume / 0.4)}`;
-	globalAudioPlayer.configureVolume(userSettings.sfxVolume, userSettings.musicVolume);
-
-	// Update the key bindings
-	const keyBindings = userSettings.keyBindings;
-	Object.keys(keyBindings).forEach(key => {
-		(document.getElementById(`${key}Binding`) as HTMLInputElement).value = keyBindings[key] as string;
-	});
-	setKeyBindings(keyBindings);
-
-	// Update the selected appearance
-	document.getElementById(userSettings.appearance).classList.add('selected');
-	setAppearance(userSettings.appearance);
+	globalAudioPlayer.configureVolume(userSettings);
+	globalEmitter.emit('setSettings', userSettings);
 
 	// Update the status bar
 	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');

@@ -1,6 +1,8 @@
 'use strict';
 
 import firebase = require('firebase/app');
+import * as Vue from 'vue';
+import mitt from 'mitt';
 
 import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
@@ -8,26 +10,47 @@ import { Session } from './Session';
 import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
-import { dialogInit, showDialog } from './webpage/dialog';
 import { PlayerInfo, initApp, signOut } from './webpage/firebase';
-import { mainpageInit, clearMessages, updatePlayers, hidePlayers, toggleHost, toggleSpectate } from './webpage/mainpage';
+import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { navbarInit } from './webpage/navbar';
-import { panelsInit, clearModal, updateUserSettings } from './webpage/panels';
+import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
+import { vueInit } from './webpage/vue';
 
 import io = require('socket.io-client');
 const globalSocket = io();
-
 const globalAudioPlayer = new AudioPlayer(globalSocket);
+const globalEmitter = mitt();
 
-let currentUID: string;
+let currentUID = '';
+
+declare module '@vue/runtime-core' {
+	interface ComponentCustomProperties {
+		audioPlayer: AudioPlayer,
+		emitter: ReturnType<typeof mitt>,
+		socket: SocketIOClient.Socket,
+		getCurrentUID(): () => string,
+		stopCurrentSession: () => Promise<void>
+	}
+}
 
 // This is the "main" function, which starts up the entire app.
 void (async function() {
+	const app = Vue.createApp({
+		provide: {
+			audioPlayer: globalAudioPlayer,
+			socket: globalSocket,
+			getCurrentUID,
+			stopCurrentSession
+		}
+	});
+
+	app.config.globalProperties.emitter = globalEmitter;
+
+	vueInit(app);
 	init(globalSocket);			// game-related
 	navbarInit(globalAudioPlayer);
-	panelsInit(globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-	dialogInit();
-	mainpageInit(globalSocket, getCurrentUID, globalAudioPlayer);
+	panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+	mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
 
 	try {
 		// Login to firebase
@@ -48,7 +71,7 @@ function loginSuccess(user: firebase.User) {
 	globalSocket.off('registered', undefined);
 	globalSocket.on('registered', () => {
 		currentUID = user.uid;
-		updateUserSettings(user, currentUID, globalAudioPlayer).then(() => {
+		updateUserSettings(user, currentUID).then(() => {
 			// Check if a joinRoom link was used
 			const urlParams = new URLSearchParams(window.location.search);
 			const joinId = urlParams.get('joinRoom');				// Id of room to join
@@ -103,7 +126,7 @@ function init(socket: SocketIOClient.Socket): void {
 	) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
-			clearMessages();
+			globalEmitter.emit('clearMessages');
 		}
 		currentRoomId = roomId;
 		clearModal();
@@ -179,7 +202,7 @@ function init(socket: SocketIOClient.Socket): void {
 			roomManageOptions.style.display = 'block';
 		}
 
-		updatePlayers(allIds);
+		globalEmitter.emit('updatePlayers', allIds);
 	});
 
 	socket.on('start', async (roomId: string, opponentIds: string[], settingsString: string) => {
@@ -206,6 +229,8 @@ function init(socket: SocketIOClient.Socket): void {
 
 		// Set up the player's game
 		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
+
+		settings.resetTimer();
 
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
@@ -258,7 +283,7 @@ async function stopCurrentSession(): Promise<void> {
 		// Returning true means the session had not ended yet
 		if (await currentSession.stop() && !currentSession.spectating) {
 			showDialog('You have disconnected from the previous game. That match will be counted as a loss.');
-			clearMessages();
+			globalEmitter.emit('clearMessages');
 		}
 	}
 	return Promise.resolve();
@@ -269,13 +294,15 @@ async function stopCurrentSession(): Promise<void> {
  */
 function showGameOnly() {
 	clearModal();
-	clearMessages();
+	globalEmitter.emit('clearMessages');
 	document.getElementById('statusArea').style.display = 'none';
 	sidebar.style.display = 'none';
 	if(!mainContent.classList.contains('ingame')) {
 		mainContent.classList.add('ingame');
 	}
-	hidePlayers();
+
+	// Clear the player list
+	globalEmitter.emit('updatePlayers', []);
 }
 
 /**

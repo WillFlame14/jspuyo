@@ -38,14 +38,14 @@ io.on('connection', function(socket) {
 		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
 	});
 
-	socket.on('addCpu', (gameId: string) => {
+	socket.on('addCpu', (gameId: string, callback: (index: number) => void) => {
 		const index = RoomManager.addCpu(gameId);
-		socket.emit('addCpuReply', index);
+		callback(index);
 	});
 
-	socket.on('removeCpu', (gameId: string) => {
+	socket.on('removeCpu', (gameId: string, callback: (index: number) => void) => {
 		const index = RoomManager.removeCpu(gameId);
-		socket.emit('removeCpuReply', index);
+		callback(index);
 	});
 
 	socket.on('requestCpus', (gameId: string) => {
@@ -74,6 +74,7 @@ io.on('connection', function(socket) {
 			const promise =	new Promise(resolve => {
 				cpuSocket.emit('cpuAssign', gameId, cpuId, () => resolve());
 			});
+
 			promises.push(promise);
 		});
 
@@ -150,8 +151,8 @@ io.on('connection', function(socket) {
 		socket.emit('allRooms', RoomManager.getAllRooms(gameId));
 	});
 
-	socket.on('getPlayers', roomId => {
-		socket.emit('givePlayers', RoomManager.getPlayers(roomId));
+	socket.on('getPlayers', (roomId: string, callback: (players: string[]) => void) => {
+		callback(RoomManager.getPlayers(roomId));
 	});
 
 	socket.on('ranked', (gameInfo: { gameId: string }) => {
@@ -231,9 +232,9 @@ io.on('connection', function(socket) {
 	});
 
 	// Player sent a chat message
-	socket.on('sendMessage', (gameId, message) => {
+	socket.on('sendMessage', (gameId, message, roomId = null) => {
 		// Send to everyone in the room, including sender
-		io.in(RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
+		io.in(roomId || RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
 	});
 
 	// Player emitted a sound

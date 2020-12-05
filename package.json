@@ -16,7 +16,7 @@
     "stylelint": "stylelint \"src/_css/*.scss\" --fix",
     "test": "eslint src/ --fix && stylelint \"src/_css/*.scss\" --fix && mocha 'test/**/*.test.js'",
     "tsc": "tsc -p ./tsconfig.json",
-    "tsc-watch": "tsc -p ./tsconfig.json --watch --preserveWatchOutput",
+    "tsc-watch": "tsc -p ./tsconfig.json --watch --preserveWatchOutput --incremental",
     "uglify": "browserify -p tsify -t uglifyify src/Main.ts > public/bundle.js",
     "uglify-limited": "browserify -p tsify -t uglifyify src/webpage/pages.ts > public/limited.js"
   },
@@ -31,18 +31,20 @@
   },
   "homepage": "https://github.com/WillFlame14/jspuyo#readme",
   "dependencies": {
-    "@types/express": "^4.17.8",
-    "@types/socket.io-client": "^1.4.34",
-    "@typescript-eslint/eslint-plugin": "^4.4.1",
-    "@typescript-eslint/parser": "^4.4.1",
     "express": "^4.17.1",
     "firebase": "^7.24.0",
     "firebaseui": "^4.6.1",
-    "socket.io": "^2.3.0"
+    "mitt": "^2.1.0",
+    "socket.io": "^2.3.0",
+    "vue": "^3.0.2"
   },
   "devDependencies": {
     "@types/chartist": "^0.11.0",
+    "@types/express": "^4.17.8",
     "@types/socket.io": "^2.1.11",
+    "@types/socket.io-client": "^1.4.34",
+    "@typescript-eslint/eslint-plugin": "^4.4.1",
+    "@typescript-eslint/parser": "^4.4.1",
     "autoprefixer": "^9.8.6",
     "browserify": "^16.5.2",
     "chai": "^4.2.0",

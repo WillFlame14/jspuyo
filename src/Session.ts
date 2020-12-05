@@ -1,7 +1,7 @@
 'use strict';
 
 import { Game } from './Game';
-import { showDialog } from './webpage/dialog';
+import { showDialog } from './webpage/panels';
 import { PlayerInfo } from './webpage/firebase';
 
 export class Session {

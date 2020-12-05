@@ -13,9 +13,9 @@ describe('CPU options', () => {
 
 	beforeEach(() => {
 		// Close CPU Options modal if it is open (i.e. a test failed and left incomplete state)
-		cy.get('#cpuRoomModal').then(element => {
+		cy.get('#cpuOptionsModal').then(element => {
 			if(element.is(':visible')) {
-				cy.get('#cpuRoomModal').find('.close').click();
+				cy.get('#cpuOptionsModal').find('.close').click();
 			}
 		})
 	});

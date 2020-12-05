@@ -72,6 +72,13 @@ export class Settings {
 	}
 
 	/**
+	 * Resets the timer for margin time.
+	 */
+	resetTimer(): void {
+		this.timer = Date.now();
+	}
+
+	/**
 	 * Updates the target points due to margin time.
 	 */
 	checkMarginTime(currentTime = Date.now()): void {

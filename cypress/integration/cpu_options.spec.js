@@ -13,9 +13,11 @@ describe('CPU options', () => {
 
 	beforeEach(() => {
 		// Close CPU Options modal if it is open (i.e. a test failed and left incomplete state)
-		if(cy.get('#cpuRoomModal').is(':visible')) {
-			cy.get('#cpuRoomModal').find('.close').click();
-		}
+		cy.get('#cpuRoomModal').then(element => {
+			if(element.is(':visible')) {
+				cy.get('#cpuRoomModal').find('.close').click();
+			}
+		})
 	});
 
 	it('can add and remove CPUs', () => {

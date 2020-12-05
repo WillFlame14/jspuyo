@@ -230,6 +230,8 @@ function init(socket: SocketIOClient.Socket): void {
 		// Set up the player's game
 		const game = new PlayerGame(getCurrentUID(), opponentIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
+		settings.resetTimer();
+
 		// Create the session
 		currentSession = new Session(getCurrentUID(), game, socket, roomId);
 		currentSession.run();

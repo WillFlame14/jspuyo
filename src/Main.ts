@@ -16,6 +16,10 @@ import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
 
+import { pageInit } from './webpage/pages';
+import { initCharts } from './webpage/pages/gallery';
+import { initGuide } from './webpage/pages/guide';
+
 import io = require('socket.io-client');
 const globalSocket = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
@@ -46,18 +50,35 @@ void (async function() {
 
 	app.config.globalProperties.emitter = globalEmitter;
 
-	vueInit(app);
-	init(globalSocket);			// game-related
-	navbarInit(globalAudioPlayer);
-	panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-	mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+	pageInit();
 
-	try {
-		// Login to firebase
-		loginSuccess(await initApp(globalSocket));
-	}
-	catch(err) {
-		console.error(err);
+	switch(window.location.pathname) {
+		case '/info':
+		case '/privacy':
+		case '/terms':
+			// No need for anything special
+			break;
+		case '/guide':
+			initGuide(app, globalEmitter, globalAudioPlayer);
+			break;
+		case '/gallery':
+			initCharts();
+			break;
+		default:
+			vueInit(app);
+			init(globalSocket);			// game-related
+			navbarInit(globalAudioPlayer);
+			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+
+			try {
+				// Login to firebase
+				loginSuccess(await initApp(globalSocket));
+			}
+			catch(err) {
+				console.error(err);
+			}
+			break;
 	}
 })();
 

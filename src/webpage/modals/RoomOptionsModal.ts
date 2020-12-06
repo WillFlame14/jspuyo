@@ -130,7 +130,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 				<div id="modeSelector">
 					<div class="option-title">Mode</div>
 					<img id="mode-icon"
-						v-bind:src="'images/modal_boxes/' + settings.gamemode + '_icon.png'"
+						v-bind:src="'images/modal_boxes/' + settings.gamemode.toLowerCase() + '_icon.png'"
 						v-on:click="changeGamemode()">
 				</div>
 				<form id="boardSizeSelector" autocomplete="off">

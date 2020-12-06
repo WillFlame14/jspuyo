@@ -22,7 +22,31 @@ let cpuCounter = 1;
 const socketIdToId = new Map<string, string>();
 const cpuInfos = new Map<string, Map<string, CpuInfo>>();
 
-app.use('/', express.static('./public/'));
+app.use(express.static('./public'));
+
+app.get('/info', (req, res) => {
+	res.sendFile('./public/pages/about.html', { root: __dirname });
+});
+
+app.get('/guide', (req, res) => {
+	res.sendFile('./public/pages/guide.html', { root: __dirname });
+});
+
+app.get('/gallery', (req, res) => {
+	res.sendFile('./public/pages/gallery.html', { root: __dirname });
+});
+
+app.get('/privacy', (req, res) => {
+	res.sendFile('./public/pages/privacy.html', { root: __dirname });
+});
+
+app.get('/terms', (req, res) => {
+	res.sendFile('./public/pages/terms.html', { root: __dirname });
+});
+
+app.get('/', (req, res) => {
+	res.sendFile('./public/index.html', { root: __dirname });
+});
 
 io.on('connection', function(socket) {
 	socket.on('register', (gameId: string) => {

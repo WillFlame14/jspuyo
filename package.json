@@ -7,18 +7,17 @@
     "autoprefix": "postcss temp.css --use autoprefixer -o public/style.css",
     "autoprefix-watch": "postcss temp.css --use autoprefixer -o public/style.css --watch",
     "bundle": "watchify src/Main.ts -p [tsify -p tsconfig.json] -o public/bundle.js --debug",
-    "bundle-limited": "watchify src/webpage/pages.ts -p tsify -o public/limited.js --debug",
+    "compile": "npm-run-all uglify sass autoprefix",
     "eslint": "eslint src/ --fix",
     "node": "node-dev --respawn server.js",
     "sass": "sass src/_css/style.scss temp.css --no-source-map",
     "sass-watch": "sass  --watch src/_css/style.scss temp.css --no-source-map",
-    "start": "npm-run-all --parallel bundle bundle-limited node sass-watch autoprefix-watch tsc-watch",
+    "start": "npm-run-all --parallel bundle node sass-watch autoprefix-watch tsc-watch",
     "stylelint": "stylelint \"src/_css/*.scss\" --fix",
     "test": "eslint src/ --fix && stylelint \"src/_css/*.scss\" --fix && mocha 'test/**/*.test.js'",
     "tsc": "tsc -p ./tsconfig.json",
     "tsc-watch": "tsc -p ./tsconfig.json --watch --preserveWatchOutput --incremental",
-    "uglify": "browserify -p tsify -t uglifyify src/Main.ts > public/bundle.js",
-    "uglify-limited": "browserify -p tsify -t uglifyify src/webpage/pages.ts > public/limited.js"
+    "uglify": "browserify -p tsify -t uglifyify src/Main.ts > public/bundle.js"
   },
   "repository": {
     "type": "git",

@@ -1,6 +1,7 @@
 'use strict';
 
 import mitt from 'mitt';
+import firebase from 'firebase/app';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';

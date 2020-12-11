@@ -80,7 +80,7 @@ io.on('connection', function(socket) {
 	socket.on('setCpus', (gameInfo: {gameId: string, cpus: CpuInfo[]}) => {
 		const { gameId, cpus } = gameInfo;
 
-		const promises: Promise<unknown>[] = [];
+		const promises: Promise<void>[] = [];
 
 		// Temporarily store in a shared map
 		cpuInfos.set(gameId, new Map());
@@ -95,7 +95,7 @@ io.on('connection', function(socket) {
 			Object.assign(cpu, { client_socket: cpuSocket });
 			cpuInfos.get(gameId).set(cpuId, cpu);
 
-			const promise =	new Promise(resolve => {
+			const promise: Promise<void> =	new Promise(resolve => {
 				cpuSocket.emit('cpuAssign', gameId, cpuId, () => resolve());
 			});
 

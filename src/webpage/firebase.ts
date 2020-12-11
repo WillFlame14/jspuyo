@@ -1,6 +1,6 @@
 'use strict';
 
-import firebase = require('firebase/app');
+import firebase from 'firebase/app';
 import firebaseui = require('firebaseui');
 import { firebaseConfig } from '../../config';
 import { UserSettings } from '../utils/Settings';
@@ -56,7 +56,7 @@ export function initApp(globalSocket: SocketIOClient.Socket): Promise<firebase.U
 		socket = globalSocket;
 		initializeUI(resolve);
 
-		firebase.auth().onAuthStateChanged((user: firebase.User) => {
+		firebase.auth().onAuthStateChanged((user) => {
 			// Just logged in
 			if (user) {
 				document.getElementById('firebaseui-auth-container').style.display = 'none';
@@ -180,7 +180,7 @@ export async function signOut(): Promise<void> {
 /**
  * Checks if a username is valid.
  */
-function validateUsername(username: string): Promise<string> {
+function validateUsername(username: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if(!username || username.trim().length === 0) {
 			reject('Please enter a username.');

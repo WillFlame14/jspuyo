@@ -1,6 +1,6 @@
 'use strict';
 
-import firebase = require('firebase/app');
+import firebase from 'firebase/app';
 import * as Vue from 'vue';
 import mitt from 'mitt';
 

@@ -18,8 +18,6 @@ install:
 script:
   - npm run tsc
   - npm test
-  - npm run uglify & npm run uglify-limited
-  - npm run sass
-  - npm run autoprefix
+  - npm run compile
   - node server.js & wait-on http://localhost:3000
   - $(npm bin)/cypress run --record

@@ -7,5 +7,5 @@
     "noImplicitThis": true,
     "target": "ESNext"
   },
-  "include": ["./src/**/*", "./server.ts"]
+  "include": ["./src/**/*.ts", "./server.ts"]
 }

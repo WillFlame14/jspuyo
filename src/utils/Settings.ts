@@ -71,6 +71,10 @@ export class Settings {
 		return settings.toString();
 	}
 
+	setSeed(seed = Math.random()): void {
+		this.seed = seed;
+	}
+
 	/**
 	 * Resets the timer for margin time.
 	 */

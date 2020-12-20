@@ -61,6 +61,11 @@ export function panelsInit(
 		socket.emit('ranked', { gameId: getCurrentUID() });
 	};
 
+	document.getElementById('guide').onclick = async () => {
+		await stopCurrentSession();
+		window.location.assign('/guide');
+	};
+
 	// Dialog panels
 	document.getElementById('dialogAccept').onclick = () => {
 		document.getElementById('dialogBox').style.display = 'none';

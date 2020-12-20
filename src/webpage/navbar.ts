@@ -5,7 +5,7 @@ import { AudioPlayer } from '../utils/AudioPlayer';
 const panelDropdowns: Record<string, string[]> = {
 	'queuePanel': ['freeForAll', 'ranked'],
 	'customPanel': ['createRoom', 'joinRoom', 'spectate'],
-	'singleplayerPanel': ['sprint', 'timeChallenge'],
+	'singleplayerPanel': ['sprint', 'timeChallenge', 'guide'],
 	'profilePanel': ['settings', 'gallery', 'logout']
 };
 

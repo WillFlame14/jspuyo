@@ -1,63 +1,75 @@
 'use strict';
 
 import { Game } from './Game';
-import { showDialog } from './webpage/panels';
-import { PlayerInfo } from './webpage/firebase';
 
 export class Session {
 	gameId: string;
+	opponentIds: string[];
 	game: Game;
 	socket: SocketIOClient.Socket;
 	roomId: string;
-	spectating: boolean;
 
 	/** Flag to force the session to end immediately. */
 	forceStop = false;
 
-	/** Whether the session has stopped or not. */
 	stopped = false;
+	paused = false;
 
-	constructor(gameId: string, game: Game, socket: SocketIOClient.Socket, roomId: string, spectating = false) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: SocketIOClient.Socket, roomId: string) {
 		this.gameId = gameId;
+		this.opponentIds = opponentIds;
 		this.game = game;
 		this.socket = socket;
 		this.roomId = roomId;
-		this.spectating = spectating;
+
+		this.initialize();
+	}
+
+	initialize(): void {
+		if(this.socket.listeners('sendNuisance').length !== 0) {
+			return;
+		}
+
+		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
+			this.sendNuisance(oppId, nuisance);
+		});
+
+		this.socket.on('activateNuisance', (oppId: string) => {
+			this.activateNuisance(oppId);
+		});
+
+		this.socket.on('gameOver', (oppId: string) => {
+			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
+			if(this.opponentIds.length === 0) {
+				this.game.endResult = 'Win';
+			}
+		});
+
+		this.socket.on('playerDisconnect', (oppId: string) => {
+			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
+			if(this.opponentIds.length === 0) {
+				this.game.endResult = 'OppDisconnect';
+			}
+		});
+
+		this.socket.on('pause', () => {
+			this.paused = true;
+		});
+
+		this.socket.on('play', () => {
+			this.paused = false;
+		});
+
+		this.socket.on('timeout', () => {
+			this.game.endResult = 'Timeout';
+		});
 	}
 
 	/**
 	 * Starts the session by running requestAnimationFrame().
 	 */
 	run(): void {
-		const main = () => {
-			const mainFrame = window.requestAnimationFrame(main);
-
-			if(this.forceStop) {
-				window.cancelAnimationFrame(mainFrame);
-				this.finish('Disconnect');
-
-				// Save stats since the game was forcefully disconnected
-				this.game.statTracker.addResult('undecided');
-				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
-				this.stopped = true;
-				return;
-			}
-
-			this.game.step();
-
-			// Check end results
-			const endResult = this.game.end();
-			if(endResult !== null) {
-				window.cancelAnimationFrame(mainFrame);
-				this.finish(endResult);
-				this.stopped = true;
-
-				// Save stats
-				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
-				return;
-			}
-		};
-		main();
+		throw new Error('run() must be implemented by the child class!');
 	}
 
 	/**
@@ -67,22 +79,16 @@ export class Session {
 	finish(endResult: string): void {
 		switch(endResult) {
 			case 'Win':
-				console.log('You win!');
 				this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Loss':
-				console.log('You lose...');
 				this.socket.emit('gameOver', this.gameId);
 				break;
 			case 'OppDisconnect':
-				console.log('Your opponent has disconnected. This match will be counted as a win.');
 				this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Disconnect':
 				this.socket.emit('forceDisconnect', this.gameId, this.roomId);
-				break;
-			case 'Timeout':
-				showDialog('You have been disconnected from the game due to connection timeout.');
 				break;
 		}
 	}
@@ -110,5 +116,58 @@ export class Session {
 				setTimeout(waitForStop, 500);
 			}
 		});
+	}
+
+	sendNuisance(oppId: string, nuisance: number): void {
+		this.game.receiveNuisance(oppId, nuisance);
+	}
+
+	activateNuisance(oppId: string): void {
+		this.game.activateNuisance(oppId);
+	}
+}
+
+export class CpuSession extends Session {
+	timer: ReturnType<typeof setTimeout>;
+
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: SocketIOClient.Socket, roomId: string) {
+		super(gameId, opponentIds, game, socket, roomId);
+	}
+
+	run(): void {
+		// Called every "frame" to simulate the game loop
+		const main = () => {
+			if(this.forceStop) {
+				clearTimeout(this.timer);
+				this.stopped = true;
+				return;
+			}
+
+			const { currentBoardHash, score, nuisance } = this.game.step();
+			this.socket.emit('sendState', this.gameId, currentBoardHash, score, nuisance);
+
+			const endResult = this.game.end();
+			if(endResult !== null) {
+				switch(endResult) {
+					case 'Win':
+						// TODO: Win animation
+						this.socket.emit('gameEnd', this.roomId);
+						break;
+					case 'Loss':
+						this.socket.emit('gameOver', this.gameId);
+						break;
+					case 'OppDisconnect':
+						// Ignore if CPU wins due to player disconnect
+						break;
+				}
+				this.finish(endResult);
+				this.stopped = true;
+			}
+			else {
+				// If CPU game has not ended, recursively set a new timeout
+				this.timer = setTimeout(main, 16.67);
+			}
+		};
+		main();
 	}
 }

@@ -33,6 +33,7 @@ export class PlayerGame extends Game {
 
 		// Associate a GameArea to each opponent
 		let opponentCounter = 2;
+
 		this.opponentIds.forEach(id => {
 			this.opponentGameAreas[id] = gameAreas[opponentCounter];
 			this.opponentIdToCellId[id] = opponentCounter;
@@ -47,7 +48,7 @@ export class PlayerGame extends Game {
 		this.socket.off('sendSound', undefined);
 		this.socket.off('sendVoice', undefined);
 
-		// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
@@ -80,12 +81,12 @@ export class PlayerGame extends Game {
 	 * @Override
 	 * Draws the board with the new hash after stepping.
 	 */
-	step(): string {
-		const currentBoardHash = super.step();
-		if(currentBoardHash) {
-			this.gameArea.drawFromHash(currentBoardHash);
+	step(): Record<string, unknown> {
+		const state = super.step();
+		if(state.currentBoardHash) {
+			this.gameArea.drawFromHash(state.currentBoardHash as string);
 		}
-		return currentBoardHash;
+		return state;
 	}
 
 	/**
@@ -114,6 +115,7 @@ export class PlayerGame extends Game {
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
 export class SpectateGame extends Game {
+	opponentIds: string[];
 	opponentGameAreas: Record<string, GameArea>;
 	opponentIdToCellId: Record<string, number>;
 
@@ -129,6 +131,8 @@ export class SpectateGame extends Game {
 		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;
+
+		this.opponentIds = opponentIds;
 		this.opponentGameAreas = {};
 		this.opponentIdToCellId = {};
 
@@ -173,8 +177,8 @@ export class SpectateGame extends Game {
 	 * @Override
 	 * Increments the game. Since player is spectating, do nothing.
 	 */
-	step(): string {
-		return;
+	step(): Record<string, unknown> {
+		return {};
 	}
 
 	/**

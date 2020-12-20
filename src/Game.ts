@@ -45,7 +45,6 @@ export class Game {
 	currentScore = 0;
 
 	allClear = false;
-	paused = false;
 
 	/** Leftover nuisance (decimal between 0 and 1) */
 	leftoverNuisance = 0;
@@ -99,64 +98,14 @@ export class Game {
 		this.lastBoardHash = null;
 		this.socket = socket;
 
-		this.socket.off('sendNuisance', undefined);
-		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
-			this.visibleNuisance[oppId] += nuisance;
-		});
-
-		this.socket.off('activateNuisance', undefined);
-		this.socket.on('activateNuisance', (oppId: string) => {
-			this.activeNuisance += this.visibleNuisance[oppId];
-			this.visibleNuisance[oppId] = 0;
-		});
-
-		this.socket.off('gameOver', undefined);
-		this.socket.on('gameOver', (oppId: string) => {
-			// Do not log to console for CPUs
-			if(!this.gameId.includes('CPU')) {
-				console.log(`Player with id ${oppId} has topped out.`);
-			}
-			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.endResult = 'Win';
-			}
-		});
-
-		this.socket.off('playerDisconnect', undefined);
-		this.socket.on('playerDisconnect', (oppId: string) => {
-			// Do not log to console for CPUs
-			if(!this.gameId.includes('CPU')) {
-				console.log(`Player with id ${oppId} has disconnected.`);
-			}
-			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.endResult = 'OppDisconnect';
-			}
-		});
-
-		this.socket.off('pause', undefined);
-		this.socket.on('pause', () => {
-			this.paused = true;
-		});
-
-		this.socket.off('play', undefined);
-		this.socket.on('play', () => {
-			this.paused = false;
-		});
-
-		this.socket.off('timeout', undefined);
-		this.socket.on('timeout', () => {
-			this.endResult = 'Timeout';
-		});
-
-		this.opponentIds.forEach(id => {
-			this.visibleNuisance[id] = 0;
-		});
-
 		this.currentDrop = this.dropQueue.shift();
 		this.dropNum++;
 
 		this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
+	}
+
+	setStartingBoard(boardState: number[][]): void {
+		this.board = new Board(this.settings, boardState);
 	}
 
 	/**
@@ -184,6 +133,18 @@ export class Game {
 		return null;
 	}
 
+	receiveNuisance(oppId: string, nuisance: number): void {
+		if(this.visibleNuisance[oppId] === undefined) {
+			this.visibleNuisance[oppId] = 0;
+		}
+		this.visibleNuisance[oppId] += nuisance;
+	}
+
+	activateNuisance(oppId: string): void {
+		this.activeNuisance += this.visibleNuisance[oppId];
+		this.visibleNuisance[oppId] = 0;
+	}
+
 	/**
 	 * Increments the game.
 	 * If a chain is resolving or a drop is split, the game will not update until the animations have completed.
@@ -193,13 +154,9 @@ export class Game {
 	 * and rotation) while accepting any queued events from InputManager. Next it determines if the drop will become
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
-	step(): string {
-		// Do not step if game paused
-		if(this.paused) {
-			return;
-		}
+	step(): Record<string, unknown> {
+		let currentBoardHash: string = null, nuisanceSent = 0;
 
-		let currentBoardHash: string = null;
 		this.gameArea.updateNuisance(this.getTotalNuisance());
 
 		// Isolated puyo currently dropping
@@ -261,17 +218,19 @@ export class Game {
 
 			const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
 			currentBoardHash = this.gameArea.updateBoard(currentBoardState);
-			this.updateScore();
+			nuisanceSent = this.updateScore();
 		}
 
-		// Emit board state to all opponents
-		if(currentBoardHash !== null) {
-			this.socket.emit('sendState', this.gameId, currentBoardHash, this.currentScore, this.getTotalNuisance());
-		}
+		const state = {
+			currentBoardHash,
+			score: this.currentScore,
+			nuisance: this.getTotalNuisance(),
+			nuisanceSent
+		};
 
 		this.currentFrame++;
 
-		return currentBoardHash;
+		return state;
 	}
 
 	/**
@@ -559,7 +518,7 @@ export class Game {
 
 	getInputs(): void {
 		// Implemented by the child classes
-		throw new Error('getInput() must be implemented in the child class!');
+		throw new Error('getInputs() must be implemented in the child class!');
 	}
 
 	/**
@@ -698,7 +657,7 @@ export class Game {
 	/**
 	 * Updates the internal score (calling updateVisibleScore() to update the screen) and sends nuisance to opponents.
 	 */
-	updateScore(): void {
+	updateScore(): number {
 		const pointsDisplayName = `pointsDisplay${this.cellId}`;
 
 		if(this.resolvingState.chain === 0) {
@@ -732,8 +691,8 @@ export class Game {
 		this.preChainScore = this.currentScore;
 
 		// Do not send nuisance if chain is not long enough (or there is none to send)
-		if(nuisanceSent === 0 || this.resolvingState.chain < this.settings.minChain) {
-			return;
+		if(this.resolvingState.chain < this.settings.minChain) {
+			return 0;
 		}
 
 		// Partially cancel the active nuisance
@@ -760,12 +719,9 @@ export class Game {
 					this.visibleNuisance[opponents[i]] = 0;
 				}
 			}
-
-			// Still nuisance left to send
-			if(nuisanceSent > 0) {
-				this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
-			}
 		}
+
+		return nuisanceSent;
 	}
 
 	/**

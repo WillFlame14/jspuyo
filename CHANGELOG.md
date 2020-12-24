@@ -1,6 +1,62 @@
 # Changelog
 
-## v0.9 - Game Improvements, Singleplayer
+## v0.11 - Game Improvements II, Singleplayer
+
+### v0.11.0 (December 24, 2020)
+[`Add guide and simulator #65`](https://github.com/WillFlame14/jspuyo/pull/65)
+
+**New features:**
+- A new guide to jspuyo! Can be visited under the Singleplayer tab or appending `/guide` to the URL.
+  - New users will be automatically shown a popup asking if they want to view the guide.
+  - The guide introduces the basics of the game and the controls, as well as some very basic strategy.
+  - The general structure of the guide pages is also very modular, can probably be expanded to fit a Lessons mode in the future.
+- A basic simulator, currently only used in the guide but will be further explored in Singleplayer modes
+  - Can set starting board and starting nuisance
+  - Can pause and restart (resuming not supported.. yet)
+
+**Other changes:**
+- A basic router has been set up for the different URL paths. No more folders containing just `index.html`!
+- Only one JS file is created now and used across all pages. This greatly simplified the build process, but it might make loading times slightly longer.
+- Fixed a case-sensitive issue with image filenames.
+- Lots of dependences have been updated to newer versions.
+
+## v0.10 - Code Overhaul
+
+### v0.10.1 (December 5, 2020)
+[`Move frontend over to Vue #62`](https://github.com/WillFlame14/jspuyo/pull/62)
+
+**Changes:**
+- Separated the initialization code into lots of new files, should modularize a lot of the frontend
+- Added emitter to communicate between js frontend and vue frontend, since conversion isn't fully done yet
+- New cypress tests!
+- A few minor bugs fixed while refactoring
+- Asset naming is more consistent.
+
+### v0.10.0 (October 25, 2020)
+[`Migration to Typescript #59`](https://github.com/WillFlame14/jspuyo/pull/59)
+
+**Changes:**
+- Several minor bugs fixed, notably:
+  - Users can no longer register with a username that is already taken
+  - Puyos are now correctly removed above row 13
+  - The volume for the player is now correctly set.
+- Removed deprecated code that was lingering around
+- Added lots of documentation
+
+## v0.9 - Game Improvements
+
+### v0.9.1 (September 13, 2020)
+[`Minor fixes #55`](https://github.com/WillFlame14/jspuyo/pull/55)
+
+**Changes:**
+- All outdated dependencies were updated
+- Files were split up for better organization
+- Added unit tests for CPU behaviour
+  - Simple CPUs now correctly double rotate when necessary
+  - All CPUs now correctly prioritize higher scoring chains
+  - Advanced CPUs no longer incorrectly place trigger puyos in certain conditions
+- Closing the Manage CPUs modal without saving selections no longer causes server to get confused about the number of CPUs in the room
+- Games with less than 3 colours no longer cause infinite loops
 
 ### v0.9.0 (September 12, 2020)
 [`Overhaul BoardDrawer into GameDrawer #54`](https://github.com/WillFlame14/jspuyo/pull/54)

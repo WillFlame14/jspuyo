@@ -190,6 +190,10 @@ const GuideComponent = Vue.defineComponent({
 		openSettings() {
 			document.getElementById('modal-background').style.display = 'block';
 			document.getElementById('settingsModal').style.display = 'block';
+
+			if(this.simulatorOn) {
+				this.stopSimulator();
+			}
 		},
 		returnHome() {
 			window.location.assign('/');

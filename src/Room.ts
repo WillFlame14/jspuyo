@@ -176,6 +176,7 @@ export class Room {
 			);
 
 			const session = new CpuSession(cpuId, opponentIds, game, client_socket, this.roomId);
+			session.run();
 
 			this.games.set(cpuId, { frames: 0, socket, session });
 		});

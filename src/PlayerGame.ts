@@ -115,7 +115,6 @@ export class PlayerGame extends Game {
  * SpectateGame: Only interacts from opponent boards, does not create a board or register inputs for the player.
  */
 export class SpectateGame extends Game {
-	opponentIds: string[];
 	opponentGameAreas: Record<string, GameArea>;
 	opponentIdToCellId: Record<string, number>;
 
@@ -131,8 +130,6 @@ export class SpectateGame extends Game {
 		super(gameId, opponentIds, socket, settings, userSettings);
 
 		let frame = 0;
-
-		this.opponentIds = opponentIds;
 		this.opponentGameAreas = {};
 		this.opponentIdToCellId = {};
 

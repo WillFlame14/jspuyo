@@ -26,18 +26,17 @@ export class Session {
 	}
 
 	initialize(): void {
-		if(this.socket.listeners('sendNuisance').length !== 0) {
-			return;
-		}
-
+		this.socket.off('sendNuisance');
 		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
 			this.sendNuisance(oppId, nuisance);
 		});
 
+		this.socket.off('activateNuisance');
 		this.socket.on('activateNuisance', (oppId: string) => {
 			this.activateNuisance(oppId);
 		});
 
+		this.socket.off('gameOver');
 		this.socket.on('gameOver', (oppId: string) => {
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
@@ -45,6 +44,7 @@ export class Session {
 			}
 		});
 
+		this.socket.off('playerDisconnect');
 		this.socket.on('playerDisconnect', (oppId: string) => {
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(this.opponentIds.length === 0) {
@@ -52,14 +52,17 @@ export class Session {
 			}
 		});
 
+		this.socket.off('pause');
 		this.socket.on('pause', () => {
 			this.paused = true;
 		});
 
+		this.socket.off('play');
 		this.socket.on('play', () => {
 			this.paused = false;
 		});
 
+		this.socket.off('timeout');
 		this.socket.on('timeout', () => {
 			this.game.endResult = 'Timeout';
 		});
@@ -143,8 +146,21 @@ export class CpuSession extends Session {
 				return;
 			}
 
-			const { currentBoardHash, score, nuisance } = this.game.step();
-			this.socket.emit('sendState', this.gameId, currentBoardHash, score, nuisance);
+			if(!this.paused) {
+				const { currentBoardHash, score, nuisance, nuisanceSent, activateNuisance } = this.game.step();
+				if(currentBoardHash != null) {
+					this.socket.emit('sendState', this.gameId, currentBoardHash, score, nuisance);
+				}
+
+				// Still nuisance left to send
+				if(nuisanceSent !== undefined && nuisanceSent > 0) {
+					this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
+				}
+
+				if(activateNuisance) {
+					this.socket.emit('activateNuisance', this.gameId);
+				}
+			}
 
 			const endResult = this.game.end();
 			if(endResult !== null) {

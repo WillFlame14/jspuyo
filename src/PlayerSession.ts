@@ -28,7 +28,7 @@ export class PlayerSession extends Session {
 			}
 
 			if(!this.paused) {
-				const { currentBoardHash, score, nuisance, nuisanceSent } = this.game.step();
+				const { currentBoardHash, score, nuisance, nuisanceSent, activateNuisance } = this.game.step();
 
 				if(currentBoardHash != null) {
 					this.socket.emit('sendState', this.gameId, currentBoardHash, score, nuisance);
@@ -37,6 +37,10 @@ export class PlayerSession extends Session {
 				// Still nuisance left to send
 				if(nuisanceSent !== undefined && nuisanceSent > 0) {
 					this.socket.emit('sendNuisance', this.gameId, nuisanceSent);
+				}
+
+				if(activateNuisance) {
+					this.socket.emit('activateNuisance', this.gameId);
 				}
 			}
 

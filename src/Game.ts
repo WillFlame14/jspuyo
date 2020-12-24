@@ -102,6 +102,10 @@ export class Game {
 		this.dropNum++;
 
 		this.currentBoardHash = this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
+
+		for(const oppId of opponentIds) {
+			this.visibleNuisance[oppId] = 0;
+		}
 	}
 
 	setStartingBoard(boardState: number[][]): void {
@@ -155,7 +159,7 @@ export class Game {
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
 	step(): Record<string, unknown> {
-		let currentBoardHash: string = null, nuisanceSent = 0;
+		let currentBoardHash: string = null, nuisanceSent = 0, activateNuisance = false;
 
 		this.gameArea.updateNuisance(this.getTotalNuisance());
 
@@ -173,7 +177,7 @@ export class Game {
 		}
 		// Currently resolving a chain
 		else if(this.resolvingChains.length !== 0) {
-			currentBoardHash = this.resolveChains();
+			({ currentBoardHash, nuisanceSent, activateNuisance } = this.resolveChains());
 		}
 		// Not resolving a chain; game has control
 		else {
@@ -225,7 +229,8 @@ export class Game {
 			currentBoardHash,
 			score: this.currentScore,
 			nuisance: this.getTotalNuisance(),
-			nuisanceSent
+			nuisanceSent,
+			activateNuisance
 		};
 
 		this.currentFrame++;
@@ -389,8 +394,8 @@ export class Game {
 	 * Called every frame while chaining is occurring. (Prevents inputs.)
 	 * Returns the current board hash.
 	 */
-	resolveChains(): string {
-		let currentBoardHash: string = null;
+	resolveChains(): { currentBoardHash: string, nuisanceSent: number, activateNuisance: boolean } {
+		let currentBoardHash: string = null, nuisanceSent = 0, activateNuisance = false;
 
 		// Setting up the board state
 		if(this.resolvingState.currentFrame === 0) {
@@ -462,7 +467,7 @@ export class Game {
 		// Check if the chain is done resolving
 		if(this.resolvingState.currentFrame === this.resolvingState.totalFrames) {
 			// Update the score displayed
-			this.updateScore();
+			nuisanceSent = this.updateScore();
 
 			// Remove the chained puyos and popped nuisance puyos
 			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
@@ -478,7 +483,7 @@ export class Game {
 
 				// No pending nuisance, chain completed
 				if(this.getTotalNuisance() === 0) {
-					this.socket.emit('activateNuisance', this.gameId);
+					activateNuisance = true;
 				}
 
 				// Check for all clear
@@ -493,7 +498,7 @@ export class Game {
 				this.resolvingState.chain++;
 			}
 		}
-		return currentBoardHash;
+		return { currentBoardHash, nuisanceSent, activateNuisance };
 	}
 
 	/**
@@ -667,7 +672,7 @@ export class Game {
 				this.updateVisibleScore(pointsDisplayName, this.currentScore);
 				this.softDrops %= 5;
 			}
-			return;
+			return 0;
 		}
 
 		const scoreForLink = Utils.calculateScore(this.resolvingState.puyoLocs, this.resolvingState.chain);

@@ -1,12 +1,12 @@
 'use strict';
 
-import firebase = require('firebase/app');
+import firebase from 'firebase/app';
 import * as Vue from 'vue';
 import mitt from 'mitt';
 
 import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
-import { Session } from './Session';
+import { PlayerSession } from './PlayerSession';
 import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
@@ -15,6 +15,10 @@ import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
+
+import { pageInit } from './webpage/pages';
+import { initCharts } from './webpage/pages/gallery';
+import { initGuide } from './webpage/pages/guide';
 
 import io = require('socket.io-client');
 const globalSocket = io();
@@ -46,18 +50,35 @@ void (async function() {
 
 	app.config.globalProperties.emitter = globalEmitter;
 
-	vueInit(app);
-	init(globalSocket);			// game-related
-	navbarInit(globalAudioPlayer);
-	panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-	mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+	pageInit();
 
-	try {
-		// Login to firebase
-		loginSuccess(await initApp(globalSocket));
-	}
-	catch(err) {
-		console.error(err);
+	switch(window.location.pathname) {
+		case '/info':
+		case '/privacy':
+		case '/terms':
+			// No need for anything special
+			break;
+		case '/guide':
+			initGuide(app, globalEmitter, globalSocket, globalAudioPlayer);
+			break;
+		case '/gallery':
+			initCharts();
+			break;
+		default:
+			vueInit(app);
+			init(globalSocket);			// game-related
+			navbarInit(globalAudioPlayer);
+			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
+			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+
+			try {
+				// Login to firebase
+				loginSuccess(await initApp(globalSocket));
+			}
+			catch(err) {
+				console.error(err);
+			}
+			break;
 	}
 })();
 
@@ -102,7 +123,7 @@ function getCurrentUID() {
 
 /*----------------------------------------------------------*/
 
-let currentSession: Session = null;
+let currentSession: PlayerSession = null;
 let currentRoomId: string = null;
 
 const defaultSkipFrames = [0, 0, 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 25];
@@ -233,7 +254,7 @@ function init(socket: SocketIOClient.Socket): void {
 		settings.resetTimer();
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId);
+		currentSession = new PlayerSession(getCurrentUID(), opponentIds, game, socket, roomId);
 		currentSession.run();
 	});
 
@@ -256,7 +277,7 @@ function init(socket: SocketIOClient.Socket): void {
 		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
 		// Create the session
-		currentSession = new Session(getCurrentUID(), game, socket, roomId, true);
+		currentSession = new PlayerSession(getCurrentUID(), allIds, game, socket, roomId, true);
 		currentSession.run();
 	});
 
@@ -308,7 +329,7 @@ function showGameOnly() {
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-function generateCells(numCells: number, settings: Settings, appearance = new UserSettings().appearance): Record<number, GameArea> {
+export function generateCells(numCells: number, settings: Settings, appearance = new UserSettings().appearance): Record<number, GameArea> {
 	const playArea = document.getElementById('playArea') as HTMLTableElement;
 	playArea.style.display = 'table';
 
@@ -394,7 +415,7 @@ function generateCells(numCells: number, settings: Settings, appearance = new Us
 /**
  * Removes all boards on screen.
  */
-function clearCells() {
+export function clearCells() {
 	const playArea = document.getElementById('playArea');
 	while(playArea.firstChild) {
 		playArea.firstChild.remove();

@@ -48,6 +48,24 @@
 	margin-bottom: 15px;
 }
 
+#viewGuideModal {
+	display: none;
+	width: 50%;
+
+	color: white;
+	text-align: center;
+	text-shadow: base.$text-drop-shadow;
+
+	p {
+		margin: 0.5em 0.5em 1em;
+	}
+}
+
+#visitGuide {
+	display: block;
+	margin: 0 auto 5px;
+}
+
 /**
  * These are (hopefully) temporary fixes since the CSS of FirebaseUI doesn't turn out nicely.
  * Eventually the entire login UI element should be done from scratch.

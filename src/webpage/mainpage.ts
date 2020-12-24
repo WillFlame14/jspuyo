@@ -1,6 +1,5 @@
 'use strict';
 
-import { pageInit } from './pages';
 import { PlayerInfo } from './firebase';
 import { UserSettings } from '../utils/Settings';
 import { AudioPlayer, VOICES } from '../utils/AudioPlayer';
@@ -11,8 +10,6 @@ let currentlyHost = false;
 let globalEmitter: ReturnType<typeof mitt>;
 
 export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOClient.Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
-	pageInit();
-
 	globalEmitter = emitter;
 
 	const statusClick = document.getElementById('statusClick');

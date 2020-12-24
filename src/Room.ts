@@ -2,6 +2,7 @@
 
 import { CpuVariants } from './cpu/CpuVariants';
 import { CpuGame } from './CpuGame';
+import { CpuSession } from './Session';
 import { Settings } from './utils/Settings';
 
 const MAX_FRAME_DIFFERENCE = 20;
@@ -12,7 +13,7 @@ export class Room {
 	members: Map<string, { socket: SocketIO.Socket }>;
 	cpus = new Map<string, CpuInfo>();
 	numCpus = 0;
-	games = new Map<string, { socket: SocketIO.Socket, frames: number, timeout?: ReturnType<typeof setTimeout> }>();
+	games = new Map<string, { socket: SocketIO.Socket, frames: number, session?: CpuSession }>();
 	host: string;
 
 	ingame = false;
@@ -174,37 +175,10 @@ export class Room {
 				settings
 			);
 
-			let cpuTimer: ReturnType<typeof setTimeout>;
+			const session = new CpuSession(cpuId, opponentIds, game, client_socket, this.roomId);
+			session.run();
 
-			// Called every "frame" to simulate the game loop
-			const timeout = () => {
-				game.step();
-
-				const cpuEndResult = game.end();
-				if(cpuEndResult !== null) {
-					switch(cpuEndResult) {
-						case 'Win':
-							// TODO: Win animation
-							game.socket.emit('gameEnd', this.roomId);
-							break;
-						case 'Loss':
-							game.socket.emit('gameOver', cpuId);
-							break;
-						case 'OppDisconnect':
-							// Ignore if CPU wins due to player disconnect
-							break;
-					}
-				}
-				else {
-					// If CPU game has not ended, recursively set a new timeout
-					cpuTimer = setTimeout(timeout, 16.67);
-				}
-			};
-
-			// Start the timer
-			cpuTimer = setTimeout(timeout, 16.67);
-
-			this.games.set(cpuId, { frames: 0, socket, timeout: cpuTimer });
+			this.games.set(cpuId, { frames: 0, socket, session });
 		});
 
 		// Send start to the players
@@ -277,7 +251,7 @@ export class Room {
 		// Disconnect the CPU socket, since they cannot exist outside of the room
 		if(gameId.includes('CPU')) {
 			if(this.games.has(gameId)) {
-				clearTimeout(this.games.get(gameId).timeout);
+				void this.games.get(gameId).session.stop();
 				this.games.delete(gameId);
 			}
 			socket.disconnect();
@@ -330,7 +304,7 @@ export class Room {
 		// Stop all CPU timers
 		this.games.forEach((player, id) => {
 			if(Number(id) < 0) {
-				clearTimeout(player.timeout);
+				void player.session.stop();
 			}
 		});
 		this.games.clear();

@@ -1,6 +1,6 @@
 'use strict';
 
-import firebase = require('firebase/app');
+import firebase from 'firebase/app';
 import firebaseui = require('firebaseui');
 import { firebaseConfig } from '../../config';
 import { UserSettings } from '../utils/Settings';
@@ -56,7 +56,7 @@ export function initApp(globalSocket: SocketIOClient.Socket): Promise<firebase.U
 		socket = globalSocket;
 		initializeUI(resolve);
 
-		firebase.auth().onAuthStateChanged((user: firebase.User) => {
+		firebase.auth().onAuthStateChanged((user) => {
 			// Just logged in
 			if (user) {
 				document.getElementById('firebaseui-auth-container').style.display = 'none';
@@ -142,6 +142,10 @@ function initializeUI(resolve: (user) => void) {
 				document.getElementById('modal-login').style.display = 'none';
 				document.getElementById('main-content').style.display = 'grid';
 
+				// This is always a new user, so ask if they want to view guide first
+				document.getElementById('viewGuideModal').style.display = 'block';
+				document.getElementById('modal-background').style.display = 'block';
+
 				// Start game logic
 				resolve(currentUser);
 			}
@@ -155,6 +159,11 @@ function initializeUI(resolve: (user) => void) {
 			document.getElementById('usernamePickerError').style.display = 'block';
 			username = (document.getElementById('usernamePickerText') as HTMLInputElement).value || fallbackName;
 		});
+	};
+
+	document.getElementById('visitGuide').onclick = function(event) {
+		event.preventDefault();
+		window.location.assign('/guide');
 	};
 }
 
@@ -180,7 +189,7 @@ export async function signOut(): Promise<void> {
 /**
  * Checks if a username is valid.
  */
-function validateUsername(username: string): Promise<string> {
+function validateUsername(username: string): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if(!username || username.trim().length === 0) {
 			reject('Please enter a username.');

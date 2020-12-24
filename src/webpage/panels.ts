@@ -1,6 +1,7 @@
 'use strict';
 
 import mitt from 'mitt';
+import firebase from 'firebase/app';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
@@ -58,6 +59,11 @@ export function panelsInit(
 		await stopCurrentSession();
 		document.getElementById('statusGamemode').innerHTML = 'Ranked';
 		socket.emit('ranked', { gameId: getCurrentUID() });
+	};
+
+	document.getElementById('guide').onclick = async () => {
+		await stopCurrentSession();
+		window.location.assign('/guide');
 	};
 
 	// Dialog panels

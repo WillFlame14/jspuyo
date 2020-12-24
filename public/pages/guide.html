@@ -1,0 +1,28 @@
+<html>
+<head>
+	<title>jspuyo</title>
+	<meta charset="utf-8" />
+	<link href="https://fonts.googleapis.com/css2?family=Chelsea+Market&family=Rock+Salt&display=swap" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+	<div id="vue-app">
+		<div class="modal" id="modal-background">
+			 <div class="modal-content" id="settingsModal">
+				<settings-modal></settings-modal>
+			</div>
+		</div>
+		<main>
+			<div id="navbar">
+				<span id="navbarSpacer"></span>
+				<span class="title" id="pageTitle">Guide</span>
+				<span id="logo">jspuyo</span>
+			</div>
+			<div id="wrapper">
+				<guide></guide>
+			</div>
+		</main>
+	</div>
+	<script src="../bundle.js"></script>
+</body>
+</html>

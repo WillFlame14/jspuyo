@@ -1,6 +1,5 @@
 node_modules/
 bundle.js
-limited.js
 style.css
 temp.css
 cypress/screenshots
@@ -8,3 +7,4 @@ cypress/videos
 src/**/*.js
 server.js
 tsconfig.tsbuildinfo
+.eslintcache

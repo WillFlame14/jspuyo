@@ -142,6 +142,10 @@ function initializeUI(resolve: (user) => void) {
 				document.getElementById('modal-login').style.display = 'none';
 				document.getElementById('main-content').style.display = 'grid';
 
+				// This is always a new user, so ask if they want to view guide first
+				document.getElementById('viewGuideModal').style.display = 'block';
+				document.getElementById('modal-background').style.display = 'block';
+
 				// Start game logic
 				resolve(currentUser);
 			}
@@ -155,6 +159,11 @@ function initializeUI(resolve: (user) => void) {
 			document.getElementById('usernamePickerError').style.display = 'block';
 			username = (document.getElementById('usernamePickerText') as HTMLInputElement).value || fallbackName;
 		});
+	};
+
+	document.getElementById('visitGuide').onclick = function(event) {
+		event.preventDefault();
+		window.location.assign('/guide');
 	};
 }
 

@@ -14,10 +14,10 @@ const SpriteCache: Record<string, Sprite> = {};
  * Use loadImage to pre-emptively load an unscaled image for use
  * Use loadSprite to pre-emptively load an appropriately unit scaled version of an image (as an offscreen canvas)
  * Use drawSprite to draw a specific sprite at a specific size onto a desired canvas
- *
+ * Returns true if the sprite was successfully drawn.
  */
 
-export function drawSprite(args: DrawingArgs): void {
+export function drawSprite(args: DrawingArgs): boolean {
 	const { ctx, appearance: spriteSheet, size, sX, sY, dX = 0, dY = 0, sWidth = 1, sHeight = 1, merge = true} = args;
 
 	const sourceSize = merge ? size * SUB_SCALE_FACTOR : size;
@@ -32,7 +32,9 @@ export function drawSprite(args: DrawingArgs): void {
 			dX - sWidth * sourceSize / 2, dY - sHeight * sourceSize / 2,
 			spriteWidth, spriteHeight
 		);
+		return true;
 	}
+	return false;
 }
 
 /**

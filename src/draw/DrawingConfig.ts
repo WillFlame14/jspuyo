@@ -16,17 +16,26 @@ export const DIMENSIONS = {
 	MIN_SCALE: 0.5
 };
 
+export const FLAT_SQUISH_FRAMES = [1, 2, 4, 6, 8, 10];
+
 export const PUYO_COORDINATES = {
 	NUISANCE: { X: 6, Y: 12 },
 	PUYO_START: { X: 0, Y: 0 },
 	POPPING: {
-		0: { 1: { X: 6, Y: 12}, 2: { X: 9, Y: 15 } },
-		1: { 1: { X: 0, Y: 12}, 2: { X: 1, Y: 12 } },
-		2: { 1: { X: 0, Y: 13}, 2: { X: 1, Y: 13 } },
-		3: { 1: { X: 2, Y: 12}, 2: { X: 3, Y: 12 } },
-		4: { 1: { X: 2, Y: 13}, 2: { X: 3, Y: 13 } },
-		5: { 1: { X: 4, Y: 12}, 2: { X: 5, Y: 12 } }
+		0: { 1: { X: 6, Y: 12 }, 2: { X: 9, Y: 15 } },
+		1: { 1: { X: 0, Y: 12 }, 2: { X: 1, Y: 12 } },
+		2: { 1: { X: 0, Y: 13 }, 2: { X: 1, Y: 13 } },
+		3: { 1: { X: 2, Y: 12 }, 2: { X: 3, Y: 12 } },
+		4: { 1: { X: 2, Y: 13 }, 2: { X: 3, Y: 13 } },
+		5: { 1: { X: 4, Y: 12 }, 2: { X: 5, Y: 12 } }
 	} as Record<number, Record<number, SpriteLocation>>,
+	SQUISHING: {
+		1: { FLAT: { X: 11, Y: 9 }, TALL: { X: 12, Y: 9 } },
+		2: { FLAT: { X: 13, Y: 9 }, TALL: { X: 14, Y: 9 } },
+		3: { FLAT: { X: 0, Y: 10 }, TALL: { X: 1, Y: 10 } },
+		4: { FLAT: { X: 2, Y: 10 }, TALL: { X: 3, Y: 10 } },
+		5: { FLAT: { X: 4, Y: 10 }, TALL: { X: 5, Y: 10 } }
+	} as Record<number, Record<'FLAT' | 'TALL', SpriteLocation>>,
 	HIGHLIGHT_START: { X: 0, Y: 9 },
 	GHOST_START: {
 		1: { X: 14.5, Y: 7, SCALE: 0.5 },

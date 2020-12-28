@@ -75,13 +75,16 @@ export class BoardLayer extends CanvasLayer {
 
 	updateBoard(currentBoardState : { connections: Puyo[][], currentDrop: Drop }): void {
 		const { connections, currentDrop } = currentBoardState;
+		const { standardAngle, arle, schezo, colours } = currentDrop;
+		const { rows, cols } = this.settings;
+
 		if (currentDrop.schezo.y == null) {
 			if (this.hasStackChanged(MODE.PUYO_DROPPING)) {
-				this.columnHeights = (new Array(this.settings.cols).fill(0)) as number[];
+				this.columnHeights = new Array<number>(cols).fill(0);
 				this.stackLayer.resetState();
 				connections.forEach(group => {
 					group.forEach(puyo => {
-						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, rows - 0.5 - puyo.row, puyo.connections);
 						if (this.columnHeights[puyo.col] < puyo.row + 1) {
 							this.columnHeights[puyo.col] = puyo.row + 1;
 						}
@@ -89,46 +92,49 @@ export class BoardLayer extends CanvasLayer {
 				});
 			}
 			this.dynamicLayer.resetState();
-			if (currentDrop.standardAngle > Math.PI / 4 && currentDrop.standardAngle <= 3 * Math.PI / 4) {
-				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				if (this.columnHeights[currentDrop.arle.x - 1] <= this.columnHeights[currentDrop.arle.x] || this.columnHeights[currentDrop.arle.x - 1] <= currentDrop.arle.y) {
-					this.dynamicLayer.drawGhost(currentDrop.colours[1], -0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x - 1]);
+			if (standardAngle > Math.PI / 4 && standardAngle <= 3 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(colours[0], 0.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x]);
+				if (this.columnHeights[arle.x - 1] <= this.columnHeights[arle.x] || this.columnHeights[arle.x - 1] <= arle.y) {
+					this.dynamicLayer.drawGhost(colours[1], -0.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x - 1]);
 				}
 			}
-			else if (currentDrop.standardAngle > 3 * Math.PI / 4 && currentDrop.standardAngle <= 5 * Math.PI / 4) {
-				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
+			else if (standardAngle > 3 * Math.PI / 4 && standardAngle <= 5 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(colours[1], 0.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x]);
+				this.dynamicLayer.drawGhost(colours[0], 0.5 + arle.x, rows - 1.5 - this.columnHeights[arle.x]);
 			}
-			else if (currentDrop.standardAngle > 5 * Math.PI / 4 && currentDrop.standardAngle <= 7 * Math.PI / 4) {
-				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				if (this.columnHeights[currentDrop.arle.x + 1] <= this.columnHeights[currentDrop.arle.x] || this.columnHeights[currentDrop.arle.x + 1] <= currentDrop.arle.y) {
-					this.dynamicLayer.drawGhost(currentDrop.colours[1], 1.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x + 1]);
+			else if (standardAngle > 5 * Math.PI / 4 && standardAngle <= 7 * Math.PI / 4) {
+				this.dynamicLayer.drawGhost(colours[0], 0.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x]);
+				if (this.columnHeights[arle.x + 1] <= this.columnHeights[arle.x] || this.columnHeights[arle.x + 1] <= arle.y) {
+					this.dynamicLayer.drawGhost(colours[1], 1.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x + 1]);
 				}
 			}
 			else {
-				this.dynamicLayer.drawGhost(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - this.columnHeights[currentDrop.arle.x]);
-				this.dynamicLayer.drawGhost(currentDrop.colours[1], 0.5 + currentDrop.arle.x, this.settings.rows - 1.5 - this.columnHeights[currentDrop.arle.x]);
+				this.dynamicLayer.drawGhost(colours[0], 0.5 + arle.x, rows - 0.5 - this.columnHeights[arle.x]);
+				this.dynamicLayer.drawGhost(colours[1], 0.5 + arle.x, rows - 1.5 - this.columnHeights[arle.x]);
 			}
-			this.dynamicLayer.drawHighlightedDrop(currentDrop, 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
+			this.dynamicLayer.drawHighlightedDrop(currentDrop, 0.5 + arle.x, rows - 0.5 - arle.y);
 		}
 		else {
 			if (this.hasStackChanged(MODE.PUYO_DROPPING_SPLIT)) {
 				this.stackLayer.resetState();
 				connections.forEach(group => {
 					group.forEach(puyo => {
-						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, rows - 0.5 - puyo.row, puyo.connections);
 					});
 				});
 			}
 			this.dynamicLayer.resetState();
-			this.dynamicLayer.drawPuyo(currentDrop.colours[0], 0.5 + currentDrop.arle.x, this.settings.rows - 0.5 - currentDrop.arle.y);
-			this.dynamicLayer.drawPuyo(currentDrop.colours[1], 0.5 + currentDrop.schezo.x, this.settings.rows - 0.5 - currentDrop.schezo.y);
+			this.dynamicLayer.drawPuyo(colours[0], 0.5 + arle.x, rows - 0.5 - arle.y);
+			this.dynamicLayer.drawPuyo(colours[1], 0.5 + schezo.x, rows - 0.5 - schezo.y);
 		}
 		this.update();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], currentDrop: Drop }): void {
-		const { connections } = currentBoardState;
+	squishPuyos(currentBoardState: { connections: Puyo[][], currentDrop: Drop }, squishState: { currentFrame: number }): void {
+		const { connections, currentDrop } = currentBoardState;
+		const { colours, arle, schezo } = currentDrop;
+		// console.log(schezo);
+		const { rows } = this.settings;
 		if (this.hasStackChanged(MODE.PUYO_SQUISHING)) {
 			this.stackLayer.resetState();
 			connections.forEach(group => {
@@ -136,25 +142,31 @@ export class BoardLayer extends CanvasLayer {
 					this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
 				});
 			});
-			this.dynamicLayer.resetState();
+			// this.dynamicLayer.resetState();
 		}
+		this.dynamicLayer.resetState();
+		const flat = CONSTANTS.FLAT_SQUISH_FRAMES.includes(Math.floor(squishState.currentFrame / 2));
+		this.dynamicLayer.drawSquishingPuyo(colours[0], 0.5 + arle.x, rows - 0.5 - arle.y, flat);
+		this.dynamicLayer.drawSquishingPuyo(colours[1], 0.5 + schezo.x, rows - 0.5 - schezo.y, flat);
 		this.update();
 	}
 
 	resolveChains(resolvingState: ResolvingState): void {
-		const { connections, poppedLocs, connectionsAfterPop, unstablePuyos } = resolvingState;
-		if (resolvingState.currentFrame <= this.settings.popFrames) {
+		const { connections, poppedLocs, connectionsAfterPop, unstablePuyos, currentFrame } = resolvingState;
+		const { rows, popFrames, dropFrames } = this.settings;
+
+		if (currentFrame <= popFrames) {
 			if (this.hasStackChanged(MODE.CHAIN_POPPING)) {
 				this.stackLayer.resetState();
 				connections.forEach(group => {
 					group.filter(puyo => !poppedLocs.some(puyo2 => puyo.col === puyo2.col && puyo.row === puyo2.row)).forEach(puyo => {
-						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, rows - 0.5 - puyo.row, puyo.connections);
 					});
 				});
 			}
 			this.dynamicLayer.resetState();
 			poppedLocs.forEach(puyo => {
-				this.dynamicLayer.drawPoppingPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, resolvingState.currentFrame >= this.settings.popFrames / 3);
+				this.dynamicLayer.drawPoppingPuyo(puyo.colour, 0.5 + puyo.col, rows - 0.5 - puyo.row, currentFrame >= popFrames / 3);
 			});
 		}
 		else {
@@ -162,7 +174,7 @@ export class BoardLayer extends CanvasLayer {
 				this.stackLayer.resetState();
 				connectionsAfterPop.forEach(group => {
 					group.forEach(puyo => {
-						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, this.settings.rows - 0.5 - puyo.row, puyo.connections);
+						this.stackLayer.drawPuyo(puyo.colour, 0.5 + puyo.col, rows - 0.5 - puyo.row, puyo.connections);
 					});
 				});
 			}
@@ -171,7 +183,7 @@ export class BoardLayer extends CanvasLayer {
 				this.dynamicLayer.drawPuyo(
 					puyo.colour,
 					0.5 + puyo.col,
-					this.settings.rows - 0.5 - Math.max(puyo.row - (puyo.row - puyo.above) * (resolvingState.currentFrame - this.settings.popFrames) / this.settings.dropFrames, puyo.above)
+					this.settings.rows - 0.5 - Math.max(puyo.row - (puyo.row - puyo.above) * (currentFrame - popFrames) / dropFrames, puyo.above)
 				);
 			});
 		}

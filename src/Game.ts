@@ -507,9 +507,11 @@ export class Game {
 	squishPuyos(): string {
 		this.squishState.currentFrame++;
 
+		const currentDrop = Object.assign({}, this.currentDrop, {schezo: Utils.getOtherPuyo(this.currentDrop)});
+
 		// Insert squishing puyos drawing here
-		const currentBoardState = { connections: this.board.getConnections(), currentDrop: this.currentDrop };
-		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState);
+		const currentBoardState = { connections: this.board.getConnections(), currentDrop };
+		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState, this.squishState);
 
 		if(this.squishState.currentFrame === this.settings.squishFrames) {
 			// Chain was not started

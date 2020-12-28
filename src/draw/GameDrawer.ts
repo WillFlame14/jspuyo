@@ -33,19 +33,19 @@ export class CanvasLayer {
 
 export class DrawingLayer extends CanvasLayer {
 	unit: number;
-	objectsDrawn: OptionalDrawingArgs[];
+	objectsDrawn: Partial<DrawingArgs>[];
 	drawingState: number;
-	defaultArgs: OptionalDrawingArgs;
+	defaultArgs: Partial<DrawingArgs>;
 
 	constructor(width: number, height: number, unit: number, onNode: boolean, className: string = undefined) {
 		super(width, height, onNode, className);
 		this.unit = unit;
 		this.objectsDrawn = [];
 		this.drawingState = 0;
-		this.defaultArgs = {} as OptionalDrawingArgs;
+		this.defaultArgs = {};
 	}
 
-	drawFromArgs(drawingArgs: OptionalDrawingArgs): boolean {
+	drawFromArgs(drawingArgs: Partial<DrawingArgs>): boolean {
 		let succeeded = true;
 		if (!this.onNode) {
 			const args = Object.assign({ ctx: this.ctx }, this.defaultArgs, drawingArgs) as DrawingArgs;
@@ -60,7 +60,7 @@ export class DrawingLayer extends CanvasLayer {
 		return succeeded;
 	}
 
-	draw(drawingArgs: OptionalDrawingArgs): void {
+	draw(drawingArgs: Partial<DrawingArgs>): void {
 		this.objectsDrawn.push(drawingArgs);
 		const succeeded = this.drawFromArgs(drawingArgs);
 

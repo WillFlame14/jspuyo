@@ -2,20 +2,11 @@ import * as Vue from 'vue';
 
 import { RoomSizeSelector } from './RoomSizeSelector';
 
-import { Gamemode } from '../../utils/Settings';
+import { Gamemode, Settings } from '../../utils/Settings';
 import { puyoImgs } from '../panels_custom';
 
-interface RoomSettings {
-	gamemode: string,
+interface RoomSettings extends Settings {
 	numPlayers: number,
-	numColours: number,
-	cols: number,
-	rows: number,
-	marginTime: number,
-	targetPoints: number,
-	minChainLength: number,
-	gravity: number,
-	softDrop: number,
 	hardDrop: boolean,
 	winCondition: string
 }
@@ -26,23 +17,14 @@ export const RoomOptionsModal = Vue.defineComponent({
 	},
 	data(): { settings: RoomSettings, wildNumSelected: boolean, puyoImgs: string[], gamemodes: string[], winConditions: string[], disabled: boolean, mode: string } {
 		return {
-			settings: {
-				gamemode: 'TSU',
+			settings: Object.assign(new Settings(), {
 				numPlayers: 4,
-				numColours: 4,
-				cols: 6,
-				rows: 12,
-				marginTime: 96,
-				targetPoints: 70,
-				minChainLength: 0,
-				gravity: 0.036,
-				softDrop: 0.375,
 				hardDrop: false,
 				winCondition: 'FT 3'
-			},
+			}),
 			wildNumSelected: false,
 			puyoImgs,
-			gamemodes: ['TSU', 'FEVER'],
+			gamemodes: Object.values(Gamemode),
 			winConditions: ['FT 3', 'FT 5', 'FT 7'],
 			disabled: false,
 			mode: 'create'
@@ -74,10 +56,10 @@ export const RoomOptionsModal = Vue.defineComponent({
 
 			// Wrap around if at last element
 			if(index === this.gamemodes.length - 1) {
-				this.settings.gamemode = this.gamemodes[0];
+				this.settings.gamemode = Gamemode[this.gamemodes[0] as keyof typeof Gamemode];
 			}
 			else {
-				this.settings.gamemode = this.gamemodes[index + 1];
+				this.settings.gamemode = Gamemode[this.gamemodes[index + 1] as keyof typeof Gamemode];
 			}
 		},
 		changeWinCondition() {
@@ -103,7 +85,6 @@ export const RoomOptionsModal = Vue.defineComponent({
 			settings.numPlayers = undefined;	// separate the numPlayers property from settings
 
 			// Perform conversions
-			settings.gamemode = Gamemode[this.settings.gamemode as keyof typeof Gamemode];
 			settings.marginTime *= 1000;
 
 			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode });

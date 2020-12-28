@@ -11,7 +11,7 @@
     "eslint": "eslint src/ --fix --cache",
     "node": "node-dev --respawn server.js",
     "sass": "sass src/_css/style.scss temp.css --no-source-map",
-    "sass-watch": "sass  --watch src/_css/style.scss temp.css --no-source-map",
+    "sass-watch": "sass --watch src/_css/style.scss temp.css --no-source-map",
     "start": "npm-run-all --parallel bundle node sass-watch autoprefix-watch tsc-watch",
     "stylelint": "stylelint \"src/_css/*.scss\" --fix",
     "test": "eslint src/ --fix --cache && stylelint \"src/_css/*.scss\" --fix && mocha 'test/**/*.test.js'",

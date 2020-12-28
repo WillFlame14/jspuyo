@@ -44,6 +44,11 @@ export class PuyoDrawingLayer extends DrawingLayer {
 		this.draw({ sX, sY, dX, dY });
 	}
 
+	drawSquishingPuyo(colour: number, dX: number, dY: number, flat: boolean): void {
+		const { X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.SQUISHING[colour][flat ? 'FLAT' : 'TALL'];
+		this.draw({ sX, sY, dX, dY });
+	}
+
 	drawDrop(drop: Drop, dX: number, dY: number): void {
 		if('I'.includes(drop.shape)) {
 			this.drawI(drop, dX, dY, false);

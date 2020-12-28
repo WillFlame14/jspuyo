@@ -64,7 +64,7 @@ export class GameArea extends CanvasLayer {
 		return this.getHash();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], currentDrop: Drop }, squishState: { currentFrame: number }): string {
+	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: Puyo[] }, squishState: { currentFrame: number }): string {
 		this.boardLayer.squishPuyos(currentBoardState, squishState);
 		this.update();
 		return this.getHash();

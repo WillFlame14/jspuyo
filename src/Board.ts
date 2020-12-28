@@ -86,7 +86,7 @@ export class Board {
 	 * 	@return {Puyo[][]}	    	   	All the connections on the board
 	 */
 	getConnections(minLength = 0): Puyo[][] {
-		const visited: Location[] = [];		// List of visited locations
+		const visited: Point[] = [];		// List of visited locations
 		const result: Puyo[][] = [];		// List of connections
 
 		// Copy of the board
@@ -101,12 +101,12 @@ export class Board {
 		 */
 		const dfs = function(puyo: Puyo, chain_puyos: Puyo[]): Puyo[] {
 			visited.push(puyo);
-			const { col, row, colour, connections } = puyo;
+			const { x: col, y: row, colour, connections } = puyo;
 
 			// Search in all 4 cardinal directions
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
-					const new_puyo = { col: col + i, row: row + j, colour: null, connections: [] } as Puyo;
+					const new_puyo = { x: col + i, y: row + j, colour: null, connections: [] } as Puyo;
 
 					if(Math.abs(i) + Math.abs(j) === 1 && board.validLoc(new_puyo)) {
 						new_puyo.colour = board.boardState[col + i][row + j];
@@ -137,9 +137,9 @@ export class Board {
 		/**
 		 * Determines if the visited array contains the passed location.
 		 */
-		const notVisited = function(location: Location) {
-			const { col, row } = location;
-			return visited.filter(loc => loc.col === col && loc.row === row).length === 0;
+		const notVisited = function(location: Point) {
+			const { x, y } = location;
+			return visited.filter(loc => loc.x === x && loc.y === y).length === 0;
 		};
 
 		/**
@@ -157,7 +157,7 @@ export class Board {
 		// Iterate through the entire board to find all starting points
 		for(let i = 0; i < board.boardState.length; i++) {
 			for(let j = 0; j < board.boardState[i].length; j++) {
-				const puyo = { col: i, row: j, colour: board.boardState[i][j], connections: [] } as Puyo;
+				const puyo = { x: i, y: j, colour: board.boardState[i][j], connections: [] } as Puyo;
 
 				if(notVisited(puyo)) {
 					let chain_puyos: Puyo[];
@@ -180,10 +180,10 @@ export class Board {
 
 	/**
 	 * Determines if a potential location is valid.
-	 * @param 	{Location}	loc 	The board location
+	 * @param 	{Point}	loc 	The board location
 	 */
-	validLoc(loc: Location): boolean {
-		const { col, row } = loc;
+	validLoc(loc: Point): boolean {
+		const { x: col, y: row } = loc;
 		return col >= 0 &&
 			row >= 0 &&
 			col < this.width &&
@@ -197,7 +197,7 @@ export class Board {
 	 */
 	deletePuyos(puyoLocs: Puyo[] = []): void {
 		// First, set them all to null. Then filter out the null elements
-		puyoLocs.forEach(location => this.boardState[location.col][location.row] = null);
+		puyoLocs.forEach(location => this.boardState[location.x][location.y] = null);
 		this.boardState = this.boardState.map(col => col.filter(row => row !== null));
 	}
 
@@ -224,11 +224,11 @@ export class Board {
 			// Search in all four cardinal directions
 			for(let i = -1; i <= 1; i++) {
 				for(let j = -1; j <= 1; j++) {
-					if(Math.abs(i) + Math.abs(j) !== 1 || !this.validLoc({ col: loc.col + i, row: loc.row + j } as Location)) {
+					if(Math.abs(i) + Math.abs(j) !== 1 || !this.validLoc({ x: loc.x + i, y: loc.y + j })) {
 						continue;
 					}
-					if(this.boardState[loc.col + i][loc.row + j] === 0) {
-						poppedNuisance.push({ col: loc.col + i, row: loc.row + j, colour: 0 } as Puyo);
+					if(this.boardState[loc.x + i][loc.y + j] === 0) {
+						poppedNuisance.push({ x: loc.x + i, y: loc.y + j, colour: 0 } as Puyo);
 					}
 				}
 			}

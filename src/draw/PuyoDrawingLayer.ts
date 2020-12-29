@@ -44,8 +44,8 @@ export class PuyoDrawingLayer extends DrawingLayer {
 		this.draw({ sX, sY, dX, dY });
 	}
 
-	drawSquishingPuyo(colour: number, dX: number, dY: number, flat: boolean): void {
-		const { X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.SQUISHING[colour][flat ? 'FLAT' : 'TALL'];
+	drawSquishingPuyo(colour: number, dX: number, dY: number, type: SquishType): void {
+		const { X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.SQUISHING[colour][type];
 		this.draw({ sX, sY, dX, dY });
 	}
 

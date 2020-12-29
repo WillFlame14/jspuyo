@@ -121,7 +121,7 @@ export class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: Puyo[] }, squishState: { currentFrame: number }): void {
+	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[] }, squishState: { currentFrame: number }): void {
 		const { connections, squishingPuyos } = currentBoardState;
 		// console.log(schezo);
 		const { rows } = this.settings;
@@ -135,14 +135,17 @@ export class BoardLayer extends CanvasLayer {
 			// this.dynamicLayer.resetState();
 		}
 		this.dynamicLayer.resetState();
-		const flat = CONSTANTS.FLAT_SQUISH_FRAMES.includes(Math.floor(squishState.currentFrame / 2));
 		if(squishingPuyos == null) {
 			console.log(squishingPuyos);
 			return;
 		}
 		for(const puyo of squishingPuyos) {
-			const { colour, x, y } = puyo;
-			this.dynamicLayer.drawSquishingPuyo(colour, 0.5 + x, rows - 0.5 - y, flat);
+			const { colour, x, y } = puyo.puyo;
+			const type = CONSTANTS.SQUISH_FRAMES[puyo.squishType][Math.floor(squishState.currentFrame / 2)];
+			if(type === undefined) {
+				continue;
+			}
+			this.dynamicLayer.drawSquishingPuyo(colour, 0.5 + x, rows - 0.5 - y, type);
 		}
 		this.update();
 	}

@@ -7,6 +7,7 @@ import { GameArea } from './draw/GameArea';
 import { Settings, UserSettings } from './utils/Settings';
 import { StatTracker } from './StatTracker';
 import * as Utils from './utils/Utils';
+import * as CONSTANTS from './draw/DrawingConfig';
 
 export enum MODE {
 	PUYO_DROPPING,
@@ -73,7 +74,7 @@ export class Game {
 
 	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
-	squishState = { currentFrame: -1 };
+	squishState = { currentFrame: 0, totalFrames: 0 };
 	fallingVelocity: Record<number, number> = [];
 	currentFrame = 0;
 
@@ -182,11 +183,24 @@ export class Game {
 		else if(this.mode === MODE.PUYO_SQUISHING) {
 			const arle = Object.assign({ colour: this.currentDrop.colours[0] }, this.currentDrop.arle);
 			const schezo = Object.assign({}, { colour: this.currentDrop.colours[1] }, this.currentDrop.schezo || Utils.getOtherPuyo(this.currentDrop));
-			const squishingPuyos = [arle, schezo];
+			let squishType: string;
+			if(arle.x === schezo.x) {
+				if(arle.y > schezo.y) {
+					squishType = 'VERTICAL';
+				}
+				else {
+					squishType = 'VERTICAL_2';
+				}
+			}
+			else {
+				squishType = 'SPLIT';
+			}
+			const squishingPuyos = [{ puyo: arle, squishType }, { puyo: schezo, squishType }];
 			currentBoardHash = this.squishPuyos(squishingPuyos);
 		}
 		else if(this.mode === MODE.CHAIN_SQUISHING) {
-			const squishingPuyos = this.resolvingState.unstablePuyos || [];
+			const puyos = this.resolvingState.unstablePuyos || [];
+			const squishingPuyos = puyos.map(puyo => { return { puyo, squishType: 'VERTICAL' }; });
 			currentBoardHash = this.squishPuyos(squishingPuyos);
 		}
 		// Currently dropping nuisance
@@ -504,6 +518,7 @@ export class Game {
 
 			// Squish puyos into the stack
 			this.squishState.currentFrame = 0;
+			this.squishState.totalFrames = 0;
 			this.mode = MODE.CHAIN_SQUISHING;
 
 			// Done resolving all chains
@@ -535,14 +550,23 @@ export class Game {
 	/**
 	 * Squishes the puyos into the stack after lock delay finishes.
 	 */
-	squishPuyos(squishingPuyos: Puyo[]): string {
+	squishPuyos(squishingPuyos: { puyo: Puyo, squishType: string }[]): string {
 		this.squishState.currentFrame++;
+
+		if(this.squishState.totalFrames === 0) {
+			for(const puyo of squishingPuyos) {
+				const frames = CONSTANTS.SQUISH_FRAMES[puyo.squishType].length;
+				if(frames > this.squishState.totalFrames) {
+					this.squishState.totalFrames = frames;
+				}
+			}
+		}
 
 		// Insert squishing puyos drawing here
 		const currentBoardState = { connections: this.board.getConnections(), squishingPuyos };
 		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState, this.squishState);
 
-		if(this.squishState.currentFrame === this.settings.squishFrames) {
+		if(this.squishState.currentFrame >= this.squishState.totalFrames) {
 			if(this.mode === MODE.PUYO_SQUISHING) {
 				this.lockDrop();
 			}
@@ -562,6 +586,7 @@ export class Game {
 				}
 			}
 			this.squishState.currentFrame = 0;
+			this.squishState.totalFrames = 0;
 		}
 		return currentBoardHash;
 	}
@@ -697,7 +722,14 @@ export class Game {
 			this.mode = MODE.CHAIN_POPPING;
 		}
 		else {
-			this.mode = MODE.PUYO_DROPPING;
+			Object.assign(this.nuisanceState, this.board.dropNuisance(this.activeNuisance));
+
+			if(this.nuisanceState.nuisanceAmount !== 0) {
+				this.mode = MODE.NUISANCE_DROPPING;
+			}
+			else {
+				this.mode = MODE.PUYO_DROPPING;
+			}
 		}
 
 		currentDrop.schezo = null;

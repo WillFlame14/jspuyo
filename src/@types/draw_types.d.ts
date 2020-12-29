@@ -48,3 +48,5 @@ interface GameHash {
 	nuisanceObject: DrawingHash,
 	queueObject: DrawingHash
 }
+
+type SquishType = 'NORMAL' | 'FLAT' | 'TALL';

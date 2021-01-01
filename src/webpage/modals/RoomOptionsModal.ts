@@ -18,6 +18,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 	data(): { settings: RoomSettings, wildNumSelected: boolean, puyoImgs: string[], gamemodes: string[], winConditions: string[], disabled: boolean, mode: string } {
 		return {
 			settings: Object.assign(new Settings(), {
+				marginTime: 96,		// Set to seconds
 				numPlayers: 4,
 				hardDrop: false,
 				winCondition: 'FT 3'
@@ -82,10 +83,8 @@ export const RoomOptionsModal = Vue.defineComponent({
 			event.preventDefault();
 
 			const settings = Object.assign({}, this.settings);
-			settings.numPlayers = undefined;	// separate the numPlayers property from settings
-
-			// Perform conversions
-			settings.marginTime *= 1000;
+			settings.numPlayers = undefined;	// Separate the numPlayers property from settings
+			settings.marginTime *= 1000;		// Convert margin time to milliseconds
 
 			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode });
 		}
@@ -144,7 +143,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 				<label class="roomOptionLabel" for="targetPoints">Target Points</label>
 				<input class="roomOptionInput" type="number" id="targetPoints" v-model.number="settings.targetPoints" min="0" max="100000" v-bind:disabled="disabled">
 				<label class="roomOptionLabel" for="minChainLength">Min Chain Length</label>
-				<input class="roomOptionInput" type="number" id="minChainLength" v-model.number="settings.minChainLength" min="0" max="16" v-bind:disabled="disabled">
+				<input class="roomOptionInput" type="number" id="minChainLength" v-model.number="settings.minChain" min="0" max="16" v-bind:disabled="disabled">
 				<label class="roomOptionLabel" for="gravity">Gravity</label>
 				<input class="roomOptionInput" type="number" id="gravity" v-model.number="settings.gravity" min="0" max="0.2" step="any" v-bind:disabled="disabled">
 				<label class="roomOptionLabel" for="softDrop">Soft Drop</label>

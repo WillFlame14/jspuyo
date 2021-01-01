@@ -62,7 +62,7 @@ export class Settings {
 	}
 
 	static fromString(str: string): Settings {
-		return Object.assign(new Settings(), JSON.parse(str) as Settings);
+		return Object.assign(new Settings(), JSON.parse(str) as Settings, { timer: Date.now() });
 	}
 
 	static seedString(str: string): string {

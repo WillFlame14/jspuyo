@@ -560,6 +560,7 @@ export class Game {
 					this.squishState.totalFrames = frames;
 				}
 			}
+			this.squishState.totalFrames += 4;
 		}
 
 		// Insert squishing puyos drawing here
@@ -788,6 +789,7 @@ export class Game {
 		// Partially cancel the active nuisance
 		if(this.activeNuisance > nuisanceSent) {
 			this.activeNuisance -= nuisanceSent;
+			nuisanceSent = 0;
 		}
 		// Fully cancel the active nuisance
 		else {

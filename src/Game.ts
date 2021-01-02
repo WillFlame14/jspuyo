@@ -10,6 +10,7 @@ import * as Utils from './utils/Utils';
 import * as CONSTANTS from './draw/DrawingConfig';
 
 export enum MODE {
+	QUEUE_SHIFTING,
 	PUYO_DROPPING,
 	PUYO_DROPPING_SPLIT,
 	PUYO_SQUISHING,
@@ -32,13 +33,12 @@ export class Game {
 	dropGenerator: DropGenerator;
 	dropQueue: Drop[];
 	dropQueueIndex: number;
-	dropQueueSetIndex: number;
 
 	cellId: number;
 	gameArea: GameArea;
 	currentDrop: Drop;
 
-	mode: MODE = MODE.PUYO_DROPPING;
+	mode: MODE = MODE.QUEUE_SHIFTING;
 
 	/** Final result of the game */
 	endResult: string = null;
@@ -75,6 +75,8 @@ export class Game {
 	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
 	squishState = { currentFrame: 0, totalFrames: 0 };
+	queueState = { dropArray: [] as Drop[], currentFrame: 0 };
+
 	fallingVelocity: Record<number, number> = [];
 	currentFrame = 0;
 
@@ -102,16 +104,10 @@ export class Game {
 		this.dropGenerator = new DropGenerator(this.settings);
 		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
 		this.dropQueueIndex = 1;
-		this.dropQueueSetIndex = 1;
 
 		this.cellId = cellId;
 		this.gameArea = gameArea || new GameArea(settings, userSettings.appearance, 1, true);
 		this.socket = socket;
-
-		this.currentDrop = this.dropQueue.shift();
-		this.dropNum++;
-
-		this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
 
 		for(const oppId of opponentIds) {
 			this.visibleNuisance[oppId] = 0;
@@ -127,11 +123,11 @@ export class Game {
 	 */
 	end(): string {
 		if(this.board.checkGameOver()) {
-			if(this.mode === MODE.PUYO_DROPPING && this.endResult === null) {
+			if(this.mode === MODE.QUEUE_SHIFTING && this.endResult === null) {
 				this.endResult = 'Loss';
 			}
 		}
-		if(this.endResult !== null && this.mode === MODE.PUYO_DROPPING) {
+		if(this.endResult !== null && (this.mode === MODE.QUEUE_SHIFTING || this.mode === MODE.PUYO_DROPPING)) {
 			switch(this.endResult) {
 				case 'Win':
 					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
@@ -173,13 +169,31 @@ export class Game {
 
 		this.gameArea.updateNuisance(this.getTotalNuisance());
 
+		if(this.mode === MODE.QUEUE_SHIFTING) {
+			if(this.queueState.currentFrame === 0) {
+				// Almost out of drops, add new drops to the queue
+				if(this.dropQueue.length <= 5) {
+					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
+					this.dropQueueIndex++;
+				}
+				this.currentDrop = this.dropQueue.shift();
+				this.dropNum++;
+			}
+			this.queueState.dropArray = this.dropQueue.slice(0, 2);
+			this.queueState.currentFrame++;
+
+			currentBoardHash = this.gameArea.updateQueue(this.queueState);
+
+			if(this.queueState.currentFrame === this.settings.queueShiftFrames) {
+				this.queueState.currentFrame = 0;
+				this.mode = MODE.PUYO_DROPPING;
+			}
+		}
 		// Isolated puyo currently dropping
-		// if (this.currentDrop.schezo.y != null) {
-		if (this.mode === MODE.PUYO_DROPPING_SPLIT) {
+		else if(this.mode === MODE.PUYO_DROPPING_SPLIT) {
 			currentBoardHash = this.dropIsolatedPuyo();
 		}
 		// Currently squishing puyos into the stack
-		// else if(this.squishState.currentFrame !== -1) {
 		else if(this.mode === MODE.PUYO_SQUISHING) {
 			const arle = Object.assign({ colour: this.currentDrop.colours[0] }, this.currentDrop.arle);
 			const schezo = Object.assign({}, { colour: this.currentDrop.colours[1] }, this.currentDrop.schezo || Utils.getOtherPuyo(this.currentDrop));
@@ -215,18 +229,6 @@ export class Game {
 		}
 		// Not resolving a chain; game has control
 		else {
-			// Create a new drop if one does not exist and game has not ended
-			if(this.currentDrop.shape === null && this.endResult === null) {
-				if(this.dropQueue.length <= 5) {
-					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
-					this.dropQueueIndex++;
-				}
-				this.currentDrop = this.dropQueue.shift();
-				this.dropNum++;
-
-				this.gameArea.updateQueue({ dropArray: this.dropQueue.slice(0, 2) });
-			}
-
 			this.getInputs();
 
 			if(this.checkLock()) {
@@ -352,10 +354,6 @@ export class Game {
 			// Pass control over to squishPuyos()
 			this.mode = MODE.PUYO_SQUISHING;
 
-			// Reset the temporary variables
-			// currentDrop.schezo.x = null;
-			// currentDrop.schezo.y = null;
-			currentDrop.shape = null;
 			this.fallingVelocity = [];
 		}
 		return currentBoardHash;
@@ -428,7 +426,7 @@ export class Game {
 			}
 			// Reset the nuisance state
 			this.nuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
-			this.mode = MODE.PUYO_DROPPING;
+			this.mode = MODE.QUEUE_SHIFTING;
 		}
 
 		return hash;
@@ -567,11 +565,13 @@ export class Game {
 		const currentBoardState = { connections: this.board.getConnections(), squishingPuyos };
 		const currentBoardHash = this.gameArea.squishPuyos(currentBoardState, this.squishState);
 
+		// Squishing over, determine next state
 		if(this.squishState.currentFrame >= this.squishState.totalFrames) {
 			if(this.mode === MODE.PUYO_SQUISHING) {
 				this.lockDrop();
 			}
 			else if(this.mode === MODE.CHAIN_SQUISHING) {
+				// Chain finished
 				if(this.resolvingChains.length === 0) {
 					Object.assign(this.nuisanceState, this.board.dropNuisance(this.activeNuisance));
 
@@ -579,9 +579,10 @@ export class Game {
 						this.mode = MODE.NUISANCE_DROPPING;
 					}
 					else {
-						this.mode = MODE.PUYO_DROPPING;
+						this.mode = MODE.QUEUE_SHIFTING;
 					}
 				}
+				// Chain continuing
 				else {
 					this.mode = MODE.CHAIN_POPPING;
 				}
@@ -700,8 +701,6 @@ export class Game {
 			this.statTracker.addDrop(this.dropNum, this.currentFrame, this.currentMovements, currentDrop.schezo.x, currentDrop.schezo.x);
 		}
 		else {			// horizontal orientation
-			// currentDrop.arle.y = Math.max(boardState[currentDrop.arle.x].length, boardState[currentDrop.schezo.x].length);
-			// currentDrop.schezo.y = currentDrop.arle.y;
 			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
 			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
 
@@ -719,17 +718,20 @@ export class Game {
 		this.board.trim();
 
 		this.resolvingChains = this.board.resolveChains();
+		// Chain was created
 		if(this.resolvingChains.length !== 0) {
 			this.mode = MODE.CHAIN_POPPING;
 		}
+		// No chain was created
 		else {
+			// Determine if/how nuisance should fall
 			Object.assign(this.nuisanceState, this.board.dropNuisance(this.activeNuisance));
 
 			if(this.nuisanceState.nuisanceAmount !== 0) {
 				this.mode = MODE.NUISANCE_DROPPING;
 			}
 			else {
-				this.mode = MODE.PUYO_DROPPING;
+				this.mode = MODE.QUEUE_SHIFTING;
 			}
 		}
 

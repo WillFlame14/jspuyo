@@ -82,7 +82,7 @@ export class GameArea extends CanvasLayer {
 		return this.getHash();
 	}
 
-	updateQueue(queueState: { dropArray: Drop[] }): string {
+	updateQueue(queueState: { dropArray: Drop[], currentFrame: number }): string {
 		this.queueLayer.updateQueue(queueState);
 		this.update();
 		return this.getHash();

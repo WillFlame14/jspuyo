@@ -413,7 +413,7 @@ export function generateCells(numCells: number, settings: Settings, appearance =
 /**
  * Removes all boards on screen.
  */
-export function clearCells() {
+export function clearCells(): void {
 	const playArea = document.getElementById('playArea');
 	while(playArea.firstChild) {
 		playArea.firstChild.remove();

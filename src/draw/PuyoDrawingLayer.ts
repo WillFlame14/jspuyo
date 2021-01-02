@@ -115,11 +115,17 @@ export class PuyoDrawingLayer extends DrawingLayer {
 }
 
 export class QueueLayer extends PuyoDrawingLayer {
-	updateQueue(queueState: { dropArray: Drop[] }): void {
-		const { dropArray } = queueState;
+	lastDrop: Drop = null;
+
+	updateQueue(queueState: { dropArray: Drop[], currentFrame: number }): void {
+		const { dropArray, currentFrame } = queueState;
 		this.resetState();
-		for (let i = 0; i < dropArray.length; i++) {
-			this.drawDrop(dropArray[i], 1, 2 + 3 * i);
+		if(this.lastDrop !== null) {
+			this.drawDrop(this.lastDrop, 1, 2 - 3 * (currentFrame / 4));
 		}
+		for (let i = 0; i < dropArray.length; i++) {
+			this.drawDrop(dropArray[i], 1, 5 + 3 * (i - currentFrame / 4));
+		}
+		this.lastDrop = dropArray[0];
 	}
 }

@@ -164,8 +164,8 @@ export class BoardLayer extends CanvasLayer {
 				});
 			}
 			this.dynamicLayer.resetState();
-			poppedLocs.forEach(puyo => {
-				this.dynamicLayer.drawPoppingPuyo(puyo.colour, 0.5 + puyo.x, rows - 0.5 - puyo.y, currentFrame >= popFrames / 3);
+			poppedLocs.forEach((puyo, index) => {
+				this.dynamicLayer.drawPoppingPuyo(puyo.colour, 0.5 + puyo.x, rows - 0.5 - puyo.y, puyo.connections, currentFrame, index);
 			});
 		}
 		else {

@@ -39,9 +39,38 @@ export class PuyoDrawingLayer extends DrawingLayer {
 		this.draw({ sX, sY, dX, dY });
 	}
 
-	drawPoppingPuyo(colour: number, dX: number, dY: number, drawPhaseTwo: boolean): void {
-		const { X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.POPPING[colour][drawPhaseTwo ? 2 : 1];
-		this.draw({ sX, sY, dX, dY });
+	drawPoppingPuyo(colour: number, dX: number, dY: number, directions: string[] = [], currentFrame: number, offset: number): void {
+		if(colour === 0) {
+			return;
+		}
+		currentFrame = Math.floor(currentFrame / 2);
+		if(currentFrame <= CONSTANTS.POPPING_FRAMES) {
+			// FLicker on and off
+			if(currentFrame % 2 === 0) {
+				this.drawPuyo(colour, dX, dY, directions);
+			}
+		}
+		else {
+			let sX: number, sY: number, scale: number;
+			const index = currentFrame - CONSTANTS.POPPING_FRAMES - offset;
+
+			if(index < 5) {
+				({ X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.POPPING[colour][1]);
+				this.draw({ sX, sY, dX, dY });
+			}
+			else if (index < 7){
+				({ X: sX, Y: sY } = CONSTANTS.PUYO_COORDINATES.POPPING[colour][index - 3]);
+				this.draw({ sX, sY, dX, dY });
+			}
+
+			if(index > 4) {
+				({ X: sX, Y: sY, SCALE: scale } = CONSTANTS.PUYO_COORDINATES.EXPLOSION[colour][0]);
+				const x = (index - 6) / 4;
+				const y = Math.pow(x - 1, 2) - 1;
+				this.draw({ sX, sY, dX: dX + x, dY: dY + y, sWidth: scale, sHeight: scale});
+				this.draw({ sX, sY, dX: dX - x, dY: dY + y, sWidth: scale, sHeight: scale});
+			}
+		}
 	}
 
 	drawSquishingPuyo(colour: number, dX: number, dY: number, type: SquishType): void {

@@ -27,7 +27,7 @@ export class Settings {
 	rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
 	squishFrames = 12;				// Number of frames used for squishing a drop into the stack
 	dropFrames = 10;				// Number of frames used for all the puyo to drop
-	popFrames = 65;					// Number of frames used to pop any amount of puyos
+	popFrames = 50;					// Number of frames used to pop any amount of puyos
 
 	terminalVelocity = 0.5;			// Maximum speed that a puyo can fall at
 	splitPuyoInitialSpeed = 0.125;

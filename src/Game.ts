@@ -468,7 +468,7 @@ export class Game {
 				removed_puyo_colours.forEach((colour, index) => {
 					const row = index + lowestUnstablePos[colIndex];
 					if(!poppedLocs.some(puyo => puyo.x === colIndex && puyo.y === row)) {
-						unstablePuyos.push({ col: colIndex, row, colour, above: lowestUnstablePos[colIndex] + nonPoppedPuyos });
+						unstablePuyos.push({ x: colIndex, y: row, colour, above: lowestUnstablePos[colIndex] + nonPoppedPuyos });
 						nonPoppedPuyos++;
 					}
 				});

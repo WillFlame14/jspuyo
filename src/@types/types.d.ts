@@ -39,6 +39,12 @@ interface NuisanceState {
 	landFrames?: number
 }
 
+interface SquishState {
+	currentFrame: number;
+	totalFrames: number;
+	squishingPuyos: Array<{puyo: Puyo, squishType: string}>;
+}
+
 interface CpuInfo {
 	client_socket: SocketIOClient.Socket,
 	socket: SocketIO.Socket,

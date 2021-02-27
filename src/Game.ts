@@ -74,7 +74,7 @@ export class Game {
 
 	resolvingState: ResolvingState = { chain: 0, puyoLocs: [], currentFrame: 0, totalFrames: 0 };
 	nuisanceState: NuisanceState = { nuisanceArray: [], nuisanceAmount: 0, velocities: [], positions: [], allLanded: false, landFrames: 0 };
-	squishState = { currentFrame: 0, totalFrames: 0 };
+	squishState: SquishState = { currentFrame: 0, totalFrames: 0, squishingPuyos: [] };
 	queueState = { dropArray: [] as Drop[], currentFrame: 0 };
 
 	fallingVelocity: Record<number, number> = [];
@@ -194,28 +194,26 @@ export class Game {
 			currentBoardHash = this.dropIsolatedPuyo();
 		}
 		// Currently squishing puyos into the stack
-		else if(this.mode === MODE.PUYO_SQUISHING) {
-			const arle = Object.assign({ colour: this.currentDrop.colours[0] }, this.currentDrop.arle);
-			const schezo = Object.assign({}, { colour: this.currentDrop.colours[1] }, this.currentDrop.schezo || Utils.getOtherPuyo(this.currentDrop));
-			let squishType: string;
-			if(arle.x === schezo.x) {
-				if(arle.y > schezo.y) {
-					squishType = 'VERTICAL';
+		else if(this.mode === MODE.PUYO_SQUISHING || this.mode === MODE.CHAIN_SQUISHING) {
+			// Figure out the squish type
+			if(this.mode === MODE.PUYO_SQUISHING) {
+				const arle = Object.assign({ colour: this.currentDrop.colours[0] }, this.currentDrop.arle);
+				const schezo = Object.assign({}, { colour: this.currentDrop.colours[1] }, this.currentDrop.schezo || Utils.getOtherPuyo(this.currentDrop));
+				let squishType: string;
+				if(arle.x === schezo.x) {
+					if(arle.y > schezo.y) {
+						squishType = 'VERTICAL';
+					}
+					else {
+						squishType = 'VERTICAL_2';
+					}
 				}
 				else {
-					squishType = 'VERTICAL_2';
+					squishType = 'SPLIT';
 				}
+				this.squishState.squishingPuyos = [{ puyo: arle, squishType }, { puyo: schezo, squishType }];
 			}
-			else {
-				squishType = 'SPLIT';
-			}
-			const squishingPuyos = [{ puyo: arle, squishType }, { puyo: schezo, squishType }];
-			currentBoardHash = this.squishPuyos(squishingPuyos);
-		}
-		else if(this.mode === MODE.CHAIN_SQUISHING) {
-			const puyos = this.resolvingState.unstablePuyos || [];
-			const squishingPuyos = puyos.map(puyo => { return { puyo, squishType: 'VERTICAL' }; });
-			currentBoardHash = this.squishPuyos(squishingPuyos);
+			currentBoardHash = this.squishPuyos();
 		}
 		// Currently dropping nuisance
 		// else if (this.nuisanceState.nuisanceAmount !== 0) {
@@ -239,15 +237,7 @@ export class Game {
 
 					// Vertical orientation
 					if(this.currentDrop.arle.x === this.currentDrop.schezo.x) {
-						this.resolvingChains = this.board.resolveChains();
-
-						// No chains
-						if(this.resolvingChains.length === 0) {
-							this.mode = MODE.PUYO_SQUISHING;
-						}
-						else {
-							this.mode = MODE.CHAIN_POPPING;
-						}
+						this.mode = MODE.PUYO_SQUISHING;
 					}
 					// Horizontal orientation
 					else {
@@ -449,6 +439,7 @@ export class Game {
 			const poppedLocs = puyoLocs.concat(nuisanceLocs);
 			const dropFrames = Utils.getDropFrames(poppedLocs, this.board.boardState, this.settings);
 
+			// Find the lowest height of a puyo that is popping in each column (will be undefined if no puyos are popped in that column)
 			const lowestUnstablePos: Record<number, number> = {};
 			poppedLocs.forEach(puyo => {
 				if(lowestUnstablePos[puyo.x] === undefined || lowestUnstablePos[puyo.x] > puyo.y) {
@@ -457,16 +448,19 @@ export class Game {
 			});
 
 			const unstablePuyos = [];
+			/** The board, minus all popping/unstable puyos. */
 			const stableBoardAfterPop = new Board(this.settings, this.board.boardState);
 			stableBoardAfterPop.boardState.forEach((column, colIndex) => {
+				// No puyos popped in this column
 				if(lowestUnstablePos[colIndex] === undefined) {
 					return;
 				}
-				// Move all unstable puyos
+				// Remove all popping/unstable puyos
 				const removed_puyo_colours = column.splice(lowestUnstablePos[colIndex]);
-				let nonPoppedPuyos = 0;
+				let nonPoppedPuyos = 0;		// The number of non-popped but unstable puyos in this column so far
 				removed_puyo_colours.forEach((colour, index) => {
 					const row = index + lowestUnstablePos[colIndex];
+					// Find all unstable puyos that are not popped (i.e. a puyo was popped below it)
 					if(!poppedLocs.some(puyo => puyo.x === colIndex && puyo.y === row)) {
 						unstablePuyos.push({ x: colIndex, y: row, colour, above: lowestUnstablePos[colIndex] + nonPoppedPuyos });
 						nonPoppedPuyos++;
@@ -511,12 +505,15 @@ export class Game {
 			// Update the score displayed
 			nuisanceSent = this.updateScore();
 
-			// Remove the chained puyos and popped nuisance puyos
-			this.board.deletePuyos(this.resolvingState.puyoLocs.concat(this.board.findNuisancePopped(this.resolvingState.puyoLocs)));
+			// Remove all popped and unstable puyos
+			this.board.deletePuyos(this.resolvingState.poppedLocs.concat(this.resolvingState.unstablePuyos));
 
 			// Squish puyos into the stack
-			this.squishState.currentFrame = 0;
-			this.squishState.totalFrames = 0;
+			this.squishState.squishingPuyos = this.resolvingState.unstablePuyos.map(puyo => {
+				// Move all unstable puyos to their final position
+				puyo.y = puyo.above;
+				return { puyo, squishType: 'VERTICAL' };
+			});
 			this.mode = MODE.CHAIN_SQUISHING;
 
 			// Done resolving all chains
@@ -548,7 +545,8 @@ export class Game {
 	/**
 	 * Squishes the puyos into the stack after lock delay finishes.
 	 */
-	squishPuyos(squishingPuyos: { puyo: Puyo, squishType: string }[]): string {
+	squishPuyos(): string {
+		const { squishingPuyos } = this.squishState;
 		this.squishState.currentFrame++;
 
 		if(this.squishState.totalFrames === 0) {
@@ -571,6 +569,12 @@ export class Game {
 				this.lockDrop();
 			}
 			else if(this.mode === MODE.CHAIN_SQUISHING) {
+				// Add all unstable puyos to the stack
+				for(const p of squishingPuyos) {
+					const { puyo } = p;
+					this.board.boardState[puyo.x][puyo.y] = puyo.colour;
+				}
+
 				// Chain finished
 				if(this.resolvingChains.length === 0) {
 					Object.assign(this.nuisanceState, this.board.dropNuisance(this.activeNuisance));

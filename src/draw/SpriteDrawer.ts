@@ -3,14 +3,24 @@
 const SHEET_ROWS = 16;  // number of rows in the sprite grid
 const SHEET_COLS = 16;  // number of columns in the sprite grid
 const SHEET_UNIT = 32;  // number of pixels in a sprite grid unit
-const SHEET_GAP = 1;    // number of pixels before sprite starts (top/left)
-const SHEET_USED_UNIT = SHEET_UNIT - SHEET_GAP;
-const SUB_SCALE_FACTOR = 1.05;
+const SHEET_GAP = 1;    // number of pixels before sprite starts within its grid space (top/left)
+const SHEET_USED_UNIT = SHEET_UNIT - SHEET_GAP; // number of pixels containing sprite content in a 1x1 sprite
+const SUB_SCALE_FACTOR = 1.05; // experimentally-determined scale factor that allows interconnecting "sub"-sprites to visually meld
 
 const SpriteCache: Record<string, Sprite> = {};
 
 /**
  * Stores and loads scaled sprites.
+ * @param {CanvasRenderingContext2D}    ctx         The canvas to draw the sprite onto
+ * @param {string}                      appearance  The name of the spritesheet
+ * @param {number}                      size        The unit size of the canvas
+ * @param {number}                      sX          The source x-coordinate in sprite units, with 0 denoting the leftmost column
+ * @param {number}                      sY          The source y-coordinate in sprite units, with 0 denoting the topmost row
+ * @param {number}                      dX          The destination x-coordinate in sprite units, with 0 denoting the leftmost column
+ * @param {number}                      dY          The destination y-coordinate in sprite units, with 0 denoting the topmost row
+ * @param {number}                      sWidth      The source width in sprite units
+ * @param {number}                      sHeight     The source height in sprite units
+ * @param {boolean}                     merge       Whether the sprite should be scaled up slightly to meld with interconnecting sprites
  * Use loadImage to pre-emptively load an unscaled image for use
  * Use loadSprite to pre-emptively load an appropriately unit scaled version of an image (as an offscreen canvas)
  * Use drawSprite to draw a specific sprite at a specific size onto a desired canvas
@@ -38,13 +48,12 @@ export function drawSprite(args: DrawingArgs): boolean {
 }
 
 /**
- * Loads canvas with scaled sprite sheet if it hasn't been done yet.
- * Will return false if the original image hasn't been loaded and cannot be accessed to scale into a canvas.
- * @param  {string} 	spriteSheet [description]
- * @param  {number} 	size        [description]
- * @return {boolean}	            Whether the sprite was able to be drawn.
+ * Loads canvas with scaled sprite sheet if it hasn't been loaded yet.
+ * @param  {string} 	spriteSheet The name of the spritesheet
+ * @param  {number} 	size        The unit size of the scaled spritesheet
+ * @return {boolean}	            Whether the canvas with scaled sprite sheet has been loaded
  */
-function loadSprite(spriteSheet: string, size: number) {
+function loadSprite(spriteSheet: string, size: number): boolean {
 	if(!loadImage(spriteSheet)) {
 		return false;
 	}
@@ -67,9 +76,9 @@ function loadSprite(spriteSheet: string, size: number) {
 }
 
 /**
- * Loads sprite sheet image if it hasn't been done yet.
- * @param 	{string} 	 	spriteSheet The name of the spritesheet to be loaded
- * @return 	{boolean}					Whether the image has been loaded yet
+ * Loads sprite sheet image if it hasn't been loaded yet.
+ * @param 	{string} 	 	spriteSheet The name of the spritesheet
+ * @return 	{boolean}					Whether the image has been loaded
  */
 function loadImage(spriteSheet: string): boolean {
 	if(SpriteCache[spriteSheet]) {

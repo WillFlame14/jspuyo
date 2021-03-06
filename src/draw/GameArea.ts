@@ -25,7 +25,10 @@ export class GameArea extends CanvasLayer {
 		this.appearance = appearance;
 		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
 		this.nuisanceLayer = new NuisanceLayer(CONSTANTS.DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, appearance, onNode);
-		this.queueLayer = new QueueLayer(CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.H * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode);
+		this.queueLayer = new QueueLayer(
+			CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.H * scaleFactor,
+			CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode
+		);
 		this.simplified = scaleFactor <= CONSTANTS.DIMENSIONS.MIN_SCALE;
 	}
 

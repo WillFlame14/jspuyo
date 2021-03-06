@@ -3,11 +3,12 @@ import { Drop } from '../Drop';
 import * as CONSTANTS from './DrawingConfig';
 
 export class PuyoDrawingLayer extends DrawingLayer {
-	constructor(width: number, height: number, unit: number, appearance: string, onNode: boolean, className = undefined) {
-		super(width, height, unit, onNode, className);
+	constructor(width: number, height: number, unitW: number, unitH: number, appearance: string, onNode: boolean, className = undefined) {
+		super(width, height, unitW, unitH, onNode, className);
 		this.defaultArgs = {
 			appearance,
-			size: 1,
+			unitW: this.unitW,
+			unitH: this.unitH,
 			sWidth: 1,
 			sHeight: 1,
 			merge: true

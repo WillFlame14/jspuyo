@@ -5,11 +5,12 @@ export class NuisanceLayer extends DrawingLayer {
 	nuisance: number;
 
 	constructor(width: number, height: number, appearance: string, onNode: boolean) {
-		super(width, height, height / 2, onNode);
+		super(width, height, height / 2, height / 2, onNode);
 		this.nuisance = null;
 		this.defaultArgs = {
 			appearance,
-			size: 1,
+			unitW: this.unitW,
+			unitH: this.unitH,
 			merge: false
 		};
 	}

@@ -8,7 +8,8 @@ import { Settings } from '../utils/Settings';
 import * as CONSTANTS from './DrawingConfig';
 
 export class BoardLayer extends CanvasLayer {
-	unit: number;
+	unitW: number;
+	unitH: number;
 	settings: Settings;
 	appearance: string;
 	backgroundLayer: DrawingLayer;
@@ -19,19 +20,24 @@ export class BoardLayer extends CanvasLayer {
 
 	constructor(settings: Settings, appearance: string, scaleFactor = 1, onNode: boolean) {
 		super(CONSTANTS.DIMENSIONS.BOARD.W * scaleFactor, CONSTANTS.DIMENSIONS.BOARD.H * scaleFactor, onNode);
-		this.unit = this.width / settings.cols;
+		this.unitW = this.width / settings.cols;
+		this.unitH = this.height / settings.rows;
 		this.settings = settings;
 		this.appearance = appearance;
-		this.backgroundLayer = new DrawingLayer(this.width, this.height, this.unit, onNode);
+		this.backgroundLayer = new DrawingLayer(this.width, this.height, this.unitW, this.unitH, onNode);
 		this.backgroundLayer.resetState();
 		if (!this.onNode) {
 			this.backgroundLayer.ctx.fillStyle = 'black';
 			this.backgroundLayer.ctx.globalAlpha = 0.2;
 			this.backgroundLayer.ctx.fillRect(0, 0, this.width, this.height);
-			this.backgroundLayer.draw({ appearance, size: 1, sX: CONSTANTS.PUYO_COORDINATES.CROSS.X, sY: CONSTANTS.PUYO_COORDINATES.CROSS.Y, dX: 2.5, dY: 0.5, sWidth: 1, sHeight: 1, merge: false });
+			this.backgroundLayer.draw({
+				appearance, unitW: 1, unitH: 1,
+				sX: CONSTANTS.PUYO_COORDINATES.CROSS.X, sY: CONSTANTS.PUYO_COORDINATES.CROSS.Y,
+				dX: 2.5, dY: 0.5, sWidth: 1, sHeight: 1, merge: false
+			});
 		}
-		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
-		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unit, appearance, onNode);
+		this.stackLayer = new PuyoDrawingLayer(this.width, this.height, this.unitW, this.unitH, appearance, onNode);
+		this.dynamicLayer = new PuyoDrawingLayer(this.width, this.height, this.unitW, this.unitH, appearance, onNode);
 		this.columnHeights = [];
 		this.mode = null;
 	}

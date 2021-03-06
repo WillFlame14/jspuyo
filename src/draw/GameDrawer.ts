@@ -32,14 +32,16 @@ export class CanvasLayer {
 }
 
 export class DrawingLayer extends CanvasLayer {
-	unit: number;
+	unitW: number;
+	unitH: number;
 	objectsDrawn: Partial<DrawingArgs>[];
 	drawingState: number;
 	defaultArgs: Partial<DrawingArgs>;
 
-	constructor(width: number, height: number, unit: number, onNode: boolean, className: string = undefined) {
+	constructor(width: number, height: number, unitW: number, unitH: number, onNode: boolean, className: string = undefined) {
 		super(width, height, onNode, className);
-		this.unit = unit;
+		this.unitW = unitW;
+		this.unitH = unitH;
 		this.objectsDrawn = [];
 		this.drawingState = 0;
 		this.defaultArgs = {};
@@ -49,12 +51,6 @@ export class DrawingLayer extends CanvasLayer {
 		let succeeded = true;
 		if (!this.onNode) {
 			const args = Object.assign({ ctx: this.ctx }, this.defaultArgs, drawingArgs) as DrawingArgs;
-
-			// Resize the sprite
-			args.size *= this.unit;
-			args.dX *= this.unit;
-			args.dY *= this.unit;
-
 			succeeded = drawSprite(args);
 		}
 		return succeeded;

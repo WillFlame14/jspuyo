@@ -25,9 +25,10 @@ export class Settings {
 	lockDelayFrames = 32;			// Frames before a drop locks into place
 	frames_per_rotation = 8;		// Number of frames used to animate 90 degrees of rotation
 	rotate180_time = 200;			// Max milliseconds after a rotate attempt that a second rotate attempt will trigger 180 rotation
-	squishFrames = 16;				// Number of frames used for squishing a drop into the stack
+	squishFrames = 12;				// Number of frames used for squishing a drop into the stack
 	dropFrames = 10;				// Number of frames used for all the puyo to drop
-	popFrames = 65;					// Number of frames used to pop any amount of puyos
+	popFrames = 50;					// Number of frames used to pop any amount of puyos
+	queueShiftFrames = 4;			// Number of frames used to shift the queue
 
 	terminalVelocity = 0.5;			// Maximum speed that a puyo can fall at
 	splitPuyoInitialSpeed = 0.125;
@@ -40,7 +41,7 @@ export class Settings {
 	hashRotFactor = 50;				// Fraction of a rev rounded to when hashing
 	nuisanceSpawnRow: number;		// Row of nuisance spawn
 
-	constructor(gamemode = Gamemode.TSU, gravity = 0.036, rows = 12, cols = 6, softDrop = 0.375, numColours = 4,
+	constructor(gamemode = Gamemode.TSU, gravity = 0.036, rows = 12, cols = 6, softDrop = 0.464, numColours = 4,
 				targetPoints = 70, marginTime = 96000, minChain = 0, seed = Math.random()) {		// eslint-disable-line indent
 		this.gamemode = gamemode;			// Type of game that is being played
 		this.gravity = gravity;				// Vertical distance the drop falls every frame naturally (without soft dropping)
@@ -62,7 +63,7 @@ export class Settings {
 	}
 
 	static fromString(str: string): Settings {
-		return Object.assign(new Settings(), JSON.parse(str) as Settings);
+		return Object.assign(new Settings(), JSON.parse(str) as Settings, { timer: Date.now() });
 	}
 
 	static seedString(str: string): string {

@@ -25,7 +25,10 @@ export class GameArea extends CanvasLayer {
 		this.appearance = appearance;
 		this.boardLayer = new BoardLayer(settings, appearance, scaleFactor, onNode);
 		this.nuisanceLayer = new NuisanceLayer(CONSTANTS.DIMENSIONS.NUISANCE_QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.NUISANCE_QUEUE.H * scaleFactor, appearance, onNode);
-		this.queueLayer = new QueueLayer(CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.H * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode);
+		this.queueLayer = new QueueLayer(
+			CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor, CONSTANTS.DIMENSIONS.QUEUE.H * scaleFactor,
+			CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, CONSTANTS.DIMENSIONS.QUEUE.W * scaleFactor / 2, appearance, onNode
+		);
 		this.simplified = scaleFactor <= CONSTANTS.DIMENSIONS.MIN_SCALE;
 	}
 
@@ -64,8 +67,8 @@ export class GameArea extends CanvasLayer {
 		return this.getHash();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], currentDrop: Drop }): string {
-		this.boardLayer.squishPuyos(currentBoardState);
+	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[] }, squishState: { currentFrame: number }): string {
+		this.boardLayer.squishPuyos(currentBoardState, squishState);
 		this.update();
 		return this.getHash();
 	}
@@ -82,7 +85,7 @@ export class GameArea extends CanvasLayer {
 		return this.getHash();
 	}
 
-	updateQueue(queueState: { dropArray: Drop[] }): string {
+	updateQueue(queueState: { dropArray: Drop[], currentFrame: number }): string {
 		this.queueLayer.updateQueue(queueState);
 		this.update();
 		return this.getHash();

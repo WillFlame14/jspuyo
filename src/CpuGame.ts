@@ -14,7 +14,7 @@ export class CpuGame extends Game {
 	movementSpeed: number;
 	currentMove: CpuMove;
 	rotations: number;
-	lastArle: Position;
+	lastArle: Point;
 
 	softDropTimer: number;
 	movementTimer: number;
@@ -93,7 +93,7 @@ export class CpuGame extends Game {
 			}
 		}
 
-		this.lastArle = Object.assign(this.currentDrop.arle) as Position;
+		this.lastArle = Object.assign(this.currentDrop.arle) as Point;
 	}
 
 	/**

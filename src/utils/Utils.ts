@@ -17,7 +17,7 @@ export function getRandomColour (numColours: number): number {
  *
  * Currently only works for I-shaped Drops (Tsu).
  */
-export function getOtherPuyo (drop: Drop): Position {
+export function getOtherPuyo (drop: Drop): Point {
 	let x = drop.arle.x + Math.cos(drop.standardAngle + Math.PI / 2);
 	let y = drop.arle.y + Math.sin(drop.standardAngle + Math.PI / 2);
 
@@ -28,7 +28,7 @@ export function getOtherPuyo (drop: Drop): Position {
 	if(Math.abs(y - Math.round(y)) < 0.001) {
 		y = Math.round(y);
 	}
-	return { x, y } as Position;
+	return { x, y };
 }
 
 /**
@@ -40,7 +40,7 @@ export function getOtherPuyo (drop: Drop): Position {
  */
 export function getDropFrames(poppingLocs: Puyo[], boardState: number[][], settings: Settings): number {
 	return poppingLocs.some(loc => {
-		return boardState[loc.col][loc.row + 1] !== undefined && !poppingLocs.some(loc2 => loc2.col === loc.col && loc2.row === loc.row + 1);
+		return boardState[loc.x][loc.y + 1] !== undefined && !poppingLocs.some(loc2 => loc2.x === loc.x && loc2.y === loc.y + 1);
 	}) ? settings.dropFrames : 0;
 }
 

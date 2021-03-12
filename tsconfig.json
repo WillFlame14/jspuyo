@@ -5,7 +5,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitThis": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "types": ["node", "chartist"]
   },
-  "include": ["./src/**/*.ts", "./server.ts"]
+  "include": ["./src/**/*.ts", "./server.ts"],
+  "exclude": ["**/node_modules", "**/.*/"]
 }

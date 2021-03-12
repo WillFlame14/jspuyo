@@ -32,35 +32,44 @@ export class CanvasLayer {
 }
 
 export class DrawingLayer extends CanvasLayer {
-	unit: number;
-	objectsDrawn: OptionalDrawingArgs[];
+	unitW: number;
+	unitH: number;
+	objectsDrawn: Partial<DrawingArgs>[];
 	drawingState: number;
-	defaultArgs: OptionalDrawingArgs;
+	defaultArgs: Partial<DrawingArgs>;
 
-	constructor(width: number, height: number, unit: number, onNode: boolean, className: string = undefined) {
+	constructor(width: number, height: number, unitW: number, unitH: number, onNode: boolean, className: string = undefined) {
 		super(width, height, onNode, className);
-		this.unit = unit;
+		this.unitW = unitW;
+		this.unitH = unitH;
 		this.objectsDrawn = [];
 		this.drawingState = 0;
-		this.defaultArgs = {} as OptionalDrawingArgs;
+		this.defaultArgs = {};
 	}
 
-	drawFromArgs(drawingArgs: OptionalDrawingArgs): void {
+	drawFromArgs(drawingArgs: Partial<DrawingArgs>): boolean {
+		let succeeded = true;
 		if (!this.onNode) {
 			const args = Object.assign({ ctx: this.ctx }, this.defaultArgs, drawingArgs) as DrawingArgs;
-
-			// Resize the sprite
-			args.size *= this.unit;
-			args.dX *= this.unit;
-			args.dY *= this.unit;
-
-			drawSprite(args);
+			succeeded = drawSprite(args);
 		}
+		return succeeded;
 	}
 
-	draw(drawingArgs: OptionalDrawingArgs): void {
+	draw(drawingArgs: Partial<DrawingArgs>): void {
 		this.objectsDrawn.push(drawingArgs);
-		this.drawFromArgs(drawingArgs);
+		const succeeded = this.drawFromArgs(drawingArgs);
+
+		const retry = (attempts = 0) => {
+			const result = this.drawFromArgs(drawingArgs);
+			if(!result && attempts < 10) {
+				setTimeout(() => retry(attempts + 1), 20);
+			}
+		};
+
+		if(!succeeded) {
+			setTimeout(() => retry(), 20);
+		}
 	}
 
 	getStateObject(): DrawingHash {
@@ -70,10 +79,18 @@ export class DrawingLayer extends CanvasLayer {
 	drawFromStateObject(state: DrawingHash): void {
 		if (state.drawingState !== this.drawingState) {
 			this.clear();
+
+			let all_successful = true;
 			state.objectsDrawn.forEach((drawingArgs) => {
-				this.drawFromArgs(drawingArgs);
+				const succeeded = this.drawFromArgs(drawingArgs);
+				if(!succeeded) {
+					all_successful = false;
+				}
 			});
-			this.drawingState = state.drawingState;
+
+			if(all_successful) {
+				this.drawingState = state.drawingState;
+			}
 		}
 	}
 

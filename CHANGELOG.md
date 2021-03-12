@@ -2,6 +2,22 @@
 
 ## v0.11 - Game Improvements II, Singleplayer
 
+### v0.11.1 (March 12, 2021)
+[`Various game fixes #66`](https://github.com/WillFlame14/jspuyo/pull/66)
+
+**New features:**
+- More animations!
+  - Puyos now squish into the stack
+  - Puyos now have a popping animation
+  - The queue now has a shifting animation
+
+**Other changes:**
+- Position and Location classes combined into a Point class to reduce repetition and avoid name conflicts
+- Game.ts now determines what action to perform based on its current "mode" rather than particular properties on certain states
+- CPU games now correctly reset their timer for margin time between every game
+- Add support for drawing with distinct width and height scaling
+- Various tuning changes
+
 ### v0.11.0 (December 24, 2020)
 [`Add guide and simulator #65`](https://github.com/WillFlame14/jspuyo/pull/65)
 

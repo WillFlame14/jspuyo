@@ -1,16 +1,11 @@
-interface Puyo extends Location {
+interface Puyo extends Point {
 	/** The number of puyos this one is above */
 	above?: number,
 	colour: number,
 	connections?: string[]
 }
 
-interface Location {
-	col: number,
-	row: number
-}
-
-interface Position {
+interface Point {
 	x: number,
 	y: number
 }
@@ -42,6 +37,12 @@ interface NuisanceState {
 	velocities?: number[],
 	allLanded?: boolean,
 	landFrames?: number
+}
+
+interface SquishState {
+	currentFrame: number;
+	totalFrames: number;
+	squishingPuyos: Array<{puyo: Puyo, squishType: string}>;
 }
 
 interface CpuInfo {

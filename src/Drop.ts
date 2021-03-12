@@ -24,8 +24,8 @@ export class Drop {
 	shape: Shape;
 	settings: Settings;
 	colours: number[];
-	arle: Position;
-	schezo: Position;
+	arle: Point;
+	schezo: Point;
 	standardAngle: number;
 	rotating: Direction;
 	rotating180: number;
@@ -34,15 +34,15 @@ export class Drop {
 		shape: Shape,
 		colours: number[],
 		settings: Settings,
-		arle: Position = undefined,
-		schezo = { x: null, y: null } as Position,
+		arle: Point = undefined,
+		schezo: Point = { x: null, y: null },
 		standardAngle = 0,
 		rotating: Direction = null
 	) {
 		this.shape = shape;
 		this.colours = colours;
 		this.settings = settings;
-		this.arle = arle || { x: 2, y: this.settings.rows + 0.5 } as Position;
+		this.arle = arle || { x: 2, y: this.settings.rows + 0.5 };
 		this.schezo = schezo;
 		this.standardAngle = standardAngle;
 		this.rotating = rotating;
@@ -107,8 +107,8 @@ export class Drop {
 			this.shape,
 			this.colours.slice(),
 			this.settings,
-			Utils.objectCopy(this.arle) as Position,
-			Utils.objectCopy(this.schezo) as Position,
+			Utils.objectCopy(this.arle) as Point,
+			Utils.objectCopy(this.schezo) as Point,
 			this.standardAngle,
 			this.rotating);
 	}

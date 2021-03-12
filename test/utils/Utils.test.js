@@ -45,11 +45,11 @@ describe('Utils.js', function() {
 				[]
 			];
 			const poppingLocs = [
-				{ col: 0, row: 2 },
-				{ col: 0, row: 3 },		// popped nuisance
-				{ col: 1, row: 1 },
-				{ col: 1, row: 2 },
-				{ col: 2, row: 1 }
+				{ x: 0, y: 2 },
+				{ x: 0, y: 3 },		// popped nuisance
+				{ x: 1, y: 1 },
+				{ x: 1, y: 2 },
+				{ x: 2, y: 1 }
 			];
 			const dropFrames = getDropFrames(poppingLocs, boardState, settings);
 			expect(dropFrames).to.equal(0);
@@ -65,10 +65,10 @@ describe('Utils.js', function() {
 				[]
 			];
 			const poppingLocs = [
-				{ col: 0, row: 0 },
-				{ col: 0, row: 1 },
-				{ col: 1, row: 0 },
-				{ col: 2, row: 0 }
+				{ x: 0, y: 0 },
+				{ x: 0, y: 1 },
+				{ x: 1, y: 0 },
+				{ x: 2, y: 0 }
 			];
 			const dropFrames = getDropFrames(poppingLocs, boardState, settings);
 			expect(dropFrames).to.equal(settings.dropFrames);
@@ -84,11 +84,11 @@ describe('Utils.js', function() {
 				[]
 			];
 			const poppingLocs = [
-				{ col: 0, row: 2 },
-				{ col: 0, row: 3 },		//popped nuisance
-				{ col: 1, row: 1 },
-				{ col: 1, row: 2 },
-				{ col: 2, row: 1 }
+				{ x: 0, y: 2 },
+				{ x: 0, y: 3 },		//popped nuisance
+				{ x: 1, y: 1 },
+				{ x: 1, y: 2 },
+				{ x: 2, y: 1 }
 			];
 			const dropFrames = getDropFrames(poppingLocs, boardState, settings);
 			expect(dropFrames).to.equal(0);

@@ -10,6 +10,14 @@ const SUB_SCALE_FACTOR = 1.05; // experimentally-determined scale factor that al
 const SpriteCache: Record<string, Sprite> = {};
 
 /**
+ * Loads all the sprites associated with an appearance ahead of time. This prevents problems such as failing to clear canvas between draws.
+ */
+export function preloadSprites(appearance: string): void {
+	// Probably should be more robust, but this is good enough for now.
+	loadSprite(appearance, SUB_SCALE_FACTOR, SUB_SCALE_FACTOR);
+}
+
+/**
  * Stores and loads scaled sprites.
  * @param {CanvasRenderingContext2D}    ctx         The canvas to draw the sprite onto
  * @param {string}                      appearance  The name of the spritesheet

@@ -2,8 +2,9 @@
 
 import mitt from 'mitt';
 
-import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo, signOut } from './firebase';
+import { preloadSprites } from '../draw/SpriteDrawer';
+import { AudioPlayer } from '../utils/AudioPlayer';
 import { Settings, UserSettings } from '../utils/Settings';
 
 export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
@@ -148,6 +149,8 @@ export function initCustomPanels(
 			audioPlayer.playSfx('submit');
 			clearModal();
 		});
+
+		preloadSprites(newSettings.appearance);
 	});
 
 	// User Panel - Log Out

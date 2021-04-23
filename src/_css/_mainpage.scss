@@ -284,8 +284,9 @@
 // An entry in the player list
 .playerIndividual {
 	display: grid;
-	grid-template-columns: 15% 65% 20%;
-	padding: 8px 5px;
+	grid-column-gap: 10px;
+	grid-template-columns: 1fr 3fr 2fr 2fr;
+	padding: 8px 15px 8px 5px;
 
 	// The icon next to each player's name
 	img {

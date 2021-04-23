@@ -21,12 +21,12 @@ export const RoomOptionsModal = Vue.defineComponent({
 				marginTime: 96,		// Set to seconds
 				numPlayers: 4,
 				hardDrop: false,
-				winCondition: 'FT 3'
+				winCondition: 'None'
 			}),
 			wildNumSelected: false,
 			puyoImgs,
 			gamemodes: Object.values(Gamemode),
-			winConditions: ['FT 3', 'FT 5', 'FT 7'],
+			winConditions: ['None', 'FT 3', 'FT 5', 'FT 7'],
 			disabled: false,
 			mode: 'create'
 		};

@@ -137,7 +137,7 @@ let quickPlayTimer: ReturnType<typeof setTimeout> = null;
 function init(socket: SocketIOClient.Socket): void {
 	socket.on('roomUpdate', (
 		roomId: string,
-		allIds: string[],
+		playerScores: Record<string, number>,
 		roomSize: number,
 		settingsString: string,
 		roomType: string,
@@ -191,7 +191,7 @@ function init(socket: SocketIOClient.Socket): void {
 			statusExtra.style.display = 'block';
 			roomManageOptions.style.display = 'none';
 
-			if (allIds.length === 1) {
+			if (Object.keys(playerScores).length === 1) {
 				statusMsg.innerHTML = 'Waiting for more players to start...';
 				clearInterval(quickPlayTimer);
 				quickPlayTimer = null;
@@ -223,7 +223,7 @@ function init(socket: SocketIOClient.Socket): void {
 			roomManageOptions.style.display = 'block';
 		}
 
-		globalEmitter.emit('updatePlayers', allIds);
+		globalEmitter.emit('updatePlayers', playerScores);
 	});
 
 	socket.on('start', async (roomId: string, opponentIds: string[], settingsString: string) => {

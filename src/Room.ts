@@ -12,6 +12,7 @@ export class Room {
 	password: string = null;
 	members: Map<string, { socket: SocketIO.Socket }>;
 	cpus = new Map<string, CpuInfo>();
+	wins: Record<string, number> = {};
 	numCpus = 0;
 	games = new Map<string, { socket: SocketIO.Socket, frames: number, session?: CpuSession }>();
 	host: string;
@@ -45,20 +46,12 @@ export class Room {
 		this.roomType = roomType;
 
 		this.members.forEach((player, gameId) => {
-			// Send update to all players
-			player.socket.emit(
-				'roomUpdate',
-				this.roomId,
-				Array.from(this.members.keys()),
-				this.roomSize,
-				this.settingsString,
-				this.roomType,
-				gameId === this.host,
-				false		// Not spectating
-			);
-
 			player.socket.join(this.roomId);
+			this.wins[gameId] = 0;
 		});
+
+		// Send update to all players
+		this.sendRoomUpdate();
 
 		console.log(`Creating room ${this.roomId} with gameIds: ${JSON.stringify(Array.from(this.members.keys()).map(id => id.substring(0, 6)))}`);
 	}
@@ -103,6 +96,9 @@ export class Room {
 			this.cpus.set(gameId, cpuInfo);
 		}
 		console.log(`Added gameId ${gameId.substring(0, 6)} to room ${this.roomId}`);
+
+		// Set their win count to 0
+		this.wins[gameId] = 0;
 
 		if(notify) {
 			this.sendRoomUpdate();
@@ -215,6 +211,8 @@ export class Room {
 	 * @return {boolean}          True if the room is now empty, and false otherwise.
 	 */
 	leave(gameId: string, notify = true, spectate = false): boolean {
+		this.wins[gameId] = undefined;
+
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
 			socket.leave(this.roomId);
@@ -407,11 +405,15 @@ export class Room {
 
 		// Determine if there is a winner
 		if(this.undefeated.length <= 1) {
-			// If the remaining players lose at the same time, winner will be a blank string
-			const winner = this.undefeated[0] || '';
+			// If the remaining players lose at the same time, winner will be undefined
+			const winner = this.undefeated[0];
 			this.games.forEach((player) => {
 				player.socket.emit('winnerResult', winner);
 			});
+
+			if(winner !== undefined) {
+				this.wins[winner]++;
+			}
 
 			// End room
 			this.end();
@@ -422,9 +424,6 @@ export class Room {
 	 * Sends a room update to all the members and spectators of the room.
 	 */
 	sendRoomUpdate(): void {
-		// Get all display names of members and CPUs
-		const playersInRoom = Array.from(this.members.keys()).concat(Array.from(this.cpus.keys()));
-
 		// Temporary timer if it has not been updated yet
 		let tempTimer = null;
 
@@ -439,7 +438,7 @@ export class Room {
 		this.members.forEach((player, id) => {
 			player.socket.emit('roomUpdate',
 				this.roomId,
-				playersInRoom,
+				this.wins,
 				this.roomSize,
 				this.settingsString,
 				this.roomType,
@@ -452,7 +451,7 @@ export class Room {
 		this.spectating.forEach(socket => {
 			socket.emit('roomUpdate',
 				this.roomId,
-				playersInRoom,
+				this.wins,
 				this.roomSize,
 				this.settingsString,
 				this.roomType,

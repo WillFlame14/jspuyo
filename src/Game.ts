@@ -135,8 +135,8 @@ export class Game {
 					break;
 				case 'Loss':
 					this.audioPlayer.playAndEmitSfx('loss');
-					setTimeout(() => this.audioPlayer.playAndEmitSfx('win'), 2000);
 					this.statTracker.addResult('loss');
+					break;
 			}
 			return this.endResult;
 		}

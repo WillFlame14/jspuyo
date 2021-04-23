@@ -20,7 +20,7 @@ export class Room {
 	paused: string[] = [];
 	unfocused: string[] = [];
 	spectating = new Map<string, SocketIO.Socket>();
-	defeated: string[] = [];
+	undefeated: string[] = [];
 	timeout: ReturnType<typeof setTimeout> = null;
 
 	roomSize: number;
@@ -158,8 +158,8 @@ export class Room {
 		this.settingsString = Settings.seedString(this.settingsString);
 		const settings = Settings.fromString(this.settingsString);
 
-		// Reset the defeated array
-		this.defeated = [];
+		// Reset the undefeated array
+		this.undefeated = allIds.slice();
 
 		// Generate the CPU games
 		this.cpus.forEach((cpu, cpuId) => {
@@ -260,11 +260,8 @@ export class Room {
 
 		if(this.ingame) {
 			this.games.delete(gameId);
-
-			// Emit midgame disconnect event to all players in the room
-			this.games.forEach(player => {
-				player.socket.emit('playerDisconnect', gameId);
-			});
+			// Add defeat, but count as disconnect
+			this.addDefeat(gameId, true);
 		}
 		else {
 			if(notify) {
@@ -339,7 +336,7 @@ export class Room {
 
 		this.games.forEach((player, id) => {
 			// Exclude defeated players
-			if(!this.defeated.includes(id)) {
+			if(this.undefeated.includes(id)) {
 				const frames = player.frames;
 				if(frames < minFrames) {
 					minFrames = frames;
@@ -390,6 +387,34 @@ export class Room {
 				clearTimeout(this.timeout);
 				this.timeout = null;
 			}
+		}
+	}
+
+	addDefeat(gameId: string, disconnect = false): void {
+		const index = this.undefeated.indexOf(gameId);
+		if(index === -1) {
+			console.error(`Tried to add defeat for ${gameId}, but they had already been defeated.`);
+			return;
+		}
+		this.undefeated.splice(index, 1);
+
+		// Send defeat to all players except self
+		this.games.forEach((player, id) => {
+			if(id !== gameId) {
+				player.socket.emit('gameOver', gameId, disconnect);
+			}
+		});
+
+		// Determine if there is a winner
+		if(this.undefeated.length <= 1) {
+			// If the remaining players lose at the same time, winner will be a blank string
+			const winner = this.undefeated[0] || '';
+			this.games.forEach((player) => {
+				player.socket.emit('winnerResult', winner);
+			});
+
+			// End room
+			this.end();
 		}
 	}
 

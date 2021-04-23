@@ -134,18 +134,6 @@ export class RoomManager {
 		return room;
 	}
 
-	static endRoom(roomId: string): Room {
-		const room = roomIdToRoom.get(roomId);
-
-		if(room === undefined) {
-			console.log(`Tried to end room ${roomId}, but it did not exist.`);
-			return;
-		}
-
-		room.end();
-		return room;
-	}
-
 	static leaveRoom(gameId: string, roomId: string = null, notify = false): Room {
 		// The old roomId is explicitly provided when force disconnecting from a room, since joining happens faster than leaving
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
@@ -285,12 +273,7 @@ export class RoomManager {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room !== undefined) {
-			room.defeated.push(gameId);
-
-			// If the remaining players lose at the same time
-			if(room.defeated.length === room.roomSize) {
-				room.end();
-			}
+			room.addDefeat(gameId);
 		}
 	}
 

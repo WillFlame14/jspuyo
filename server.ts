@@ -284,13 +284,7 @@ io.on('connection', function(socket) {
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
 		const roomId = RoomManager.getRoomIdFromId(gameId);
-		socket.to(roomId).emit('gameOver', gameId);
 		RoomManager.beenDefeated(gameId, roomId);
-	});
-
-	// Game is over for all players
-	socket.on('gameEnd', roomId => {
-		RoomManager.endRoom(roomId);
 	});
 
 	socket.on('forceDisconnect', (gameId, roomId) => {

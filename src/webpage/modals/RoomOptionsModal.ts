@@ -86,7 +86,9 @@ export const RoomOptionsModal = Vue.defineComponent({
 			settings.numPlayers = undefined;	// Separate the numPlayers property from settings
 			settings.marginTime *= 1000;		// Convert margin time to milliseconds
 
-			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode });
+			const roomType = this.settings.winCondition === 'None' ? 'default' : this.settings.winCondition;
+
+			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode, roomType });
 		}
 	},
 	mounted() {

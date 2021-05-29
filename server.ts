@@ -131,14 +131,14 @@ io.on('connection', function(socket) {
 		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
-	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number}) => {
-		const { gameId, settingsString, roomSize } = gameInfo;
+	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number, roomType: string}) => {
+		const { gameId, settingsString, roomSize, roomType } = gameInfo;
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
-		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString).roomId;
+		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString, roomType).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 

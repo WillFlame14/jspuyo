@@ -181,7 +181,7 @@ export class Room {
 		this.members.forEach((player, gameId) => {
 			const opponentIds = allIds.filter(id => id !== gameId);
 			this.games.set(gameId, { frames: 0, socket: player.socket });
-			player.socket.emit('start', this.roomId, opponentIds, this.settingsString);
+			player.socket.emit('start', this.roomId, this.wins, opponentIds, this.settingsString);
 		});
 
 		// Send start to the spectators
@@ -189,6 +189,7 @@ export class Room {
 			socket.emit(
 				'spectate',
 				this.roomId,
+				this.wins,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 				this.settingsString
 			);
@@ -313,6 +314,30 @@ export class Room {
 				this.quickPlayStartTime = Date.now() + timer;
 			}
 
+			if (this.roomType.includes('FT')) {
+				const winCondition = Number(this.roomType.substring(3));
+				let winConditionReached = false;
+
+				for(const wins of Object.values(this.wins)) {
+					if(wins === winCondition) {
+						winConditionReached = true;
+						break;
+					}
+				}
+				// Restart game if no one has reached win condition
+				if(!winConditionReached) {
+					this.start();
+					return;
+				}
+				// Otherwise, reset all wins
+				else {
+					for(const gameId of Object.keys(this.wins)) {
+						this.wins[gameId] = 0;
+					}
+				}
+			}
+
+			// Return to lobby menu
 			this.sendRoomUpdate();
 		}, 5000);
 

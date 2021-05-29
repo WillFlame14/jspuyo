@@ -9,6 +9,13 @@ import { Settings, UserSettings } from '../utils/Settings';
 
 export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
 
+interface RoomSettings {
+	settings: Settings;
+	roomSize: number;
+	mode: string;
+	roomType: string;
+}
+
 export function initCustomPanels(
 	emitter: ReturnType<typeof mitt>,
 	clearModal: () => void,
@@ -28,16 +35,16 @@ export function initCustomPanels(
 		emitter.emit('disableRoomSettings', false);
 	};
 
-	emitter.on('submitRoomSettings', ({settings, roomSize, mode}: {settings: Settings, roomSize: number, mode: string}) => {
+	emitter.on('submitRoomSettings', ({ settings, roomSize, mode, roomType }: RoomSettings) => {
 		const settingsString = Object.assign(new Settings(), settings).toString();
 		switch(mode) {
 			case 'create':
 				void stopCurrentSession().then(() => {
-					socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize });
+					socket.emit('createRoom', { gameId: getCurrentUID(), settingsString, roomSize, roomType });
 				});
 				break;
 			case 'set':
-				socket.emit('changeSettings', getCurrentUID(), settingsString, roomSize);
+				socket.emit('changeSettings', getCurrentUID(), settingsString, roomSize, roomType);
 				break;
 		}
 		audioPlayer.playSfx('submit');

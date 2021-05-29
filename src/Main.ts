@@ -152,7 +152,7 @@ function init(socket: SocketIOClient.Socket): void {
 		currentRoomId = roomId;
 		clearModal();
 		clearCells();
-		generateCells(1, Settings.fromString(settingsString));
+		generateCells([getCurrentUID()], Settings.fromString(settingsString));
 		if(mainContent.classList.contains('ingame')) {
 			mainContent.classList.remove('ingame');
 		}
@@ -223,10 +223,10 @@ function init(socket: SocketIOClient.Socket): void {
 			roomManageOptions.style.display = 'block';
 		}
 
-		globalEmitter.emit('updatePlayers', playerScores);
+		globalEmitter.emit('updatePlayers', { playerScores, showWins: !roomType.includes('FT') });
 	});
 
-	socket.on('start', async (roomId: string, opponentIds: string[], settingsString: string) => {
+	socket.on('start', async (roomId: string, playerScores: Record<string, number>, opponentIds: string[], settingsString: string) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -238,7 +238,7 @@ function init(socket: SocketIOClient.Socket): void {
 
 		// Adjust the number of boards drawn
 		clearCells();
-		const gameAreas = generateCells(opponentIds.length + 1, settings, userSettings.appearance);
+		const gameAreas = generateCells([getCurrentUID(), ...opponentIds], settings, userSettings.appearance, playerScores);
 
 		// Hide the status bar
 		document.getElementById('statusHover').style.display = 'none';
@@ -256,7 +256,7 @@ function init(socket: SocketIOClient.Socket): void {
 		currentSession.run();
 	});
 
-	socket.on('spectate', async (roomId: string, allIds: string[], settingsString: string) => {
+	socket.on('spectate', async (roomId: string, playerScores: Record<string, number>, allIds: string[], settingsString: string) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -270,7 +270,7 @@ function init(socket: SocketIOClient.Socket): void {
 
 		// Adjust the number of boards drawn
 		clearCells();
-		const gameAreas = generateCells(allIds.length, settings, userSettings.appearance);
+		const gameAreas = generateCells(allIds, settings, userSettings.appearance, playerScores);
 
 		const game = new SpectateGame(getCurrentUID(), allIds, socket, settings, userSettings, gameAreas, globalAudioPlayer);
 
@@ -319,15 +319,18 @@ function showGameOnly() {
 	if(!mainContent.classList.contains('ingame')) {
 		mainContent.classList.add('ingame');
 	}
-
-	// Clear the player list
-	globalEmitter.emit('updatePlayers', []);
 }
 
 /**
  * Creates canvas elements on screen for each player. Currently supports up to 16 total players nicely.
  */
-export function generateCells(numCells: number, settings: Settings, appearance = new UserSettings().appearance): Record<number, GameArea> {
+export function generateCells(
+	gameIds: string[],
+	settings: Settings,
+	appearance = new UserSettings().appearance,
+	playerScores?: Record<string, number>
+): Record<number, GameArea> {
+	const numCells = gameIds.length;
 	const playArea = document.getElementById('playArea') as HTMLTableElement;
 	playArea.style.display = 'table';
 
@@ -335,7 +338,7 @@ export function generateCells(numCells: number, settings: Settings, appearance =
 	let runningId = 1;
 	const gameAreas: Record<number, GameArea> = {};
 
-	const createGameCanvas = function(id: number, row: HTMLTableRowElement, size: number) {
+	const createGameCanvas = function(id: number, gameId: string, row: HTMLTableRowElement, size: number) {
 		gameAreas[id] = new GameArea(settings, appearance, size);
 
 		const cell = row.insertCell(-1);
@@ -351,23 +354,39 @@ export function generateCells(numCells: number, settings: Settings, appearance =
 		pointsArea.className = 'pointsArea';
 		playerArea.appendChild(pointsArea);
 
-		const pointsDisplay = document.createElement('span');
+		const pointsDisplay = document.createElement('div');
 		pointsDisplay.id = `pointsDisplay${id}`;
 		pointsDisplay.className = 'pointsDisplay';
 		pointsDisplay.innerHTML = '00000000';
 		pointsDisplay.style.fontSize = `${52 * size}`;
 		pointsArea.appendChild(pointsDisplay);
 
+		const playerName = document.createElement('div');
+		let string = '';
+		void PlayerInfo.getUserProperty(gameId, 'username').then((username: string) => {
+			string += username;
+		}).catch(() => {
+			// No username found (i.e. CPU or test)
+			string += gameId;
+		}).then(() => {
+			if(playerScores !== undefined) {
+				string += ` ${playerScores[gameId]} ★`;
+			}
+			playerName.innerHTML = string;
+		});
+
+		playerName.className = 'playerDisplay';
+		playerArea.appendChild(playerName);
 		return cell;
 	};
 
-	const playerCell = createGameCanvas(runningId, firstRow, 1);
+	const playerCell = createGameCanvas(runningId, gameIds[runningId - 1], firstRow, 1);
 	runningId++;
 
 	// Set up the number of boards displayed
 	if(numCells < 5) {
 		for(let i = 0; i < numCells - 1; i++) {
-			createGameCanvas(runningId, firstRow, 1);
+			createGameCanvas(runningId, gameIds[runningId - 1], firstRow, 1);
 			runningId++;
 		}
 	}
@@ -375,13 +394,13 @@ export function generateCells(numCells: number, settings: Settings, appearance =
 		playerCell.setAttribute('rowspan', '2');
 		// Create a larger top row
 		for(let i = 0; i < Math.ceil((numCells - 1) / 2); i++) {
-			createGameCanvas(runningId, firstRow, 0.5);
+			createGameCanvas(runningId, gameIds[runningId - 1], firstRow, 0.5);
 			runningId++;
 		}
 		// And a smaller bottom row
 		const secondRow = playArea.insertRow(-1);
 		for(let i = 0; i < Math.floor((numCells - 1) / 2); i++) {
-			createGameCanvas(runningId, secondRow, 0.5);
+			createGameCanvas(runningId, gameIds[runningId - 1], secondRow, 0.5);
 			runningId++;
 		}
 	}
@@ -391,19 +410,19 @@ export function generateCells(numCells: number, settings: Settings, appearance =
 		let extras = numCells - 1 - minPerRow * 3;
 		// Spread rows over the first two rows
 		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-			createGameCanvas(runningId, firstRow, 0.33);
+			createGameCanvas(runningId, gameIds[runningId - 1], firstRow, 0.33);
 			runningId++;
 		}
 		extras--;
 		const secondRow = playArea.insertRow(-1);
 		for(let i = 0; i < minPerRow + (extras > 0 ? 1 : 0); i++) {
-			createGameCanvas(runningId, secondRow, 0.33);
+			createGameCanvas(runningId, gameIds[runningId - 1], secondRow, 0.33);
 			runningId++;
 		}
 		// Do the final bottom row, guaranteed to be no extras
 		const thirdRow = playArea.insertRow(-1);
 		for(let i = 0; i < minPerRow; i++) {
-			createGameCanvas(runningId, thirdRow, 0.33);
+			createGameCanvas(runningId, gameIds[runningId - 1], thirdRow, 0.33);
 			runningId++;
 		}
 	}

@@ -10,14 +10,16 @@ interface Player {
 }
 
 export const PlayerList = Vue.defineComponent({
-	data(): { players: Player[], puyoImgs: string[] } {
+	data(): { players: Player[], showWins: boolean, puyoImgs: string[] } {
 		return {
 			players: [],
+			showWins: true,
 			puyoImgs
 		};
 	},
 	mounted() {
-		this.emitter.on('updatePlayers', (playerScores: Record<string, number>) => {
+		this.emitter.on('updatePlayers', ({playerScores, showWins}: { playerScores: Record<string, number>, showWins: boolean }) => {
+			this.showWins = showWins;
 			const promises: (Promise<string> | string)[] = [];
 			// Fetch usernames from the database using the ids
 			for(const [id, wins] of Object.entries(playerScores)) {
@@ -53,7 +55,7 @@ export const PlayerList = Vue.defineComponent({
 			<li class="playerIndividual" v-for="(player, index) in players">
 				<img v-bind:src="'images/modal_boxes/puyo_' + puyoImgs[index % puyoImgs.length] + '.png'">
 				<span >{{player.name}}</span>
-				<span class="centre-align">{{player.wins + '★'}}</span>
+				<span class="centre-align">{{showWins ? player.wins + '★' : ''}}</span>
 				<span class="right-align">{{player.rating}}</span>
 			</li>
 		</ul>`

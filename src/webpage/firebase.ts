@@ -238,6 +238,10 @@ export class PlayerInfo {
 
 	/**
 	 * Updates a specific property of the user data.
+	 * @param	uid			UID of the user
+	 * @param 	property	Name of the property to be updated
+	 * @param	value		New value of the property be updated to
+	 * @param	overwrite	Whether to overwrite the property's children. False by default.
 	 */
 	static updateUser(uid: string, property: string, value: unknown, overwrite = true): void {
 		// Update the firebase auth User object if it is one of their properties

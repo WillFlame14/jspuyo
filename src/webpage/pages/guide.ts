@@ -52,7 +52,7 @@ export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt
 	emitter.on('startSimulator', (options: Options) => {
 		clearCells();
 		settings.setSeed(options.seed);		// Will default to random seed if none is provided
-		const gameAreas = generateCells(1, settings);
+		const gameAreas = generateCells(['test'], settings);
 		const game = new PlayerGame(null, ['system'], socket, settings, userSettings, gameAreas, audioPlayer);
 
 		if(options.nuisance) {
@@ -173,7 +173,7 @@ const GuideComponent = Vue.defineComponent({
 			this.currentPage = this.guidePages[this.pageNum];
 			clearCells();
 			if(this.currentPage.options.simulator) {
-				generateCells(1, settings);
+				generateCells(['test'], settings);
 			}
 			if(this.simulatorOn) {
 				this.stopSimulator();

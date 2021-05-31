@@ -2,6 +2,21 @@
 
 ## v0.11 - Game Improvements II, Singleplayer
 
+### v0.11.2 (May 30, 2021)
+[`Add scoring system for games, ratings framework #81`](https://github.com/WillFlame14/jspuyo/pull/81)
+
+**New features:**
+- A rating system very similar to Hiku's Western Ranking has been implemented.
+  - Currently, there is no way to access this rating system as Ranked matches do not function properly yet.
+- Player names are now shown beneath boards to help identify who's who.
+- Lobbies without a win condition now keeps track of total wins in the player list.
+- Lobbies with a FT # win condition now do not return to the lobby between games, and each player's wins are tracked underneath their board.
+
+**Other changes:**
+- Fixed [`#60`](https://github.com/WillFlame14/jspuyo/issues/60), and likely other issues associated with the server not being able to figure out who won a game.
+- CPUs no longer emit gameOver and gameEnd events twice (didn't cause any visible problems, but occasionally had some weird errors).
+- Removed a lot of unnecessary/repeated code.
+
 ### v0.11.1 (March 12, 2021)
 [`Various game fixes #66`](https://github.com/WillFlame14/jspuyo/pull/66)
 

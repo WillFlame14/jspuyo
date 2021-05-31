@@ -37,19 +37,18 @@ export class Session {
 		});
 
 		this.socket.off('gameOver');
-		this.socket.on('gameOver', (oppId: string) => {
+		this.socket.on('gameOver', (oppId: string, disconnect: boolean) => {
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.game.endResult = 'Win';
+			if(disconnect) {
+				// Opponent lost due to disconnecting
 			}
 		});
 
-		this.socket.off('playerDisconnect');
-		this.socket.on('playerDisconnect', (oppId: string) => {
-			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
-			if(this.opponentIds.length === 0) {
-				this.game.endResult = 'OppDisconnect';
-			}
+		this.socket.off('winnerResult');
+		this.socket.on('winnerResult', (winnerId: string) => {
+			this.game.endResult = winnerId === this.gameId ? 'Win' : 'Loss';
+			// Regardless of whether this player won, someone did, so win sfx should be played.
+			setTimeout(() => this.game.audioPlayer.playAndEmitSfx('win'), 2000);
 		});
 
 		this.socket.off('pause');
@@ -82,13 +81,13 @@ export class Session {
 	finish(endResult: string): void {
 		switch(endResult) {
 			case 'Win':
-				this.socket.emit('gameEnd', this.roomId);
+				//this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Loss':
 				this.socket.emit('gameOver', this.gameId);
 				break;
 			case 'OppDisconnect':
-				this.socket.emit('gameEnd', this.roomId);
+				//this.socket.emit('gameEnd', this.roomId);
 				break;
 			case 'Disconnect':
 				this.socket.emit('forceDisconnect', this.gameId, this.roomId);
@@ -164,18 +163,6 @@ export class CpuSession extends Session {
 
 			const endResult = this.game.end();
 			if(endResult !== null) {
-				switch(endResult) {
-					case 'Win':
-						// TODO: Win animation
-						this.socket.emit('gameEnd', this.roomId);
-						break;
-					case 'Loss':
-						this.socket.emit('gameOver', this.gameId);
-						break;
-					case 'OppDisconnect':
-						// Ignore if CPU wins due to player disconnect
-						break;
-				}
 				this.finish(endResult);
 				this.stopped = true;
 			}

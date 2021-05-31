@@ -131,14 +131,14 @@ io.on('connection', function(socket) {
 		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
-	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number}) => {
-		const { gameId, settingsString, roomSize } = gameInfo;
+	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number, roomType: string}) => {
+		const { gameId, settingsString, roomSize, roomType } = gameInfo;
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
-		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString).roomId;
+		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString, roomType).roomId;
 		socket.emit('giveRoomId', roomId);
 	});
 
@@ -284,13 +284,7 @@ io.on('connection', function(socket) {
 	// Player was eliminated
 	socket.on('gameOver', gameId => {
 		const roomId = RoomManager.getRoomIdFromId(gameId);
-		socket.to(roomId).emit('gameOver', gameId);
 		RoomManager.beenDefeated(gameId, roomId);
-	});
-
-	// Game is over for all players
-	socket.on('gameEnd', roomId => {
-		RoomManager.endRoom(roomId);
 	});
 
 	socket.on('forceDisconnect', (gameId, roomId) => {

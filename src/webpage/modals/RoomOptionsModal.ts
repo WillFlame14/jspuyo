@@ -21,12 +21,12 @@ export const RoomOptionsModal = Vue.defineComponent({
 				marginTime: 96,		// Set to seconds
 				numPlayers: 4,
 				hardDrop: false,
-				winCondition: 'FT 3'
+				winCondition: 'None'
 			}),
 			wildNumSelected: false,
 			puyoImgs,
 			gamemodes: Object.values(Gamemode),
-			winConditions: ['FT 3', 'FT 5', 'FT 7'],
+			winConditions: ['None', 'FT 3', 'FT 5', 'FT 7'],
 			disabled: false,
 			mode: 'create'
 		};
@@ -86,7 +86,9 @@ export const RoomOptionsModal = Vue.defineComponent({
 			settings.numPlayers = undefined;	// Separate the numPlayers property from settings
 			settings.marginTime *= 1000;		// Convert margin time to milliseconds
 
-			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode });
+			const roomType = this.settings.winCondition === 'None' ? 'default' : this.settings.winCondition;
+
+			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.mode, roomType });
 		}
 	},
 	mounted() {

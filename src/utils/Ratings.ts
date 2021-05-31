@@ -1,4 +1,5 @@
-/*
+/* To be used when adding support for ranked matches
+----------------------------------------------------------
 import { PlayerInfo } from '../webpage/firebase';
 
 	const promises = [

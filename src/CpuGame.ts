@@ -19,8 +19,6 @@ export class CpuGame extends Game {
 	softDropTimer: number;
 	movementTimer: number;
 
-	audioPlayer: AudioPlayer;
-
 	constructor(gameId: string, opponentIds: string[], socket: SocketIOClient.Socket, ai: Cpu, speed: number, settings: Settings) {
 		super(gameId, opponentIds, socket, settings, defaultUserSettings, null, null);
 

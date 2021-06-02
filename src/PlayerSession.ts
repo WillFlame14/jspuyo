@@ -1,3 +1,5 @@
+import { Socket } from 'socket.io-client';
+
 import { Game } from './Game';
 import { PlayerInfo } from './webpage/firebase';
 import { Session } from './Session';
@@ -6,7 +8,7 @@ import { showDialog } from './webpage/panels';
 export class PlayerSession extends Session {
 	spectating: boolean;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: SocketIOClient.Socket, roomId: string, spectating = false) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string, spectating = false) {
 		super(gameId, opponentIds, game, socket, roomId);
 
 		this.spectating = spectating;
@@ -70,7 +72,7 @@ export class PlayerSession extends Session {
 }
 
 export class Simulator extends Session {
-	constructor(game: Game, socket: SocketIOClient.Socket) {
+	constructor(game: Game, socket: Socket) {
 		super(null, [], game, socket, null);
 	}
 

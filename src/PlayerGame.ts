@@ -1,5 +1,7 @@
 'use strict';
 
+import { Socket } from 'socket.io-client';
+
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Game } from './Game';
 import { GameArea } from './draw/GameArea';
@@ -14,7 +16,7 @@ export class PlayerGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: SocketIOClient.Socket,
+		socket: Socket,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,
@@ -121,7 +123,7 @@ export class SpectateGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: SocketIOClient.Socket,
+		socket: Socket,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,

@@ -6,12 +6,13 @@ const app = express();
 import http_lib = require('http');
 const http = http_lib.createServer(app);
 
-import io_lib = require('socket.io');
-const io = io_lib(http, { perMessageDeflate: false });
+import { Server, Socket } from 'socket.io';
+const io = new Server(http, { perMessageDeflate: false });
 
-import io_client = require('socket.io-client');
+import { io as io_client } from 'socket.io-client';
 const port = process.env.PORT || 3000;
 
+import { CpuInfo } from './src/Room';
 import { RoomManager } from './src/RoomManager';
 import { Settings } from './src/utils/Settings';
 
@@ -48,7 +49,7 @@ app.get('/', (req, res) => {
 	res.sendFile('./public/index.html', { root: __dirname });
 });
 
-io.on('connection', function(socket) {
+io.on('connection', function(socket: Socket) {
 	socket.on('register', (gameId: string) => {
 		if(Array.from(socketIdToId.values()).includes(gameId)) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
@@ -87,7 +88,7 @@ io.on('connection', function(socket) {
 
 		// Assign each cpu a negative id
 		cpus.forEach(cpu => {
-			const cpuSocket = io_client.connect('http://localhost:3000');
+			const cpuSocket = io_client('http://localhost:3000');
 			const cpuId = `CPU-${cpuCounter}`;
 			cpuCounter++;
 

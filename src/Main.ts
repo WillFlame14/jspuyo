@@ -3,6 +3,7 @@
 import firebase from 'firebase/app';
 import * as Vue from 'vue';
 import mitt from 'mitt';
+import { io, Socket } from 'socket.io-client';
 
 import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
@@ -20,7 +21,6 @@ import { pageInit } from './webpage/pages';
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';
 
-import io = require('socket.io-client');
 const globalSocket = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 const globalEmitter = mitt();
@@ -31,7 +31,7 @@ declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
-		socket: SocketIOClient.Socket,
+		socket: Socket,
 		getCurrentUID(): () => string,
 		stopCurrentSession: () => Promise<void>
 	}
@@ -134,7 +134,7 @@ const sidebar = document.getElementById('sidebar');
 let quickPlayTimer: ReturnType<typeof setTimeout> = null;
 
 // Set up all the event listeners
-function init(socket: SocketIOClient.Socket): void {
+function init(socket: Socket): void {
 	socket.on('roomUpdate', (
 		roomId: string,
 		playerScores: Record<string, number>,

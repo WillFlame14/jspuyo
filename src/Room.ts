@@ -5,22 +5,32 @@ import { CpuGame } from './CpuGame';
 import { CpuSession } from './Session';
 import { Settings } from './utils/Settings';
 
+import { Socket } from 'socket.io';
+import { Socket as ClientSocket } from 'socket.io-client';
+
 const MAX_FRAME_DIFFERENCE = 20;
+
+export interface CpuInfo {
+	client_socket: ClientSocket,
+	socket: Socket,
+	speed: number,
+	ai: string
+}
 
 export class Room {
 	roomId: string;
 	password: string = null;
-	members: Map<string, { socket: SocketIO.Socket }>;
+	members: Map<string, { socket: Socket }>;
 	cpus = new Map<string, CpuInfo>();
 	wins: Record<string, number> = {};
 	numCpus = 0;
-	games = new Map<string, { socket: SocketIO.Socket, frames: number, session?: CpuSession }>();
+	games = new Map<string, { socket: Socket, frames: number, session?: CpuSession }>();
 	host: string;
 
 	ingame = false;
 	paused: string[] = [];
 	unfocused: string[] = [];
-	spectating = new Map<string, SocketIO.Socket>();
+	spectating = new Map<string, Socket>();
 	undefeated: string[] = [];
 	timeout: ReturnType<typeof setTimeout> = null;
 
@@ -32,7 +42,7 @@ export class Room {
 
 	constructor(
 		roomId: string,
-		members: Map<string, { socket: SocketIO.Socket }>,
+		members: Map<string, { socket: Socket }>,
 		host: string,
 		roomSize: number,
 		settingsString: string,
@@ -46,7 +56,7 @@ export class Room {
 		this.roomType = roomType;
 
 		this.members.forEach((player, gameId) => {
-			player.socket.join(this.roomId);
+			void player.socket.join(this.roomId);
 			this.wins[gameId] = 0;
 		});
 
@@ -69,11 +79,11 @@ export class Room {
 	/**
 	 * Adds a player/CPU to an existing room.
 	 * @param {string}          gameId  [description]
-	 * @param {SocketIO.Socket} socket  [description]
+	 * @param {Socket} socket  [description]
 	 * @param {CpuInfo}         cpuInfo Additional information if this is a CPU player (optional).
 	 * @param {boolean}         notify 	Whether to notify the other members of the room that someone has joined (true by default).
 	 */
-	join(gameId: string, socket: SocketIO.Socket, cpuInfo = null, notify = true): void {
+	join(gameId: string, socket: Socket, cpuInfo = null, notify = true): void {
 		// Room is full or ingame
 		if((this.members.size === this.roomSize && cpuInfo === null) || this.ingame) {
 			this.spectate(gameId, socket);
@@ -85,7 +95,7 @@ export class Room {
 			this.spectating.delete(gameId);
 		}
 		else {
-			socket.join(this.roomId);
+			void socket.join(this.roomId);
 		}
 
 		// Determine if adding a CPU or player
@@ -108,15 +118,15 @@ export class Room {
 	/**
 	 * Spectates a room (receives player data but does not play).
 	 * @param {string}          gameId The game id of the player wishing to spectate
-	 * @param {SocketIO.Socket} socket The player's socket
+	 * @param {Socket} socket The player's socket
 	 */
-	spectate(gameId: string, socket: SocketIO.Socket): void {
+	spectate(gameId: string, socket: Socket): void {
 		if(this.members.has(gameId)) {
 			this.leave(gameId, true, true);
 		}
 		else {
 			// Need to separate socket join since leaving (and re-joining) is extremely slow
-			socket.join(this.roomId);
+			void socket.join(this.roomId);
 		}
 
 		this.spectating.set(gameId, socket);
@@ -216,7 +226,7 @@ export class Room {
 
 		if(this.spectating.has(gameId)) {
 			const socket = this.spectating.get(gameId);
-			socket.leave(this.roomId);
+			void socket.leave(this.roomId);
 			console.log(`Removed spectator ${gameId.substring(0, 6)} from room ${this.roomId}`);
 			return;
 		}
@@ -231,7 +241,7 @@ export class Room {
 
 		const socket = playerList.get(gameId).socket;
 		if(!spectate) {
-			socket.leave(this.roomId);
+			void socket.leave(this.roomId);
 		}
 
 		// Remove player from maps

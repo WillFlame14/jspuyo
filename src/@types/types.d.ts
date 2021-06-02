@@ -1,22 +1,13 @@
-interface Puyo extends Point {
-	/** The number of puyos this one is above */
-	above?: number,
-	colour: number,
-	connections?: string[]
-}
-
 interface Point {
 	x: number,
 	y: number
 }
 
-interface KeyBindings {
-	moveLeft: string,
-	moveRight: string,
-	rotateCCW: string,
-	rotateCW: string,
-	softDrop: string,
-	hardDrop: string
+interface Puyo extends Point {
+	/** The number of puyos this one is above */
+	above?: number,
+	colour: number,
+	connections?: string[]
 }
 
 interface ResolvingState {
@@ -43,11 +34,4 @@ interface SquishState {
 	currentFrame: number;
 	totalFrames: number;
 	squishingPuyos: Array<{puyo: Puyo, squishType: string}>;
-}
-
-interface CpuInfo {
-	client_socket: SocketIOClient.Socket,
-	socket: SocketIO.Socket,
-	speed: number,
-	ai: string
 }

@@ -1,6 +1,8 @@
 'use strict';
 
-import { Room } from './Room';
+import { Room, CpuInfo } from './Room';
+
+import { Socket } from 'socket.io';
 
 const roomIds = new Set<string>();		// Set of roomIds currently in use
 const roomIdToRoom = new Map<string, Room>();
@@ -14,7 +16,7 @@ export class RoomManager {
 
 	static createRoom(
 		gameId: string,
-		members: Map<string, { socket: SocketIO.Socket, frames: number }>,
+		members: Map<string, { socket: Socket, frames: number }>,
 		host: string,
 		roomSize: number,
 		settingsString: string,
@@ -52,7 +54,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static joinRoom(gameId: string, roomId: string, socket: SocketIO.Socket, roomPassword: string = null): Room {
+	static joinRoom(gameId: string, roomId: string, socket: Socket, roomPassword: string = null): Room {
 		const room = roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -86,7 +88,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static spectateRoom(gameId: string, socket: SocketIO.Socket, roomId: string = null): Room {
+	static spectateRoom(gameId: string, socket: Socket, roomId: string = null): Room {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -123,7 +125,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static startRoomWithGameId(gameId: string, socket: SocketIO.Socket): Room {
+	static startRoomWithGameId(gameId: string, socket: Socket): Room {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 		if(room.members.size + room.cpus.size > 1) {
 			room.start();

@@ -1,5 +1,14 @@
 'use strict';
 
+export interface KeyBindings {
+	moveLeft: string,
+	moveRight: string,
+	rotateCCW: string,
+	rotateCW: string,
+	softDrop: string,
+	hardDrop: string
+}
+
 export enum Gamemode {
 	TSU = 'Tsu',
 	FEVER = 'Fever'

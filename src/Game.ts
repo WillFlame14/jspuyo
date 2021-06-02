@@ -1,5 +1,7 @@
 'use strict';
 
+import { Socket } from 'socket.io-client';
+
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Board } from './Board';
 import { Direction, Drop, DropGenerator } from './Drop';
@@ -28,7 +30,7 @@ export class Game {
 	userSettings: UserSettings;
 	statTracker: StatTracker;
 	audioPlayer: AudioPlayer;
-	socket: SocketIOClient.Socket;
+	socket: Socket;
 
 	dropGenerator: DropGenerator;
 	dropQueue: Drop[];
@@ -88,7 +90,7 @@ export class Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: SocketIOClient.Socket,
+		socket: Socket,
 		settings: Settings,
 		userSettings: UserSettings,
 		cellId: number = null,

@@ -5,6 +5,8 @@ import firebaseui = require('firebaseui');
 import { firebaseConfig } from '../../config';
 import { UserSettings } from '../utils/Settings';
 
+import { Socket } from 'socket.io-client';
+
 // Add the Firebase products that you want to use
 require("firebase/auth");
 require("firebase/database");
@@ -14,7 +16,7 @@ let currentUser: firebase.User = null;
 let fallbackName = '';		// Display name that is used if empty string is provided (aka the original name)
 
 let ui: firebaseui.auth.AuthUI;				// Firebaseui object
-let socket: SocketIOClient.Socket;	// Socket associated with the browser tab
+let socket: Socket;	// Socket associated with the browser tab
 
 const uiConfig = {
 	callbacks: {
@@ -46,7 +48,7 @@ const uiConfig = {
  * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
  * Returns a resolved promise with the user object once login is completed.
  */
-export function initApp(globalSocket: SocketIOClient.Socket): Promise<firebase.User> {
+export function initApp(globalSocket: Socket): Promise<firebase.User> {
 	return new Promise((resolve) => {
 		// Initialize Firebase
 		firebase.initializeApp(firebaseConfig);

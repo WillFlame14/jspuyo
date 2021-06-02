@@ -2,6 +2,7 @@
 
 import mitt from 'mitt';
 import firebase from 'firebase/app';
+import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
@@ -21,7 +22,7 @@ const ranks: Record<string, string> = {
 
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
-	socket: SocketIOClient.Socket,
+	socket: Socket,
 	getCurrentUID: () => string,
 	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer

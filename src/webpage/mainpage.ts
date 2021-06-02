@@ -3,13 +3,15 @@
 import { PlayerInfo } from './firebase';
 import { UserSettings } from '../utils/Settings';
 import { AudioPlayer, VOICES } from '../utils/AudioPlayer';
+import { CpuInfo } from '../Room';
 
 import mitt from 'mitt';
+import { Socket } from 'socket.io-client';
 
 let currentlyHost = false;
 let globalEmitter: ReturnType<typeof mitt>;
 
-export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: SocketIOClient.Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
+export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
 	globalEmitter = emitter;
 
 	const statusClick = document.getElementById('statusClick');

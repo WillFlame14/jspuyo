@@ -1,14 +1,14 @@
 import * as Vue from 'vue';
 
 import { AppearanceComponent } from './AppearanceComponent';
-import { KeyBindings } from './KeyBindingsComponent';
+import { KeyBindings as KeyBindingsComponent } from './KeyBindingsComponent';
 
-import { UserSettings } from '../../utils/Settings';
+import { UserSettings, KeyBindings } from '../../utils/Settings';
 
 export const SettingsModal = Vue.defineComponent({
 	components: {
 		'appearance-icons': AppearanceComponent,
-		'key-bindings': KeyBindings
+		'key-bindings': KeyBindingsComponent
 	},
 	data(): { settings: UserSettings } {
 		return {

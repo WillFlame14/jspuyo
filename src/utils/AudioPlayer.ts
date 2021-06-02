@@ -1,6 +1,7 @@
 'use strict';
 
 import { UserSettings } from './Settings';
+import { Socket } from 'socket.io-client';
 
 interface AudioInfo {
 	numClips?: number,
@@ -42,7 +43,7 @@ export const VOICES: Record<string, AudioInfo> = {
 const SOUNDS_DIRECTORY = './sounds';
 
 export class AudioPlayer {
-	socket: SocketIOClient.Socket;
+	socket: Socket;
 	disabled: boolean;
 	sfxVolume: number;
 	musicVolume: number;
@@ -52,7 +53,7 @@ export class AudioPlayer {
 
 	gameId: string;
 
-	constructor(socket: SocketIOClient.Socket, disable: string = null) {
+	constructor(socket: Socket, disable: string = null) {
 		this.socket = socket;
 		this.disabled = disable === 'disable';
 

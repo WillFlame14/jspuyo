@@ -1,8 +1,8 @@
 'use strict';
 
-import { UserSettings } from './utils/Settings';
+import { UserSettings, KeyBindings } from './utils/Settings';
 
-export class InputManager{
+export class InputManager {
 	/** Array of callback functions, indexed at their triggering event */
 	events: Record<string, (data, das) => void> = {};
 

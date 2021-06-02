@@ -1,6 +1,7 @@
 'use strict';
 
 import mitt from 'mitt';
+import { Socket } from 'socket.io-client';
 
 import { PlayerInfo, signOut } from './firebase';
 import { preloadSprites } from '../draw/SpriteDrawer';
@@ -20,7 +21,7 @@ export function initCustomPanels(
 	emitter: ReturnType<typeof mitt>,
 	clearModal: () => void,
 	stopCurrentSession: () => Promise<void>,
-	socket: SocketIOClient.Socket,
+	socket: Socket,
 	audioPlayer: AudioPlayer,
 	getCurrentUID: () => string
 ): void {

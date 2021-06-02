@@ -1,12 +1,13 @@
 'use strict';
 
 import { Game } from './Game';
+import { Socket } from 'socket.io-client';
 
 export class Session {
 	gameId: string;
 	opponentIds: string[];
 	game: Game;
-	socket: SocketIOClient.Socket;
+	socket: Socket;
 	roomId: string;
 
 	/** Flag to force the session to end immediately. */
@@ -15,7 +16,7 @@ export class Session {
 	stopped = false;
 	paused = false;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: SocketIOClient.Socket, roomId: string) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string) {
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.game = game;
@@ -132,7 +133,7 @@ export class Session {
 export class CpuSession extends Session {
 	timer: ReturnType<typeof setTimeout>;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: SocketIOClient.Socket, roomId: string) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string) {
 		super(gameId, opponentIds, game, socket, roomId);
 	}
 

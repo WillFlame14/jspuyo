@@ -1,5 +1,6 @@
 import * as Vue from 'vue';
 import mitt from 'mitt';
+import { Socket } from 'socket.io-client';
 
 import { SettingsModal } from '../modals/SettingsModal';
 import { UserSettings } from '../../utils/Settings';
@@ -30,7 +31,7 @@ const settings = new Settings();
 const userSettings = new UserSettings();
 let currentSession: Simulator;
 
-export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: SocketIOClient.Socket, audioPlayer: AudioPlayer): void {
+export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: Socket, audioPlayer: AudioPlayer): void {
 	app.component('guide', GuideComponent);
 	app.component('settings-modal', SettingsModal);
 	app.mount('#vue-app');

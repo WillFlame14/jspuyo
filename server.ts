@@ -25,29 +25,20 @@ const cpuInfos = new Map<string, Map<string, CpuInfo>>();
 
 app.use(express.static('./public'));
 
-app.get('/info', (req, res) => {
-	res.sendFile('./public/pages/about.html', { root: __dirname });
-});
+const routes = {
+	info: 'about',
+	guide: 'guide',
+	gallery: 'gallery',
+	privacy: 'privacy',
+	terms: 'terms',
+	'': 'index'
+};
 
-app.get('/guide', (req, res) => {
-	res.sendFile('./public/pages/guide.html', { root: __dirname });
-});
-
-app.get('/gallery', (req, res) => {
-	res.sendFile('./public/pages/gallery.html', { root: __dirname });
-});
-
-app.get('/privacy', (req, res) => {
-	res.sendFile('./public/pages/privacy.html', { root: __dirname });
-});
-
-app.get('/terms', (req, res) => {
-	res.sendFile('./public/pages/terms.html', { root: __dirname });
-});
-
-app.get('/', (req, res) => {
-	res.sendFile('./public/index.html', { root: __dirname });
-});
+for(const [route, dest] of Object.entries(routes)) {
+	app.get(`/${route}`, (req, res) => {
+		res.sendFile(`./public/pages/${dest}.html`, { root: __dirname });
+	});
+}
 
 io.on('connection', function(socket: Socket) {
 	socket.on('register', (gameId: string) => {

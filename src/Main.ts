@@ -32,7 +32,7 @@ declare module '@vue/runtime-core' {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
 		socket: Socket,
-		getCurrentUID(): () => string,
+		getCurrentUID: () => string,
 		stopCurrentSession: () => Promise<void>
 	}
 }
@@ -285,12 +285,7 @@ function init(socket: Socket): void {
 
 	// Alert the server whenever the browser tab goes into or out of focus
 	document.addEventListener('visibilitychange', () => {
-		if(document.hidden) {
-			socket.emit('focus', getCurrentUID(), false);
-		}
-		else {
-			socket.emit('focus', getCurrentUID(), true);
-		}
+		socket.emit('focus', getCurrentUID(), !document.hidden);
 	});
 }
 

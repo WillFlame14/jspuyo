@@ -11,6 +11,7 @@ import { SpectateRoomModal } from './modals/SpectateRoomModal';
 
 import { Chat } from './Chat';
 import { PlayerList } from './PlayerList';
+import { StatusComponent } from './StatusComponent';
 
 export function vueInit(app: Vue.App<Element>): void {
 	app.component('cpu-options-modal', CpuOptionsModal);
@@ -24,6 +25,7 @@ export function vueInit(app: Vue.App<Element>): void {
 
 	app.component('chat', Chat);
 	app.component('player-list', PlayerList);
+	app.component('status-component', StatusComponent);
 
 	app.mount('#vue-app');
 }

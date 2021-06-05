@@ -78,10 +78,10 @@ export class Room {
 
 	/**
 	 * Adds a player/CPU to an existing room.
-	 * @param {string}          gameId  [description]
-	 * @param {Socket} socket  [description]
-	 * @param {CpuInfo}         cpuInfo Additional information if this is a CPU player (optional).
-	 * @param {boolean}         notify 	Whether to notify the other members of the room that someone has joined (true by default).
+	 * @param {string}	gameId  [description]
+	 * @param {Socket}	socket  [description]
+	 * @param {CpuInfo}	cpuInfo Additional information if this is a CPU player (optional).
+	 * @param {boolean}	notify 	Whether to notify the other members of the room that someone has joined (true by default).
 	 */
 	join(gameId: string, socket: Socket, cpuInfo = null, notify = true): void {
 		// Room is full or ingame

@@ -12,14 +12,6 @@ import { UserSettings } from '../utils/Settings';
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
-const ranks: Record<string, string> = {
-	'0': 'Blob',
-	'1000': 'Forest Learner',
-	'1250': 'Ocean Diver',
-	'1500': 'Waterfall Fighter',
-	'1750': 'Lightning Ranger'
-};
-
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
 	socket: Socket,
@@ -117,13 +109,9 @@ export async function updateUserSettings(user: firebase.User, currentUID: string
 	globalAudioPlayer.configureVolume(userSettings);
 	globalEmitter.emit('setSettings', userSettings);
 
-	// Update the status bar
-	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');
-	document.getElementById('statusName').innerHTML = user.displayName;
-
-	document.getElementById('statusRating').innerHTML = `Rating: ${rating}`;
-
-	const rankBoundaries = Object.keys(ranks);
-	const title = ranks[rankBoundaries[rankBoundaries.findIndex(minimumRating => Number(minimumRating) > rating) - 1]];
-	document.getElementById('statusTitle').innerHTML = title;
+	globalEmitter.emit('updateStatus', {
+		name: user.displayName,
+		rating,
+		voice: userSettings.voice
+	});
 }

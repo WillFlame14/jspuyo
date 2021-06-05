@@ -13,7 +13,6 @@ import { AudioPlayer } from './utils/AudioPlayer';
 
 import { PlayerInfo, initApp, signOut } from './webpage/firebase';
 import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
-import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
 
@@ -67,7 +66,6 @@ void (async function() {
 		default:
 			vueInit(app);
 			init(globalSocket);			// game-related
-			navbarInit(globalAudioPlayer);
 			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
 			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
 

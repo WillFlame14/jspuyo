@@ -16,7 +16,6 @@ import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
 
-import { pageInit } from './webpage/pages';
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';
 
@@ -49,7 +48,16 @@ void (async function() {
 
 	app.config.globalProperties.emitter = globalEmitter;
 
-	pageInit();
+	const backgrounds = [
+		'forest.jpg',
+		'forest2.jpg',
+		'winter.jpg',
+		'wildlife.jpg'
+	];
+
+	// Set a random background image
+	const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+	document.documentElement.style.backgroundImage = `url("images/backgrounds/${background}")`;
 
 	switch(window.location.pathname) {
 		case '/info':

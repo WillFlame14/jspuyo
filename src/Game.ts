@@ -34,7 +34,6 @@ export class Game {
 
 	dropGenerator: DropGenerator;
 	dropQueue: Drop[];
-	dropQueueIndex: number;
 
 	cellId: number;
 	gameArea: GameArea;
@@ -104,8 +103,7 @@ export class Game {
 		this.statTracker = new StatTracker();
 
 		this.dropGenerator = new DropGenerator(this.settings);
-		this.dropQueue = this.dropGenerator.requestDrops(0).map(drop => drop.copy());
-		this.dropQueueIndex = 1;
+		this.dropQueue = this.dropGenerator.requestDrops().map(drop => drop.copy());
 
 		this.cellId = cellId;
 		this.gameArea = gameArea || new GameArea(settings, userSettings.appearance, 1, true);
@@ -175,8 +173,7 @@ export class Game {
 			if(this.queueState.currentFrame === 0) {
 				// Almost out of drops, add new drops to the queue
 				if(this.dropQueue.length <= 5) {
-					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops(this.dropQueueIndex));
-					this.dropQueueIndex++;
+					this.dropQueue = this.dropQueue.concat(this.dropGenerator.requestDrops());
 				}
 				this.currentDrop = this.dropQueue.shift();
 				this.dropNum++;

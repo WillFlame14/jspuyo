@@ -225,17 +225,15 @@ export class Drop {
 export class DropGenerator {
 	settings: Settings;
 	seed: number;
-	drops: Drop[][];
+	drops: Drop[][] = [[]];
 	colourList: number[];
-	colourBuckets: Record<string, number>;
+	colourBuckets: Record<string, number> = {};
+	index = 0;
 
 	constructor(settings: Settings) {
 		this.settings = settings;
 		this.seed = this.settings.seed;
-		this.drops = [];
 		this.colourList = [...Array(this.settings.numColours + 1).keys()].slice(1);
-		this.colourBuckets = {};
-		this.drops[0] = [];
 
 		// Set up colourBuckets for the first batch of 128
 		this.colourList.forEach(colour => {
@@ -279,33 +277,35 @@ export class DropGenerator {
 
 	/**
 	 * Called when a queue is running low on drops so that a new batch is generated.
-	 * @param  {number} index The current index of the drop batch
 	 * @return {Drop[]}       The next drop batch
 	 */
-	requestDrops(index: number): Drop[] {
-		if(this.drops[index + 1] === undefined) {
-			this.drops[index + 1] = [];
+	requestDrops(): Drop[] {
+		this.index++;
 
-			// Reset colourBuckets for the next batch of 128
-			this.colourList.forEach(colour => {
-				// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
-				this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
-			});
+		// Generate the next set of drops
+		this.drops[this.index] = [];
 
-			for(let i = 0; i < 128; i++) {
-				// Filter out colours that have been completely used up
-				const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
-				const colours = [
-					Number(colourList[Math.floor(this.randomNumber() * colourList.length)]),
-					Number(colourList[Math.floor(this.randomNumber() * colourList.length)])
-				];
-				this.colourBuckets[colours[0]]--;
-				this.colourBuckets[colours[1]]--;
+		// Reset colourBuckets for the next batch of 128
+		this.colourList.forEach(colour => {
+			// Ceiling instead of flooring so that there will be leftover amounts instead of not enough
+			this.colourBuckets[colour] = Math.ceil(128 / this.settings.numColours);
+		});
 
-				this.drops[index + 1].push(Drop.getNewDrop(this.settings, colours));
-			}
+		for(let i = 0; i < 128; i++) {
+			// Filter out colours that have been completely used up
+			const colourList = Object.keys(this.colourBuckets).filter(colour => this.colourBuckets[colour] > 0);
+			const colours = [
+				Number(colourList[Math.floor(this.randomNumber() * colourList.length)]),
+				Number(colourList[Math.floor(this.randomNumber() * colourList.length)])
+			];
+			this.colourBuckets[colours[0]]--;
+			this.colourBuckets[colours[1]]--;
+
+			this.drops[this.index].push(Drop.getNewDrop(this.settings, colours));
 		}
-		return this.drops[index];
+
+		// Return the previous batch
+		return this.drops[this.index - 1];
 	}
 
 	/**

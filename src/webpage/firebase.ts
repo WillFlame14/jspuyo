@@ -45,57 +45,57 @@ const uiConfig = {
 };
 
 /**
- * Initialize the firebase login screen and associated UI changes, as well as methods that handle game start on successful login.
- * Returns a resolved promise with the user object once login is completed.
+ * Initialize the firebase login screen and associated UI changes,
+ * as well as methods that handle game start on successful login.
+ * @param {Socket}                   globalSocket    The socket used for the player
+ * @param {firebase.User) => void}   loginSuccess    Callback when login succeeds
  */
-export function initApp(globalSocket: Socket): Promise<firebase.User> {
-	return new Promise((resolve) => {
-		// Initialize Firebase
-		firebase.initializeApp(firebaseConfig);
-		ui = new firebaseui.auth.AuthUI(firebase.auth());
-		ui.start('#firebaseui-auth-container', uiConfig);
+export function initApp(globalSocket: Socket, loginSuccess: (user: firebase.User) => void): void {
+	// Initialize Firebase
+	firebase.initializeApp(firebaseConfig);
+	ui = new firebaseui.auth.AuthUI(firebase.auth());
+	ui.start('#firebaseui-auth-container', uiConfig);
 
-		socket = globalSocket;
-		initializeUI(resolve);
+	socket = globalSocket;
+	initializeUI(loginSuccess);
 
-		firebase.auth().onAuthStateChanged((user) => {
-			// Just logged in
-			if (user) {
-				document.getElementById('firebaseui-auth-container').style.display = 'none';
-				document.getElementById('guestMessage').style.display = user.isAnonymous ? 'block' : 'none';
+	firebase.auth().onAuthStateChanged((user) => {
+		// Just logged in
+		if (user) {
+			document.getElementById('firebaseui-auth-container').style.display = 'none';
+			document.getElementById('guestMessage').style.display = user.isAnonymous ? 'block' : 'none';
 
-				// Open username change screen if new user
-				if(newUser) {
-					// Set their current name as default
-					(document.getElementById('usernamePickerText') as HTMLInputElement).value = user.displayName;
-					(document.getElementById('usernamePickerText') as HTMLInputElement).placeholder = user.displayName || '';
-					fallbackName = user.displayName;
+			// Open username change screen if new user
+			if(newUser) {
+				// Set their current name as default
+				(document.getElementById('usernamePickerText') as HTMLInputElement).value = user.displayName;
+				(document.getElementById('usernamePickerText') as HTMLInputElement).placeholder = user.displayName || '';
+				fallbackName = user.displayName;
 
-					document.getElementById('usernamePicker').style.display = 'block';
-					currentUser = user;
+				document.getElementById('usernamePicker').style.display = 'block';
+				currentUser = user;
 
-					// Login will occur on username submission
-				}
-				else {
-					document.getElementById('modal-login').style.display = 'none';
-					document.getElementById('main-content').style.display = 'grid';
-
-					// Start the actual game logic
-					resolve(user);
-				}
+				// Login will occur on username submission
 			}
-			// Just logged out
 			else {
-				document.getElementById('main-content').style.display = 'none';
-				document.getElementById('modal-background').style.display = 'none';
-				document.getElementById('modal-background-disable').style.display = 'none';
+				document.getElementById('modal-login').style.display = 'none';
+				document.getElementById('main-content').style.display = 'grid';
 
-				document.getElementById('modal-login').style.display = 'block';
-				document.getElementById('firebaseui-auth-container').style.display = 'block';
+				// Start the actual game logic
+				loginSuccess(user);
 			}
-		}, function(error) {
-			console.log(error);
-		});
+		}
+		// Just logged out
+		else {
+			document.getElementById('main-content').style.display = 'none';
+			document.getElementById('modal-background').style.display = 'none';
+			document.getElementById('modal-background-disable').style.display = 'none';
+
+			document.getElementById('modal-login').style.display = 'block';
+			document.getElementById('firebaseui-auth-container').style.display = 'block';
+		}
+	}, function(error) {
+		console.log(error);
 	});
 }
 

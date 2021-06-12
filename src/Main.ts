@@ -36,7 +36,7 @@ declare module '@vue/runtime-core' {
 }
 
 // This is the "main" function, which starts up the entire app.
-void (async function() {
+(function() {
 	const app = Vue.createApp({
 		provide: {
 			audioPlayer: globalAudioPlayer,
@@ -77,13 +77,8 @@ void (async function() {
 			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
 			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
 
-			try {
-				// Login to firebase
-				loginSuccess(await initApp(globalSocket));
-			}
-			catch(err) {
-				console.error(err);
-			}
+			// Set up the login process for firebase. loginSuccess() will be called after login finishes
+			initApp(globalSocket, loginSuccess);
 			break;
 	}
 })();

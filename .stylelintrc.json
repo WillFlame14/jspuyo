@@ -1,5 +1,5 @@
 {
-  "extends": ["stylelint-config-sass-guidelines", "stylelint-config-rational-order"],
+  "extends": ["stylelint-config-sass-guidelines", "@stanzilla/stylelint-config-rational-order"],
   "plugins": ["stylelint-order"],
   "rules": {
   	"color-hex-length": "long",

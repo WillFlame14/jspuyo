@@ -16,7 +16,7 @@
     "start": "npm-run-all --parallel bundle bundle-server node sass-watch autoprefix-watch",
     "stylelint": "stylelint \"src/_css/*.scss\" --fix",
     "test": "eslint src/ --fix --cache && stylelint \"src/_css/*.scss\" --fix && mocha 'test/**/*.test.js'",
-    "tsc": "tsc -p ./tsconfig.json -noEmit",
+    "tsc": "tsc -p ./tsconfig.json",
     "uglify": "esbuild src/Main.ts --bundle --minify --outfile=public/bundle.js",
     "uglify-server": "esbuild server.ts --bundle --platform=node --minify --outfile=server.js",
     "prepare": "husky install"
@@ -33,8 +33,8 @@
   "homepage": "https://github.com/WillFlame14/jspuyo#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "firebase": "^7.24.0",
-    "firebaseui": "^4.8.0",
+    "firebase": "^9.6.10",
+    "firebaseui": "^0.600.0",
     "mitt": "^2.1.0",
     "socket.io": "^3.1.2",
     "socket.io-client": "^3.1.3",

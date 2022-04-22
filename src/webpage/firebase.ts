@@ -1,20 +1,20 @@
 'use strict';
 
-import firebase from 'firebase/app';
-import firebaseui = require('firebaseui');
+import { FirebaseApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged, User, updateProfile } from 'firebase/auth';
+import { child, get, getDatabase, ref, remove, set, update } from 'firebase/database';
+import firebase from 'firebase/compat/app';
+import * as firebaseui from 'firebaseui';
 import { firebaseConfig } from '../../config';
 import { UserSettings } from '../utils/Settings';
 
 import { Socket } from 'socket.io-client';
 
-// Add the Firebase products that you want to use
-require("firebase/auth");
-require("firebase/database");
-
 let newUser = false;
-let currentUser: firebase.User = null;
+let currentUser: User = null;
 let fallbackName = '';		// Display name that is used if empty string is provided (aka the original name)
 
+let firebaseApp: FirebaseApp;
 let ui: firebaseui.auth.AuthUI;				// Firebaseui object
 let socket: Socket;	// Socket associated with the browser tab
 
@@ -47,19 +47,20 @@ const uiConfig = {
 /**
  * Initialize the firebase login screen and associated UI changes,
  * as well as methods that handle game start on successful login.
- * @param {Socket}                   globalSocket    The socket used for the player
- * @param {firebase.User) => void}   loginSuccess    Callback when login succeeds
+ * @param {Socket}          globalSocket    The socket used for the player
+ * @param {User) => void}   loginSuccess    Callback when login succeeds
  */
-export function initApp(globalSocket: Socket, loginSuccess: (user: firebase.User) => void): void {
+export function initApp(globalSocket: Socket, loginSuccess: (user: User) => void): void {
 	// Initialize Firebase
-	firebase.initializeApp(firebaseConfig);
+	firebaseApp = firebase.initializeApp(firebaseConfig);
+	const auth = getAuth(firebaseApp);
 	ui = new firebaseui.auth.AuthUI(firebase.auth());
 	ui.start('#firebaseui-auth-container', uiConfig);
 
 	socket = globalSocket;
 	initializeUI(loginSuccess);
 
-	firebase.auth().onAuthStateChanged((user) => {
+	onAuthStateChanged(auth, user => {
 		// Just logged in
 		if (user) {
 			document.getElementById('firebaseui-auth-container').style.display = 'none';
@@ -99,7 +100,7 @@ export function initApp(globalSocket: Socket, loginSuccess: (user: firebase.User
 	});
 }
 
-function initializeUI(resolve: (user) => void) {
+function initializeUI(resolve: (user: User) => void) {
 	// Hackily add some messages into the FirebaseUI login screen
 	const onlineUsersMessage = document.createElement('div');
 	onlineUsersMessage.id = 'onlineUsers';
@@ -137,7 +138,7 @@ function initializeUI(resolve: (user) => void) {
 
 		validateUsername(username).then(() => {
 			// Update with new username
-			currentUser.updateProfile({ displayName: username }).then(function() {
+			updateProfile(currentUser, { displayName: username }).then(function() {
 				PlayerInfo.addUser(currentUser.uid, currentUser.displayName);
 
 				document.getElementById('usernamePickerError').style.display = 'none';
@@ -147,6 +148,8 @@ function initializeUI(resolve: (user) => void) {
 				// This is always a new user, so ask if they want to view guide first
 				document.getElementById('viewGuideModal').style.display = 'block';
 				document.getElementById('modal-background').style.display = 'block';
+
+				newUser = false;
 
 				// Start game logic
 				resolve(currentUser);
@@ -175,15 +178,16 @@ function initializeUI(resolve: (user) => void) {
  * If the user was an anonymous user, their account is deleted to save space.
  */
 export async function signOut(): Promise<void> {
+	const auth = getAuth(firebaseApp);
 	// Update the online users counter
 	socket.emit('getOnlineUsers');
 
-	if(firebase.auth().currentUser && firebase.auth().currentUser.isAnonymous) {
-		await PlayerInfo.deleteUser(firebase.auth().currentUser.uid);
-		void firebase.auth().signOut();
+	if(auth.currentUser && auth.currentUser.isAnonymous) {
+		await PlayerInfo.deleteUser(auth.currentUser.uid);
+		void auth.signOut();
 	}
 	else {
-		void firebase.auth().signOut();
+		void auth.signOut();
 	}
 	ui.start('#firebaseui-auth-container', uiConfig);
 }
@@ -192,6 +196,8 @@ export async function signOut(): Promise<void> {
  * Checks if a username is valid.
  */
 function validateUsername(username: string): Promise<void> {
+	const database = getDatabase();
+
 	return new Promise((resolve, reject) => {
 		if(!username || username.trim().length === 0) {
 			reject('Please enter a username.');
@@ -206,7 +212,7 @@ function validateUsername(username: string): Promise<void> {
 		}
 
 		// Check for duplicate username
-		firebase.database().ref(`username`).once('value').then(data => {
+		get(child(ref(database), 'username')).then(data => {
 			if(!data.exists()) {
 				resolve();
 			}
@@ -233,9 +239,11 @@ export class PlayerInfo {
 	 * Initializes all the user data with default values.
 	 */
 	static addUser(uid: string, username: string): void {
-		void firebase.database().ref(`username/${uid}`).set(username);
-		void firebase.database().ref(`userSettings/${uid}`).set(new UserSettings());
-		void firebase.database().ref(`rating/${uid}`).set(1000);
+		const database = getDatabase();
+
+		void set(ref(database, `username/${uid}`), username);
+		void set(ref(database, `userSettings/${uid}`), new UserSettings());
+		void set(ref(database, `rating/${uid}`), 1000);
 	}
 
 	/**
@@ -246,22 +254,23 @@ export class PlayerInfo {
 	 * @param	overwrite	Whether to overwrite the property's children. False by default.
 	 */
 	static updateUser(uid: string, property: string, value: unknown, overwrite = true): void {
+		const database = getDatabase();
 		// Update the firebase auth User object if it is one of their properties
 		if(userProperties.includes(property)) {
 			if(property === 'username') {
-				void firebase.auth().currentUser.updateProfile({ displayName: value as string });
+				void updateProfile(currentUser, { displayName: value as string });
 			}
 			else {
-				void firebase.auth().currentUser.updateProfile({ [property]: value });
+				void updateProfile(currentUser, { [property]: value });
 			}
 		}
 
 		// Overwrite/update the database property
 		if(overwrite) {
-			void firebase.database().ref(`${property}/${uid}`).set(value);
+			void set(ref(database, `${property}/${uid}`), value);
 		}
 		else {
-			void firebase.database().ref(`${property}/${uid}`).update(value);
+			void update(ref(database, `${property}/${uid}`), value as any);
 		}
 	}
 
@@ -270,18 +279,21 @@ export class PlayerInfo {
 	 * Only called when an anonymous user logs out.
 	 */
 	static async deleteUser(uid: string) : Promise<unknown[]> {
+		const database = getDatabase();
+
 		const promises = [
-			firebase.database().ref(`username/${uid}`).remove(),
-			firebase.database().ref(`userSettings/${uid}`).remove(),
-			firebase.database().ref(`rating/${uid}`).remove(),
-			firebase.database().ref(`stats/${uid}`).remove()
+			remove(ref(database, `username/${uid}`)),
+			remove(ref(database, `userSettings/${uid}`)),
+			remove(ref(database, `rating/${uid}`)),
+			remove(ref(database, `stats/${uid}`)),
 		];
 		return Promise.all(promises);
 	}
 
 	static getUserProperty(uid: string, property: string): Promise<unknown> {
+		const database = getDatabase();
 		return new Promise((resolve, reject) => {
-			firebase.database().ref(`${property}/${uid}`).once('value').then(data => {
+			get(child(ref(database), `${property}/${uid}`)).then(data => {
 				if(!data.exists()) {
 					reject(`No ${property} found for user ${uid}.`);
 				}

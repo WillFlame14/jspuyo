@@ -1,6 +1,6 @@
 'use strict';
 
-import firebase from 'firebase/app';
+import { User } from 'firebase/auth';
 import * as Vue from 'vue';
 import mitt from 'mitt';
 import { io, Socket } from 'socket.io-client';
@@ -87,7 +87,7 @@ declare module '@vue/runtime-core' {
  * Called after successfully logging in.
  * Links the current user to the socket and registers with the game server.
  */
-function loginSuccess(user: firebase.User) {
+function loginSuccess(user: User) {
 	globalSocket.emit('register', user.uid);
 
 	globalSocket.off('registered', undefined);

@@ -1,7 +1,7 @@
 'use strict';
 
 import mitt from 'mitt';
-import firebase from 'firebase/app';
+import { User } from 'firebase/auth';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
@@ -99,7 +99,7 @@ export function showDialog(message: string): void {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-export async function updateUserSettings(user: firebase.User, currentUID: string): Promise<void> {
+export async function updateUserSettings(user: User, currentUID: string): Promise<void> {
 	const promises: [Promise<UserSettings>, Promise<number>] = [
 		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
 		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)

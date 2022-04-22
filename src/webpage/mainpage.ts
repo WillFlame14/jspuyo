@@ -1,8 +1,6 @@
 'use strict';
 
-import { PlayerInfo } from './firebase';
-import { UserSettings } from '../utils/Settings';
-import { AudioPlayer, VOICES } from '../utils/AudioPlayer';
+import { AudioPlayer } from '../utils/AudioPlayer';
 import { CpuInfo } from '../Room';
 
 import mitt from 'mitt';
@@ -13,50 +11,6 @@ let globalEmitter: ReturnType<typeof mitt>;
 
 export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
 	globalEmitter = emitter;
-
-	const statusClick = document.getElementById('statusClick');
-	const statusHover = document.getElementById('statusHover');
-
-	statusClick.onclick = function() {
-		statusClick.classList.toggle('open');
-		statusHover.classList.toggle('open');
-	};
-
-	const voiceSelect = document.getElementById('voiceSelect') as HTMLTableElement;
-	let currentRow: HTMLTableRowElement;
-
-	for(const [index, name] of Object.keys(VOICES).entries()) {
-		const { colour } = VOICES[name];
-
-		if(index % 4 === 0) {
-			currentRow = voiceSelect.insertRow(-1);
-		}
-		const optionBox = currentRow.insertCell(-1);
-		const option = document.createElement('div');
-		option.id = `${name}Voice`;
-
-		// Add select functionality for all voice options
-		option.onclick = function() {
-			audioPlayer.playVoice(name, 'select');
-			PlayerInfo.getUserProperty(getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
-				// De-select old voice
-				document.getElementById(`${userSettings.voice}Voice`).classList.remove('selected');
-
-				// Select new voice
-				option.classList.add('selected');
-
-				// Update user settings
-				userSettings.voice = name;
-				PlayerInfo.updateUser(getCurrentUID(), 'userSettings', userSettings);
-			}).catch((err) => {
-				console.log(err);
-			});
-		};
-		option.classList.add('voiceOption');
-		option.style.backgroundColor = rgbaString(...colour, 0.8);
-
-		optionBox.appendChild(option);
-	}
 
 	document.querySelectorAll('.roomManageOption').forEach(element => {
 		element.addEventListener('click', () => {
@@ -165,11 +119,4 @@ export function toggleSpectate(): void {
 		element.style.display = 'none';
 	});
 	document.getElementById('managePlay').style.display = 'grid';
-}
-
-/**
- * Returns an rgba CSS string, given the RGB + opacity values.
- */
-function rgbaString(red?: number, green?: number, blue?: number, opacity = 1) {
-	return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }

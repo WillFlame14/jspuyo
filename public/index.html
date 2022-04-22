@@ -62,55 +62,10 @@
         </div>
         <main>
             <div id="navbar">
-                <span id="navbarSpacer"></span>
-                <span class="navPanel" id="queuePanel">
-                    <img src="images/navbar/QueueIcon.png" class="navIcon">
-                    <span class="panelName">Queue</span>
-                    <div class="dropdown">
-                        <a id="freeForAll">Free for all</a>
-                        <a id="ranked">Ranked</a>
-                    </div>
-                </span>
-                <span class="navPanel" id="customPanel">
-                    <img src="images/navbar/CustomIcon.png" class="navIcon">
-                    <span class="panelName">Custom</span>
-                    <div class="dropdown">
-                        <a id="createRoom">Create Room</a>
-                        <a id="joinRoom">Join Room</a>
-                        <a id="spectate">Spectate</a>
-                    </div>
-                </span>
-                <span class="navPanel" id="singleplayerPanel">
-                    <img src="images/navbar/SingleplayerIcon.png" class="navIcon">
-                    <span class="panelName">Singleplayer</span>
-                    <div class="dropdown">
-                        <a id="sprint">Sprint [WIP]</a>
-                        <a id="timeChallenge">Time Challenge [WIP]</a>
-                        <a id="guide">Guide</a>
-                    </div>
-                </span>
-                <span class="navPanel" id="profilePanel">
-                    <img src="images/navbar/ProfileIcon.png" class="navIcon">
-                    <span class="panelName">Profile</span>
-                    <div class="dropdown">
-                        <a id="gallery">Gallery</a>
-                        <a id="settings">Settings</a>
-                        <a id="logout">Log Out</a>
-                    </div>
-                </span>
-                <span id="logo">jspuyo</span>
+                <navbar></navbar>
             </div>
             <div id="spectateNotice">You are currently spectating this room.</div>
-            <div id="statusHover">
-                <div id="statusName"></div>
-                <div id="statusRating"></div>
-                <div id="statusTitle"></div>
-                <div id="voiceSelectTitle">Voice Selector</div>
-                <table id="voiceSelect">
-                    <!-- Inserted by javascript -->
-                </table>
-            </div>
-            <div id="statusClick">☰</div>
+            <status-component></status-component>
             <div id="main-content">
                 <table id="playArea">
                     <!-- Inserted by javascript -->

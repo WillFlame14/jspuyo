@@ -3,7 +3,7 @@
 import { UserSettings } from './Settings';
 import { Socket } from 'socket.io-client';
 
-interface AudioInfo {
+export interface AudioInfo {
 	numClips?: number,
 	defaultVolume: number,
 	start?: number,

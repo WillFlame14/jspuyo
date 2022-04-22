@@ -204,7 +204,7 @@ const GuideComponent = Vue.defineComponent({
 		<table class="guide" id="playArea">
 			<!-- Inserted by javascript -->
 		</table>
-		<div class = "guide" id="content">
+		<div class="guide" id="content">
 			<div class="title" id="guideTitle">{{currentPage.title}}</div>
 			<div id="info">
 				<p v-for="line in currentPage.content">{{line}}</p>

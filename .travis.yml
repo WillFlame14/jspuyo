@@ -1,6 +1,6 @@
 language: node_js
 node_js: 
-  - "12.16.1"
+  - "16.14.2"
 addons:
   apt:
     packages:
@@ -10,14 +10,8 @@ cache:
   # Caches $HOME/.npm when npm ci is default script command
   # Caches node_modules in all other cases
   npm: true
-  directories:
-    # we also need to cache folder with Cypress binary
-    - ~/.cache
 install:
   - npm ci
 script:
   - npm run tsc
   - npm test
-  - npm run compile
-  - node server.js & wait-on http://localhost:3000
-  - $(npm bin)/cypress run --record

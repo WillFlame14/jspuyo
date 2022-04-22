@@ -117,10 +117,8 @@ export function initCustomPanels(
 		// Leave the room
 		socket.emit('forceDisconnect');
 
-		let stats;
-
 		try {
-			stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
+			const stats = await PlayerInfo.getUserProperty(getCurrentUID(), 'stats');
 
 			// Need to stringify object before storing, otherwise the data will not be stored correctly
 			window.localStorage.setItem('stats', JSON.stringify(stats));

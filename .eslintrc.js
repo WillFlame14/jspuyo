@@ -8,7 +8,6 @@ module.exports = {
     },
     "extends": [
         "eslint:recommended",
-        "plugin:cypress/recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking"
     ],
@@ -16,7 +15,7 @@ module.exports = {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": ["**/public/*", "**/cypress/*", "**/*.js"],
+    "ignorePatterns": ["**/public/*", "**/*.js"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2018,
@@ -43,6 +42,5 @@ module.exports = {
         "no-var": "error",
         "prefer-const": "error",
         "semi": "error",
-        "cypress/no-unnecessary-waiting": "off"
     }
 };

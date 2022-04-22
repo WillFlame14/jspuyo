@@ -1,6 +1,6 @@
 'use strict';
 
-import firebase from 'firebase/app';
+import { User } from 'firebase/auth';
 import * as Vue from 'vue';
 import mitt from 'mitt';
 import { io, Socket } from 'socket.io-client';
@@ -13,11 +13,9 @@ import { AudioPlayer } from './utils/AudioPlayer';
 
 import { PlayerInfo, initApp, signOut } from './webpage/firebase';
 import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
-import { navbarInit } from './webpage/navbar';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
 
-import { pageInit } from './webpage/pages';
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';
 
@@ -32,13 +30,13 @@ declare module '@vue/runtime-core' {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
 		socket: Socket,
-		getCurrentUID(): () => string,
+		getCurrentUID: () => string,
 		stopCurrentSession: () => Promise<void>
 	}
 }
 
 // This is the "main" function, which starts up the entire app.
-void (async function() {
+(function() {
 	const app = Vue.createApp({
 		provide: {
 			audioPlayer: globalAudioPlayer,
@@ -50,7 +48,16 @@ void (async function() {
 
 	app.config.globalProperties.emitter = globalEmitter;
 
-	pageInit();
+	const backgrounds = [
+		'forest.jpg',
+		'forest2.jpg',
+		'winter.jpg',
+		'wildlife.jpg'
+	];
+
+	// Set a random background image
+	const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+	document.documentElement.style.backgroundImage = `url("images/backgrounds/${background}")`;
 
 	switch(window.location.pathname) {
 		case '/info':
@@ -67,17 +74,11 @@ void (async function() {
 		default:
 			vueInit(app);
 			init(globalSocket);			// game-related
-			navbarInit(globalAudioPlayer);
 			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
 			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
 
-			try {
-				// Login to firebase
-				loginSuccess(await initApp(globalSocket));
-			}
-			catch(err) {
-				console.error(err);
-			}
+			// Set up the login process for firebase. loginSuccess() will be called after login finishes
+			initApp(globalSocket, loginSuccess);
 			break;
 	}
 })();
@@ -86,7 +87,7 @@ void (async function() {
  * Called after successfully logging in.
  * Links the current user to the socket and registers with the game server.
  */
-function loginSuccess(user: firebase.User) {
+function loginSuccess(user: User) {
 	globalSocket.emit('register', user.uid);
 
 	globalSocket.off('registered', undefined);
@@ -285,12 +286,7 @@ function init(socket: Socket): void {
 
 	// Alert the server whenever the browser tab goes into or out of focus
 	document.addEventListener('visibilitychange', () => {
-		if(document.hidden) {
-			socket.emit('focus', getCurrentUID(), false);
-		}
-		else {
-			socket.emit('focus', getCurrentUID(), true);
-		}
+		socket.emit('focus', getCurrentUID(), !document.hidden);
 	});
 }
 

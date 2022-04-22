@@ -5,6 +5,9 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitThis": true,
+    "paths": {
+      "vue": ["./node_modules/vue/dist/vue.esm-bundler"],
+    },
     "target": "ESNext",
     "types": ["node", "chartist"]
   },

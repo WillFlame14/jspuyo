@@ -1,7 +1,7 @@
 'use strict';
 
 import mitt from 'mitt';
-import firebase from 'firebase/app';
+import { User } from 'firebase/auth';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
@@ -11,14 +11,6 @@ import { UserSettings } from '../utils/Settings';
 
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
-
-const ranks: Record<string, string> = {
-	'0': 'Blob',
-	'1000': 'Forest Learner',
-	'1250': 'Ocean Diver',
-	'1500': 'Waterfall Fighter',
-	'1750': 'Lightning Ranger'
-};
 
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
@@ -107,7 +99,7 @@ export function showDialog(message: string): void {
  * Updates the user settings panel with information from the database.
  * Only called once on login, since any changes within a session will be saved by the browser.
  */
-export async function updateUserSettings(user: firebase.User, currentUID: string): Promise<void> {
+export async function updateUserSettings(user: User, currentUID: string): Promise<void> {
 	const promises: [Promise<UserSettings>, Promise<number>] = [
 		(PlayerInfo.getUserProperty(currentUID, 'userSettings') as Promise<UserSettings>),
 		(PlayerInfo.getUserProperty(currentUID, 'rating') as Promise<number>)
@@ -117,13 +109,9 @@ export async function updateUserSettings(user: firebase.User, currentUID: string
 	globalAudioPlayer.configureVolume(userSettings);
 	globalEmitter.emit('setSettings', userSettings);
 
-	// Update the status bar
-	document.getElementById(`${userSettings.voice}Voice`).classList.add('selected');
-	document.getElementById('statusName').innerHTML = user.displayName;
-
-	document.getElementById('statusRating').innerHTML = `Rating: ${rating}`;
-
-	const rankBoundaries = Object.keys(ranks);
-	const title = ranks[rankBoundaries[rankBoundaries.findIndex(minimumRating => Number(minimumRating) > rating) - 1]];
-	document.getElementById('statusTitle').innerHTML = title;
+	globalEmitter.emit('updateStatus', {
+		name: user.displayName,
+		rating,
+		voice: userSettings.voice
+	});
 }

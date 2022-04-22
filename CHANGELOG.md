@@ -2,6 +2,15 @@
 
 ## v0.11 - Game Improvements II, Singleplayer
 
+### v0.11.3 (April 21, 2022)
+[`General improvements #89`](https://github.com/WillFlame14/jspuyo/pull/89)
+**Changes:**
+- Status component and navbar have been moved to Vue
+- pages.ts has finally been removed!
+- Removed cypress, as it just caused flaky pipelines without actually testing much
+- Updated dependencies to safer versions
+- Switched module bundler to esbuild from browserify
+
 ### v0.11.2 (May 30, 2021)
 [`Add scoring system for games, ratings framework #81`](https://github.com/WillFlame14/jspuyo/pull/81)
 

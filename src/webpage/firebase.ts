@@ -44,6 +44,10 @@ const uiConfig = {
 	privacyPolicyUrl: '/privacy'
 };
 
+export function basicInit() {
+	firebase.initializeApp(firebaseConfig);
+}
+
 /**
  * Initialize the firebase login screen and associated UI changes,
  * as well as methods that handle game start on successful login.

@@ -60,7 +60,7 @@ export const NavbarComponent = Vue.defineComponent({
 			<span
 				id="queuePanel"
 				class="navPanel"
-				v-bind:class="{ expanded: selectedPanel === 'queue' }"
+				v-bind:class="{ expanded: true }"
 				v-bind:style="{ zIndex: zIndexes.queue }"
 				v-on:click="expandDropdown('queue')"
 			>
@@ -74,7 +74,7 @@ export const NavbarComponent = Vue.defineComponent({
 			<span
 				id="customPanel"
 				class="navPanel"
-				v-bind:class="{ expanded: selectedPanel === 'custom' }"
+				v-bind:class="{ expanded: true }"
 				v-bind:style="{ zIndex: zIndexes.custom }"
 				v-on:click="expandDropdown('custom')"
 			>
@@ -89,7 +89,7 @@ export const NavbarComponent = Vue.defineComponent({
 			<span
 				id="singleplayerPanel"
 				class="navPanel"
-				v-bind:class="{ expanded: selectedPanel === 'singleplayer' }"
+				v-bind:class="{ expanded: true }"
 				v-bind:style="{ zIndex: zIndexes.singleplayer }"
 				v-on:click="expandDropdown('singleplayer')"
 			>
@@ -104,7 +104,7 @@ export const NavbarComponent = Vue.defineComponent({
 			<span
 				id="profilePanel"
 				class="navPanel"
-				v-bind:class="{ expanded: selectedPanel === 'profile' }"
+				v-bind:class="{ expanded: true }"
 				v-bind:style="{ zIndex: zIndexes.profile }"
 				v-on:click="expandDropdown('profile')"
 			>

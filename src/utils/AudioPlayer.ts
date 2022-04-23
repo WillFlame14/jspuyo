@@ -153,6 +153,8 @@ export class AudioPlayer {
 			return;
 		}
 
+		console.log(character);
+
 		let audio: HTMLAudioElement[];
 		if(index === null) {
 			audio = this.voices[character][audio_name] as HTMLAudioElement[];

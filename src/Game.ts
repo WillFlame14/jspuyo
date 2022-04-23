@@ -123,7 +123,7 @@ export class Game {
 	 */
 	end(): string {
 		if(this.board.checkGameOver()) {
-			if(this.mode === MODE.QUEUE_SHIFTING && this.endResult === null) {
+			if(this.mode === MODE.PUYO_DROPPING && this.endResult === null) {
 				this.endResult = 'Loss';
 			}
 		}

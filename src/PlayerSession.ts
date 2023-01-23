@@ -5,6 +5,8 @@ import { PlayerInfo } from './webpage/firebase';
 import { Session } from './Session';
 import { showDialog } from './webpage/panels';
 
+let last_frame_drawn = false;
+
 export class PlayerSession extends Session {
 	spectating: boolean;
 
@@ -48,14 +50,18 @@ export class PlayerSession extends Session {
 
 			// Check end results
 			const endResult = this.game.end();
-			if(endResult !== null) {
+			if(endResult !== null && last_frame_drawn) {
 				window.cancelAnimationFrame(mainFrame);
 				this.finish(endResult);
 				this.stopped = true;
+				last_frame_drawn = false;
 
 				// Save stats
 				PlayerInfo.updateUser(this.gameId, 'stats', { [Date.now()]: this.game.statTracker.toString() }, false);
 				return;
+			}
+			else if (endResult !== null) {
+				last_frame_drawn = true;
 			}
 		};
 		main();

@@ -15,7 +15,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 	components: {
 		'room-size-selector': RoomSizeSelector
 	},
-	data(): { settings: RoomSettings, wildNumSelected: boolean, puyoImgs: string[], gamemodes: string[], winConditions: string[], disabled: boolean, mode: string } {
+	data(): { settings: RoomSettings, wildNumSelected: boolean, puyoImgs: string[], winConditions: string[], disabled: boolean, mode: string } {
 		return {
 			settings: Object.assign(new Settings(), {
 				marginTime: 96,		// Set to seconds
@@ -25,7 +25,6 @@ export const RoomOptionsModal = Vue.defineComponent({
 			}),
 			wildNumSelected: false,
 			puyoImgs,
-			gamemodes: Object.values(Gamemode),
 			winConditions: ['None', 'FT 3', 'FT 5', 'FT 7'],
 			disabled: false,
 			mode: 'create'
@@ -53,14 +52,15 @@ export const RoomOptionsModal = Vue.defineComponent({
 				return;
 			}
 
-			const index = this.gamemodes.indexOf(this.settings.gamemode);
+			const gamemodes = Object.values(Gamemode);
+			const index = gamemodes.indexOf(this.settings.gamemode);
 
 			// Wrap around if at last element
-			if(index === this.gamemodes.length - 1) {
-				this.settings.gamemode = Gamemode[this.gamemodes[0] as keyof typeof Gamemode];
+			if(index === gamemodes.length - 1) {
+				this.settings.gamemode = gamemodes[0];
 			}
 			else {
-				this.settings.gamemode = Gamemode[this.gamemodes[index + 1] as keyof typeof Gamemode];
+				this.settings.gamemode = gamemodes[index + 1];
 			}
 		},
 		changeWinCondition() {

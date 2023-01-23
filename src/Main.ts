@@ -11,7 +11,7 @@ import { PlayerSession } from './PlayerSession';
 import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
-import { PlayerInfo, initApp, signOut } from './webpage/firebase';
+import { PlayerInfo, basicInit, initApp, signOut } from './webpage/firebase';
 import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue';
@@ -57,7 +57,7 @@ declare module '@vue/runtime-core' {
 
 	// Set a random background image
 	const background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
-	document.documentElement.style.backgroundImage = `url("images/backgrounds/${background}")`;
+	document.documentElement.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("images/backgrounds/${background}")`;
 
 	switch(window.location.pathname) {
 		case '/info':
@@ -66,6 +66,7 @@ declare module '@vue/runtime-core' {
 			// No need for anything special
 			break;
 		case '/guide':
+			basicInit();
 			initGuide(app, globalEmitter, globalSocket, globalAudioPlayer);
 			break;
 		case '/gallery':

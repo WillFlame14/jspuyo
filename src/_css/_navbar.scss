@@ -61,12 +61,20 @@
 	z-index: 5;
 
 	background-image: linear-gradient(#254620, #052a00);
+
+	&:hover {
+		background-image: linear-gradient(#355630, #153a10);
+	}
 }
 
 #customPanel {
 	z-index: 4;
 
 	background-image: linear-gradient(#453421, #2a1600);
+
+	&:hover {
+		background-image: linear-gradient(#554431, #3a2610);
+	}
 }
 
 #singleplayerPanel {
@@ -78,10 +86,18 @@
 	&.expanded {
 		flex: 0 0 320px;
 	}
+
+	&:hover {
+		background-image: linear-gradient(#374255, #102e3a);
+	}
 }
 
 #profilePanel {
 	background-image: linear-gradient(#381d3c, #24002a);
+
+	&:hover {
+		background-image: linear-gradient(#482d4c, #34103a);
+	}
 }
 
 // Icon of the panel. Always displayed.

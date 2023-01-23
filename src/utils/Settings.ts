@@ -9,13 +9,13 @@ export interface KeyBindings {
 	hardDrop: string
 }
 
-export enum Gamemode {
-	TSU = 'Tsu',
-	FEVER = 'Fever'
-}
+export const Gamemode = {
+	TSU: 'Tsu',
+	FEVER: 'Fever'
+} as const;
 
 export class Settings {
-	gamemode: Gamemode;
+	gamemode: typeof Gamemode[keyof typeof Gamemode];
 	gravity: number;
 	rows: number;
 	cols: number;

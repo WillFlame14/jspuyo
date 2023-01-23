@@ -1,13 +1,21 @@
 import * as Vue from 'vue';
 
 export const JoinIdModal = Vue.defineComponent({
-	data(): { link: string, copied: boolean } {
+	emits: ['clearModal'],
+	data() {
 		return {
-			link: '',
 			copied: false
 		};
 	},
 	inject: ['audioPlayer'],
+	props: {
+		roomId: String
+	},
+	computed: {
+		link(): string {
+			return `${window.location.href.split('?')[0]}?joinRoom=${this.roomId}`;
+		}
+	},
 	methods: {
 		copyLink() {
 			(this.$refs.joinIdLink as HTMLInputElement).select();
@@ -25,25 +33,21 @@ export const JoinIdModal = Vue.defineComponent({
 				document.getSelection().removeAllRanges();
 				this.audioPlayer.playSfx('submit');
 			}
+		},
+
+		clearModal() {
+			this.$emit('clearModal');
+			this.audioPlayer.playSfx('close_modal');
 		}
 	},
-	mounted() {
-		this.emitter.on('setLink', (link: string) => {
-			this.link = link;
-
-			// Hide the "Copied!" message
-			this.copied = false;
-		});
-	},
-	unmounted() {
-		this.emitter.off('setLink', undefined);
-	},
 	template:`
-		<div class="close">&times;</div>
-		<div>Use the following link to join the room:</div>
-		<form autocomplete="off">
-			<input type="text" ref="joinIdLink" id="joinIdLink" v-bind:value="link">
-			<input type="button" id="copyJoinId" value="&#x1F4CB" v-on:click="copyLink()">
-		</form>
-		<div id="joinIdCopied" v-show="copied">Copied to clipboard!</div>`
+		<div class="modal-content" id="giveJoinId">
+			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div>Use the following link to join the room:</div>
+			<form autocomplete="off">
+				<input type="text" ref="joinIdLink" id="joinIdLink" v-bind:value="link">
+				<input type="button" id="copyJoinId" value="&#x1F4CB" v-on:click="copyLink()">
+			</form>
+			<div id="joinIdCopied" v-show="copied">Copied to clipboard!</div>
+		</div>`
 });

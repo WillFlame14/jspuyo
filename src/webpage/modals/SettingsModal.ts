@@ -6,10 +6,12 @@ import { KeyBindings as KeyBindingsComponent } from './KeyBindingsComponent';
 import { UserSettings, KeyBindings } from '../../utils/Settings';
 
 export const SettingsModal = Vue.defineComponent({
+	emits: ['clearModal'],
 	components: {
 		'appearance-icons': AppearanceComponent,
 		'key-bindings': KeyBindingsComponent
 	},
+	inject: ['audioPlayer'],
 	data(): { settings: UserSettings } {
 		return {
 			settings: {
@@ -55,6 +57,11 @@ export const SettingsModal = Vue.defineComponent({
 			newSettings.appearance = appearance;
 
 			this.emitter.emit('saveSettings', newSettings);
+		},
+
+		clearModal() {
+			this.$emit('clearModal');
+			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	mounted() {
@@ -74,48 +81,49 @@ export const SettingsModal = Vue.defineComponent({
 	},
 	unmounted() {
 		this.emitter.off('setSettings', undefined);
-		this.emitter.off('getSettings', undefined);
 	},
-	template:
-		`<div class="close">&times;</div>
-		<div class="modal-title">User Settings</div>
-		<div class="left-right-container" id="userSettingsOptions">
-			<div>
-				<div class="justify-flexbox">
-					<form class="block-form" autocomplete="off">
-						<label for="das">DAS</label>
-						<input type="number" class="dasArrInput" id="das" v-model="settings.das" min="0" max="999"><br>
-					</form>
-					<form class="block-form" autocomplete="off">
-						<label for="arr">ARR</label>
-						<input type="number" class="dasArrInput" id="arr" v-model="settings.arr" min="0" max="99">
-					</form>
-				</div>
-				<form class="block-form sliders" autocomplete="off">
-					<label class="slider-label" for="sfxVolume">SFX Volume</label>
-					<input class="slider-range" type="range" id="sfxVolume" v-model="settings.sfxVolume"  min="0" max="100">
-					<label class="slider-label" for="musicVolume">Music Volume</label>
-					<input class="slider-range" type="range" id="musicVolume" v-model="settings.musicVolume" min="0" max="100">
-					<label class="slider-label" for="skipFrames">Intermediate Frames Shown</label>
-					<input class="slider-range" type="range" id="skipFrames" v-model="settings.skipFrames" min="0" max="50">
-				</form>
-			</div>
-			<div class="divider vertical" id="settingsDivider"></div>
-			<div>
-				<key-bindings></key-bindings>
-				<div class="justify-flexbox ghostHighlightOptions">
-					<form class="block-form" autocomplete="off">
-						<label for="ghost">Ghost Drop</label>
-						<input type="button" class="off" id="ghost" value="OFF" disabled><br>
-					</form>
-					<form class="block-form" autocomplete="off">
-						<label for="highlightChains">Highlight Chains</label>
-						<input type="button" class="off" id="highlightChains" value="OFF" disabled>
+	template:`
+		<div class="modal-content" id="settingsModal">
+			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="modal-title">User Settings</div>
+			<div class="left-right-container" id="userSettingsOptions">
+				<div>
+					<div class="justify-flexbox">
+						<form class="block-form" autocomplete="off">
+							<label for="das">DAS</label>
+							<input type="number" class="dasArrInput" id="das" v-model="settings.das" min="0" max="999"><br>
+						</form>
+						<form class="block-form" autocomplete="off">
+							<label for="arr">ARR</label>
+							<input type="number" class="dasArrInput" id="arr" v-model="settings.arr" min="0" max="99">
+						</form>
+					</div>
+					<form class="block-form sliders" autocomplete="off">
+						<label class="slider-label" for="sfxVolume">SFX Volume</label>
+						<input class="slider-range" type="range" id="sfxVolume" v-model="settings.sfxVolume"  min="0" max="100">
+						<label class="slider-label" for="musicVolume">Music Volume</label>
+						<input class="slider-range" type="range" id="musicVolume" v-model="settings.musicVolume" min="0" max="100">
+						<label class="slider-label" for="skipFrames">Intermediate Frames Shown</label>
+						<input class="slider-range" type="range" id="skipFrames" v-model="settings.skipFrames" min="0" max="50">
 					</form>
 				</div>
-				<div class="option-title">Appearance</div>
-				<appearance-icons></appearance-icons>
-				<button id="settingsSubmit" v-on:click="saveSettings()">Save Settings</button>
+				<div class="divider vertical" id="settingsDivider"></div>
+				<div>
+					<key-bindings></key-bindings>
+					<div class="justify-flexbox ghostHighlightOptions">
+						<form class="block-form" autocomplete="off">
+							<label for="ghost">Ghost Drop</label>
+							<input type="button" class="off" id="ghost" value="OFF" disabled><br>
+						</form>
+						<form class="block-form" autocomplete="off">
+							<label for="highlightChains">Highlight Chains</label>
+							<input type="button" class="off" id="highlightChains" value="OFF" disabled>
+						</form>
+					</div>
+					<div class="option-title">Appearance</div>
+					<appearance-icons></appearance-icons>
+					<button id="settingsSubmit" v-on:click="saveSettings()">Save Settings</button>
+				</div>
 			</div>
 		</div>`
 });

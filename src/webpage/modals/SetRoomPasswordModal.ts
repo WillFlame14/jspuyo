@@ -1,6 +1,7 @@
 import * as Vue from 'vue';
 
 export const SetRoomPasswordModal = Vue.defineComponent({
+	emits: ['clearModal'],
 	data(): { password: string } {
 		return {
 			password: ''
@@ -16,15 +17,22 @@ export const SetRoomPasswordModal = Vue.defineComponent({
 			this.audioPlayer.playSfx('submit');
 
 			this.emitter.emit('submitRoomPassword');
+		},
+
+		clearModal() {
+			this.$emit('clearModal');
+			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	template:`
-		<div class="close">&times;</div>
-        <form id="roomPasswordForm" autocomplete="off" v-on:submit="submit()">
-            <label for="roomPassword">Enter the password for the room.</label><br>
-            <div id="roomPasswordInput">
-                <input type="text" id="roomPassword" placeholder="<no password>" maxlength="20" v-model="password">
-            </div>
-            <input type="submit" id="roomPasswordSubmit" value="Save Password">
-        </form>`
+		<div class="modal-content" id="roomPasswordModal">
+			<div class="close" v-on:click="clearModal()">&times;</div>
+	        <form id="roomPasswordForm" autocomplete="off" v-on:submit="submit()">
+	            <label for="roomPassword">Enter the password for the room.</label><br>
+	            <div id="roomPasswordInput">
+	                <input type="text" id="roomPassword" placeholder="<no password>" maxlength="20" v-model="password">
+	            </div>
+	            <input type="submit" id="roomPasswordSubmit" value="Save Password">
+	        </form>
+	    </div>`
 });

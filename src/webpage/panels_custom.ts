@@ -25,14 +25,10 @@ export function initCustomPanels(
 	audioPlayer: AudioPlayer,
 	getCurrentUID: () => string
 ): void {
-	// The black overlay that appears when a modal box is shown
-	const modal = document.getElementById('modal-background');
-
 	// Custom - Create Room
 	document.getElementById('createRoom').onclick = () => {
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-		emitter.emit('setMode', 'create');
+		emitter.emit('setActiveModal', { name: 'RoomOptionsModal', props: { createRoomMode: 'create' } });
+
 		emitter.emit('disableRoomSettings', false);
 	};
 
@@ -51,65 +47,48 @@ export function initCustomPanels(
 		audioPlayer.playSfx('submit');
 
 		// Close the CPU options menu
-		document.getElementById('createRoomModal').style.display = 'none';
-		modal.style.display = 'none';
+		emitter.emit('clearModal');
 	});
 
 	// Receiving the id of the newly created room
-	socket.on('giveRoomId', (id: string) => {
-		emitter.emit('setLink', `${window.location.href.split('?')[0]}?joinRoom=${id}`);
-
-		modal.style.display = 'block';
-		document.getElementById('giveJoinId').style.display = 'block';
+	socket.on('giveRoomId', (roomId: string) => {
+		emitter.emit('setActiveModal', { name: 'JoinIdModal', props: { roomId } });
 	});
 
 	// Custom - Join Room
 	document.getElementById('joinRoom').onclick = () => {
-		modal.style.display = 'block';
-		document.getElementById('joinRoomModal').style.display = 'block';
+		emitter.emit('setActiveModal', { name: 'JoinRoomModal' });
 	};
 
 	// Received when room cannot be joined
-	socket.on('joinFailure', (errMessage: string) => {
+	socket.on('joinFailure', (errorMsg: string) => {
 		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
-		modal.style.display = 'block';
-		document.getElementById('joinRoomModal').style.display = 'block';
-
-		emitter.emit('joinFailure', errMessage);
+		emitter.emit('setActiveModal', { name:'JoinRoomModal', props: { errorMsg } });
 	});
 
 	// Event received when attempting to join a password-protected room
 	socket.on('requireRoomPassword', (roomId: string) => {
-		modal.style.display = 'block';
-		document.getElementById('joinRoomPasswordModal').style.display = 'block';
-		document.getElementById('joinRoomModal').style.display = 'none';
-
-		emitter.emit('setJoinId', roomId);
+		emitter.emit('setActiveModal', { name:'JoinRoomPasswordModal', props: { roomId } });
 	});
 
 	// Event received when entering the wrong password to a password-protected room
-	socket.on('joinRoomPasswordFailure', (message: string) => {
-		modal.style.display = 'block';
-
-		emitter.emit('joinRoomPasswordFailure', message);
+	socket.on('joinRoomPasswordFailure', (errorMsg: string) => {
+		emitter.emit('setActiveModal', { name: 'JoinRoomPasswordModal', props: { errorMsg } });
 	});
 
 	// Custom - Spectate
 	document.getElementById('spectate').onclick = () => {
 		void stopCurrentSession();
 		socket.emit('getAllRooms', getCurrentUID());
-
-		modal.style.display = 'block';
-		document.getElementById('spectateRoomModal').style.display = 'block';
 	};
 
-	socket.on('allRooms', (roomIds: string[]) => {
-		emitter.emit('allRooms', roomIds);
+	socket.on('allRooms', (allRoomIds: string[]) => {
+		emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { allRoomIds } });
 	});
 
 	// Received when attempting to spectate an invalid room
-	socket.on('spectateFailure', (errMessage: string) => {
-		emitter.emit('spectateFailure', errMessage);
+	socket.on('spectateFailure', (errorMsg: string) => {
+		emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { errorMsg } });
 	});
 
 	document.getElementById('gallery').onclick = async function() {
@@ -137,9 +116,7 @@ export function initCustomPanels(
 	document.getElementById('settings').onclick = function() {
 		void stopCurrentSession();
 
-		modal.style.display = 'block';
-
-		document.getElementById('settingsModal').style.display = 'block';
+		emitter.emit('setActiveModal', { name:'SettingsModal' });
 	};
 
 	emitter.on('saveSettings', (newSettings: UserSettings) => {

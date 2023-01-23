@@ -18,15 +18,10 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, g
 		});
 	});
 
-	const modal = document.getElementById('modal-background');				// The semi-transparent gray background
-	const cpuOptionsError = document.getElementById('cpuOptionsError');		// The error message that appears when performing an invalid action (invisible otherwise)
-
 	document.getElementById('manageCpus').onclick = function() {
 		toggleHost(currentlyHost);
 
-		modal.style.display = 'block';
-		cpuOptionsError.style.display = 'none';
-		document.getElementById('cpuOptionsModal').style.display = 'block';
+		globalEmitter.emit('setActiveModal', { name: 'CpuOptionsModal' });
 		socket.emit('requestCpus', getCurrentUID());
 	};
 
@@ -48,28 +43,22 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, g
 		audioPlayer.playSfx('submit');
 
 		// Close the CPU options menu
-		document.getElementById('cpuOptionsModal').style.display = 'none';
-		modal.style.display = 'none';
+		globalEmitter.emit('clearModal');
 	});
 
 	document.getElementById('manageSettings').onclick = function() {
 		toggleHost(currentlyHost);
 
-		modal.style.display = 'block';
-		document.getElementById('createRoomModal').style.display = 'block';
-
 		// Flag so the submit button causes settings to be changed (instead of creating a new room)
-		emitter.emit('setMode', 'set');
+		globalEmitter.emit('setActiveModal', { name: 'RoomOptionsModal', props: { createRoomMode: 'set' } });
 	};
 
 	document.getElementById('manageRoomPassword').onclick = function() {
-		modal.style.display = 'block';
-		document.getElementById('roomPasswordModal').style.display = 'block';
+		globalEmitter.emit('setActiveModal', { name: 'SetRoomPasswordModal' });
 	};
 
 	emitter.on('submitRoomPassword', () => {
-		document.getElementById('roomPasswordModal').style.display = 'none';
-		modal.style.display = 'none';
+		globalEmitter.emit('clearModal');
 	});
 
 	document.getElementById('manageStartRoom').onclick = function() {
@@ -91,16 +80,7 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, g
 
 export function toggleHost(host: boolean): void {
 	currentlyHost = host;
-	// The Add/Remove/Save CPU buttons
-	document.getElementById('cpuOptionsButtons').style.display = host ? 'grid' : 'none';
-
-	// The CPU control options
-	document.querySelectorAll('.aiOption').forEach((dropdown: HTMLOptionElement) => {
-		dropdown.disabled = !host;
-	});
-	document.querySelectorAll('.cpuSpeedSlider').forEach((slider: HTMLInputElement) => {
-		slider.disabled = !host;
-	});
+	globalEmitter.emit('toggleHost', host);
 
 	globalEmitter.emit('disableRoomSettings', !host);
 

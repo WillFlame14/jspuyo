@@ -27,14 +27,6 @@ export function panelsInit(
 	// The black overlay that appears when a modal box is shown
 	const modal = document.getElementById('modal-background');
 
-	// Set all close buttons to remove modals
-	Array.from(document.getElementsByClassName('close')).forEach((close: HTMLElement) => {
-		close.onclick = () => {
-			clearModal();
-			audioPlayer.playSfx('close_modal');
-		};
-	});
-
 	// Manage window onclick
 	window.onclick = function(event: Event) {
 		if (event.target === modal) {
@@ -75,18 +67,7 @@ export function clearModal(): void {
 		return;
 	}
 
-	const modal = document.getElementById('modal-background');
-	modal.style.display = "none";
-
-	// Clear all modal content
-	Array.from(document.getElementsByClassName('modal-content')).forEach((element: HTMLElement) => {
-		element.style.display = 'none';
-	});
-
-	// Clear all error messages
-	// Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
-	// 	element.style.display = 'none';
-	// });
+	globalEmitter.emit('clearModal');
 }
 
 export function showDialog(message: string): void {

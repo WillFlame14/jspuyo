@@ -14,7 +14,7 @@ import { AudioPlayer } from './utils/AudioPlayer';
 import { PlayerInfo, basicInit, initApp, signOut } from './webpage/firebase';
 import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
-import { vueInit } from './webpage/vue';
+import { vueInit } from './webpage/vue_loader';
 
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';

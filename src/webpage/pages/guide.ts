@@ -2,7 +2,7 @@ import * as Vue from 'vue';
 import mitt from 'mitt';
 import { Socket } from 'socket.io-client';
 
-import { SettingsModal } from '../modals/SettingsModal';
+import { ModalManager } from '../ModalManager';
 import { UserSettings } from '../../utils/Settings';
 import { AudioPlayer } from '../../utils/AudioPlayer';
 
@@ -33,21 +33,12 @@ let currentSession: Simulator;
 
 export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: Socket, audioPlayer: AudioPlayer): void {
 	app.component('guide', GuideComponent);
-	app.component('settings-modal', SettingsModal);
+	app.component('modal-manager', ModalManager);
 	app.mount('#vue-app');
-
-	Array.from(document.getElementsByClassName('close')).forEach((close: HTMLElement) => {
-		close.onclick = () => {
-			document.getElementById('modal-background').style.display = 'none';
-			document.getElementById('settingsModal').style.display = 'none';
-			audioPlayer.playSfx('close_modal');
-		};
-	});
 
 	emitter.on('saveSettings', (newSettings: UserSettings) => {
 		Object.assign(userSettings, newSettings);
-		document.getElementById('modal-background').style.display = 'none';
-		document.getElementById('settingsModal').style.display = 'none';
+		emitter.emit('clearModal');
 	});
 
 	emitter.on('startSimulator', (options: Options) => {
@@ -189,8 +180,7 @@ const GuideComponent = Vue.defineComponent({
 			this.simulatorOn = false;
 		},
 		openSettings() {
-			document.getElementById('modal-background').style.display = 'block';
-			document.getElementById('settingsModal').style.display = 'block';
+			this.emitter.emit('setActiveModal', { name: 'SettingsModal' });
 
 			if(this.simulatorOn) {
 				this.stopSimulator();

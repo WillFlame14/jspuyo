@@ -56,22 +56,22 @@ io.on('connection', function(socket) {
 		callback(Array.from(socketIdToId.keys()).length);
 	});
 
-	socket.on('addCpu', (gameId: string, callback: (index: number) => void) => {
+	socket.on('addCpu', (gameId, callback) => {
 		const index = RoomManager.addCpu(gameId);
 		callback(index);
 	});
 
-	socket.on('removeCpu', (gameId: string, callback: (index: number) => void) => {
+	socket.on('removeCpu', (gameId, callback) => {
 		const index = RoomManager.removeCpu(gameId);
 		callback(index);
 	});
 
-	socket.on('requestCpus', (gameId: string, callback) => {
+	socket.on('requestCpus', (gameId, callback) => {
 		const cpus = RoomManager.requestCpus(gameId);
 		callback(cpus);
 	});
 
-	socket.on('setCpus', (gameInfo: {gameId: string, cpus: CpuInfo[]}) => {
+	socket.on('setCpus', (gameInfo) => {
 		const { gameId, cpus } = gameInfo;
 
 		const promises: Promise<void>[] = [];
@@ -117,11 +117,11 @@ io.on('connection', function(socket) {
 		callback();
 	});
 
-	socket.on('setRoomPassword', (gameId: string, password: string) => {
+	socket.on('setRoomPassword', (gameId, password) => {
 		RoomManager.setRoomPassword(gameId, password);
 	});
 
-	socket.on('startRoom', (gameId: string) => {
+	socket.on('startRoom', (gameId) => {
 		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
@@ -165,15 +165,15 @@ io.on('connection', function(socket) {
 		RoomManager.spectateRoom(gameId, socket, roomId);
 	});
 
-	socket.on('getAllRooms', (gameId, callback: (allRoomIds: string[]) => void) => {
+	socket.on('getAllRooms', (gameId, callback) => {
 		callback(RoomManager.getAllRooms(gameId));
 	});
 
-	socket.on('getPlayers', (roomId: string, callback: (players: string[]) => void) => {
+	socket.on('getPlayers', (roomId, callback) => {
 		callback(RoomManager.getPlayers(roomId));
 	});
 
-	socket.on('ranked', (gameInfo: { gameId: string }) => {
+	socket.on('ranked', (gameInfo) => {
 		const { gameId } = gameInfo;
 
 		// No pending ranked game
@@ -208,7 +208,7 @@ io.on('connection', function(socket) {
 		console.log(`${gameId.substring(0, 6)} has joined the ranked queue.`);
 	});
 
-	socket.on('freeForAll', (gameInfo: { gameId: string }) => {
+	socket.on('freeForAll', (gameInfo) => {
 		const { gameId } = gameInfo;
 
 		if(RoomManager.defaultQueueRoomId === null) {

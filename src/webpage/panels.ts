@@ -31,23 +31,23 @@ export function panelsInit(
 	};
 
 	// Received when room cannot be joined
-	socket.on('joinFailure', (errorMsg: string) => {
+	socket.on('joinFailure', (errorMsg) => {
 		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
 		emitter.emit('setActiveModal', { name:'JoinRoomModal', props: { errorMsg } });
 	});
 
 	// Event received when attempting to join a password-protected room
-	socket.on('requireRoomPassword', (roomId: string) => {
+	socket.on('requireRoomPassword', (roomId) => {
 		emitter.emit('setActiveModal', { name:'JoinRoomPasswordModal', props: { roomId } });
 	});
 
 	// Event received when entering the wrong password to a password-protected room
-	socket.on('joinRoomPasswordFailure', (errorMsg: string) => {
+	socket.on('joinRoomPasswordFailure', (errorMsg) => {
 		emitter.emit('setActiveModal', { name: 'JoinRoomPasswordModal', props: { errorMsg } });
 	});
 
 	// Received when attempting to spectate an invalid room
-	socket.on('spectateFailure', (errorMsg: string) => {
+	socket.on('spectateFailure', (errorMsg) => {
 		emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { errorMsg } });
 	});
 }

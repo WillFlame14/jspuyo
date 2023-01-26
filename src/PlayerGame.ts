@@ -84,10 +84,10 @@ export class PlayerGame extends Game {
 	 * @Override
 	 * Draws the board with the new hash after stepping.
 	 */
-	step(): Record<string, unknown> {
+	step() {
 		const state = super.step();
 		if(state.currentBoardHash) {
-			this.gameArea.drawFromHash(state.currentBoardHash as string);
+			this.gameArea.drawFromHash(state.currentBoardHash);
 		}
 		return state;
 	}
@@ -175,10 +175,16 @@ export class SpectateGame extends Game {
 
 	/**
 	 * @Override
-	 * Increments the game. Since player is spectating, do nothing.
+	 * Increments the game. Since player is spectating, return a dummy state.
 	 */
-	step(): Record<string, unknown> {
-		return {};
+	step() {
+		return {
+			currentBoardHash: '',
+			score: 0,
+			nuisance: 0,
+			nuisanceSent: 0,
+			activateNuisance: false
+		};
 	}
 
 	/**

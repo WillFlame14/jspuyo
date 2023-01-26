@@ -34,7 +34,7 @@ export class PlayerSession extends Session {
 				return;
 			}
 
-			if(!this.paused) {
+			if(!this.paused && !this.spectating) {
 				const { currentBoardHash, score, nuisance, nuisanceSent, activateNuisance } = this.game.step();
 
 				if(currentBoardHash != null) {

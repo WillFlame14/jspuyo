@@ -30,17 +30,17 @@ export class Session {
 
 	initialize(): void {
 		this.socket.off('sendNuisance');
-		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
+		this.socket.on('sendNuisance', (oppId, nuisance) => {
 			this.sendNuisance(oppId, nuisance);
 		});
 
 		this.socket.off('activateNuisance');
-		this.socket.on('activateNuisance', (oppId: string) => {
+		this.socket.on('activateNuisance', (oppId) => {
 			this.activateNuisance(oppId);
 		});
 
 		this.socket.off('gameOver');
-		this.socket.on('gameOver', (oppId: string, disconnect: boolean) => {
+		this.socket.on('gameOver', (oppId, disconnect) => {
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(disconnect) {
 				// Opponent lost due to disconnecting
@@ -48,7 +48,7 @@ export class Session {
 		});
 
 		this.socket.off('winnerResult');
-		this.socket.on('winnerResult', (winnerId: string) => {
+		this.socket.on('winnerResult', (winnerId) => {
 			this.game.endResult = winnerId === this.gameId ? 'Win' : 'Loss';
 			// Regardless of whether this player won, someone did, so win sfx should be played.
 			setTimeout(() => this.game.audioPlayer.playAndEmitSfx('win'), 2000);

@@ -37,6 +37,7 @@ module.exports = {
         "no-trailing-spaces": "error",
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+        "@typescript-eslint/explicit-module-boundary-types": "off",
         "no-unused-expressions": "error",
         "no-useless-computed-key": "error",
         "no-var": "error",

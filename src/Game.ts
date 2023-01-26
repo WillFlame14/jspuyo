@@ -122,7 +122,7 @@ export class Game {
 	/**
 	 * Determines if the Game should be ended.
 	 */
-	end(): string {
+	end() {
 		if(this.board.checkGameOver()) {
 			if(this.mode === MODE.PUYO_DROPPING && this.endResult === null) {
 				this.endResult = 'Loss';
@@ -165,7 +165,7 @@ export class Game {
 	 * and rotation) while accepting any queued events from InputManager. Next it determines if the drop will become
 	 * locked, and if so, adds it to the board and checks for chains.
 	 */
-	step(): Record<string, unknown> {
+	step() {
 		let currentBoardHash: string = null, nuisanceSent = 0, activateNuisance = false;
 
 		this.gameArea.updateNuisance(this.getTotalNuisance());

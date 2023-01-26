@@ -1,5 +1,6 @@
 'use strict';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from './utils/AudioPlayer';
@@ -30,7 +31,7 @@ export class Game {
 	userSettings: UserSettings;
 	statTracker: StatTracker;
 	audioPlayer: AudioPlayer;
-	socket: Socket;
+	socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 
 	dropGenerator: DropGenerator;
 	dropQueue: Drop[];
@@ -89,7 +90,7 @@ export class Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		settings: Settings,
 		userSettings: UserSettings,
 		cellId: number = null,

@@ -5,14 +5,17 @@ import { CpuGame } from './CpuGame';
 import { CpuSession } from './Session';
 import { Settings } from './utils/Settings';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io';
 import { Socket as ClientSocket } from 'socket.io-client';
+
+type SSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const MAX_FRAME_DIFFERENCE = 20;
 
 export interface CpuInfo {
 	client_socket: ClientSocket,
-	socket: Socket,
+	socket: SSocket,
 	speed: number,
 	ai: string
 }
@@ -20,17 +23,17 @@ export interface CpuInfo {
 export class Room {
 	roomId: string;
 	password: string = null;
-	members: Map<string, { socket: Socket }>;
+	members: Map<string, { socket: SSocket }>;
 	cpus = new Map<string, CpuInfo>();
 	wins: Record<string, number> = {};
 	numCpus = 0;
-	games = new Map<string, { socket: Socket, frames: number, session?: CpuSession }>();
+	games = new Map<string, { socket: SSocket, frames: number, session?: CpuSession }>();
 	host: string;
 
 	ingame = false;
 	paused: string[] = [];
 	unfocused: string[] = [];
-	spectating = new Map<string, Socket>();
+	spectating = new Map<string, SSocket>();
 	undefeated: string[] = [];
 	timeout: ReturnType<typeof setTimeout> = null;
 
@@ -42,7 +45,7 @@ export class Room {
 
 	constructor(
 		roomId: string,
-		members: Map<string, { socket: Socket }>,
+		members: Map<string, { socket: SSocket }>,
 		host: string,
 		roomSize: number,
 		settingsString: string,
@@ -79,11 +82,11 @@ export class Room {
 	/**
 	 * Adds a player/CPU to an existing room.
 	 * @param {string}	gameId  [description]
-	 * @param {Socket}	socket  [description]
+	 * @param {SSocket}	socket  [description]
 	 * @param {CpuInfo}	cpuInfo Additional information if this is a CPU player (optional).
 	 * @param {boolean}	notify 	Whether to notify the other members of the room that someone has joined (true by default).
 	 */
-	join(gameId: string, socket: Socket, cpuInfo = null, notify = true): void {
+	join(gameId: string, socket: SSocket, cpuInfo = null, notify = true): void {
 		// Room is full or ingame
 		if((this.members.size === this.roomSize && cpuInfo === null) || this.ingame) {
 			this.spectate(gameId, socket);
@@ -118,9 +121,9 @@ export class Room {
 	/**
 	 * Spectates a room (receives player data but does not play).
 	 * @param {string}          gameId The game id of the player wishing to spectate
-	 * @param {Socket} socket The player's socket
+	 * @param {SSocket} socket The player's socket
 	 */
-	spectate(gameId: string, socket: Socket): void {
+	spectate(gameId: string, socket: SSocket): void {
 		if(this.members.has(gameId)) {
 			this.leave(gameId, true, true);
 		}
@@ -135,6 +138,7 @@ export class Room {
 		if(this.ingame) {
 			socket.emit('spectate',
 				this.roomId,
+				this.wins,
 				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
 				this.settingsString
 			);
@@ -142,7 +146,7 @@ export class Room {
 		else {
 			socket.emit('roomUpdate',
 				this.roomId,
-				Array.from(this.members.keys()).concat(Array.from(this.cpus.keys())),
+				this.wins,
 				this.roomSize,
 				this.settingsString,
 				this.roomType,

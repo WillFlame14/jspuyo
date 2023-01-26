@@ -6,9 +6,13 @@ import { child, get, getDatabase, ref, remove, set, update } from 'firebase/data
 import firebase from 'firebase/compat/app';
 import * as firebaseui from 'firebaseui';
 import { firebaseConfig } from '../../config';
+
+import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { UserSettings } from '../utils/Settings';
 
 import { Socket } from 'socket.io-client';
+
+type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
 let newUser = false;
 let currentUser: User = null;
@@ -16,7 +20,7 @@ let fallbackName = '';		// Display name that is used if empty string is provided
 
 let firebaseApp: FirebaseApp;
 let ui: firebaseui.auth.AuthUI;				// Firebaseui object
-let socket: Socket;	// Socket associated with the browser tab
+let socket: CSocket;	// Socket associated with the browser tab
 
 const uiConfig = {
 	callbacks: {
@@ -51,10 +55,10 @@ export function basicInit() {
 /**
  * Initialize the firebase login screen and associated UI changes,
  * as well as methods that handle game start on successful login.
- * @param {Socket}          globalSocket    The socket used for the player
+ * @param {CSocket}         globalSocket    The socket used for the player
  * @param {User) => void}   loginSuccess    Callback when login succeeds
  */
-export function initApp(globalSocket: Socket, loginSuccess: (user: User) => void): void {
+export function initApp(globalSocket: CSocket, loginSuccess: (user: User) => void): void {
 	// Initialize Firebase
 	firebaseApp = firebase.initializeApp(firebaseConfig);
 	const auth = getAuth(firebaseApp);
@@ -104,6 +108,12 @@ export function initApp(globalSocket: Socket, loginSuccess: (user: User) => void
 	});
 }
 
+function updateOnlineUsers() {
+	socket.emit('getOnlineUsers', (numUsers: number) => {
+		document.getElementById('onlineUsers').innerHTML = `Online users: ${numUsers}`;
+	});
+}
+
 function initializeUI(resolve: (user: User) => void) {
 	// Hackily add some messages into the FirebaseUI login screen
 	const onlineUsersMessage = document.createElement('div');
@@ -127,10 +137,7 @@ function initializeUI(resolve: (user: User) => void) {
 	document.getElementById('firebaseui-auth-container').prepend(welcomeMessage);
 
 	// Send request for number of online users
-	socket.emit('getOnlineUsers');
-	socket.on('onlineUsersCount', (numUsers: number) => {
-		onlineUsersMessage.innerHTML = `Online users: ${numUsers}`;
-	});
+	updateOnlineUsers();
 
 	// Upon submission of the display name change
 	document.getElementById('usernamePickerForm').onsubmit = function(event) {
@@ -178,8 +185,7 @@ function initializeUI(resolve: (user: User) => void) {
  */
 export async function signOut(): Promise<void> {
 	const auth = getAuth(firebaseApp);
-	// Update the online users counter
-	socket.emit('getOnlineUsers');
+	updateOnlineUsers();
 
 	if(auth.currentUser && auth.currentUser.isAnonymous) {
 		await PlayerInfo.deleteUser(auth.currentUser.uid);

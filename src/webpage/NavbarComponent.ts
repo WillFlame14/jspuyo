@@ -90,7 +90,7 @@ export const NavbarComponent = Vue.defineComponent({
 		async openGallery() {
 			void this.stopCurrentSession();
 			// Leave the room
-			this.socket.emit('forceDisconnect');
+			this.socket.emit('forceDisconnect', this.getCurrentUID());
 
 			let stats = [] as unknown;
 			try {

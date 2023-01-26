@@ -1,15 +1,17 @@
 'use strict';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
-import { CpuInfo } from '../Room';
 
 import mitt from 'mitt';
+import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { Socket } from 'socket.io-client';
+
+type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 let currentlyHost = false;
 let globalEmitter: ReturnType<typeof mitt>;
 
-export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
+export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
 	globalEmitter = emitter;
 
 	document.querySelectorAll('.roomManageOption').forEach(element => {
@@ -22,29 +24,10 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, g
 		toggleHost(currentlyHost);
 
 		globalEmitter.emit('setActiveModal', { name: 'CpuOptionsModal' });
-		socket.emit('requestCpus', getCurrentUID());
-	};
-
-	socket.on('requestCpusReply', (cpus: { ai: string, speed: number }[]) => {
-		emitter.emit('presetCpus', cpus);
-	});
-
-	emitter.on('setCpus', (cpuInfos: { ai: string, speed: number }[]) => {
-		const cpus: CpuInfo[] = [];
-
-		cpuInfos.forEach(cpuInfo => {
-			const cpu = Object.assign({ client_socket: null, socket: null }, cpuInfo);
-			cpu.speed = (10 - cpu.speed) * 500;
-
-			cpus.push(cpu);
+		socket.emit('requestCpus', getCurrentUID(), (cpus) => {
+			emitter.emit('presetCpus', cpus);
 		});
-
-		socket.emit('setCpus', { gameId: getCurrentUID(), cpus });
-		audioPlayer.playSfx('submit');
-
-		// Close the CPU options menu
-		globalEmitter.emit('clearModal');
-	});
+	};
 
 	document.getElementById('manageSettings').onclick = function() {
 		toggleHost(currentlyHost);
@@ -57,24 +40,23 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: Socket, g
 		globalEmitter.emit('setActiveModal', { name: 'SetRoomPasswordModal' });
 	};
 
-	emitter.on('submitRoomPassword', () => {
-		globalEmitter.emit('clearModal');
-	});
-
 	document.getElementById('manageStartRoom').onclick = function() {
 		socket.emit('startRoom', getCurrentUID());
 	};
 
 	document.getElementById('manageJoinLink').onclick = function() {
-		socket.emit('requestJoinLink', getCurrentUID());
+		socket.emit('requestJoinLink', getCurrentUID(), (roomId) => {
+			globalEmitter.emit('setActiveModal', { name: 'JoinIdModal', props: { roomId } });
+		});
 	};
 
 	document.getElementById('manageSpectate').onclick = function() {
-		socket.emit('spectate', getCurrentUID());
+		socket.emit('spectateRoom', getCurrentUID());
 	};
 
 	document.getElementById('managePlay').onclick = function() {
-		socket.emit('joinRoom', { gameId: getCurrentUID() });
+		// FIX: Missing joinId?
+		// socket.emit('joinRoom', { gameId: getCurrentUID() });
 	};
 }
 

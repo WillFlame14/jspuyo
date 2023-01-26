@@ -1,13 +1,15 @@
 'use strict';
 
+import { ServerToClientEvents, ClientToServerEvents } from './src/@types/events';
+
 import express = require('express');
 const app = express();
 
 import http_lib = require('http');
 const http = http_lib.createServer(app);
 
-import { Server, Socket } from 'socket.io';
-const io = new Server(http, { perMessageDeflate: false });
+import { Server } from 'socket.io';
+const io = new Server<ClientToServerEvents, ServerToClientEvents, Record<string, never>, Record<string, never>>(http, { perMessageDeflate: false });
 
 import { io as io_client } from 'socket.io-client';
 const port = process.env.PORT || 3000;
@@ -40,8 +42,8 @@ for(const [route, dest] of Object.entries(routes)) {
 	});
 }
 
-io.on('connection', function(socket: Socket) {
-	socket.on('register', (gameId: string) => {
+io.on('connection', function(socket) {
+	socket.on('register', (gameId) => {
 		if(Array.from(socketIdToId.values()).includes(gameId)) {
 			// TODO: User is registering on two separate tabs. Might want to prevent this in the future.
 		}
@@ -50,8 +52,8 @@ io.on('connection', function(socket: Socket) {
 		socket.emit('registered');
 	});
 
-	socket.on('getOnlineUsers', () => {
-		socket.emit('onlineUsersCount', Array.from(socketIdToId.keys()).length);
+	socket.on('getOnlineUsers', (callback) => {
+		callback(Array.from(socketIdToId.keys()).length);
 	});
 
 	socket.on('addCpu', (gameId: string, callback: (index: number) => void) => {
@@ -64,9 +66,9 @@ io.on('connection', function(socket: Socket) {
 		callback(index);
 	});
 
-	socket.on('requestCpus', (gameId: string) => {
+	socket.on('requestCpus', (gameId: string, callback) => {
 		const cpus = RoomManager.requestCpus(gameId);
-		socket.emit('requestCpusReply', cpus);
+		callback(cpus);
 	});
 
 	socket.on('setCpus', (gameInfo: {gameId: string, cpus: CpuInfo[]}) => {
@@ -104,7 +106,7 @@ io.on('connection', function(socket: Socket) {
 		});
 	});
 
-	socket.on('cpuAssign', (gameId: string, cpuId: string, callback: () => void) => {
+	socket.on('cpuAssign', (gameId, cpuId, callback) => {
 		socketIdToId.set(socket.id, cpuId);
 
 		const cpuInfo = cpuInfos.get(gameId).get(cpuId);
@@ -123,27 +125,27 @@ io.on('connection', function(socket: Socket) {
 		RoomManager.startRoomWithGameId(gameId, socket);
 	});
 
-	socket.on('createRoom', (gameInfo: { gameId: string, settingsString: string, roomSize: number, roomType: string}) => {
+	socket.on('createRoom', (gameInfo, callback) => {
 		const { gameId, settingsString, roomSize, roomType } = gameInfo;
 
 		const members = new Map().set(gameId, { socket, frames: 0 });
 		// Room creator becomes the host
 		const host = gameId;
 
-		const roomId = RoomManager.createRoom(gameId, members, host, roomSize, settingsString, roomType).roomId;
-		socket.emit('giveRoomId', roomId);
+		const { roomId } = RoomManager.createRoom(gameId, members, host, roomSize, settingsString, roomType);
+		callback(roomId);
 	});
 
-	socket.on('requestJoinLink', gameId => {
+	socket.on('requestJoinLink', (gameId, callback) => {
 		const roomId = RoomManager.getRoomIdFromId(gameId);
-		socket.emit('giveRoomId', roomId);
+		callback(roomId);
 	});
 
 	socket.on('changeSettings', (gameId, settingsString, roomSize) => {
 		RoomManager.changeSettings(gameId, settingsString, roomSize);
 	});
 
-	socket.on('joinRoom', (gameInfo: { gameId: string, joinId: string, roomPassword: string }) => {
+	socket.on('joinRoom', (gameInfo) => {
 		const { gameId, joinId, roomPassword } = gameInfo;
 		try {
 			RoomManager.joinRoom(gameId, joinId, socket, roomPassword);
@@ -155,7 +157,7 @@ io.on('connection', function(socket: Socket) {
 		}
 	});
 
-	socket.on('spectate', (gameId, roomId = null) => {
+	socket.on('spectateRoom', (gameId, roomId = null) => {
 		// RoomId is null if the user wishes to spectate their own room
 		if(roomId !== null) {
 			RoomManager.leaveRoom(gameId);
@@ -248,9 +250,9 @@ io.on('connection', function(socket: Socket) {
 	});
 
 	// Player sent a chat message
-	socket.on('sendMessage', (gameId, message, roomId = null) => {
+	socket.on('sendMessage', (gameId, message) => {
 		// Send to everyone in the room, including sender
-		io.in(roomId || RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
+		io.in(RoomManager.getRoomIdFromId(gameId)).emit('sendMessage', gameId, message);
 	});
 
 	// Player emitted a sound

@@ -46,13 +46,16 @@ export const ModalManager = Vue.defineComponent({
 		},
 		visitGuide() {
 			window.location.assign('/guide');
+		},
+		setActiveModal({name, props}: {name: string, props: Record<string, unknown>}) {
+			this.activeModal = name;
+			Object.assign(this.props, props);
+			this.active = true;
 		}
 	},
 	mounted() {
 		this.emitter.on('setActiveModal', ({name, props}: {name: string, props: Record<string, unknown>}) => {
-			this.activeModal = name;
-			Object.assign(this.props, props);
-			this.active = true;
+			this.setActiveModal({name, props});
 		});
 
 		this.emitter.on('clearModal', () => {
@@ -71,6 +74,6 @@ export const ModalManager = Vue.defineComponent({
 				<p>If not, you can always visit the Guide from the Singleplayer menu.</p>
 				<button id="visitGuide" v-on:click.prevent="visitGuide()">Go to guide</button>
 			</div>
-			<component v-show="active" :is="activeModal" v-bind="props" v-on:clearModal="clearModal"/>
+			<component v-show="active" :is="activeModal" v-bind="props" v-on:clear-modal="clearModal" v-on:set-active-modal="setActiveModal"/>
 		</div>`
 });

@@ -16,7 +16,7 @@ export const SetRoomPasswordModal = Vue.defineComponent({
 			this.socket.emit('setRoomPassword', this.getCurrentUID(), this.password);
 			this.audioPlayer.playSfx('submit');
 
-			this.emitter.emit('submitRoomPassword');
+			this.$emit('clearModal');
 		},
 
 		clearModal() {

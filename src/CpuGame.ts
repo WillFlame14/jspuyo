@@ -6,6 +6,7 @@ import { Game } from './Game';
 import { AudioPlayer } from './utils/AudioPlayer';
 import { Settings, UserSettings } from './utils/Settings';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 const defaultUserSettings = new UserSettings();
@@ -21,7 +22,7 @@ export class CpuGame extends Game {
 	softDropTimer: number;
 	movementTimer: number;
 
-	constructor(gameId: string, opponentIds: string[], socket: Socket, ai: Cpu, speed: number, settings: Settings) {
+	constructor(gameId: string, opponentIds: string[], socket: Socket<ServerToClientEvents, ClientToServerEvents>, ai: Cpu, speed: number, settings: Settings) {
 		super(gameId, opponentIds, socket, settings, defaultUserSettings, null, null);
 
 		this.ai = ai;							// The algorithm used to determine the optimal move

@@ -2,19 +2,21 @@
 
 import mitt from 'mitt';
 import { User } from 'firebase/auth';
+import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
-import { initCustomPanels } from './panels_custom';
 import { UserSettings } from '../utils/Settings';
 
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
+export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
+
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
-	socket: Socket,
+	socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 	getCurrentUID: () => string,
 	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer
@@ -22,13 +24,32 @@ export function panelsInit(
 	globalEmitter = emitter;
 	globalAudioPlayer = audioPlayer;
 
-	initCustomPanels(emitter, clearModal, stopCurrentSession, socket);
-
 	// Dialog panels
 	document.getElementById('dialogAccept').onclick = () => {
 		document.getElementById('dialogBox').style.display = 'none';
 		document.getElementById('modal-background-disable').style.display = 'none';
 	};
+
+	// Received when room cannot be joined
+	socket.on('joinFailure', (errorMsg: string) => {
+		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
+		emitter.emit('setActiveModal', { name:'JoinRoomModal', props: { errorMsg } });
+	});
+
+	// Event received when attempting to join a password-protected room
+	socket.on('requireRoomPassword', (roomId: string) => {
+		emitter.emit('setActiveModal', { name:'JoinRoomPasswordModal', props: { roomId } });
+	});
+
+	// Event received when entering the wrong password to a password-protected room
+	socket.on('joinRoomPasswordFailure', (errorMsg: string) => {
+		emitter.emit('setActiveModal', { name: 'JoinRoomPasswordModal', props: { errorMsg } });
+	});
+
+	// Received when attempting to spectate an invalid room
+	socket.on('spectateFailure', (errorMsg: string) => {
+		emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { errorMsg } });
+	});
 }
 
 /**

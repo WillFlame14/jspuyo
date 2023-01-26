@@ -1,5 +1,6 @@
 'use strict';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from './utils/AudioPlayer';
@@ -16,7 +17,7 @@ export class PlayerGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,
@@ -51,12 +52,12 @@ export class PlayerGame extends Game {
 		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
-			else{
+			else {
 				frame--;
 			}
 			this.updateOpponentScore(oppId, score);
@@ -123,7 +124,7 @@ export class SpectateGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,
@@ -152,7 +153,7 @@ export class SpectateGame extends Game {
 		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;

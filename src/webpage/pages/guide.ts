@@ -1,5 +1,6 @@
 import * as Vue from 'vue';
 import mitt from 'mitt';
+import { ServerToClientEvents, ClientToServerEvents } from '../../@types/events';
 import { Socket } from 'socket.io-client';
 
 import { ModalManager } from '../ModalManager';
@@ -10,6 +11,8 @@ import { Settings } from '../../utils/Settings';
 import { PlayerGame } from '../../PlayerGame';
 import { clearCells, generateCells } from '../../Main';
 import { Simulator } from '../../PlayerSession';
+
+type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 interface GuidePage {
 	pageNumber: number,
@@ -31,7 +34,7 @@ const settings = new Settings();
 const userSettings = new UserSettings();
 let currentSession: Simulator;
 
-export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: Socket, audioPlayer: AudioPlayer): void {
+export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: CSocket, audioPlayer: AudioPlayer): void {
 	app.component('guide', GuideComponent);
 	app.component('modal-manager', ModalManager);
 	app.mount('#vue-app');

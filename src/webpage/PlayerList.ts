@@ -1,7 +1,7 @@
 import * as Vue from 'vue';
 
 import { PlayerInfo } from './firebase';
-import { puyoImgs } from './panels_custom';
+import { puyoImgs } from './panels';
 
 interface Player {
 	name: string,
@@ -47,7 +47,7 @@ export const PlayerList = Vue.defineComponent({
 		});
 	},
 	unmounted() {
-		this.socket.off('updatePlayers', undefined);
+		this.emitter.off('updatePlayers', undefined);
 	},
 	template: `
 		<div id="playersTitle">Players</div>

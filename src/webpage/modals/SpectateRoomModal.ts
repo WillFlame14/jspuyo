@@ -40,7 +40,7 @@ export const SpectateRoomModal = Vue.defineComponent({
 			event.preventDefault();
 			// await this.stopCurrentSession();
 
-			this.socket.emit('spectate', this.getCurrentUID(), this.currentRoomId);
+			this.socket.emit('spectateRoom', this.getCurrentUID(), this.currentRoomId);
 			this.audioPlayer.playSfx('submit');
 		},
 		clearModal() {

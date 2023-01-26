@@ -1,13 +1,15 @@
 'use strict';
 
 import { Game } from './Game';
+
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 export class Session {
 	gameId: string;
 	opponentIds: string[];
 	game: Game;
-	socket: Socket;
+	socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 	roomId: string;
 
 	/** Flag to force the session to end immediately. */
@@ -16,7 +18,7 @@ export class Session {
 	stopped = false;
 	paused = false;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket<ServerToClientEvents, ClientToServerEvents>, roomId: string) {
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.game = game;

@@ -4,7 +4,7 @@ import type { PropType } from 'vue';
 import { RoomSizeSelector } from './RoomSizeSelector';
 
 import { Gamemode, Settings } from '../../utils/Settings';
-import { puyoImgs } from '../panels_custom';
+import { puyoImgs } from '../panels';
 
 interface RoomSettings extends Settings {
 	numPlayers: number,
@@ -105,11 +105,13 @@ export const RoomOptionsModal = Vue.defineComponent({
 			switch(this.createRoomMode) {
 				case 'create':
 					void this.stopCurrentSession().then(() => {
-						this.socket.emit('createRoom', { gameId: this.getCurrentUID(), settingsString, roomSize, roomType });
+						this.socket.emit('createRoom', { gameId: this.getCurrentUID(), settingsString, roomSize, roomType }, (roomId) => {
+							this.emitter.emit('setActiveModal', { name: 'JoinIdModal', props: { roomId } });
+						});
 					});
 					break;
 				case 'set':
-					this.socket.emit('changeSettings', this.getCurrentUID(), settingsString, roomSize, roomType);
+					this.socket.emit('changeSettings', this.getCurrentUID(), settingsString, roomSize);
 					break;
 			}
 			this.audioPlayer.playSfx('submit');

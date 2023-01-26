@@ -1,7 +1,7 @@
 import * as Vue from 'vue';
 
 import { CPU_NAMES } from '../../cpu/CpuVariants';
-import { puyoImgs } from '../panels_custom';
+import { puyoImgs } from '../panels';
 
 interface BasicCpuInfo {
 	ai: string,
@@ -37,6 +37,7 @@ const CpuSettingsComponent = Vue.defineComponent({
 });
 
 export const CpuOptionsModal = Vue.defineComponent({
+	emits: ['clearModal'],
 	components: {
 		'cpu-settings-component': CpuSettingsComponent
 	},
@@ -53,7 +54,7 @@ export const CpuOptionsModal = Vue.defineComponent({
 			this.audioPlayer.playSfx('submit');
 
 			// Send request to server to add CPU (can only add only up to roomsize)
-			this.socket.emit('addCpu', this.getCurrentUID(), (index: number) => {
+			this.socket.emit('addCpu', this.getCurrentUID(), (index) => {
 				if(index === -1) {
 					this.errorMsg = 'There is no more space in the room.';
 					return;
@@ -69,7 +70,7 @@ export const CpuOptionsModal = Vue.defineComponent({
 			this.audioPlayer.playSfx('submit');
 
 			// Send request to server to remove CPU (can only remove if there are any CPUs)
-			this.socket.emit('removeCpu', this.getCurrentUID(), (index: number) => {
+			this.socket.emit('removeCpu', this.getCurrentUID(), (index) => {
 				if(index === -1) {
 					// No CPUs in room
 					this.errorMsg = 'There no CPUs currently in the room.';
@@ -83,7 +84,18 @@ export const CpuOptionsModal = Vue.defineComponent({
 		},
 
 		submitCpus() {
-			this.emitter.emit('setCpus', this.cpus);
+			const cpus = this.cpus.map(cpuInfo => {
+				const cpu = Object.assign({ client_socket: null, socket: null }, cpuInfo);
+				cpu.speed = (10 - cpu.speed) * 500;
+
+				return cpu;
+			});
+
+			this.socket.emit('setCpus', { gameId: this.getCurrentUID(), cpus });
+			this.audioPlayer.playSfx('submit');
+
+			// Close the CPU options menu
+			this.$emit('clearModal');
 		},
 
 		setAI({ id, ai }: { id: number, ai: string }) {
@@ -96,7 +108,7 @@ export const CpuOptionsModal = Vue.defineComponent({
 		},
 
 		clearModal() {
-			this.emitter.emit('clearModal');
+			this.$emit('clearModal');
 			this.audioPlayer.playSfx('close_modal');
 		}
 	},

@@ -22,34 +22,7 @@ export function panelsInit(
 	globalEmitter = emitter;
 	globalAudioPlayer = audioPlayer;
 
-	initCustomPanels(emitter, clearModal, stopCurrentSession, socket, audioPlayer, getCurrentUID);
-
-	// The black overlay that appears when a modal box is shown
-	const modal = document.getElementById('modal-background');
-
-	// Manage window onclick
-	window.onclick = function(event: Event) {
-		if (event.target === modal) {
-			clearModal();
-		}
-	};
-
-	// Queue Panel
-	document.getElementById('freeForAll').onclick = async () => {
-		await stopCurrentSession();
-		document.getElementById('statusGamemode').innerHTML = 'Free For All';
-		socket.emit('freeForAll', { gameId: getCurrentUID() });
-	};
-	document.getElementById('ranked').onclick = async () => {
-		await stopCurrentSession();
-		document.getElementById('statusGamemode').innerHTML = 'Ranked';
-		socket.emit('ranked', { gameId: getCurrentUID() });
-	};
-
-	document.getElementById('guide').onclick = async () => {
-		await stopCurrentSession();
-		window.location.assign('/guide');
-	};
+	initCustomPanels(emitter, clearModal, stopCurrentSession, socket);
 
 	// Dialog panels
 	document.getElementById('dialogAccept').onclick = () => {

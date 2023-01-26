@@ -163,8 +163,8 @@ io.on('connection', function(socket: Socket) {
 		RoomManager.spectateRoom(gameId, socket, roomId);
 	});
 
-	socket.on('getAllRooms', gameId => {
-		socket.emit('allRooms', RoomManager.getAllRooms(gameId));
+	socket.on('getAllRooms', (gameId, callback: (allRoomIds: string[]) => void) => {
+		callback(RoomManager.getAllRooms(gameId));
 	});
 
 	socket.on('getPlayers', (roomId: string, callback: (players: string[]) => void) => {

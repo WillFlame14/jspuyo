@@ -19,7 +19,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 	components: {
 		'room-size-selector': RoomSizeSelector
 	},
-	inject: ['audioPlayer'],
+	inject: ['audioPlayer', 'getCurrentUID', 'socket', 'stopCurrentSession'],
 	props: {
 		createRoomMode: {
 			type: String as PropType<CreateRoomMode>,
@@ -99,8 +99,23 @@ export const RoomOptionsModal = Vue.defineComponent({
 			settings.marginTime *= 1000;		// Convert margin time to milliseconds
 
 			const roomType = this.settings.winCondition === 'None' ? 'default' : this.settings.winCondition;
+			const roomSize = this.settings.numPlayers || 4;
 
-			this.emitter.emit('submitRoomSettings', { settings, roomSize: this.settings.numPlayers || 4, mode: this.createRoomMode, roomType });
+			const settingsString = Object.assign(new Settings(), settings).toString();
+			switch(this.createRoomMode) {
+				case 'create':
+					void this.stopCurrentSession().then(() => {
+						this.socket.emit('createRoom', { gameId: this.getCurrentUID(), settingsString, roomSize, roomType });
+					});
+					break;
+				case 'set':
+					this.socket.emit('changeSettings', this.getCurrentUID(), settingsString, roomSize, roomType);
+					break;
+			}
+			this.audioPlayer.playSfx('submit');
+
+			// Close the CPU options menu
+			this.$emit('clearModal');
 		},
 
 		clearModal() {

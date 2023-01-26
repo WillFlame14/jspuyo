@@ -4,6 +4,8 @@ import { AppearanceComponent } from './AppearanceComponent';
 import { KeyBindings as KeyBindingsComponent } from './KeyBindingsComponent';
 
 import { UserSettings, KeyBindings } from '../../utils/Settings';
+import { PlayerInfo } from '../firebase';
+import { preloadSprites } from '../../draw/SpriteDrawer';
 
 export const SettingsModal = Vue.defineComponent({
 	emits: ['clearModal'],
@@ -11,8 +13,8 @@ export const SettingsModal = Vue.defineComponent({
 		'appearance-icons': AppearanceComponent,
 		'key-bindings': KeyBindingsComponent
 	},
-	inject: ['audioPlayer'],
-	data(): { settings: UserSettings } {
+	inject: ['audioPlayer', 'getCurrentUID'],
+	data(): { settings: Partial<UserSettings> } {
 		return {
 			settings: {
 				das: 200,
@@ -20,9 +22,7 @@ export const SettingsModal = Vue.defineComponent({
 				sfxVolume: 50,
 				musicVolume: 50,
 				skipFrames: 50,
-				appearance: null,		// The properties below are just for completion, they are not really used
-				keyBindings: null,
-				voice: ''
+				appearance: 'TsuClassic'
 			}
 		};
 	},
@@ -46,17 +46,27 @@ export const SettingsModal = Vue.defineComponent({
 				});
 			});
 
-			const _appearance: Promise<string> = new Promise((resolve) => {
-				this.emitter.emit('getAppearance', (newAppearance: string) => {
-					resolve(newAppearance);
-				});
+			const [keyBindings] = await Promise.all([_keyBindings]);
+			newSettings.keyBindings = keyBindings;
+
+			void PlayerInfo.getUserProperty(this.getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
+				userSettings = Object.assign(userSettings, newSettings);
+
+				// Configure audio player with new volume settings
+				this.audioPlayer.configureVolume(userSettings);
+
+				// Update values
+				PlayerInfo.updateUser(this.getCurrentUID(), 'userSettings', userSettings);
+
+				this.audioPlayer.playSfx('submit');
+				this.$emit('clearModal');
 			});
 
-			const [keyBindings, appearance] = await Promise.all([_keyBindings, _appearance]);
-			newSettings.keyBindings = keyBindings;
-			newSettings.appearance = appearance;
+			preloadSprites(newSettings.appearance);
+		},
 
-			this.emitter.emit('saveSettings', newSettings);
+		selectAppearance(appearance: string) {
+			this.settings.appearance = appearance;
 		},
 
 		clearModal() {
@@ -121,7 +131,7 @@ export const SettingsModal = Vue.defineComponent({
 						</form>
 					</div>
 					<div class="option-title">Appearance</div>
-					<appearance-icons></appearance-icons>
+					<appearance-icons v-bind:selected="settings.appearance" v-on:select-appearance="selectAppearance"></appearance-icons>
 					<button id="settingsSubmit" v-on:click="saveSettings()">Save Settings</button>
 				</div>
 			</div>

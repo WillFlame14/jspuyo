@@ -37,6 +37,15 @@ export const ModalManager = Vue.defineComponent({
 		clearModal() {
 			this.active = false;
 			this.props.errorMsg = '';
+		},
+		// Clear modal if the click was on the background (and not a child element)
+		modalClick(event: Event) {
+			if ((event.target as HTMLElement).id === 'modal-background') {
+				this.clearModal();
+			}
+		},
+		visitGuide() {
+			window.location.assign('/guide');
 		}
 	},
 	mounted() {
@@ -55,12 +64,12 @@ export const ModalManager = Vue.defineComponent({
 		});
 	},
 	template:`
-		<div v-show="active" class="modal" id="modal-background">
+		<div v-show="active" class="modal" id="modal-background" v-on:click="modalClick">
 			<div class="modal-content" id="viewGuideModal">
 				<div class="close">&times;</div>
 				<p>It looks like it's your first time here. Would you like to view a guide on controls and how to play?</p>
 				<p>If not, you can always visit the Guide from the Singleplayer menu.</p>
-				<button id="visitGuide">Go to guide</button>
+				<button id="visitGuide" v-on:click.prevent="visitGuide()">Go to guide</button>
 			</div>
 			<component v-show="active" :is="activeModal" v-bind="props" v-on:clearModal="clearModal"/>
 		</div>`

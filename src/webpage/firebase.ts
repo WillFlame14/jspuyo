@@ -169,11 +169,6 @@ function initializeUI(resolve: (user: User) => void) {
 			username = (document.getElementById('usernamePickerText') as HTMLInputElement).value || fallbackName;
 		});
 	};
-
-	document.getElementById('visitGuide').onclick = function(event) {
-		event.preventDefault();
-		window.location.assign('/guide');
-	};
 }
 
 /**

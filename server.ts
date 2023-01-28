@@ -148,7 +148,7 @@ io.on('connection', function(socket) {
 	socket.on('joinRoom', (gameInfo) => {
 		const { gameId, joinId, roomPassword } = gameInfo;
 		try {
-			RoomManager.joinRoom(gameId, joinId, socket, roomPassword);
+			RoomManager.joinRoom(gameId, socket, joinId, roomPassword);
 		}
 		catch(err) {
 			if(err instanceof Error) {
@@ -187,7 +187,7 @@ io.on('connection', function(socket) {
 		// Pending ranked game
 		else {
 			try {
-				const room = RoomManager.joinRoom(gameId, RoomManager.rankedRoomId, socket);
+				const room = RoomManager.joinRoom(gameId, socket, RoomManager.rankedRoomId);
 				// Start game in 10s if there are 2 players
 				if(room.members.size === 2 && room.quickPlayTimer === null) {
 					room.quickPlayTimer = setTimeout(() => {
@@ -221,7 +221,7 @@ io.on('connection', function(socket) {
 		}
 		else {
 			try {
-				const room = RoomManager.joinRoom(gameId, RoomManager.defaultQueueRoomId, socket);
+				const room = RoomManager.joinRoom(gameId, socket, RoomManager.defaultQueueRoomId);
 
 				// Start game in 30s if there are at least 2 players
 				if(room.members.size >= 2 && !room.ingame && room.quickPlayTimer === null) {

@@ -1,4 +1,5 @@
 import * as Vue from 'vue';
+import type { PropType } from 'vue';
 
 import { CPU_NAMES } from '../../cpu/CpuVariants';
 import { puyoImgs } from '../panels';
@@ -42,10 +43,16 @@ export const CpuOptionsModal = Vue.defineComponent({
 		'cpu-settings-component': CpuSettingsComponent
 	},
 	inject: ['audioPlayer', 'socket', 'getCurrentUID'],
-	props: ['host'],
-	data(): { cpus: BasicCpuInfo[], errorMsg: string } {
+	props: {
+		host: {
+			type: Boolean
+		},
+		cpus: {
+			type: Array as PropType<BasicCpuInfo[]>
+		}
+	},
+	data(): { errorMsg: string } {
 		return {
-			cpus: [],
 			errorMsg: ''
 		};
 	},
@@ -106,14 +113,6 @@ export const CpuOptionsModal = Vue.defineComponent({
 		setSpeed({ id, speed }: { id: number, speed: number }) {
 			this.cpus[id].speed = speed;
 		},
-	},
-	mounted() {
-		this.emitter.on('presetCpus', (cpus: BasicCpuInfo[]) => {
-			this.cpus = cpus;
-		});
-	},
-	unmounted() {
-		this.emitter.off('presetCpus', undefined);
 	},
 	template: `
 		<div class="modal-content" id="cpuOptionsModal">

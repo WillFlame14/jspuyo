@@ -19,8 +19,6 @@ export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', '
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
 	socket: Socket<ServerToClientEvents, ClientToServerEvents>,
-	getCurrentUID: () => string,
-	stopCurrentSession: () => Promise<void>,
 	audioPlayer: AudioPlayer
 ): void {
 	globalEmitter = emitter;

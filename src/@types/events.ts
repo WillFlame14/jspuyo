@@ -12,7 +12,7 @@ export interface ClientToServerEvents {
 	getOnlineUsers: (callback: (numUsers: number) => void) => void,
 	register: (gameId: string) => void,
 	createRoom: (gameInfo: { gameId: string, settingsString: string, roomSize: number, roomType: string}, callback: (roomId: string) => void) => void,
-	joinRoom: (gameInfo: { gameId: string, joinId: string, roomPassword?: string }) => void,
+	joinRoom: (gameInfo: { gameId: string, joinId?: string, roomPassword?: string }) => void,
 	spectateRoom: (gameId, roomId?: string) => void,
 	requestJoinLink: (gameId: string, callback: (roomId: string) => void) => void,
 	freeForAll: (gameInfo: { gameId: string }) => void,

@@ -13,12 +13,13 @@ import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
 import { PlayerInfo, basicInit, initApp, signOut } from './webpage/firebase';
-import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
 import { vueInit } from './webpage/vue_loader';
 
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';
+
+import store from './webpage/store';
 
 const globalSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
@@ -76,8 +77,7 @@ declare module '@vue/runtime-core' {
 		default:
 			vueInit(app);
 			init(globalSocket);			// game-related
-			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+			panelsInit(globalEmitter, globalSocket, globalAudioPlayer);
 
 			// Set up the login process for firebase. loginSuccess() will be called after login finishes
 			initApp(globalSocket, loginSuccess);
@@ -192,7 +192,7 @@ function init(socket: Socket<ServerToClientEvents, ClientToServerEvents>): void 
 			}
 
 			if(spectating) {
-				toggleSpectate();
+				store.toggleSpectate();
 				roomManageOptions.style.display = 'block';
 				statusExtra.innerHTML = 'You are currently spectating this room.';
 			}
@@ -203,12 +203,12 @@ function init(socket: Socket<ServerToClientEvents, ClientToServerEvents>): void 
 		// Custom room
 		else {
 			if(spectating) {
-				toggleSpectate();
+				store.toggleSpectate();
 				statusExtra.innerHTML = 'You are currently spectating this room.';
 				statusExtra.style.display = 'block';
 			}
 			else {
-				toggleHost(host);
+				store.toggleHost(host);
 				statusExtra.innerHTML = '';
 				statusExtra.style.display = 'none';
 			}

@@ -34,15 +34,10 @@ export const JoinIdModal = Vue.defineComponent({
 				this.audioPlayer.playSfx('submit');
 			}
 		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
-		}
 	},
 	template:`
 		<div class="modal-content" id="giveJoinId">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<div>Use the following link to join the room:</div>
 			<form autocomplete="off">
 				<input type="text" ref="joinIdLink" id="joinIdLink" v-bind:value="link">

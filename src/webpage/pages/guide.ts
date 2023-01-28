@@ -1,18 +1,14 @@
 import * as Vue from 'vue';
-import mitt from 'mitt';
-import { ServerToClientEvents, ClientToServerEvents } from '../../@types/events';
-import { Socket } from 'socket.io-client';
 
 import { ModalManager } from '../ModalManager';
 import { UserSettings } from '../../utils/Settings';
-import { AudioPlayer } from '../../utils/AudioPlayer';
 
 import { Settings } from '../../utils/Settings';
 import { PlayerGame } from '../../PlayerGame';
 import { clearCells, generateCells } from '../../Main';
 import { Simulator } from '../../PlayerSession';
 
-type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+import store from '../store';
 
 interface GuidePage {
 	pageNumber: number,
@@ -30,41 +26,10 @@ interface Options {
 	seed?: number;
 }
 
-const settings = new Settings();
-const userSettings = new UserSettings();
-let currentSession: Simulator;
-
-export function initGuide(app: Vue.App<Element>, emitter: ReturnType<typeof mitt>, socket: CSocket, audioPlayer: AudioPlayer): void {
+export function initGuide(app: Vue.App<Element>): void {
 	app.component('guide', GuideComponent);
 	app.component('modal-manager', ModalManager);
 	app.mount('#vue-app');
-
-	emitter.on('saveSettings', (newSettings: UserSettings) => {
-		Object.assign(userSettings, newSettings);
-		emitter.emit('clearModal');
-	});
-
-	emitter.on('startSimulator', (options: Options) => {
-		clearCells();
-		settings.setSeed(options.seed);		// Will default to random seed if none is provided
-		const gameAreas = generateCells(['test'], settings);
-		const game = new PlayerGame(null, ['system'], socket, settings, userSettings, gameAreas, audioPlayer);
-
-		if(options.nuisance) {
-			game.receiveNuisance('system', options.nuisance);
-			game.activateNuisance('system');
-		}
-		if(options.startingBoard) {
-			game.setStartingBoard(options.startingBoard);
-		}
-
-		currentSession = new Simulator(game, socket);
-		currentSession.run();
-	});
-
-	emitter.on('stopSimulator', () => {
-		void currentSession.stop();
-	});
 }
 
 const guidePages: GuidePage[] = [
@@ -154,12 +119,17 @@ const guidePages: GuidePage[] = [
 ];
 
 const GuideComponent = Vue.defineComponent({
-	data(): { pageNum: number, currentPage: GuidePage, guidePages: GuidePage[], simulatorOn: boolean } {
+	inject: ['audioPlayer', 'socket'],
+	data() {
 		return {
 			pageNum: 0,
 			currentPage: guidePages[0],
+			currentSession: undefined as Simulator,
 			guidePages,
-			simulatorOn: false
+			simulatorOn: false,
+			settings: new Settings(),
+			userSettings: new UserSettings(),
+			store
 		};
 	},
 	methods: {
@@ -168,22 +138,40 @@ const GuideComponent = Vue.defineComponent({
 			this.currentPage = this.guidePages[this.pageNum];
 			clearCells();
 			if(this.currentPage.options.simulator) {
-				generateCells(['test'], settings);
+				generateCells(['test'], this.settings);
 			}
 			if(this.simulatorOn) {
 				this.stopSimulator();
 			}
 		},
 		startSimulator() {
-			this.emitter.emit('startSimulator', this.currentPage.options);
+			clearCells();
+			const { options } = this.currentPage;
+
+			this.settings.setSeed(options.seed);		// Will default to random seed if none is provided
+			const gameAreas = generateCells(['test'], this.settings, this.userSettings.appearance);
+			const game = new PlayerGame(null, ['system'], this.socket, this.settings, this.userSettings, gameAreas, this.audioPlayer);
+
+			if(options.nuisance) {
+				game.receiveNuisance('system', options.nuisance);
+				game.activateNuisance('system');
+			}
+			if(options.startingBoard) {
+				game.setStartingBoard(options.startingBoard);
+			}
+
+			this.currentSession = new Simulator(game, this.socket);
+			this.currentSession.run();
+
 			this.simulatorOn = true;
 		},
 		stopSimulator() {
-			this.emitter.emit('stopSimulator');
+			void this.currentSession.stop();
+
 			this.simulatorOn = false;
 		},
 		openSettings() {
-			this.emitter.emit('setActiveModal', { name: 'SettingsModal' });
+			store.setActiveModal('SettingsModal');
 
 			if(this.simulatorOn) {
 				this.stopSimulator();
@@ -192,6 +180,19 @@ const GuideComponent = Vue.defineComponent({
 		returnHome() {
 			window.location.assign('/');
 		}
+	},
+	mounted() {
+		// Enable anonymous functions
+		this.store.props.anonymous = true;
+
+		this.store.props.anonymousFunctions = {
+			saveSettings: (newSettings: UserSettings) => {
+				Object.assign(this.userSettings, newSettings);
+
+				this.audioPlayer.configureVolume(this.userSettings);
+				store.clearModal();
+			}
+		};
 	},
 	template: `
 		<table class="guide" id="playArea">

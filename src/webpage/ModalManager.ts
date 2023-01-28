@@ -9,6 +9,8 @@ import { SettingsModal } from './modals/SettingsModal';
 import { SetRoomPasswordModal } from './modals/SetRoomPasswordModal';
 import { SpectateRoomModal } from './modals/SpectateRoomModal';
 
+import store from './store';
+
 export const ModalManager = Vue.defineComponent({
 	components: {
 		CpuOptionsModal,
@@ -20,23 +22,19 @@ export const ModalManager = Vue.defineComponent({
 		SetRoomPasswordModal,
 		SpectateRoomModal
 	},
+	inject: ['audioPlayer'],
 	data() {
 		return {
-			active: false,
-			activeModal: 'RoomOptionsModal',
-			props: {
-				host: true,
-				createRoomMode: 'create',
-				roomId: '',
-				errorMsg: '',
-				allRoomIds: []
-			}
+			store
 		};
 	},
 	methods: {
-		clearModal() {
-			this.active = false;
-			this.props.errorMsg = '';
+		clearModal(playSfx = true) {
+			this.store.clearModal();
+
+			if (playSfx) {
+				this.audioPlayer.playSfx('close_modal');
+			}
 		},
 		// Clear modal if the click was on the background (and not a child element)
 		modalClick(event: Event) {
@@ -47,33 +45,18 @@ export const ModalManager = Vue.defineComponent({
 		visitGuide() {
 			window.location.assign('/guide');
 		},
-		setActiveModal({name, props}: {name: string, props: Record<string, unknown>}) {
-			this.activeModal = name;
-			Object.assign(this.props, props);
-			this.active = true;
+		setActiveModal(name: string, props: Record<string, unknown>) {
+			this.store.setActiveModal(name, props);
 		}
 	},
-	mounted() {
-		this.emitter.on('setActiveModal', ({name, props}: {name: string, props: Record<string, unknown>}) => {
-			this.setActiveModal({name, props});
-		});
-
-		this.emitter.on('clearModal', () => {
-			this.active = false;
-		});
-
-		this.emitter.on('toggleHost', (host: boolean) => {
-			this.props.host = host;
-		});
-	},
 	template:`
-		<div v-show="active" class="modal" id="modal-background" v-on:click="modalClick">
+		<div v-show="store.active" class="modal" id="modal-background" v-on:click="modalClick">
 			<div class="modal-content" id="viewGuideModal">
 				<div class="close">&times;</div>
 				<p>It looks like it's your first time here. Would you like to view a guide on controls and how to play?</p>
 				<p>If not, you can always visit the Guide from the Singleplayer menu.</p>
 				<button id="visitGuide" v-on:click.prevent="visitGuide()">Go to guide</button>
 			</div>
-			<component v-show="active" :is="activeModal" v-bind="props" v-on:clear-modal="clearModal" v-on:set-active-modal="setActiveModal"/>
+			<component :is="store.activeModal" v-bind="store.props" v-on:clear-modal="clearModal" v-on:set-active-modal="setActiveModal"/>
 		</div>`
 });

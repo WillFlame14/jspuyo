@@ -38,14 +38,14 @@ declare module '@vue/runtime-core' {
 
 // This is the "main" function, which starts up the entire app.
 (function() {
-	const app = Vue.createApp({
+	const app = Vue.createApp(Vue.defineComponent({
 		provide: {
 			audioPlayer: globalAudioPlayer,
 			socket: globalSocket,
 			getCurrentUID,
 			stopCurrentSession
 		}
-	});
+	}));
 
 	app.config.globalProperties.emitter = globalEmitter;
 
@@ -68,7 +68,7 @@ declare module '@vue/runtime-core' {
 			break;
 		case '/guide':
 			basicInit();
-			initGuide(app, globalEmitter, globalSocket, globalAudioPlayer);
+			initGuide(app);
 			break;
 		case '/gallery':
 			initCharts();

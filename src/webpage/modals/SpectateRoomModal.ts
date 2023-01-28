@@ -42,15 +42,11 @@ export const SpectateRoomModal = Vue.defineComponent({
 
 			this.socket.emit('spectateRoom', this.getCurrentUID(), this.currentRoomId);
 			this.audioPlayer.playSfx('submit');
-		},
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	template:`
 		<div class="modal-content" id="spectateRoomModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<form id="spectateForm" autocomplete="off" v-on:submit="submit()">
 				<label for="roomList">Select a room you wish to spectate.</label><br>
 				<div class="errorMsg" id="spectateFormError" v-show="errorMsg.length !== 0">{{errorMsg}}</div>

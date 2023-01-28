@@ -15,7 +15,7 @@ interface RoomSettings extends Settings {
 type CreateRoomMode = 'create' | 'set';
 
 export const RoomOptionsModal = Vue.defineComponent({
-	emits: ['clearModal'],
+	emits: ['clearModal', 'setActiveModal'],
 	components: {
 		'room-size-selector': RoomSizeSelector
 	},
@@ -26,20 +26,20 @@ export const RoomOptionsModal = Vue.defineComponent({
 			validator: (value: string) => {
 				return ['create', 'set'].includes(value);
 			}
-		}
+		},
+		host: Boolean
 	},
-	data(): { settings: RoomSettings, wildNumSelected: boolean, puyoImgs: string[], winConditions: string[], disabled: boolean } {
+	data() {
 		return {
 			settings: Object.assign(new Settings(), {
 				marginTime: 96,		// Set to seconds
 				numPlayers: 4,
 				hardDrop: false,
 				winCondition: 'None'
-			}),
+			}) as RoomSettings,
 			wildNumSelected: false,
 			puyoImgs,
-			winConditions: ['None', 'FT 3', 'FT 5', 'FT 7'],
-			disabled: false
+			winConditions: ['None', 'FT 3', 'FT 5', 'FT 7']
 		};
 	},
 	computed: {
@@ -60,7 +60,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 		},
 
 		changeGamemode() {
-			if(this.disabled) {
+			if(!this.host) {
 				return;
 			}
 
@@ -106,7 +106,7 @@ export const RoomOptionsModal = Vue.defineComponent({
 				case 'create':
 					void this.stopCurrentSession().then(() => {
 						this.socket.emit('createRoom', { gameId: this.getCurrentUID(), settingsString, roomSize, roomType }, (roomId) => {
-							this.emitter.emit('setActiveModal', { name: 'JoinIdModal', props: { roomId } });
+							this.$emit('setActiveModal', 'JoinIdModal', { roomId });
 						});
 					});
 					break;
@@ -115,27 +115,11 @@ export const RoomOptionsModal = Vue.defineComponent({
 					break;
 			}
 			this.audioPlayer.playSfx('submit');
-
-			// Close the CPU options menu
-			this.$emit('clearModal');
-		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
 		}
-	},
-	mounted() {
-		this.emitter.on('disableRoomSettings', (state: boolean) => {
-			this.disabled = state;
-		});
-	},
-	unmounted() {
-		this.emitter.off('disableRoomSettings', undefined);
 	},
 	template: `
 		<div class="modal-content" id="createRoomModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<div class="modal-title">Room Options</div>
 			<div class="left-right-container" id="createRoomOptions">
 				<div id="createRoomOptionsLeft">
@@ -147,21 +131,21 @@ export const RoomOptionsModal = Vue.defineComponent({
 					</div>
 					<form id="boardSizeSelector" autocomplete="off">
 						<label for="numRows">Rows</label>
-						<input type="number" id="numRows" v-model.number="settings.rows" min="6" max="100" v-bind:disabled="disabled">
+						<input type="number" id="numRows" v-model.number="settings.rows" min="6" max="100" v-bind:disabled="!host">
 						<label for="numCols">Columns</label>
-						<input type="number" id="numCols" v-model.number="settings.cols" min="3" max="50" v-bind:disabled="disabled">
+						<input type="number" id="numCols" v-model.number="settings.cols" min="3" max="50" v-bind:disabled="!host">
 					</form>
 					<div id="roomSizeSelector">
 						<room-size-selector
 							v-bind:selectedNum="settings.numPlayers"
 							v-bind:wildNumSelected="wildNumSelected"
 							v-on:selectNumPlayers="selectNumPlayers"
-							v-bind:disabled="disabled || createRoomMode === 'set'">
+							v-bind:disabled="!host || createRoomMode === 'set'">
 						</room-size-selector>
 					</div>
 					<form id="coloursSelector" autocomplete="off">
 						<label id="coloursSelectorTitle" for="numColoursInput">Colours</label><br>
-						<input type="number" id="numColoursInput" v-model.number="settings.numColours" min="0" max="5" v-bind:disabled="disabled">
+						<input type="number" id="numColoursInput" v-model.number="settings.numColours" min="0" max="5" v-bind:disabled="!host">
 						<span id="coloursSelected">
 							<img v-for="index in settings.numColours"
 								v-bind:src="'images/modal_boxes/puyo_' + puyoImgs[index - 1] + '.png'">
@@ -171,28 +155,28 @@ export const RoomOptionsModal = Vue.defineComponent({
 				<div class="divider vertical" id="createRoomDivider"></div>
 				<form id="createRoomOptionsAdvanced" autocomplete="off">
 					<label class="roomOptionLabel" for="marginTime">Margin Time</label>
-					<input class="roomOptionInput" type="number" id="marginTime" v-model.number="settings.marginTime" min="0" max="1000" v-bind:disabled="disabled">
+					<input class="roomOptionInput" type="number" id="marginTime" v-model.number="settings.marginTime" min="0" max="1000" v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="targetPoints">Target Points</label>
-					<input class="roomOptionInput" type="number" id="targetPoints" v-model.number="settings.targetPoints" min="0" max="100000" v-bind:disabled="disabled">
+					<input class="roomOptionInput" type="number" id="targetPoints" v-model.number="settings.targetPoints" min="0" max="100000" v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="minChainLength">Min Chain Length</label>
-					<input class="roomOptionInput" type="number" id="minChainLength" v-model.number="settings.minChain" min="0" max="16" v-bind:disabled="disabled">
+					<input class="roomOptionInput" type="number" id="minChainLength" v-model.number="settings.minChain" min="0" max="16" v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="gravity">Gravity</label>
-					<input class="roomOptionInput" type="number" id="gravity" v-model.number="settings.gravity" min="0" max="0.2" step="any" v-bind:disabled="disabled">
+					<input class="roomOptionInput" type="number" id="gravity" v-model.number="settings.gravity" min="0" max="0.2" step="any" v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="softDrop">Soft Drop</label>
-					<input class="roomOptionInput" type="number" id="softDrop" v-model.number="settings.softDrop" min="0" max="1"  step="any" v-bind:disabled="disabled">
+					<input class="roomOptionInput" type="number" id="softDrop" v-model.number="settings.softDrop" min="0" max="1"  step="any" v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="hardDrop">Hard Drop</label>
 					<input class="roomOptionInput" type="button" id="hardDrop"
 						v-bind:class="{ on: settings.hardDrop, off: !settings.hardDrop }"
 						v-model="hardDropStatus"
 						v-on:click="toggleHardDrop()"
-						v-bind:disabled="disabled">
+						v-bind:disabled="!host">
 					<label class="roomOptionLabel" for="winCondition">Win Condition</label>
 					<input class="roomOptionInput" type="button" id="winCondition"
 						v-model="settings.winCondition"
 						v-on:click="changeWinCondition()"
-						v-bind:disabled="disabled">
+						v-bind:disabled="!host">
 					<input type="submit" id="createRoomSubmit"
-						v-if="!disabled"
+						v-if="host"
 						v-bind:value="submitMessage"
 						v-on:click="submitSettings($event)">
 				</form>

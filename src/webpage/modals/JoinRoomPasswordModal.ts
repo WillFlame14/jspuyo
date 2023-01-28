@@ -19,16 +19,11 @@ export const JoinRoomPasswordModal = Vue.defineComponent({
 
 			this.socket.emit('joinRoom', { gameId: this.getCurrentUID(), joinId: this.roomId, roomPassword: this.password });
 			this.audioPlayer.playSfx('submit');
-		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	template:`
 		<div class="modal-content" id="joinRoomPasswordModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<form id="joinRoomPasswordForm" autocomplete="off" v-on:submit="submit()">
 				<label for="joinRoomPassword">Enter the password for the room.</label><br>
 				<div class="errorMsg" id="joinRoomPasswordFormError" v-show="errorMsg.length !== 0">{{errorMsg}}</div>

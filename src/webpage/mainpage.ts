@@ -6,14 +6,13 @@ import mitt from 'mitt';
 import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { Socket } from 'socket.io-client';
 
+import store from './store';
+
 type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 let currentlyHost = false;
-let globalEmitter: ReturnType<typeof mitt>;
 
 export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, getCurrentUID: () => string, audioPlayer: AudioPlayer): void {
-	globalEmitter = emitter;
-
 	document.querySelectorAll('.roomManageOption').forEach(element => {
 		element.addEventListener('click', () => {
 			audioPlayer.playSfx('click_option');
@@ -23,7 +22,7 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, 
 	document.getElementById('manageCpus').onclick = function() {
 		toggleHost(currentlyHost);
 
-		globalEmitter.emit('setActiveModal', { name: 'CpuOptionsModal' });
+		store.setActiveModal('CpuOptionsModal');
 		socket.emit('requestCpus', getCurrentUID(), (cpus) => {
 			emitter.emit('presetCpus', cpus);
 		});
@@ -33,11 +32,11 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, 
 		toggleHost(currentlyHost);
 
 		// Flag so the submit button causes settings to be changed (instead of creating a new room)
-		globalEmitter.emit('setActiveModal', { name: 'RoomOptionsModal', props: { createRoomMode: 'set' } });
+		store.setActiveModal('RoomOptionsModal', { createRoomMode: 'set' });
 	};
 
 	document.getElementById('manageRoomPassword').onclick = function() {
-		globalEmitter.emit('setActiveModal', { name: 'SetRoomPasswordModal' });
+		store.setActiveModal('SetRoomPasswordModal');
 	};
 
 	document.getElementById('manageStartRoom').onclick = function() {
@@ -46,7 +45,7 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, 
 
 	document.getElementById('manageJoinLink').onclick = function() {
 		socket.emit('requestJoinLink', getCurrentUID(), (roomId) => {
-			globalEmitter.emit('setActiveModal', { name: 'JoinIdModal', props: { roomId } });
+			store.setActiveModal('JoinIdModal', { roomId });
 		});
 	};
 
@@ -62,9 +61,7 @@ export function mainpageInit(emitter: ReturnType<typeof mitt>, socket: CSocket, 
 
 export function toggleHost(host: boolean): void {
 	currentlyHost = host;
-	globalEmitter.emit('toggleHost', host);
-
-	globalEmitter.emit('disableRoomSettings', !host);
+	store.toggleHost(host);
 
 	// Turn on all the typical room manage options
 	document.getElementById('roomManage').querySelectorAll('.player').forEach((element: HTMLElement) => {

@@ -9,6 +9,8 @@ import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
 import { UserSettings } from '../utils/Settings';
 
+import store from './store';
+
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
@@ -33,22 +35,22 @@ export function panelsInit(
 	// Received when room cannot be joined
 	socket.on('joinFailure', (errorMsg) => {
 		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
-		emitter.emit('setActiveModal', { name:'JoinRoomModal', props: { errorMsg } });
+		store.setActiveModal('JoinRoomModal', { errorMsg });
 	});
 
 	// Event received when attempting to join a password-protected room
 	socket.on('requireRoomPassword', (roomId) => {
-		emitter.emit('setActiveModal', { name:'JoinRoomPasswordModal', props: { roomId } });
+		store.setActiveModal('JoinRoomPasswordModal', { roomId });
 	});
 
 	// Event received when entering the wrong password to a password-protected room
 	socket.on('joinRoomPasswordFailure', (errorMsg) => {
-		emitter.emit('setActiveModal', { name: 'JoinRoomPasswordModal', props: { errorMsg } });
+		store.setActiveModal('JoinRoomPasswordModal', { errorMsg });
 	});
 
 	// Received when attempting to spectate an invalid room
 	socket.on('spectateFailure', (errorMsg) => {
-		emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { errorMsg } });
+		store.setActiveModal('SpectateRoomModal', { errorMsg });
 	});
 }
 
@@ -61,7 +63,7 @@ export function clearModal(): void {
 		return;
 	}
 
-	globalEmitter.emit('clearModal');
+	store.clearModal();
 }
 
 export function showDialog(message: string): void {

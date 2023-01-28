@@ -17,16 +17,11 @@ export const SetRoomPasswordModal = Vue.defineComponent({
 			this.audioPlayer.playSfx('submit');
 
 			this.$emit('clearModal');
-		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	template:`
 		<div class="modal-content" id="roomPasswordModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 	        <form id="roomPasswordForm" autocomplete="off" v-on:submit="submit()">
 	            <label for="roomPassword">Enter the password for the room.</label><br>
 	            <div id="roomPasswordInput">

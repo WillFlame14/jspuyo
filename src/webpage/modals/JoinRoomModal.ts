@@ -27,7 +27,7 @@ export const JoinRoomModal = Vue.defineComponent({
 	},
 	template:`
 		<div class="modal-content" id="joinRoomModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<form id="joinIdForm" autocomplete="off" v-on:submit="submit()">
 				<label for="joinId">Enter the code for the room you wish to join.</label><br>
 				<div class="errorMsg" v-show="errorMsg.length !== 0">{{errorMsg}}</div>

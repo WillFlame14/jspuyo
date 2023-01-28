@@ -1,4 +1,5 @@
 import * as Vue from 'vue';
+import type { PropType } from 'vue';
 
 import { AppearanceComponent } from './AppearanceComponent';
 import { KeyBindings as KeyBindingsComponent } from './KeyBindingsComponent';
@@ -7,6 +8,10 @@ import { UserSettings, KeyBindings } from '../../utils/Settings';
 import { PlayerInfo } from '../firebase';
 import { preloadSprites } from '../../draw/SpriteDrawer';
 
+interface AnonymousFunctions {
+	saveSettings: (newSettings: Partial<UserSettings>) => void
+}
+
 export const SettingsModal = Vue.defineComponent({
 	emits: ['clearModal'],
 	components: {
@@ -14,6 +19,14 @@ export const SettingsModal = Vue.defineComponent({
 		'key-bindings': KeyBindingsComponent
 	},
 	inject: ['audioPlayer', 'getCurrentUID'],
+	props: {
+		anonymous: {
+			type: Boolean
+		},
+		anonymousFunctions: {
+			type: Object as PropType<AnonymousFunctions>
+		}
+	},
 	data(): { settings: Partial<UserSettings> } {
 		return {
 			settings: {
@@ -49,29 +62,30 @@ export const SettingsModal = Vue.defineComponent({
 			const [keyBindings] = await Promise.all([_keyBindings]);
 			newSettings.keyBindings = keyBindings;
 
-			void PlayerInfo.getUserProperty(this.getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
-				userSettings = Object.assign(userSettings, newSettings);
+			this.audioPlayer.playSfx('submit');
 
-				// Configure audio player with new volume settings
-				this.audioPlayer.configureVolume(userSettings);
+			if (this.anonymous) {
+				this.anonymousFunctions.saveSettings(newSettings);
+			}
+			else {
+				void PlayerInfo.getUserProperty(this.getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
+					userSettings = Object.assign(userSettings, newSettings);
 
-				// Update values
-				PlayerInfo.updateUser(this.getCurrentUID(), 'userSettings', userSettings);
+					// Configure audio player with new volume settings
+					this.audioPlayer.configureVolume(userSettings);
 
-				this.audioPlayer.playSfx('submit');
-				this.$emit('clearModal');
-			});
+					// Update values
+					PlayerInfo.updateUser(this.getCurrentUID(), 'userSettings', userSettings);
+
+					this.$emit('clearModal', false);
+				});
+			}
 
 			preloadSprites(newSettings.appearance);
 		},
 
 		selectAppearance(appearance: string) {
 			this.settings.appearance = appearance;
-		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
 		}
 	},
 	mounted() {
@@ -94,7 +108,7 @@ export const SettingsModal = Vue.defineComponent({
 	},
 	template:`
 		<div class="modal-content" id="settingsModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<div class="modal-title">User Settings</div>
 			<div class="left-right-container" id="userSettingsOptions">
 				<div>

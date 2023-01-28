@@ -1,6 +1,8 @@
 import * as Vue from 'vue';
 import { PlayerInfo, signOut } from './firebase';
 
+import store from './store';
+
 const panelDropdowns: Record<string, string[]> = {
 	'queue': ['freeForAll', 'ranked'],
 	'custom': ['createRoom', 'joinRoom', 'spectate'],
@@ -68,18 +70,17 @@ export const NavbarComponent = Vue.defineComponent({
 		},
 		// Custom Panel
 		createRoom() {
-			this.emitter.emit('setActiveModal', { name: 'RoomOptionsModal', props: { createRoomMode: 'create' } });
-
-			this.emitter.emit('disableRoomSettings', false);
+			store.setActiveModal('RoomOptionsModal', { createRoomMode: 'create' });
+			store.toggleHost(true);
 		},
 		joinRoom() {
-			this.emitter.emit('setActiveModal', { name: 'JoinRoomModal' });
+			store.setActiveModal('JoinRoomModal');
 		},
 		// Singleplayer Panel
 		async spectate() {
 			await this.stopCurrentSession();
 			this.socket.emit('getAllRooms', this.getCurrentUID(), (allRoomIds: string[]) => {
-				this.emitter.emit('setActiveModal', { name:'SpectateRoomModal', props: { allRoomIds } });
+				store.setActiveModal('SpectateRoomModal', { allRoomIds });
 			});
 		},
 		async openGuide() {
@@ -110,7 +111,7 @@ export const NavbarComponent = Vue.defineComponent({
 		openSettings() {
 			void this.stopCurrentSession();
 
-			this.emitter.emit('setActiveModal', { name:'SettingsModal' });
+			store.setActiveModal('SettingsModal');
 		},
 		logOut() {
 			this.socket.emit('forceDisconnect', this.getCurrentUID());

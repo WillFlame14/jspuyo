@@ -95,7 +95,7 @@ export const CpuOptionsModal = Vue.defineComponent({
 			this.audioPlayer.playSfx('submit');
 
 			// Close the CPU options menu
-			this.$emit('clearModal');
+			this.$emit('clearModal', false);
 		},
 
 		setAI({ id, ai }: { id: number, ai: string }) {
@@ -106,11 +106,6 @@ export const CpuOptionsModal = Vue.defineComponent({
 		setSpeed({ id, speed }: { id: number, speed: number }) {
 			this.cpus[id].speed = speed;
 		},
-
-		clearModal() {
-			this.$emit('clearModal');
-			this.audioPlayer.playSfx('close_modal');
-		}
 	},
 	mounted() {
 		this.emitter.on('presetCpus', (cpus: BasicCpuInfo[]) => {
@@ -122,7 +117,7 @@ export const CpuOptionsModal = Vue.defineComponent({
 	},
 	template: `
 		<div class="modal-content" id="cpuOptionsModal">
-			<div class="close" v-on:click="clearModal()">&times;</div>
+			<div class="close" v-on:click="$emit('clearModal')">&times;</div>
 			<div class="modal-title">CPU Options</div>
 			<div class="errorMsg" id="cpuOptionsError" v-show="errorMsg.length !== 0">{{errorMsg}}</div>
 			<div id="cpuOptionsEmpty" v-show="cpus.length === 0">No CPUs in room</div>

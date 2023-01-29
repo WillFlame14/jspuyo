@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/WillFlame14/jspuyo#readme",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "firebase": "^9.6.10",
     "firebaseui": "^0.600.0",
     "mitt": "^2.1.0",

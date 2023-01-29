@@ -1,4 +1,7 @@
 import * as Vue from 'vue';
+import { PlayerInfo, signOut } from './firebase';
+
+import store from './store';
 
 const panelDropdowns: Record<string, string[]> = {
 	'queue': ['freeForAll', 'ranked'],
@@ -17,7 +20,7 @@ const zIndexMap = {
 };
 
 export const NavbarComponent = Vue.defineComponent({
-	inject: ['audioPlayer'],
+	inject: ['audioPlayer', 'getCurrentUID', 'socket', 'stopCurrentSession'],
 	data(): { selectedPanel: string, zIndexes: Record<PanelName, number>, heights: Record<PanelName, number> } {
 		return {
 			selectedPanel: null,
@@ -53,6 +56,67 @@ export const NavbarComponent = Vue.defineComponent({
 		},
 		logoClick() {
 			window.location.assign('/info');
+		},
+		// Queue Panel
+		async freeForAll() {
+			await this.stopCurrentSession();
+			document.getElementById('statusGamemode').innerHTML = 'Free For All';
+			this.socket.emit('freeForAll', { gameId: this.getCurrentUID() });
+		},
+		async ranked() {
+			await this.stopCurrentSession();
+			document.getElementById('statusGamemode').innerHTML = 'Ranked';
+			this.socket.emit('ranked', { gameId: this.getCurrentUID() });
+		},
+		// Custom Panel
+		createRoom() {
+			store.setActiveModal('RoomOptionsModal', { createRoomMode: 'create' });
+			store.toggleHost(true);
+		},
+		joinRoom() {
+			store.setActiveModal('JoinRoomModal');
+		},
+		// Singleplayer Panel
+		async spectate() {
+			await this.stopCurrentSession();
+			this.socket.emit('getAllRooms', this.getCurrentUID(), (allRoomIds: string[]) => {
+				store.setActiveModal('SpectateRoomModal', { allRoomIds });
+			});
+		},
+		async openGuide() {
+			await this.stopCurrentSession();
+			window.location.assign('/guide');
+		},
+		// Profile Panel
+		async openGallery() {
+			void this.stopCurrentSession();
+			// Leave the room
+			this.socket.emit('forceDisconnect', this.getCurrentUID());
+
+			let stats = [] as unknown;
+			try {
+				stats = await PlayerInfo.getUserProperty(this.getCurrentUID(), 'stats');
+			}
+			catch(err) {
+				// No games played yet. Special warning message?
+				console.log(err);
+			}
+
+			// Need to stringify object before storing, otherwise the data will not be stored correctly
+			window.localStorage.setItem('stats', JSON.stringify(stats));
+
+			// Redirect to gallery subdirectory
+			window.location.assign('/gallery');
+		},
+		openSettings() {
+			void this.stopCurrentSession();
+
+			store.setActiveModal('SettingsModal');
+		},
+		logOut() {
+			this.socket.emit('forceDisconnect', this.getCurrentUID());
+			this.socket.emit('unlinkUser');
+			void signOut();
 		}
 	},
 	template:
@@ -67,8 +131,8 @@ export const NavbarComponent = Vue.defineComponent({
 				<img src="images/navbar/QueueIcon.png" class="navIcon">
 				<span class="panelName">Queue</span>
 				<div class="dropdown" v-bind:style="{ height: heights.queue }">
-					<a id="freeForAll" v-on:mouseover="hoverSfx()">Free for all</a>
-					<a id="ranked" v-on:mouseover="hoverSfx()">Ranked</a>
+					<a id="freeForAll" v-on:mouseover="hoverSfx()" v-on:click="freeForAll()">Free for all</a>
+					<a id="ranked" v-on:mouseover="hoverSfx()" v-on:click="ranked()">Ranked</a>
 				</div>
 			</span>
 			<span
@@ -81,9 +145,9 @@ export const NavbarComponent = Vue.defineComponent({
 				<img src="images/navbar/CustomIcon.png" class="navIcon">
 				<span class="panelName">Custom</span>
 				<div class="dropdown" v-bind:style="{ height: heights.custom }">
-					<a id="createRoom" v-on:mouseover="hoverSfx()">Create Room</a>
-					<a id="joinRoom" v-on:mouseover="hoverSfx()">Join Room</a>
-					<a id="spectate" v-on:mouseover="hoverSfx()">Spectate</a>
+					<a id="createRoom" v-on:mouseover="hoverSfx()" v-on:click="createRoom()">Create Room</a>
+					<a id="joinRoom" v-on:mouseover="hoverSfx()" v-on:click="joinRoom()">Join Room</a>
+					<a id="spectate" v-on:mouseover="hoverSfx()" v-on:click="spectate()">Spectate</a>
 				</div>
 			</span>
 			<span
@@ -98,7 +162,7 @@ export const NavbarComponent = Vue.defineComponent({
 				<div class="dropdown" v-bind:style="{ height: heights.singleplayer }">
 					<a id="sprint" v-on:mouseover="hoverSfx()">Sprint [WIP]</a>
 					<a id="timeChallenge" v-on:mouseover="hoverSfx()">Time Challenge [WIP]</a>
-					<a id="guide" v-on:mouseover="hoverSfx()">Guide</a>
+					<a id="guide" v-on:mouseover="hoverSfx()" v-on:click="openGuide()">Guide</a>
 				</div>
 			</span>
 			<span
@@ -111,9 +175,9 @@ export const NavbarComponent = Vue.defineComponent({
 				<img src="images/navbar/ProfileIcon.png" class="navIcon">
 				<span class="panelName">Profile</span>
 				<div class="dropdown" v-bind:style="{ height: heights.profile }">
-					<a id="gallery" v-on:mouseover="hoverSfx()">Gallery</a>
-					<a id="settings" v-on:mouseover="hoverSfx()">Settings</a>
-					<a id="logout" v-on:mouseover="hoverSfx()">Log Out</a>
+					<a id="gallery" v-on:mouseover="hoverSfx()" v-on:click="openGallery()">Gallery</a>
+					<a id="settings" v-on:mouseover="hoverSfx()" v-on:click="openSettings()">Settings</a>
+					<a id="logout" v-on:mouseover="hoverSfx()" v-on:click="logOut()">Log Out</a>
 				</div>
 			</span>
 			<span id="logo" v-on:click="logoClick()">jspuyo</span>`

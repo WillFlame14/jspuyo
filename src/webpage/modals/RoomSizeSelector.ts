@@ -1,6 +1,7 @@
 import * as Vue from 'vue';
 
 export const RoomSizeSelector = Vue.defineComponent({
+	emits: ['selectNumPlayers'],
 	props: ['selectedNum', 'wildNumSelected', 'disabled'],
 	data(): { wildNum: number } {
 		return {

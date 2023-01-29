@@ -1,7 +1,11 @@
 'use strict';
 
 import { UserSettings } from './Settings';
+
+import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { Socket } from 'socket.io-client';
+
+type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 export interface AudioInfo {
 	numClips?: number,
@@ -43,7 +47,7 @@ export const VOICES: Record<string, AudioInfo> = {
 const SOUNDS_DIRECTORY = './sounds';
 
 export class AudioPlayer {
-	socket: Socket;
+	socket: CSocket;
 	disabled: boolean;
 	sfxVolume: number;
 	musicVolume: number;
@@ -53,7 +57,7 @@ export class AudioPlayer {
 
 	gameId: string;
 
-	constructor(socket: Socket, disable: string = null) {
+	constructor(socket: CSocket, disable: string = null) {
 		this.socket = socket;
 		this.disabled = disable === 'disable';
 
@@ -153,8 +157,6 @@ export class AudioPlayer {
 			return;
 		}
 
-		console.log(character);
-
 		let audio: HTMLAudioElement[];
 		if(index === null) {
 			audio = this.voices[character][audio_name] as HTMLAudioElement[];
@@ -171,7 +173,7 @@ export class AudioPlayer {
 	 * Plays a sound effect, and emits the sound to the server.
 	 * Used so that other players can hear the appropriate sound.
 	 */
-	playAndEmitSfx(sfx_name: string, index = null): void {
+	playAndEmitSfx(sfx_name: string, index: number = null): void {
 		this.playSfx(sfx_name, index);
 		this.socket.emit('sendSound', this.gameId, sfx_name, index);
 	}
@@ -180,7 +182,7 @@ export class AudioPlayer {
 	 * Plays a voiced audio clip, and emits the sound to the server.
 	 * Used so that other players can hear the appropriate sound.
 	 */
-	playAndEmitVoice(character: string, audio_name: string, index = null): void {
+	playAndEmitVoice(character: string, audio_name: string, index: number = null): void {
 		this.playVoice(character, audio_name, index);
 		this.socket.emit('sendVoice', this.gameId, character, audio_name, index);
 	}

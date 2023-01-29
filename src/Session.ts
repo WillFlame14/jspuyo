@@ -1,13 +1,15 @@
 'use strict';
 
 import { Game } from './Game';
+
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 export class Session {
 	gameId: string;
 	opponentIds: string[];
 	game: Game;
-	socket: Socket;
+	socket: Socket<ServerToClientEvents, ClientToServerEvents>;
 	roomId: string;
 
 	/** Flag to force the session to end immediately. */
@@ -16,7 +18,7 @@ export class Session {
 	stopped = false;
 	paused = false;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket<ServerToClientEvents, ClientToServerEvents>, roomId: string) {
 		this.gameId = gameId;
 		this.opponentIds = opponentIds;
 		this.game = game;
@@ -28,17 +30,17 @@ export class Session {
 
 	initialize(): void {
 		this.socket.off('sendNuisance');
-		this.socket.on('sendNuisance', (oppId: string, nuisance: number) => {
+		this.socket.on('sendNuisance', (oppId, nuisance) => {
 			this.sendNuisance(oppId, nuisance);
 		});
 
 		this.socket.off('activateNuisance');
-		this.socket.on('activateNuisance', (oppId: string) => {
+		this.socket.on('activateNuisance', (oppId) => {
 			this.activateNuisance(oppId);
 		});
 
 		this.socket.off('gameOver');
-		this.socket.on('gameOver', (oppId: string, disconnect: boolean) => {
+		this.socket.on('gameOver', (oppId, disconnect) => {
 			this.opponentIds.splice(this.opponentIds.indexOf(oppId), 1);
 			if(disconnect) {
 				// Opponent lost due to disconnecting
@@ -46,7 +48,7 @@ export class Session {
 		});
 
 		this.socket.off('winnerResult');
-		this.socket.on('winnerResult', (winnerId: string) => {
+		this.socket.on('winnerResult', (winnerId) => {
 			this.game.endResult = winnerId === this.gameId ? 'Win' : 'Loss';
 			// Regardless of whether this player won, someone did, so win sfx should be played.
 			setTimeout(() => this.game.audioPlayer.playAndEmitSfx('win'), 2000);

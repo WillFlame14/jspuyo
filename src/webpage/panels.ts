@@ -2,68 +2,54 @@
 
 import mitt from 'mitt';
 import { User } from 'firebase/auth';
+import { ServerToClientEvents, ClientToServerEvents } from '../@types/events';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from '../utils/AudioPlayer';
 import { PlayerInfo } from './firebase';
-import { initCustomPanels } from './panels_custom';
 import { UserSettings } from '../utils/Settings';
+
+import store from './store';
 
 let globalEmitter: ReturnType<typeof mitt>;
 let globalAudioPlayer: AudioPlayer;
 
+export const puyoImgs: string[] = ['red', 'blue', 'green', 'yellow', 'purple', 'teal'];
+
 export function panelsInit(
 	emitter: ReturnType<typeof mitt>,
-	socket: Socket,
-	getCurrentUID: () => string,
-	stopCurrentSession: () => Promise<void>,
+	socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 	audioPlayer: AudioPlayer
 ): void {
 	globalEmitter = emitter;
 	globalAudioPlayer = audioPlayer;
-
-	initCustomPanels(emitter, clearModal, stopCurrentSession, socket, audioPlayer, getCurrentUID);
-
-	// The black overlay that appears when a modal box is shown
-	const modal = document.getElementById('modal-background');
-
-	// Set all close buttons to remove modals
-	Array.from(document.getElementsByClassName('close')).forEach((close: HTMLElement) => {
-		close.onclick = () => {
-			clearModal();
-			audioPlayer.playSfx('close_modal');
-		};
-	});
-
-	// Manage window onclick
-	window.onclick = function(event: Event) {
-		if (event.target === modal) {
-			clearModal();
-		}
-	};
-
-	// Queue Panel
-	document.getElementById('freeForAll').onclick = async () => {
-		await stopCurrentSession();
-		document.getElementById('statusGamemode').innerHTML = 'Free For All';
-		socket.emit('freeForAll', { gameId: getCurrentUID() });
-	};
-	document.getElementById('ranked').onclick = async () => {
-		await stopCurrentSession();
-		document.getElementById('statusGamemode').innerHTML = 'Ranked';
-		socket.emit('ranked', { gameId: getCurrentUID() });
-	};
-
-	document.getElementById('guide').onclick = async () => {
-		await stopCurrentSession();
-		window.location.assign('/guide');
-	};
 
 	// Dialog panels
 	document.getElementById('dialogAccept').onclick = () => {
 		document.getElementById('dialogBox').style.display = 'none';
 		document.getElementById('modal-background-disable').style.display = 'none';
 	};
+
+	// Received when room cannot be joined
+	socket.on('joinFailure', (errorMsg) => {
+		// Display modal elements if they are not already being displayed (e.g. arrived from direct join link)
+		store.setActiveModal('JoinRoomModal', { errorMsg });
+	});
+
+	// Event received when attempting to join a password-protected room
+	socket.on('requireRoomPassword', (roomId) => {
+		store.setActiveModal('JoinRoomPasswordModal', { roomId });
+	});
+
+	// Event received when entering the wrong password to a password-protected room
+	socket.on('joinRoomPasswordFailure', (errorMsg) => {
+		store.setActiveModal('JoinRoomPasswordModal', { errorMsg });
+	});
+
+	// Received when attempting to spectate an invalid room
+	socket.on('spectateFailure', (errorMsg) => {
+		store.setActiveModal('SpectateRoomModal', { errorMsg });
+	});
 }
 
 /**
@@ -75,18 +61,7 @@ export function clearModal(): void {
 		return;
 	}
 
-	const modal = document.getElementById('modal-background');
-	modal.style.display = "none";
-
-	// Clear all modal content
-	Array.from(document.getElementsByClassName('modal-content')).forEach((element: HTMLElement) => {
-		element.style.display = 'none';
-	});
-
-	// Clear all error messages
-	// Array.from(document.getElementsByClassName('errorMsg')).forEach((element: HTMLElement) => {
-	// 	element.style.display = 'none';
-	// });
+	store.clearModal();
 }
 
 export function showDialog(message: string): void {
@@ -107,7 +82,7 @@ export async function updateUserSettings(user: User, currentUID: string): Promis
 
 	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
 	globalAudioPlayer.configureVolume(userSettings);
-	globalEmitter.emit('setSettings', userSettings);
+	store.updateUserSettings(userSettings);
 
 	globalEmitter.emit('updateStatus', {
 		name: user.displayName,

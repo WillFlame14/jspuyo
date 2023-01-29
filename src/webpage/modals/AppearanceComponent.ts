@@ -1,29 +1,17 @@
 import * as Vue from 'vue';
 
 export const AppearanceComponent = Vue.defineComponent({
-	data(): { appearances: string[], selected: string } {
+	emits: ['selectAppearance'],
+	data(): { appearances: string[] } {
 		return {
-			appearances: ['Aqua', 'Chalk', 'TsuClassic', 'Custom', 'FlatColour', 'Test'],
-			selected: 'TsuClassic'
+			appearances: ['Aqua', 'Chalk', 'TsuClassic', 'Custom', 'FlatColour', 'Test']
 		};
 	},
-	methods: {
-		selectAppearance(appearance: string) {
-			this.selected = appearance;
+	props: {
+		selected: {
+			type: String,
+			defaultValue: 'TsuClassic'
 		}
-	},
-	mounted() {
-		this.emitter.on('setAppearance', (appearance: string) => {
-			this.selected = appearance;
-		});
-
-		this.emitter.on('getAppearance', (callback: (appearance: string) => void) => {
-			callback(this.selected);
-		});
-	},
-	unmounted() {
-		this.emitter.off('setAppearance', undefined);
-		this.emitter.off('getAppearance', undefined);
 	},
 	template:
 		`<div class="justify-flexbox">
@@ -32,6 +20,6 @@ export const AppearanceComponent = Vue.defineComponent({
 				v-bind:class="{selected: selected === appearance}"
 				v-bind:id="appearance"
 				v-bind:src="'images/modal_boxes/puyo_' + appearance.toLowerCase() + '.png'"
-				v-on:click="selectAppearance(appearance)">
+				v-on:click="$emit('selectAppearance', appearance)">
 		</div>`
 });

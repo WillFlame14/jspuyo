@@ -1,5 +1,6 @@
 'use strict';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 import { AudioPlayer } from './utils/AudioPlayer';
@@ -16,7 +17,7 @@ export class PlayerGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,
@@ -51,12 +52,12 @@ export class PlayerGame extends Game {
 		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
 			}
-			else{
+			else {
 				frame--;
 			}
 			this.updateOpponentScore(oppId, score);
@@ -83,10 +84,10 @@ export class PlayerGame extends Game {
 	 * @Override
 	 * Draws the board with the new hash after stepping.
 	 */
-	step(): Record<string, unknown> {
+	step() {
 		const state = super.step();
 		if(state.currentBoardHash) {
-			this.gameArea.drawFromHash(state.currentBoardHash as string);
+			this.gameArea.drawFromHash(state.currentBoardHash);
 		}
 		return state;
 	}
@@ -123,7 +124,7 @@ export class SpectateGame extends Game {
 	constructor(
 		gameId: string,
 		opponentIds: string[],
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		settings: Settings,
 		userSettings: UserSettings,
 		gameAreas: Record<number, GameArea>,
@@ -152,7 +153,7 @@ export class SpectateGame extends Game {
 		this.socket.off('sendVoice', undefined);
 
 		// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-		this.socket.on('sendState', (oppId: string, boardHash: string, score: number, nuisance: number) => {
+		this.socket.on('sendState', (oppId, boardHash, score, nuisance) => {
 			if(frame === 0) {
 				this.opponentGameAreas[oppId].drawFromHash(boardHash);
 				frame = userSettings.skipFrames;
@@ -174,10 +175,16 @@ export class SpectateGame extends Game {
 
 	/**
 	 * @Override
-	 * Increments the game. Since player is spectating, do nothing.
+	 * Increments the game. Since player is spectating, return a dummy state.
 	 */
-	step(): Record<string, unknown> {
-		return {};
+	step() {
+		return {
+			currentBoardHash: '',
+			score: 0,
+			nuisance: 0,
+			nuisanceSent: 0,
+			activateNuisance: false
+		};
 	}
 
 	/**

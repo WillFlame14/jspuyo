@@ -2,7 +2,10 @@
 
 import { Room, CpuInfo } from './Room';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io';
+
+type SSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
 const roomIds = new Set<string>();		// Set of roomIds currently in use
 const roomIdToRoom = new Map<string, Room>();
@@ -16,7 +19,7 @@ export class RoomManager {
 
 	static createRoom(
 		gameId: string,
-		members: Map<string, { socket: Socket, frames: number }>,
+		members: Map<string, { socket: SSocket, frames: number }>,
 		host: string,
 		roomSize: number,
 		settingsString: string,
@@ -54,8 +57,8 @@ export class RoomManager {
 		return room;
 	}
 
-	static joinRoom(gameId: string, roomId: string, socket: Socket, roomPassword: string = null): Room {
-		const room = roomIdToRoom.get(roomId);
+	static joinRoom(gameId: string, socket: SSocket, roomId: string = null, roomPassword: string = null): Room {
+		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
 			throw new Error(`The room you are trying to join ${roomId ? `(id ${roomId}) `:''}does not exist.`);
@@ -88,7 +91,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static spectateRoom(gameId: string, socket: Socket, roomId: string = null): Room {
+	static spectateRoom(gameId: string, socket: SSocket, roomId: string = null): Room {
 		const room = (roomId === null) ? roomIdToRoom.get(idToRoomId.get(gameId)) : roomIdToRoom.get(roomId);
 
 		if(room === undefined) {
@@ -125,7 +128,7 @@ export class RoomManager {
 		return room;
 	}
 
-	static startRoomWithGameId(gameId: string, socket: Socket): Room {
+	static startRoomWithGameId(gameId: string, socket: SSocket): Room {
 		const room = roomIdToRoom.get(idToRoomId.get(gameId));
 		if(room.members.size + room.cpus.size > 1) {
 			room.start();

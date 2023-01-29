@@ -22,38 +22,7 @@
             <div class="modal-content" id="firebaseui-auth-container"></div>
             <div id="loader">Loading...</div>
         </div>
-        <div class="modal" id="modal-background">
-            <div class="modal-content" id="viewGuideModal">
-                <div class="close">&times;</div>
-                <p>It looks like it's your first time here. Would you like to view a guide on controls and how to play?</p>
-                <p>If not, you can always visit the Guide from the Singleplayer menu.</p>
-                <button id="visitGuide">Go to guide</button>
-            </div>
-            <div class="modal-content" id="createRoomModal">
-                <create-room-modal></create-room-modal>
-            </div>
-            <div class="modal-content" id="giveJoinId">
-               <join-id-modal></join-id-modal>
-            </div>
-            <div class="modal-content" id="joinRoomModal">
-                <join-room-modal></join-room-modal>
-            </div>
-            <div class="modal-content" id="spectateRoomModal">
-                <spectate-room-modal></spectate-room-modal>
-            </div>
-            <div class="modal-content" id="cpuOptionsModal">
-                <cpu-options-modal></cpu-options-modal>
-            </div>
-            <div class="modal-content" id="settingsModal">
-                <settings-modal></settings-modal>
-            </div>
-            <div class="modal-content" id="roomPasswordModal">
-                <set-room-password-modal></set-room-password-modal>
-            </div>
-            <div class="modal-content" id="joinRoomPasswordModal">
-                <join-room-password-modal></join-room-password-modal>
-            </div>
-        </div>
+        <modal-manager></modal-manager>
         <div class="modal" id="modal-background-disable">
             <div class="modal-content dialog" id="dialogBox">
                 <div id="dialogText"></div>
@@ -70,41 +39,7 @@
                 <table id="playArea">
                     <!-- Inserted by javascript -->
                 </table>
-                <div class="status" id="statusArea">
-                    <ul class="justify-flexbox vertical" id="roomManage">
-                        <li class="player roomManageOption" id="manageCpus">
-                            <img class="roomManageIcon" src="images/mainpage/cpu.png">
-                            <span>Manage CPUs</span>
-                        </li>
-                        <li class="player roomManageOption" id="manageSettings">
-                            <img class="roomManageIcon" src="images/mainpage/settings.png">
-                            <span>Settings</span>
-                        </li>
-                        <li class="player roomManageOption" id="manageRoomPassword">
-                            <img class="roomManageIcon" src="images/mainpage/password.png">
-                            <span>Set Password</span>
-                        </li>
-                        <li class="player roomManageOption" id="manageJoinLink">
-                            <img class="roomManageIcon" src="images/mainpage/link.png">
-                            <span>Show Join Link</span>
-                        </li>
-                        <li class="player roomManageOption" id="manageStartRoom">
-                            <img class="roomManageIcon" src="images/mainpage/start.png">
-                            <span>Start Room</span>
-                        </li>
-                        <li class="player roomManageOption" id="manageSpectate">
-                            <img class="roomManageIcon" src="images/mainpage/spectate.png">
-                            <span>Spectate</span>
-                        </li>
-                        <li class="roomManageOption" id="managePlay">
-                            <img class="roomManageIcon" src="images/navbar/CustomIcon.png">
-                            <span>Play</span>
-                        </li>
-                    </ul>
-                    <div id="statusMsg"></div>
-                    <div id="statusGamemode"></div>
-                    <div id="statusExtra"></div>
-                </div>
+                <status-area></status-area>
                 <div id="sidebar">
                     <div class="playersDisplay" id="playersDisplay">
                         <player-list></player-list>

@@ -2,8 +2,34 @@
 
 ## v0.11 - Game Improvements II, Singleplayer
 
+### v0.11.5 (January 29, 2023)
+[`Further UI refactoring #99`](https://github.com/WillFlame14/jspuyo/pull/99)
+
+**Changes:**
+- Socket.io upgraded to v4, enabling typed events
+- Added a store for keeping track of frontend state.
+- Refactored ModalManager, StatusArea components.
+- Reduced and simplified many socket events.
+- Cleaned up settings and keybind components.
+- Refactored out a lot of repetitive elements/functions from various modals.
+- Added back the Fever and Tsu icons.
+- Fixed a bug where spectating players were unable to join the room.
+- Fixed a bug where changing settings in the guide had no effect.
+- Possibly fixed various room update issues.
+
+### v0.11.4 (January 23, 2023)
+[`Bump for minor fixes #97`](https://github.com/WillFlame14/jspuyo/pull/97)
+
+**Changes:**
+- All navbar panels now start opened and are highlighted on hover.
+- Gamemodes can be switched again.
+- Background has been darkened to improve visibility.
+- Game no longer ends without drawing the last frame (i.e. puyos finish squishing).
+- Fixed guide simulator not working.
+
 ### v0.11.3 (April 21, 2022)
 [`General improvements #89`](https://github.com/WillFlame14/jspuyo/pull/89)
+
 **Changes:**
 - Status component and navbar have been moved to Vue
 - pages.ts has finally been removed!

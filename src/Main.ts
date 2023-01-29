@@ -5,6 +5,7 @@ import * as Vue from 'vue';
 import mitt from 'mitt';
 import { io, Socket } from 'socket.io-client';
 
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { GameArea } from './draw/GameArea';
 import { PlayerGame, SpectateGame } from './PlayerGame';
 import { PlayerSession } from './PlayerSession';
@@ -12,14 +13,15 @@ import { Settings, UserSettings } from './utils/Settings';
 import { AudioPlayer } from './utils/AudioPlayer';
 
 import { PlayerInfo, basicInit, initApp, signOut } from './webpage/firebase';
-import { mainpageInit, toggleHost, toggleSpectate } from './webpage/mainpage';
 import { panelsInit, clearModal, showDialog, updateUserSettings } from './webpage/panels';
-import { vueInit } from './webpage/vue';
+import { vueInit } from './webpage/vue_loader';
 
 import { initCharts } from './webpage/pages/gallery';
 import { initGuide } from './webpage/pages/guide';
 
-const globalSocket = io();
+import store from './webpage/store';
+
+const globalSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io();
 const globalAudioPlayer = new AudioPlayer(globalSocket);
 const globalEmitter = mitt();
 
@@ -29,7 +31,7 @@ declare module '@vue/runtime-core' {
 	interface ComponentCustomProperties {
 		audioPlayer: AudioPlayer,
 		emitter: ReturnType<typeof mitt>,
-		socket: Socket,
+		socket: Socket<ServerToClientEvents, ClientToServerEvents>,
 		getCurrentUID: () => string,
 		stopCurrentSession: () => Promise<void>
 	}
@@ -37,14 +39,14 @@ declare module '@vue/runtime-core' {
 
 // This is the "main" function, which starts up the entire app.
 (function() {
-	const app = Vue.createApp({
+	const app = Vue.createApp(Vue.defineComponent({
 		provide: {
 			audioPlayer: globalAudioPlayer,
 			socket: globalSocket,
 			getCurrentUID,
 			stopCurrentSession
 		}
-	});
+	}));
 
 	app.config.globalProperties.emitter = globalEmitter;
 
@@ -67,7 +69,7 @@ declare module '@vue/runtime-core' {
 			break;
 		case '/guide':
 			basicInit();
-			initGuide(app, globalEmitter, globalSocket, globalAudioPlayer);
+			initGuide(app);
 			break;
 		case '/gallery':
 			initCharts();
@@ -75,8 +77,7 @@ declare module '@vue/runtime-core' {
 		default:
 			vueInit(app);
 			init(globalSocket);			// game-related
-			panelsInit(globalEmitter, globalSocket, getCurrentUID, stopCurrentSession, globalAudioPlayer);
-			mainpageInit(globalEmitter, globalSocket, getCurrentUID, globalAudioPlayer);
+			panelsInit(globalEmitter, globalSocket, globalAudioPlayer);
 
 			// Set up the login process for firebase. loginSuccess() will be called after login finishes
 			initApp(globalSocket, loginSuccess);
@@ -100,7 +101,7 @@ function loginSuccess(user: User) {
 			const joinId = urlParams.get('joinRoom');				// Id of room to join
 
 			if(joinId !== null) {
-				globalSocket.emit('joinRoom', { gameId: currentUID, joinId, spectate: false });
+				globalSocket.emit('joinRoom', { gameId: currentUID, joinId });
 				console.log('Joining a room...');
 			}
 			else {
@@ -136,17 +137,8 @@ const sidebar = document.getElementById('sidebar');
 let quickPlayTimer: ReturnType<typeof setTimeout> = null;
 
 // Set up all the event listeners
-function init(socket: Socket): void {
-	socket.on('roomUpdate', (
-		roomId: string,
-		playerScores: Record<string, number>,
-		roomSize: number,
-		settingsString: string,
-		roomType: string,
-		host: boolean,
-		spectating: boolean,
-		quickPlayStartTime: number
-	) => {
+function init(socket: Socket<ServerToClientEvents, ClientToServerEvents>): void {
+	socket.on('roomUpdate', (roomId, playerScores, roomSize, settingsString, roomType, host, spectating, quickPlayStartTime) => {
 		// Clear messages only if joining a new room
 		if(currentRoomId && currentRoomId !== roomId) {
 			globalEmitter.emit('clearMessages');
@@ -200,7 +192,7 @@ function init(socket: Socket): void {
 			}
 
 			if(spectating) {
-				toggleSpectate();
+				store.toggleSpectate();
 				roomManageOptions.style.display = 'block';
 				statusExtra.innerHTML = 'You are currently spectating this room.';
 			}
@@ -211,12 +203,12 @@ function init(socket: Socket): void {
 		// Custom room
 		else {
 			if(spectating) {
-				toggleSpectate();
+				store.toggleSpectate();
 				statusExtra.innerHTML = 'You are currently spectating this room.';
 				statusExtra.style.display = 'block';
 			}
 			else {
-				toggleHost(host);
+				store.toggleHost(host);
 				statusExtra.innerHTML = '';
 				statusExtra.style.display = 'none';
 			}
@@ -228,7 +220,7 @@ function init(socket: Socket): void {
 		globalEmitter.emit('updatePlayers', { playerScores, showWins: !roomType.includes('FT') });
 	});
 
-	socket.on('start', async (roomId: string, playerScores: Record<string, number>, opponentIds: string[], settingsString: string) => {
+	socket.on('start', async (roomId, playerScores, opponentIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
 
@@ -258,7 +250,7 @@ function init(socket: Socket): void {
 		currentSession.run();
 	});
 
-	socket.on('spectate', async (roomId: string, playerScores: Record<string, number>, allIds: string[], settingsString: string) => {
+	socket.on('spectate', async (roomId, playerScores, allIds, settingsString) => {
 		currentRoomId = roomId;
 		showGameOnly();
 

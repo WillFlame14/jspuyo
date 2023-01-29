@@ -1,3 +1,4 @@
+import { ServerToClientEvents, ClientToServerEvents } from './@types/events';
 import { Socket } from 'socket.io-client';
 
 import { Game } from './Game';
@@ -5,12 +6,14 @@ import { PlayerInfo } from './webpage/firebase';
 import { Session } from './Session';
 import { showDialog } from './webpage/panels';
 
+type CSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+
 let last_frame_drawn = false;
 
 export class PlayerSession extends Session {
 	spectating: boolean;
 
-	constructor(gameId: string, opponentIds: string[], game: Game, socket: Socket, roomId: string, spectating = false) {
+	constructor(gameId: string, opponentIds: string[], game: Game, socket: CSocket, roomId: string, spectating = false) {
 		super(gameId, opponentIds, game, socket, roomId);
 
 		this.spectating = spectating;
@@ -31,7 +34,7 @@ export class PlayerSession extends Session {
 				return;
 			}
 
-			if(!this.paused) {
+			if(!this.paused && !this.spectating) {
 				const { currentBoardHash, score, nuisance, nuisanceSent, activateNuisance } = this.game.step();
 
 				if(currentBoardHash != null) {
@@ -78,7 +81,7 @@ export class PlayerSession extends Session {
 }
 
 export class Simulator extends Session {
-	constructor(game: Game, socket: Socket) {
+	constructor(game: Game, socket: CSocket) {
 		super(null, [], game, socket, null);
 	}
 

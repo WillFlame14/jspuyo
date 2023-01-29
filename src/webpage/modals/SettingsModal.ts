@@ -4,9 +4,11 @@ import type { PropType } from 'vue';
 import { AppearanceComponent } from './AppearanceComponent';
 import { KeyBindings as KeyBindingsComponent } from './KeyBindingsComponent';
 
-import { UserSettings, KeyBindings } from '../../utils/Settings';
+import { UserSettings } from '../../utils/Settings';
 import { PlayerInfo } from '../firebase';
 import { preloadSprites } from '../../draw/SpriteDrawer';
+
+import store from '../store';
 
 interface AnonymousFunctions {
 	saveSettings: (newSettings: Partial<UserSettings>) => void
@@ -27,41 +29,28 @@ export const SettingsModal = Vue.defineComponent({
 			type: Object as PropType<AnonymousFunctions>
 		}
 	},
-	data(): { settings: Partial<UserSettings> } {
+	data() {
+		const localizedSettings = Object.assign({}, store.userSettings);
+
+		// Perform conversions
+		localizedSettings.skipFrames = 50 - localizedSettings.skipFrames;
+		localizedSettings.sfxVolume = 100 * Math.sqrt(localizedSettings.sfxVolume / 0.4);
+		localizedSettings.musicVolume = 100 * Math.sqrt(localizedSettings.musicVolume / 0.4);
+
 		return {
-			settings: {
-				das: 200,
-				arr: 20,
-				sfxVolume: 50,
-				musicVolume: 50,
-				skipFrames: 50,
-				appearance: 'TsuClassic'
-			}
+			settings: localizedSettings
 		};
 	},
 	methods: {
-		async saveSettings() {
+		saveSettings() {
 			// Perform conversions
 			const newSettings = Object.assign({}, this.settings);
 			newSettings.skipFrames = 50 - Math.floor(newSettings.skipFrames);
 			newSettings.sfxVolume = (newSettings.sfxVolume / 100)**2 * 0.4;
 			newSettings.musicVolume = (newSettings.musicVolume / 100)**2 * 0.4;
 
-			// Request values from child components
-			const _keyBindings: Promise<KeyBindings> = new Promise((resolve) => {
-				this.emitter.emit('reqKeys', (newBindings: Record<string, Record<string, string>>) => {
-					const simplifiedBindings = {} as KeyBindings;
-					// Reduce the object to just operation: boundKey
-					Object.keys(newBindings).forEach((key: string) => {
-						simplifiedBindings[key] = newBindings[key].boundKey;
-					});
-					resolve(simplifiedBindings);
-				});
-			});
-
-			const [keyBindings] = await Promise.all([_keyBindings]);
-			newSettings.keyBindings = keyBindings;
-
+			// Configure audio player with new volume settings
+			this.audioPlayer.configureVolume(newSettings);
 			this.audioPlayer.playSfx('submit');
 
 			if (this.anonymous) {
@@ -70,9 +59,6 @@ export const SettingsModal = Vue.defineComponent({
 			else {
 				void PlayerInfo.getUserProperty(this.getCurrentUID(), 'userSettings').then((userSettings: UserSettings) => {
 					userSettings = Object.assign(userSettings, newSettings);
-
-					// Configure audio player with new volume settings
-					this.audioPlayer.configureVolume(userSettings);
 
 					// Update values
 					PlayerInfo.updateUser(this.getCurrentUID(), 'userSettings', userSettings);
@@ -84,27 +70,13 @@ export const SettingsModal = Vue.defineComponent({
 			preloadSprites(newSettings.appearance);
 		},
 
+		updateKeybind(operation: string, newKey: string) {
+			this.settings.keyBindings[operation] = newKey;
+		},
+
 		selectAppearance(appearance: string) {
 			this.settings.appearance = appearance;
 		}
-	},
-	mounted() {
-		this.emitter.on('setSettings', (settings: UserSettings) => {
-			const newSettings = Object.assign({}, settings);
-			// Perform conversions
-			newSettings.skipFrames = 50 - settings.skipFrames;
-			newSettings.sfxVolume = 100 * Math.sqrt(settings.sfxVolume / 0.4);
-			newSettings.musicVolume = 100 * Math.sqrt(settings.musicVolume / 0.4);
-
-			this.settings = newSettings;
-
-			// Hand off updated values to the components
-			this.emitter.emit('bindKeys', settings.keyBindings);
-			this.emitter.emit('setAppearance', settings.appearance);
-		});
-	},
-	unmounted() {
-		this.emitter.off('setSettings', undefined);
 	},
 	template:`
 		<div class="modal-content" id="settingsModal">
@@ -133,7 +105,7 @@ export const SettingsModal = Vue.defineComponent({
 				</div>
 				<div class="divider vertical" id="settingsDivider"></div>
 				<div>
-					<key-bindings></key-bindings>
+					<key-bindings v-bind:keybinds="settings.keyBindings" v-on:update-keybind="updateKeybind"></key-bindings>
 					<div class="justify-flexbox ghostHighlightOptions">
 						<form class="block-form" autocomplete="off">
 							<label for="ghost">Ghost Drop</label>

@@ -31,6 +31,8 @@ export default reactive({
 	currentlyHost: false,
 	currentlySpectating: false,
 
+	userSettings: {} as UserSettings,
+
 	setActiveModal(modal: string, props: Partial<ModalProps> = {}) {
 		this.active = true;
 		this.activeModal = modal;
@@ -49,5 +51,8 @@ export default reactive({
 	toggleSpectate() {
 		this.currentlySpectating = true;
 		this.currentlyHost = false;
+	},
+	updateUserSettings(userSettings: UserSettings) {
+		this.userSettings = userSettings;
 	}
 });

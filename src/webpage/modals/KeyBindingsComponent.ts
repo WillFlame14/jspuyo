@@ -1,10 +1,5 @@
 import * as Vue from 'vue';
-
-interface Binding {
-	name: string,
-	boundKey: string,
-	displayKey: string
-}
+import type { PropType } from 'vue';
 
 const KeyBindingComponent = Vue.defineComponent({
 	props: ['keybind', 'operation'],
@@ -14,17 +9,17 @@ const KeyBindingComponent = Vue.defineComponent({
 		};
 	},
 	methods: {
-		releaseBind(operation: string) {
+		/** Releases a keybind, to allow binding a new one. */
+		releaseBind() {
 			this.awaitingBinding = true;
-			this.$emit('releaseBind', operation);
 		},
-		restoreBind(operation: string) {
+		/** Restores a keybind after the user does not select a new one. */
+		restoreBind() {
 			if(!this.awaitingBinding) {
 				return;
 			}
 
 			this.awaitingBinding = false;
-			this.$emit('restoreBind', operation);
 		},
 		/**
 		 * Binds a new key to the currently waiting operation.
@@ -38,55 +33,17 @@ const KeyBindingComponent = Vue.defineComponent({
 
 			this.$emit('updateBind', operation, event.code);
 			this.awaitingBinding = false;
-		}
-	},
-	template:
-		`<form autocomplete="off">
-			<label v-bind:for="operation + 'Binding'">{{keybind.name}}</label>
-			<input type="button" class="keyBinding"
-				v-bind:id="operation + 'Binding'"
-				v-bind:value="keybind.displayKey"
-				v-on:click="releaseBind(operation)"
-				v-on:keydown="bindNewKey($event, operation)"
-				v-on:blur="restoreBind(operation)">
-		</form>`
-});
-
-export const KeyBindings = Vue.defineComponent({
-	components: {
-		'key-binding': KeyBindingComponent
-	},
-	data(): { bindings: Record<string, Binding>, keyAwaitingBind: string } {
-		return {
-			bindings: {
-				moveLeft: { name: 'Move Left', boundKey: 'ArrowLeft', displayKey: '\u2190' },
-				moveRight: { name: 'Move Right', boundKey: 'ArrowRight', displayKey: '\u2192' },
-				rotateCCW: { name: 'Rotate CCW', boundKey: 'KeyZ', displayKey: 'Z' },
-				rotateCW: { name: 'Rotate CW', boundKey: 'KeyX', displayKey: 'X' },
-				softDrop: { name: 'Soft Drop', boundKey: 'ArrowDown', displayKey: '\u2193' },
-				hardDrop: { name: 'Hard Drop', boundKey: 'ArrowUp', displayKey: '\u2191' }
-			},
-			keyAwaitingBind: '',
-		};
-	},
-	methods: {
-		updateBind(operation: string, newKey: string) {
-			this.bindings[operation].boundKey = newKey;
-			this.bindings[operation].displayKey = this.codeToDisplay(newKey);
 		},
-		/**
-		 * Releases a keybind, to allow binding a new one.
-		 * @param {string} operation The operation to be unbound
-		 */
-		releaseBind(operation: string) {
-			this.bindings[operation].displayKey = '...';
-		},
-		/**
-		 * Restores a keybind after the user does not select a new one.
-		 * @param {string} operation The operation to be rebound
-		 */
-		restoreBind(operation: string) {
-			this.bindings[operation].displayKey = this.codeToDisplay(this.bindings[operation].boundKey);
+		getName(operation: string) {
+			const opToName: Record<string, string> = {
+				moveLeft: 'Move Left',
+				moveRight: 'Move Right',
+				rotateCCW: 'Rotate CCW',
+				rotateCW: 'Rotate CW',
+				softDrop: 'Soft Drop',
+				hardDrop: 'Hard Drop'
+			};
+			return opToName[operation];
 		},
 		/**
 		 * Converts a KeyCode to a readable string/symbol.
@@ -120,30 +77,38 @@ export const KeyBindings = Vue.defineComponent({
 			}
 		}
 	},
-	mounted() {
-		this.emitter.on('bindKeys', (keybinds: Record<string, string>) => {
-			Object.keys(keybinds).forEach((operation: string) => {
-				this.bindings[operation].boundKey = keybinds[operation];
-				this.bindings[operation].displayKey = this.codeToDisplay(keybinds[operation]);
-			});
-		});
+	template:
+		`<form autocomplete="off">
+			<label v-bind:for="operation + 'Binding'">{{getName(operation)}}</label>
+			<input type="button" class="keyBinding"
+				v-bind:id="operation + 'Binding'"
+				v-bind:value="awaitingBinding ? '...' : codeToDisplay(keybind)"
+				v-on:click="releaseBind()"
+				v-on:keydown="bindNewKey($event, operation)"
+				v-on:blur="restoreBind()">
+		</form>`
+});
 
-		this.emitter.on('reqKeys', (callback: (bindings: Record<string, Binding>) => void) => {
-			callback(this.bindings);
-		});
+export const KeyBindings = Vue.defineComponent({
+	components: {
+		'key-binding': KeyBindingComponent
 	},
-	unmounted() {
-		this.emitter.off('bindKeys', undefined);
-		this.emitter.off('reqKeys', undefined);
+	props: {
+		keybinds: {
+			type: Object as PropType<Record<string, string>>
+		}
+	},
+	methods: {
+		updateBind(operation: string, newKey: string) {
+			this.$emit('updateKeybind', operation, newKey);
+		}
 	},
 	template:
 		`<div class="keyBindings" id="keyBindings">
 			<key-binding
-				v-for="(keybind, operation) in bindings"
+				v-for="(keybind, operation) in keybinds"
 				v-bind:keybind="keybind"
 				v-bind:operation="operation"
-				v-on:releaseBind="releaseBind"
-				v-on:restoreBind="restoreBind"
 				v-on:updateBind="updateBind">
 			</key-binding>
 		</div>`

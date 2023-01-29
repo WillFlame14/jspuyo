@@ -188,8 +188,6 @@ const GuideComponent = Vue.defineComponent({
 		this.store.props.anonymousFunctions = {
 			saveSettings: (newSettings: UserSettings) => {
 				Object.assign(this.userSettings, newSettings);
-
-				this.audioPlayer.configureVolume(this.userSettings);
 				store.clearModal();
 			}
 		};

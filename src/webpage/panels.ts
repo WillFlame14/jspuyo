@@ -82,7 +82,7 @@ export async function updateUserSettings(user: User, currentUID: string): Promis
 
 	const [userSettings, rating]: [UserSettings, number] = await Promise.all(promises);
 	globalAudioPlayer.configureVolume(userSettings);
-	globalEmitter.emit('setSettings', userSettings);
+	store.updateUserSettings(userSettings);
 
 	globalEmitter.emit('updateStatus', {
 		name: user.displayName,

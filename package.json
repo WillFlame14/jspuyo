@@ -16,7 +16,7 @@
     "start": "npm-run-all --parallel bundle bundle-server node sass-watch autoprefix-watch",
     "stylelint": "stylelint \"src/_css/*.scss\" --fix",
     "test": "eslint src/ --fix --cache && stylelint \"src/_css/*.scss\" --fix && mocha 'test/**/*.test.js'",
-    "tsc": "tsc -p ./tsconfig.json --noEmit",
+    "tsc": "tsc -p ./tsconfig.json",
     "uglify": "esbuild src/Main.ts --bundle --minify --outfile=public/bundle.js",
     "uglify-server": "esbuild server.ts --bundle --platform=node --minify --outfile=server.js",
     "prepare": "husky install"

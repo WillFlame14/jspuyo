@@ -67,26 +67,26 @@ export class GameArea extends CanvasLayer {
 		return this.getHash();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[] }, squishState: { currentFrame: number }): string {
-		this.boardLayer.squishPuyos(currentBoardState, squishState);
+	squishPuyos(connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[], currentFrame: number): string {
+		this.boardLayer.squishPuyos(connections, squishingPuyos, currentFrame);
 		this.update();
 		return this.getHash();
 	}
 
-	resolveChains(resolvingState: ResolvingState): string {
-		this.boardLayer.resolveChains(resolvingState);
+	resolveChains(connections: Puyo[][], poppedLocs: Puyo[], connectionsAfterPop: Puyo[][], unstablePuyos: Puyo[], currentFrame: number): string {
+		this.boardLayer.resolveChains(connections, poppedLocs, connectionsAfterPop, unstablePuyos, currentFrame);
 		this.update();
 		return this.getHash();
 	}
 
-	dropNuisance(boardState: number[][], nuisanceState: NuisanceState): string {
-		this.boardLayer.dropNuisance(boardState, nuisanceState);
+	dropNuisance(boardState: number[][], nuisanceArray: number[][], positions: number[]): string {
+		this.boardLayer.dropNuisance(boardState, nuisanceArray, positions);
 		this.update();
 		return this.getHash();
 	}
 
-	updateQueue(queueState: { dropArray: Drop[], currentFrame: number }): string {
-		this.queueLayer.updateQueue(queueState);
+	updateQueue(dropArray: Drop[], currentFrame: number): string {
+		this.queueLayer.updateQueue(dropArray, currentFrame);
 		this.update();
 		return this.getHash();
 	}

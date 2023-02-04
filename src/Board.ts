@@ -241,7 +241,7 @@ export class Board {
 	 * @param  {number}        nuisance 	Number of nuisance puyos to drop
 	 * @return {NuisanceState}          	The nuisanceState of the dropped nuisance
 	 */
-	dropNuisance(nuisance: number): NuisanceState {
+	dropNuisance(nuisance: number) {
 		let nuisanceAmount = 0;
 		const nuisanceArray: number[][] = [];
 

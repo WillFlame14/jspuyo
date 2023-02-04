@@ -127,8 +127,7 @@ export class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 
-	squishPuyos(currentBoardState: { connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[] }, squishState: { currentFrame: number }): void {
-		const { connections, squishingPuyos } = currentBoardState;
+	squishPuyos(connections: Puyo[][], squishingPuyos: { puyo: Puyo, squishType: string }[], currentFrame: number): void {
 		// console.log(schezo);
 		const { rows } = this.settings;
 		if (this.hasStackChanged(MODE.PUYO_SQUISHING)) {
@@ -147,7 +146,7 @@ export class BoardLayer extends CanvasLayer {
 		}
 		for(const puyo of squishingPuyos) {
 			const { colour, x, y } = puyo.puyo;
-			const type = CONSTANTS.SQUISH_FRAMES[puyo.squishType][Math.floor(squishState.currentFrame / 2)];
+			const type = CONSTANTS.SQUISH_FRAMES[puyo.squishType][Math.floor(currentFrame / 2)];
 			if(type === undefined) {
 				continue;
 			}
@@ -156,8 +155,7 @@ export class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 
-	resolveChains(resolvingState: ResolvingState): void {
-		const { connections, poppedLocs, connectionsAfterPop, unstablePuyos, currentFrame } = resolvingState;
+	resolveChains(connections: Puyo[][], poppedLocs: Puyo[], connectionsAfterPop: Puyo[][], unstablePuyos: Puyo[], currentFrame: number): void {
 		const { rows, popFrames, dropFrames } = this.settings;
 
 		if (currentFrame <= popFrames) {
@@ -195,8 +193,7 @@ export class BoardLayer extends CanvasLayer {
 		this.update();
 	}
 
-	dropNuisance(boardState: number[][], nuisanceState: NuisanceState): void {
-		const { nuisanceArray, positions } = nuisanceState;
+	dropNuisance(boardState: number[][], nuisanceArray: number[][], positions: number[]): void {
 		if (this.hasStackChanged(MODE.NUISANCE_DROPPING)) {
 			this.stackLayer.resetState();
 			const connections = new Board(this.settings, boardState).getConnections();
@@ -207,14 +204,10 @@ export class BoardLayer extends CanvasLayer {
 			});
 		}
 		this.dynamicLayer.resetState();
-		nuisanceState.allLanded = true;
 
 		positions.forEach((height, index) => {
 			if(height !== -1) {
 				const startRow = Math.max(height, boardState[index].length);
-				if(height > boardState[index].length) {
-					nuisanceState.allLanded = false;
-				}
 				for (let i = 0; i < nuisanceArray[index].length; i++) {
 					this.dynamicLayer.drawPuyo(CONSTANTS.NUISANCE, index + 0.5, this.settings.rows - 0.5 - (startRow + i));
 				}

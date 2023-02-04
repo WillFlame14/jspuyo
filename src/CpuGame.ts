@@ -100,8 +100,7 @@ export class CpuGame extends Game {
 	/**
 	 * After locking a drop, also reset the currentMove and timer.
 	 */
-	lockDrop(): void {
-		super.lockDrop();
+	dropLocked(): void {
 		this.currentMove = null;
 		this.rotations = 0;
 		this.softDropTimer = Date.now();

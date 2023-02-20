@@ -58,36 +58,38 @@ export class PuyoSquishingState implements GameState {
 	 * Locks the drop and adds the puyos to the stack.
 	 */
 	lockDrop() {
-		const { board, currentDrop, statTracker } = this.game;
+		const { board, currentDrop, currentMovements, dropNum, statTracker } = this.game;
 		const { boardState } = board;
-		currentDrop.schezo = currentDrop.schezo || Utils.getOtherPuyo(currentDrop);
+
+		const { arle, colours } = currentDrop;
+		const schezo = currentDrop.schezo || Utils.getOtherPuyo(currentDrop);
 
 		// Force round the schezo before it is put on the stack
-		currentDrop.schezo.x = Math.round(currentDrop.schezo.x);
+		schezo.x = Math.round(schezo.x);
 
-		if(currentDrop.arle.x === currentDrop.schezo.x) {		// vertical orientation
-			if(currentDrop.arle.y < currentDrop.schezo.y) {
-				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
-				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
+		if(arle.x === currentDrop.schezo.x) {		// vertical orientation
+			if(arle.y < schezo.y) {
+				boardState[schezo.x].push(colours[0]);
+				boardState[schezo.x].push(colours[1]);
 			}
 			else {
-				boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
-				boardState[currentDrop.schezo.x].push(currentDrop.colours[0]);
+				boardState[schezo.x].push(colours[1]);
+				boardState[schezo.x].push(colours[0]);
 			}
 
-			statTracker.addDrop(this.game.dropNum, this.currentFrame, this.game.currentMovements, currentDrop.schezo.x, currentDrop.schezo.x);
+			statTracker.addDrop(dropNum, this.currentFrame, currentMovements, schezo.x, schezo.x);
 		}
 		else {			// horizontal orientation
-			boardState[currentDrop.arle.x].push(currentDrop.colours[0]);
-			boardState[currentDrop.schezo.x].push(currentDrop.colours[1]);
+			boardState[arle.x].push(colours[0]);
+			boardState[schezo.x].push(colours[1]);
 
 			statTracker.addDrop(
-				this.game.dropNum,
+				dropNum,
 				this.currentFrame,
-				this.game.currentMovements,
-				currentDrop.arle.x,
-				currentDrop.schezo.x,
-				boardState[currentDrop.arle.x].length !== boardState[currentDrop.schezo.x].length
+				currentMovements,
+				arle.x,
+				schezo.x,
+				boardState[arle.x].length !== boardState[schezo.x].length
 			);
 		}
 

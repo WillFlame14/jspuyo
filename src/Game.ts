@@ -207,16 +207,16 @@ export class Game {
 	 *     If the drop is rotating, the final position of the schezo puyo must be known.
 	 *     This can be found from the schezo's position relative to the arle and the drop's rotate direction.
 	 *     Then compare the y-coordinate of both puyos against the y-coordinate of the stack.
-	 *     If the drop is (or will be) vertical, only the lower one needs to be compared.
 	 */
 	checkLock(currentDrop: Drop = this.currentDrop, boardState: number[][] = this.board.boardState): boolean {
+		const { arle, rotating, rotating180 } = currentDrop;
+
 		// Do not lock while rotating 180
-		if(currentDrop.rotating180 > 0) {
+		if(rotating180 > 0) {
 			return false;
 		}
-		const arle = currentDrop.arle;
+
 		const schezo = Utils.getOtherPuyo(currentDrop);
-		let lock: boolean;
 
 		if(schezo.x > this.settings.cols - 1) {
 			console.log('stoP SPAMMING YOUR KEYBOARDGTGHVDRY you non longer have the privilege of game physics');
@@ -229,51 +229,27 @@ export class Game {
 			schezo.x++;
 		}
 
-		if(currentDrop.rotating === Direction.CW) {
-			if(schezo.x > arle.x) {
-				if(schezo.y > arle.y) {		// quadrant 1
-					lock = boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
-				}
-				else {						// quadrant 2
-					lock = boardState[arle.x].length > schezo.y;
-				}
-			}
-			else {
-				if(schezo.y < arle.y) {		// quadrant 3
-					lock = boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
-				}
-				else {						// quadrant 4
-					lock = boardState[arle.x].length > arle.y;
-				}
+		// Arle is locked
+		if (boardState[arle.x].length >= arle.y) {
+			return true;
+		}
+
+		// Find schezo column. Assume it is the same as arle column if rotating.
+		let schezoCol = rotating ? arle.x : schezo.x;
+
+		if (schezo.x > arle.x) {
+			if ((rotating === Direction.CW && schezo.y > arle.y) ||		// quadrant 1 CW
+				(rotating === Direction.CCW && schezo.y < arle.y)) {	// quadrant 2 CCW
+				schezoCol = Math.ceil(schezo.x);
 			}
 		}
-		else if(currentDrop.rotating === Direction.CCW) {
-			if(schezo.x > arle.x) {
-				if(schezo.y > arle.y) {		// quadrant 1
-					lock = boardState[arle.x].length > arle.y;
-				}
-				else {						// quadrant 2
-					lock = boardState[Math.ceil(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
-				}
-			}
-			else {
-				if(schezo.y < arle.y) {		// quadrant 3
-					lock = boardState[arle.x].length > schezo.y;
-				}
-				else {						// quadrant 4
-					lock = boardState[Math.floor(schezo.x)].length >= schezo.y || boardState[arle.x].length >= arle.y;
-				}
+		else {
+			if ((rotating === Direction.CW && schezo.y < arle.y) ||		// quadrant 3 CW
+				(rotating === Direction.CCW && schezo.y > arle.y)) {	// quadrant 4 CCW
+				schezoCol = Math.floor(schezo.x);
 			}
 		}
-		else {		// not rotating
-			if(arle.x === schezo.x) {		// vertical orientation
-				lock = boardState[arle.x].length >= Math.min(arle.y, schezo.y);
-			}
-			else {		//horizontal orientation
-				lock = boardState[arle.x].length >= arle.y || boardState[schezo.x].length >= schezo.y;
-			}
-		}
-		return lock;
+		return boardState[schezoCol].length >= schezo.y;
 	}
 
 	/**
@@ -431,24 +407,16 @@ export class Game {
 		const newDrop = this.currentDrop.copy();
 
 		if(direction === Direction.CW) {
-			const newStandardAngle = this.currentDrop.standardAngle - Math.PI / 2;
-			newDrop.standardAngle = newStandardAngle;
-
-			if(this.checkKick(newDrop, direction)) {
-				this.currentDrop.rotate(Direction.CW);
-				this.audioPlayer.playAndEmitSfx('rotate');
-				this.currentMovements.push(Direction.CW);
-			}
+			newDrop.standardAngle = this.currentDrop.standardAngle - Math.PI / 2;
 		}
 		else {
-			const newStandardAngle = this.currentDrop.standardAngle + Math.PI / 2;
-			newDrop.standardAngle = newStandardAngle;
+			newDrop.standardAngle = this.currentDrop.standardAngle + Math.PI / 2;
+		}
 
-			if(this.checkKick(newDrop, direction)) {
-				this.currentDrop.rotate(Direction.CCW);
-				this.audioPlayer.playAndEmitSfx('rotate');
-				this.currentMovements.push(Direction.CCW);
-			}
+		if(this.checkKick(newDrop, direction)) {
+			this.currentDrop.rotate(direction);
+			this.audioPlayer.playAndEmitSfx('rotate');
+			this.currentMovements.push(direction);
 		}
 	}
 
@@ -466,7 +434,7 @@ export class Game {
 		const schezo = Utils.getOtherPuyo(newDrop);
 		const boardState = this.board.boardState;
 
-		let kick = '';
+		let kick: Direction;
 		let doRotate = true;
 
 		// Check board edges to determine kick diretion
